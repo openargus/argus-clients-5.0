@@ -1,21 +1,20 @@
 /*
- * Argus Software
- * Copyright (c) 2000-2016 QoSient, LLC
+ * Gargoyle Client Software. Tools to read, analyze and manage Argus data.
+ * Copyright (c) 2000-2014 QoSient, LLC
  * All rights reserved.
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2, or (at your option)
- * any later version.
-
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
-
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * THE ACCOMPANYING PROGRAM IS PROPRIETARY SOFTWARE OF QoSIENT, LLC,
+ * AND CANNOT BE USED, DISTRIBUTED, COPIED OR MODIFIED WITHOUT
+ * EXPRESS PERMISSION OF QoSIENT, LLC.
+ *
+ * QOSIENT, LLC DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS
+ * SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS, IN NO EVENT SHALL QOSIENT, LLC BE LIABLE FOR ANY
+ * SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER
+ * IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION,
+ * ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
+ * THIS SOFTWARE.
  *
  */
 
@@ -28,9 +27,9 @@
  */
 
 /* 
- * $Id: //depot/argus/clients/clients/racluster.c#94 $
- * $DateTime: 2016/06/06 11:08:02 $
- * $Change: 3155 $
+ * $Id: //depot/gargoyle/clients/clients/racluster.c#17 $
+ * $DateTime: 2016/06/06 10:32:11 $
+ * $Change: 3152 $
  */
 
 #ifdef HAVE_CONFIG_H
@@ -73,6 +72,11 @@ ArgusClientInit (struct ArgusParserStruct *parser)
       (void) signal (SIGTERM, (void (*)(int)) RaParseComplete);
       (void) signal (SIGQUIT, (void (*)(int)) RaParseComplete);
       (void) signal (SIGINT,  (void (*)(int)) RaParseComplete);
+
+      if ((parser->ArgusMaskList) == NULL)
+         parser->ArgusReverse = 1;
+      else
+         parser->ArgusReverse = 0;
 
       if ((mode = parser->ArgusModeList) != NULL) {
          while (mode) {
@@ -128,11 +132,6 @@ ArgusClientInit (struct ArgusParserStruct *parser)
             mode = mode->nxt;
          }
       }
-
-      if ((parser->ArgusMaskList) == NULL)
-         parser->ArgusReverse = 1;
-      else
-         parser->ArgusReverse = 0;
 
       if (parser->ArgusFlowModelFile) {
          if ((parser->ArgusAggregator = ArgusParseAggregator(parser, parser->ArgusFlowModelFile, NULL)) == NULL)
@@ -313,7 +312,7 @@ RaParseComplete (int sig)
                   }
                }
 
-               ArgusSortQueue (ArgusSorter, agg->queue);
+               ArgusSortQueue (ArgusSorter, agg->queue, ARGUS_LOCK);
        
                argus = ArgusCopyRecordStruct((struct ArgusRecordStruct *) agg->queue->array[0]);
 
@@ -633,6 +632,7 @@ RaProcessRecord (struct ArgusParserStruct *parser, struct ArgusRecordStruct *ns)
                   struct ArgusMacStruct *m1 = NULL;
                   if ((m1 = (struct ArgusMacStruct *) ns->dsrs[ARGUS_MAC_INDEX]) != NULL) {
                      switch (m1->hdr.subtype) {
+                        default:
                         case ARGUS_TYPE_ETHER: {
                            struct ether_header *e1 = &m1->mac.mac_union.ether.ehdr;
                            int i;
@@ -973,6 +973,7 @@ RaProcessThisRecord (struct ArgusParserStruct *parser, struct ArgusRecordStruct 
                agg = agg->nxt;
             else
                found++;
+
          } else
             agg = agg->nxt;
       }
@@ -983,12 +984,12 @@ RaProcessThisRecord (struct ArgusParserStruct *parser, struct ArgusRecordStruct 
    }
 }
 
+char ArgusRecordBuffer[ARGUS_MAXRECORDSIZE];
 
 int
 RaSendArgusRecord(struct ArgusRecordStruct *argus)
 {
    struct ArgusRecord *argusrec = NULL;
-   char buf[0x10000], argusbuf[0x10000];
    int retn = 1;
 
    if (ArgusParser->RaAgMode)
@@ -997,7 +998,7 @@ RaSendArgusRecord(struct ArgusRecordStruct *argus)
    if (argus->status & ARGUS_RECORD_WRITTEN)
       return (retn);
 
-   if ((argusrec = ArgusGenerateRecord (argus, 0L, argusbuf)) != NULL) {
+   if ((argusrec = ArgusGenerateRecord (argus, 0L, ArgusRecordBuffer)) != NULL) {
 #ifdef _LITTLE_ENDIAN
       ArgusHtoN(argusrec);
 #endif
@@ -1028,6 +1029,8 @@ RaSendArgusRecord(struct ArgusRecordStruct *argus)
 
       } else {
          if (!ArgusParser->qflag) {
+            char buf[MAXSTRLEN];
+
             if (ArgusParser->Lflag) {
                if (ArgusParser->RaLabel == NULL)
                   ArgusParser->RaLabel = ArgusGenerateLabel(ArgusParser, argus);

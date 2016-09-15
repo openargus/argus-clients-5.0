@@ -20,9 +20,9 @@
  */
 
 /* 
- * $Id: //depot/gargoyle/clients/include/argus_util.h#34 $
- * $DateTime: 2016/08/22 00:32:32 $
- * $Change: 3173 $
+ * $Id: //depot/gargoyle/clients/include/argus_util.h#36 $
+ * $DateTime: 2016/09/13 16:02:42 $
+ * $Change: 3182 $
  */
 
 #ifndef ArgusUtil_h
@@ -358,7 +358,13 @@ void ArgusParseArgs (struct ArgusParserStruct *, int, char **);
 
 char *ArgusTrimString (char *str);
 char *ArgusGetString (struct ArgusParserStruct *, u_char *, int);
+char *ArgusGetUuidString (struct ArgusParserStruct *, u_char *, int);
 
+void setArgusID(struct ArgusParserStruct *, void *, int, unsigned int);
+int getArgusID(struct ArgusParserStruct *, struct ArgusAddrStruct *);
+
+unsigned int getArgusIDType(struct ArgusParserStruct *);
+void ArgusParseSourceID (struct ArgusParserStruct *, char *);
 
 void ArgusPrintBssid (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
 void ArgusPrintSsid (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
@@ -1689,6 +1695,9 @@ extern struct ArgusQueueHeader *ArgusPopQueue (struct ArgusQueueStruct *queue, i
 extern int ArgusAddToQueue(struct ArgusQueueStruct *, struct ArgusQueueHeader *, int);
 extern struct ArgusQueueHeader *ArgusRemoveFromQueue(struct ArgusQueueStruct *, struct ArgusQueueHeader *, int);
 
+extern int getArgusID(struct ArgusParserStruct *, struct ArgusAddrStruct *);
+extern unsigned int getArgusIDType(struct ArgusParserStruct *);
+
 extern int ArgusConvertInitialWriteStruct (struct WriteStruct *, struct ArgusRecordStruct *);
 extern int ArgusConvertWriteStruct (struct WriteStruct *, struct ArgusRecordStruct *);
 
@@ -1703,6 +1712,7 @@ extern int RaDiffTime (struct timeval *, struct timeval *, struct timeval *);
 extern float RaDeltaFloatTime (struct timeval *, struct timeval *);
 
 extern char *ArgusGetString (struct ArgusParserStruct *, u_char *, int);
+extern char *ArgusGetUuidString (struct ArgusParserStruct *, u_char *, int);
 
 extern void ArgusPrintTime(struct ArgusParserStruct *, char *, struct timeval *);
 extern char *ArgusGenerateLabel(struct ArgusParserStruct *, struct ArgusRecordStruct *);

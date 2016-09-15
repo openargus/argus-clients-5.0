@@ -19,9 +19,9 @@
  */
 
 /* 
- * $Id: //depot/gargoyle/clients/include/argus_output.h#11 $ 
- * $DateTime: 2016/05/11 14:20:33 $ 
- * $Change: 3141 $ 
+ * $Id: //depot/gargoyle/clients/include/argus_output.h#13 $ 
+ * $DateTime: 2016/09/13 16:02:42 $ 
+ * $Change: 3182 $ 
  */
 
 
@@ -207,10 +207,10 @@ struct timeval *getArgusMarReportInterval(struct ArgusParserStruct *);
 void setArgusPortNum (struct ArgusParserStruct *, int, char *);
 int getArgusPortNum(struct ArgusParserStruct *);
 void setArgusOflag(struct ArgusParserStruct *, unsigned int);
-unsigned int getArgusIDType(struct ArgusParserStruct *);
 void setArgusBindAddr (struct ArgusParserStruct *, char *);
-void setArgusID(struct ArgusParserStruct *, void *, unsigned int);
-unsigned int getArgusID(struct ArgusParserStruct *);
+
+void setArgusID(struct ArgusParserStruct *, void *, int, unsigned int);
+void ArgusParseSourceID (struct ArgusParserStruct *, char *);
 
 void setArgusZeroConf(struct ArgusParserStruct *, unsigned int);
 unsigned int getArgusZeroConf(struct ArgusParserStruct *);

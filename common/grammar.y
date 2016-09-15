@@ -89,6 +89,7 @@ static struct qual qerr = { Q_UNDEF, Q_UNDEF, Q_UNDEF};
 	u_long h;
 	u_char *e;
 	char *s;
+	char u[16];
 	struct stmt *stmt;
 	struct arth *a;
 	struct {
@@ -130,7 +131,7 @@ static struct qual qerr = { Q_UNDEF, Q_UNDEF, Q_UNDEF};
 %token  NUM FLOAT INBOUND OUTBOUND
 %token  LINK AUTH RECURS REQ RSP
 %token	GEQ LEQ NEQ
-%token	ID EID HIDV4 HIDV6 STRING
+%token	ID UUID EID HIDV4 HIDV6 STRING
 %token	LSH RSH
 %token  LEN
 
@@ -149,6 +150,7 @@ static struct qual qerr = { Q_UNDEF, Q_UNDEF, Q_UNDEF};
 
 %type	<s>  ID
 %type	<e>  EID
+%type	<s>  UUID
 %type	<s>  HIDV4
 %type	<s>  HIDV6
 %type	<s>  STRING
@@ -221,6 +223,8 @@ nid:	  ID			{ $$.b = Argusgen_scode($1, $$.q = $<blk>0.q); }
                                   $$.b = Argusgen_ncode($1, 0, $$.q, Q_EQUAL); }
 	| EID			{ $$.q = $<blk>0.q; $$.q.type = Q_IPV6;
 				  $$.b = Argusgen_ecode($1, $$.q); }
+	| UUID			{ $$.q = $<blk>0.q; $$.q.type = Q_STRING;
+                                  $$.b = Argusgen_ucode($1, $$.q); }
 	| not id		{ Argusgen_not($2.b); $$ = $2; }
 	;
 not:	  '!'			{ $$ = $<blk>0; }

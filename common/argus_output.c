@@ -52,6 +52,7 @@
 #endif
 
 #include <argus_compat.h>
+#include <argus_util.h>
 #include <argus_output.h>
 
 
@@ -1261,10 +1262,9 @@ ArgusOutputProcess(void *arg)
 #endif
    RaParseComplete(1);
    pthread_exit(retn);
-
-#else
-   return (retn);
 #endif /* ARGUS_THREADS */
+
+   return (retn);
 }
 
 
@@ -1586,10 +1586,8 @@ ArgusControlChannelProcess(void *arg)
    ArgusDebug (1, "ArgusControlChannelProcess() exiting\n");
 #endif
    pthread_exit(retn);
-
-#else
-   return (retn);
 #endif /* ARGUS_THREADS */
+   return (retn);
 }
 
 int ArgusAuthenticateClient (struct ArgusClientData *);
@@ -2145,8 +2143,9 @@ ArgusCheckControlMessage (struct ArgusOutputStruct *output, struct ArgusClientDa
 struct ArgusRecord *
 ArgusGenerateInitialMar (struct ArgusOutputStruct *output)
 {
-   struct ArgusRecord *retn;
+   struct ArgusAddrStruct asbuf, *asptr = &asbuf;
    struct timeval tbuf, *tptr = &tbuf;
+   struct ArgusRecord *retn;
 
    if ((retn = (struct ArgusRecord *) ArgusCalloc (1, sizeof(struct ArgusRecord))) == NULL)
      ArgusLog (LOG_ERR, "ArgusGenerateInitialMar(0x%x) ArgusCalloc error %s\n", output, strerror(errno));
@@ -2156,7 +2155,6 @@ ArgusGenerateInitialMar (struct ArgusOutputStruct *output)
    retn->hdr.len   = htons((unsigned short) sizeof(struct ArgusRecord)/4);
 
    retn->argus_mar.argusid = htonl(ARGUS_COOKIE);
-   retn->argus_mar.status |= getArgusIDType(ArgusParser);
 
    if (output) {
       retn->argus_mar.startime.tv_sec  = htonl(output->ArgusStartTime.tv_sec);
@@ -2178,8 +2176,38 @@ ArgusGenerateInitialMar (struct ArgusOutputStruct *output)
    retn->argus_mar.minor_version = VERSION_MINOR;
    retn->argus_mar.reportInterval = 0;
 
+   if (getArgusID(ArgusParser, asptr)) {
+      switch (getArgusIDType(ArgusParser) & ~ARGUS_TYPE_INTERFACE) {
+         case ARGUS_TYPE_STRING: {
+            retn->argus_mar.status |= ARGUS_IDIS_STRING;
+            bcopy (&asptr->a_un.str, &retn->argus_mar.str, 4);
+            break;
+         }
+         case ARGUS_TYPE_INT: {
+            retn->argus_mar.status |= ARGUS_IDIS_INT;
+            retn->argus_mar.value = htonl(asptr->a_un.value);
+            break;
+         }
+         case ARGUS_TYPE_IPV4: {
+            retn->argus_mar.status |= ARGUS_IDIS_IPV4;
+            retn->argus_mar.ipv4 = htonl(asptr->a_un.ipv4);
+            break;
+         }
+         case ARGUS_TYPE_IPV6: {
+            retn->argus_mar.status |= ARGUS_IDIS_IPV6;
+            bcopy (&asptr->a_un.ipv6, &retn->argus_mar.ipv6, sizeof(retn->argus_mar.ipv6));
+            break;
+         }
+         case ARGUS_TYPE_UUID: {
+            retn->argus_mar.status |= ARGUS_IDIS_UUID;
+            bcopy (&asptr->a_un.uuid, &retn->argus_mar.uuid, sizeof(retn->argus_mar.uuid));
+            break;
+         }
+      }
+      retn->argus_mar.status = htonl(retn->argus_mar.status);
+   }
 
-   retn->argus_mar.thisid = htonl(getArgusID(ArgusParser));
+
    retn->argus_mar.record_len = htonl(-1);
 
 #ifdef ARGUSDEBUG
@@ -2193,6 +2221,7 @@ ArgusGenerateInitialMar (struct ArgusOutputStruct *output)
 struct ArgusRecordStruct *
 ArgusGenerateInitialMarRecord (struct ArgusOutputStruct *output)
 {
+   struct ArgusAddrStruct asbuf, *asptr = &asbuf;
    struct ArgusRecordStruct *retn;
    struct ArgusRecord *rec;
    struct timeval now;
@@ -2211,8 +2240,37 @@ ArgusGenerateInitialMarRecord (struct ArgusOutputStruct *output)
 
    rec->hdr = retn->hdr;
    rec->argus_mar.argusid = htonl(ARGUS_COOKIE);
-   rec->argus_mar.thisid = getArgusID(ArgusParser);
-   rec->argus_mar.status  |= getArgusIDType(ArgusParser);
+
+   if (getArgusID(ArgusParser, asptr)) {
+      switch (getArgusIDType(ArgusParser) & ~ARGUS_TYPE_INTERFACE) {
+         case ARGUS_TYPE_STRING: {
+            rec->argus_mar.status |= ARGUS_IDIS_STRING;
+            bcopy (&asptr->a_un.str, &rec->argus_mar.str, 4);
+            break;
+         }
+         case ARGUS_TYPE_INT: {
+            rec->argus_mar.status |= ARGUS_IDIS_INT;
+            bcopy (&asptr->a_un.value, &rec->argus_mar.value, sizeof(rec->argus_mar.value));
+            break;
+         }
+         case ARGUS_TYPE_IPV4: {
+            rec->argus_mar.status |= ARGUS_IDIS_IPV4;
+            bcopy (&asptr->a_un.ipv4, &rec->argus_mar.ipv4, sizeof(rec->argus_mar.ipv4));
+            break;
+         }
+         case ARGUS_TYPE_IPV6: {
+            rec->argus_mar.status |= ARGUS_IDIS_IPV6;
+            bcopy (&asptr->a_un.ipv6, &rec->argus_mar.ipv6, sizeof(rec->argus_mar.ipv6));
+            break;
+         }
+         case ARGUS_TYPE_UUID: {
+            rec->argus_mar.status |= ARGUS_IDIS_UUID;
+            bcopy (&asptr->a_un.uuid, &rec->argus_mar.uuid, sizeof(rec->argus_mar.uuid));
+            break;
+         }
+      }
+      rec->argus_mar.status  |= getArgusIDType(ArgusParser);
+   }
 
    gettimeofday (&now, 0L);
 
@@ -2253,6 +2311,7 @@ struct ArgusRecordStruct *
 ArgusGenerateStatusMarRecord (struct ArgusOutputStruct *output, unsigned char status)
 {
    extern int ArgusAllocTotal, ArgusFreeTotal, ArgusAllocBytes;
+   struct ArgusAddrStruct asbuf, *asptr = &asbuf;
    struct ArgusRecordStruct *retn;
    struct ArgusRecord *rec;
    struct timeval now;
@@ -2270,8 +2329,38 @@ ArgusGenerateStatusMarRecord (struct ArgusOutputStruct *output, unsigned char st
    retn->dsrs[0] = (void *)rec;
 
    rec->hdr = retn->hdr;
-   rec->argus_mar.argusid  = getArgusID(ArgusParser);
-   rec->argus_mar.status  |= getArgusIDType(ArgusParser);
+
+   if (getArgusID(ArgusParser, asptr)) {
+      switch (getArgusIDType(ArgusParser) & ~ARGUS_TYPE_INTERFACE) {
+         case ARGUS_TYPE_STRING: {
+            rec->argus_mar.status |= ARGUS_IDIS_STRING;
+            bcopy (&asptr->a_un.str, &rec->argus_mar.str, 4);
+            break;
+         }
+         case ARGUS_TYPE_INT: {
+            rec->argus_mar.status |= ARGUS_IDIS_INT;
+            bcopy (&asptr->a_un.value, &rec->argus_mar.value, sizeof(rec->argus_mar.value));
+            break;
+         }
+         case ARGUS_TYPE_IPV4: {
+            rec->argus_mar.status |= ARGUS_IDIS_IPV4;
+            bcopy (&asptr->a_un.ipv4, &rec->argus_mar.ipv4, sizeof(rec->argus_mar.ipv4));
+            break;
+         }
+         case ARGUS_TYPE_IPV6: {
+            rec->argus_mar.status |= ARGUS_IDIS_IPV6;
+            bcopy (&asptr->a_un.ipv6, &rec->argus_mar.ipv6, sizeof(rec->argus_mar.ipv6));
+            break;
+         }
+         case ARGUS_TYPE_UUID: {
+            rec->argus_mar.status |= ARGUS_IDIS_UUID;
+            bcopy (&asptr->a_un.uuid, &rec->argus_mar.uuid, sizeof(rec->argus_mar.uuid));
+            break;
+         }
+      }
+      rec->argus_mar.status  |= getArgusIDType(ArgusParser);
+   }
+
 
    gettimeofday (&now, 0L);
 
@@ -2380,22 +2469,6 @@ getArgusPortNum(struct ArgusParserStruct *parser)
 
 
 void
-setArgusID(struct ArgusParserStruct *parser, void *ptr, unsigned int type)
-{
-   switch (type) {
-      case ARGUS_IDIS_STRING: bcopy((char *)ptr, &parser->ArgusID, strlen((char *)ptr)); break;
-      case ARGUS_IDIS_INT:    parser->ArgusID = atoi((char *)ptr); break;
-      case ARGUS_IDIS_IPV4:   parser->ArgusID = ntohl(*(unsigned int *)ptr); break;
-   }
-   parser->ArgusIDType = type;
-}
-
-unsigned int
-getArgusID(struct ArgusParserStruct *parser) {
-   return (parser->ArgusID);
-}
-
-void
 setArgusZeroConf (struct ArgusParserStruct *parser, unsigned int type)
 {
    parser->ArgusZeroConf = type;
@@ -2411,12 +2484,6 @@ void
 setArgusOflag(struct ArgusParserStruct *parser, unsigned int value)
 {
    parser->Oflag = value;
-}
-
-unsigned int
-getArgusIDType(struct ArgusParserStruct *parser)
-{
-   return (parser->ArgusIDType);
 }
 
 

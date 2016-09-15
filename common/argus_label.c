@@ -19,9 +19,9 @@
  */
 
 /*
- * $Id: //depot/gargoyle/clients/common/argus_label.c#49 $
- * $DateTime: 2016/07/13 18:38:48 $
- * $Change: 3170 $
+ * $Id: //depot/gargoyle/clients/common/argus_label.c#50 $
+ * $DateTime: 2016/09/13 10:40:12 $
+ * $Change: 3180 $
  */
 
 /*
@@ -2764,24 +2764,24 @@ RaParsePortEntry (struct ArgusParserStruct *parser, struct ArgusLabelerStruct *l
    strend = str + len;
 
    ptr = str;
-   while  (!isspace(*ptr)) ptr++;
+   while  (!isspace((int)*ptr)) ptr++;
    *ptr++ = '\0';
    label = str;
-   while  (isspace(*ptr)) ptr++;
+   while  (isspace((int)*ptr)) ptr++;
    port = ptr;
    if ((proto = strchr (port, '/')) != NULL) {
       *proto++ = '\0';
       ptr = proto;
-      while  (!isspace(*ptr)) ptr++;
+      while  (!isspace((int)*ptr)) ptr++;
       *ptr++ = '\0';
    }
 
    if (ptr < strend) {
-      while (isspace(*ptr)) ptr++;
+      while (isspace((int)*ptr)) ptr++;
       desc = ptr;
       tmp = NULL;
       while (*ptr != '\n') {
-         if (isspace(*ptr)) {
+         if (isspace((int)*ptr)) {
             if (tmp == NULL)
                tmp = ptr;
          } else

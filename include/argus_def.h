@@ -19,9 +19,9 @@
  */
 
 /* 
- * $Id: //depot/gargoyle/clients/include/argus_def.h#15 $
- * $DateTime: 2016/03/23 21:39:41 $
- * $Change: 3125 $
+ * $Id: //depot/gargoyle/clients/include/argus_def.h#17 $
+ * $DateTime: 2016/09/13 16:02:42 $
+ * $Change: 3182 $
  */
 
 /* Argus_def.h */
@@ -294,9 +294,11 @@ extern "C" {
 
 #define ARGUS_INIT_MAR				0x00100000
 
-#define ARGUS_IDIS_STRING			0x00200000
-#define ARGUS_IDIS_INT				0x00400000
-#define ARGUS_IDIS_IPV4				0x00800000
+#define ARGUS_IDIS_STRING                       0x00200000
+#define ARGUS_IDIS_INT                          0x00400000
+#define ARGUS_IDIS_IPV6                         0x00600000
+#define ARGUS_IDIS_IPV4                         0x00800000
+#define ARGUS_IDIS_UUID                         0x00A00000
  
  
 /* Argus Record Data Specific Record (DSR) Types */
@@ -451,6 +453,7 @@ extern "C" {
  
 #define ARGUS_TYPE_INT				0x20
 #define ARGUS_TYPE_STRING			0x21
+#define ARGUS_TYPE_UUID				0x22
 
 
 /* Flow Descriptor Option Qualifiers */

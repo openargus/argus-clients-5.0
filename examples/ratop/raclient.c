@@ -22,9 +22,9 @@
  */
 
 /*
- * $Id: //depot/gargoyle/clients/examples/ratop/raclient.c#28 $
- * $DateTime: 2016/07/13 18:38:48 $
- * $Change: 3170 $
+ * $Id: //depot/gargoyle/clients/examples/ratop/raclient.c#29 $
+ * $DateTime: 2016/09/13 10:40:12 $
+ * $Change: 3180 $
  */
 
 
@@ -386,7 +386,7 @@ ArgusHandleHighlightCommand (char *command)
    char **retn = NULL;
 
    sptr = &string[slen - 1];
-   while (isspace(*sptr)) {*sptr-- = '\0';}
+   while (isspace((int)*sptr)) {*sptr-- = '\0';}
 
 #if defined(ARGUS_CURSES)
    ArgusParser->ArgusSearchString = strdup(string);
@@ -409,7 +409,7 @@ ArgusHandleDisplayCommand (char *command)
    char **retn = NULL;
 
    sptr = &string[slen - 1];
-   while (isspace(*sptr)) {*sptr-- = '\0';}
+   while (isspace((int)*sptr)) {*sptr-- = '\0';}
 
    if ((fretn = ArgusFilterCompile (&lfilter, string, 1)) < 0) {
       result = "syntax error";
@@ -429,7 +429,6 @@ ArgusClientInit (struct ArgusParserStruct *parser)
    struct ArgusAdjustStruct *nadp = NULL;
    struct ArgusInput *input = NULL;
    struct ArgusModeStruct *mode;
-   char outputfile[MAXSTRLEN];
    struct timeval *tvp;
    int i = 0, size = 1;
 
@@ -438,7 +437,6 @@ ArgusClientInit (struct ArgusParserStruct *parser)
 #endif
 
    if (parser != NULL) {
-      outputfile[0] = '\0';
       parser->RaWriteOut = 1;
 
       if (!(parser->RaInitialized)) {
@@ -912,6 +910,9 @@ ArgusClientInit (struct ArgusParserStruct *parser)
          }
 
          parser->ArgusReliableConnection = 1;
+
+         if (ArgusWireless != NULL)
+            bzero(ArgusWireless, sizeof(*ArgusWireless));
       }
    }
 }
@@ -1650,6 +1651,11 @@ RaProcessThisLsOfEventRecord (struct ArgusParserStruct *parser, struct ArgusReco
 void
 RaProcessThisAirportEventRecord (struct ArgusParserStruct *parser, struct ArgusWirelessStruct *ws)
 {
+
+#if defined(ARGUS_THREADS)
+   pthread_mutex_lock(&RaCursesLock);
+#endif
+
    ArgusWireless->agrCtlRSSI  = ws->agrCtlRSSI;
    ArgusWireless->agrExtNoise = ws->agrExtRSSI;
    ArgusWireless->agrCtlNoise = ws->agrCtlNoise;
@@ -1679,6 +1685,10 @@ RaProcessThisAirportEventRecord (struct ArgusParserStruct *parser, struct ArgusW
 
    ArgusWireless->mcs = ws->mcs;
    ArgusWireless->channel = ws->channel;
+
+#if defined(ARGUS_THREADS)
+   pthread_mutex_unlock(&RaCursesLock);
+#endif
 
 #if defined(ARGUSDEBUG)
    ArgusDebug (1, "RaProcessThisAirportEventRecord () returning\n"); 

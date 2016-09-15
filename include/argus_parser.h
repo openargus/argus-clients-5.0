@@ -19,9 +19,9 @@
  */
 
 /* 
- * $Id: //depot/gargoyle/clients/include/argus_parser.h#33 $
- * $DateTime: 2016/07/13 18:38:48 $
- * $Change: 3170 $
+ * $Id: //depot/gargoyle/clients/include/argus_parser.h#35 $
+ * $DateTime: 2016/09/13 16:02:42 $
+ * $Change: 3182 $
  */
 
 
@@ -376,7 +376,8 @@ struct ArgusParserStruct {
    char *RadiumArchive;
    char *ArgusMatchLabel;
 
-   unsigned int ArgusID, ArgusIDType;
+   unsigned int ArgusIDType;
+   struct ArgusTransportStruct trans;
 
    struct timeval ArgusReportTime;
    struct timeval ArgusUpdateInterval;

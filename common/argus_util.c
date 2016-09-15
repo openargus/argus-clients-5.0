@@ -1495,11 +1495,15 @@ ArgusParseArgs (struct ArgusParserStruct *parser, int argc, char **argv)
    }
 
    if (cmdbuf) {
-      if (parser->ArgusLocalFilter != NULL)
+      if (parser->ArgusLocalFilter != NULL) {
          free(parser->ArgusLocalFilter);
+         parser->ArgusLocalFilter = NULL;
+      }
 
-      if (parser->ArgusRemoteFilter != NULL)
+      if (parser->ArgusRemoteFilter != NULL) {
          free(parser->ArgusRemoteFilter);
+         parser->ArgusRemoteFilter = NULL;
+      }
 
       if ((str = strstr (cmdbuf, "local ")) != NULL) {
          *str = '\0';

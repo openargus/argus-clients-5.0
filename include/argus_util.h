@@ -20,9 +20,9 @@
  */
 
 /* 
- * $Id: //depot/gargoyle/clients/include/argus_util.h#36 $
- * $DateTime: 2016/09/13 16:02:42 $
- * $Change: 3182 $
+ * $Id: //depot/gargoyle/clients/include/argus_util.h#37 $
+ * $DateTime: 2016/09/27 20:09:29 $
+ * $Change: 3203 $
  */
 
 #ifndef ArgusUtil_h
@@ -335,6 +335,8 @@ extern int ArgusDeletePIDFile (struct ArgusParserStruct *);
 extern char *ArgusCreatePIDFile (struct ArgusParserStruct *, char *);
 
 void ArgusMainInit (struct ArgusParserStruct *, int, char **);
+
+
 
 int RaDescend(char *);
 int RaProcessRecursiveFiles (char *);
@@ -1673,6 +1675,8 @@ extern void *ArgusMallocListRecord (struct ArgusParserStruct *, int);
 extern void ArgusFreeListRecord (struct ArgusParserStruct *, void *buf);
 extern int ArgusParseResourceFile (struct ArgusParserStruct *, char *);
 extern int ArgusParserWiresharkManufFile (struct ArgusParserStruct *, char *);
+
+extern char *ArgusTrimString (char *str);
 
 extern int ArgusParseTimeArg (char **, char **, int, struct tm *);
 

@@ -23,65 +23,65 @@ total 1072
 -r--r--r--   1 carter  staff     523 Mar 16  2016 AUTHORS
 -r--r--r--   1 carter  staff    7292 Mar 16  2016 CHANGES
 -r--r--r--   1 carter  staff    3908 Mar 16  2016 CREDITS
--r--r--r--   1 carter  staff   37088 Sep 15 14:42 ChangeLog
+-r--r--r--   1 carter  staff   37333 Sep 27 20:09 ChangeLog
 -r--r--r--   1 carter  staff    8526 Mar 16  2016 INSTALL
--r--r--r--   1 carter  staff   61221 Sep 20 14:32 MANIFEST
--r--r--r--   1 carter  staff    9064 Sep 15 14:11 Makefile.in
+-r--r--r--   1 carter  staff   61416 Sep 27 20:25 MANIFEST
+-r--r--r--   1 carter  staff    9213 Sep 27 20:16 Makefile.in
 -r--r--r--   1 carter  staff    3810 Mar 16  2016 README
--r--r--r--   1 carter  staff       6 Sep 14 23:15 VERSION
+-r--r--r--   1 carter  staff       6 Sep 19 21:55 VERSION
 -r--r--r--   1 carter  staff    7852 Mar 16  2016 aclocal.m4
 -r--r--r--   1 carter  staff   59385 Mar 16  2016 acsite.m4
-drwxrwxr-x   4 carter  staff     136 Sep 20 14:28 bin
-drwxrwxr-x  13 carter  staff     442 Sep 20 14:28 clients
-drwxrwxr-x  18 carter  staff     612 Sep 20 14:32 common
-drwxrwxr-x   6 carter  staff     204 Sep 15 16:11 config
--rwxrwxr-x   1 carter  staff  307968 Sep 11 11:59 configure
--r--r--r--   1 carter  staff   12480 Sep 13 10:40 configure.ac
-drwxrwxr-x  13 carter  staff     442 Sep 15 16:11 debian
-drwxrwxr-x  40 carter  staff    1360 Sep 20 14:28 examples
-drwxrwxr-x  43 carter  staff    1462 Sep 20 14:28 include
-drwxrwxr-x   5 carter  staff     170 Sep 20 14:28 lib
-drwxrwxr-x   5 carter  staff     170 Sep 15 16:11 man
-drwxrwxr-x   6 carter  staff     204 Sep 15 16:11 pkg
-drwxrwxr-x   6 carter  staff     204 Sep 15 16:11 support
+drwxr-xr-x   4 carter  staff     136 Sep 27 20:21 bin
+drwxr-xr-x  13 carter  staff     442 Sep 27 20:21 clients
+drwxr-xr-x  18 carter  staff     612 Sep 27 20:21 common
+drwxr-xr-x   6 carter  staff     204 Sep 15 16:11 config
+-rwxr-xr-x   1 carter  staff  307968 Sep 11 11:59 configure
+-r--r--r--   1 carter  staff   12480 Sep 19 21:55 configure.ac
+drwxr-xr-x  13 carter  staff     442 Sep 15 16:11 debian
+drwxr-xr-x  40 carter  staff    1360 Sep 27 20:21 examples
+drwxr-xr-x  43 carter  staff    1462 Sep 27 20:21 include
+drwxr-xr-x   5 carter  staff     170 Sep 27 20:21 lib
+drwxr-xr-x   5 carter  staff     170 Sep 15 16:11 man
+drwxr-xr-x   6 carter  staff     204 Sep 15 16:11 pkg
+drwxr-xr-x   6 carter  staff     204 Sep 15 16:11 support
 
 ./bin:
 total 32
--r-xr-xr-x  1 carter  staff  9459 Mar 16  2016 argusclientbug
+-r-xr-xr-x  1 carter  staff  9476 Sep 27 20:18 argusclientbug
 -r-xr-xr-x  1 carter  staff  2395 Mar 16  2016 mkdep
 
 ./clients:
 total 704
 -r--r--r--  1 carter  staff   4976 Mar 16  2016 Makefile.in
 -r--r--r--  1 carter  staff   2390 Mar 16  2016 README
--r--r--r--  1 carter  staff  27829 Mar 25 00:34 ra.c
--r--r--r--  1 carter  staff  48148 Mar 25 00:34 rabins.c
--r--r--r--  1 carter  staff  44642 Sep 20 14:24 racluster.c
+-r--r--r--  1 carter  staff  27829 Mar 25  2016 ra.c
+-r--r--r--  1 carter  staff  48148 Mar 25  2016 rabins.c
+-r--r--r--  1 carter  staff  44642 Sep 20 14:36 racluster.c
 -r--r--r--  1 carter  staff  41448 Mar 16  2016 racount.c
--r--r--r--  1 carter  staff  35700 Sep 14 23:15 radium.c
--r--r--r--  1 carter  staff  77089 Mar 25 00:34 ranonymize.c
+-r--r--r--  1 carter  staff  35700 Sep 19 21:55 radium.c
+-r--r--r--  1 carter  staff  77089 Mar 25  2016 ranonymize.c
 -r--r--r--  1 carter  staff   1833 Mar 16  2016 ranonymize.h
--r--r--r--  1 carter  staff  17516 Mar 25 00:34 rasort.c
--r--r--r--  1 carter  staff  39476 Sep 20 14:24 rasplit.c
+-r--r--r--  1 carter  staff  17516 Mar 25  2016 rasort.c
+-r--r--r--  1 carter  staff  39476 Sep 20 14:36 rasplit.c
 
 ./common:
 total 4952
 -r--r--r--  1 carter  staff    5705 Mar 16  2016 Makefile.in
--r--r--r--  1 carter  staff   19229 Sep 20 14:32 argus_auth.c
--r--r--r--  1 carter  staff  718548 Sep 20 14:24 argus_client.c
--r--r--r--  1 carter  staff  154596 Sep 14 23:15 argus_code.c
+-r--r--r--  1 carter  staff   19229 Sep 20 14:36 argus_auth.c
+-r--r--r--  1 carter  staff  718548 Sep 20 14:36 argus_client.c
+-r--r--r--  1 carter  staff  154596 Sep 19 21:55 argus_code.c
 -r--r--r--  1 carter  staff    2124 Mar 16  2016 argus_debug.h
 -r--r--r--  1 carter  staff   22538 Jul 13 18:38 argus_event.c
 -r--r--r--  1 carter  staff   87225 Jul 13 18:38 argus_filter.c
 -r--r--r--  1 carter  staff    4469 Jul 13 18:38 argus_grep.c
 -r--r--r--  1 carter  staff  175162 Jul 13 18:38 argus_import.c
--r--r--r--  1 carter  staff  179740 Sep 13 10:40 argus_label.c
+-r--r--r--  1 carter  staff  179740 Sep 19 21:55 argus_label.c
 -r--r--r--  1 carter  staff   14234 Jul 13 18:38 argus_main.c
--r--r--r--  1 carter  staff  120623 Sep 15 14:40 argus_output.c
--r--r--r--  1 carter  staff   13080 Sep 20 14:08 argus_parser.c
--r--r--r--  1 carter  staff  951419 Sep 20 14:08 argus_util.c
--r--r--r--  1 carter  staff   16617 Sep 14 23:15 grammar.y
--r--r--r--  1 carter  staff   12976 Sep 14 23:15 scanner.l
+-r--r--r--  1 carter  staff  120623 Sep 20 14:36 argus_output.c
+-r--r--r--  1 carter  staff   13080 Sep 20 14:36 argus_parser.c
+-r--r--r--  1 carter  staff  951419 Sep 20 14:36 argus_util.c
+-r--r--r--  1 carter  staff   16617 Sep 19 21:55 grammar.y
+-r--r--r--  1 carter  staff   12976 Sep 19 21:55 scanner.l
 
 ./config:
 total 184
@@ -102,7 +102,7 @@ total 80
 -r-xr-xr-x  1 carter  staff   795 Mar 16  2016 preinst
 -r-xr-xr-x  1 carter  staff   210 Mar 16  2016 prerm
 -r-xr-xr-x  1 carter  staff   442 Mar 16  2016 rules
-drwxrwxr-x  3 carter  staff   102 Sep 15 14:43 source
+drwxr-xr-x  3 carter  staff   102 Sep 15 14:43 source
 
 ./debian/source:
 total 8
@@ -111,43 +111,43 @@ total 8
 ./examples:
 total 16
 -r--r--r--   1 carter  staff  3966 Jun  6 10:32 Makefile.in
--r--r--r--   1 carter  staff  3934 Mar 16  2016 README
-drwxrwxr-x   7 carter  staff   238 Sep 20 14:28 race
-drwxrwxr-x   6 carter  staff   204 Sep 20 14:28 raconvert
-drwxrwxr-x   5 carter  staff   170 Sep 15 16:11 radark
-drwxrwxr-x   5 carter  staff   170 Sep 20 14:28 radecode
-drwxrwxr-x  15 carter  staff   510 Sep 20 14:28 radhcp
-drwxrwxr-x  11 carter  staff   374 Sep 20 14:28 radns
-drwxrwxr-x  59 carter  staff  2006 Sep 20 14:28 radump
-drwxrwxr-x   6 carter  staff   204 Sep 20 14:28 raevent
-drwxrwxr-x   6 carter  staff   204 Sep 20 14:28 rafilter
-drwxrwxr-x   6 carter  staff   204 Sep 20 14:28 ragraph
-drwxrwxr-x   5 carter  staff   170 Sep 20 14:28 ragrep
-drwxrwxr-x   5 carter  staff   170 Sep 20 14:28 rahisto
-drwxrwxr-x   6 carter  staff   204 Sep 20 14:28 rahosts
-drwxrwxr-x   5 carter  staff   170 Sep 20 14:28 ralabel
-drwxrwxr-x   5 carter  staff   170 Sep 20 14:28 ramatrix
-drwxrwxr-x   8 carter  staff   272 Sep 20 14:28 rampc
-drwxrwxr-x  10 carter  staff   340 Sep 20 14:28 ramysql
-drwxrwxr-x   5 carter  staff   170 Sep 20 14:28 rap
-drwxrwxr-x   6 carter  staff   204 Sep 20 14:28 rapath
-drwxrwxr-x   5 carter  staff   170 Sep 20 14:28 rapolicy
-drwxrwxr-x   5 carter  staff   170 Sep 20 14:28 raports
-drwxrwxr-x   5 carter  staff   170 Sep 20 14:28 raqsort
-drwxrwxr-x   6 carter  staff   204 Sep 20 14:28 rarpwatch
-drwxrwxr-x   6 carter  staff   204 Sep 20 14:28 rascanner
-drwxrwxr-x   6 carter  staff   204 Sep 20 14:28 raservices
-drwxrwxr-x  53 carter  staff  1802 Sep 20 14:26 rasnort
-drwxrwxr-x   5 carter  staff   170 Sep 20 14:28 rastream
-drwxrwxr-x   6 carter  staff   204 Sep 20 14:28 rastrip
-drwxrwxr-x   5 carter  staff   170 Sep 20 14:28 ratemplate
-drwxrwxr-x   5 carter  staff   170 Sep 20 14:28 ratimerange
-drwxrwxr-x   6 carter  staff   204 Sep 20 14:28 ratod
-drwxrwxr-x   8 carter  staff   272 Sep 20 14:28 ratop
-drwxrwxr-x   6 carter  staff   204 Sep 15 16:11 ratop.orig
-drwxrwxr-x   4 carter  staff   136 Sep 20 14:28 ratrace
-drwxrwxr-x   4 carter  staff   136 Sep 20 14:28 ratree
-drwxrwxr-x   3 carter  staff   102 Sep 15 14:43 routers
+-r--r--r--   1 carter  staff  4023 Sep 27 20:18 README
+drwxr-xr-x   7 carter  staff   238 Sep 27 20:21 race
+drwxr-xr-x   6 carter  staff   204 Sep 27 20:21 raconvert
+drwxr-xr-x   5 carter  staff   170 Sep 15 16:11 radark
+drwxr-xr-x   5 carter  staff   170 Sep 27 20:21 radecode
+drwxr-xr-x  15 carter  staff   510 Sep 27 20:21 radhcp
+drwxr-xr-x  11 carter  staff   374 Sep 27 20:21 radns
+drwxr-xr-x  59 carter  staff  2006 Sep 27 20:21 radump
+drwxr-xr-x   6 carter  staff   204 Sep 27 20:21 raevent
+drwxr-xr-x   6 carter  staff   204 Sep 27 20:21 rafilter
+drwxr-xr-x   6 carter  staff   204 Sep 27 20:21 ragraph
+drwxr-xr-x   5 carter  staff   170 Sep 27 20:21 ragrep
+drwxr-xr-x   5 carter  staff   170 Sep 27 20:21 rahisto
+drwxr-xr-x   6 carter  staff   204 Sep 27 20:21 rahosts
+drwxr-xr-x   5 carter  staff   170 Sep 27 20:21 ralabel
+drwxr-xr-x   5 carter  staff   170 Sep 27 20:21 ramatrix
+drwxr-xr-x   8 carter  staff   272 Sep 27 20:21 rampc
+drwxr-xr-x  12 carter  staff   408 Sep 27 20:21 ramysql
+drwxr-xr-x   5 carter  staff   170 Sep 27 20:21 rap
+drwxr-xr-x   6 carter  staff   204 Sep 27 20:21 rapath
+drwxr-xr-x   5 carter  staff   170 Sep 27 20:21 rapolicy
+drwxr-xr-x   5 carter  staff   170 Sep 27 20:21 raports
+drwxr-xr-x   5 carter  staff   170 Sep 27 20:21 raqsort
+drwxr-xr-x   6 carter  staff   204 Sep 27 20:21 rarpwatch
+drwxr-xr-x   6 carter  staff   204 Sep 27 20:21 rascanner
+drwxr-xr-x   6 carter  staff   204 Sep 27 20:21 raservices
+drwxr-xr-x  53 carter  staff  1802 Sep 27 20:20 rasnort
+drwxr-xr-x   5 carter  staff   170 Sep 27 20:21 rastream
+drwxr-xr-x   6 carter  staff   204 Sep 27 20:21 rastrip
+drwxr-xr-x   5 carter  staff   170 Sep 27 20:21 ratemplate
+drwxr-xr-x   5 carter  staff   170 Sep 27 20:21 ratimerange
+drwxr-xr-x   6 carter  staff   204 Sep 27 20:21 ratod
+drwxr-xr-x   8 carter  staff   272 Sep 27 20:21 ratop
+drwxr-xr-x   6 carter  staff   204 Sep 15 16:11 ratop.orig
+drwxr-xr-x   4 carter  staff   136 Sep 27 20:21 ratrace
+drwxr-xr-x   4 carter  staff   136 Sep 27 20:21 ratree
+drwxr-xr-x   3 carter  staff   102 Sep 15 14:43 routers
 
 ./examples/race:
 total 192
@@ -155,7 +155,7 @@ total 192
 -r--r--r--  1 carter  staff   5502 Mar 16  2016 README
 -r--r--r--  1 carter  staff    956 Mar 16  2016 global.h
 -r--r--r--  1 carter  staff   1470 Mar 16  2016 md5.h
--r--r--r--  1 carter  staff  76679 Sep 13 10:40 raced.c
+-r--r--r--  1 carter  staff  76679 Sep 19 21:55 raced.c
 
 ./examples/raconvert:
 total 240
@@ -181,13 +181,13 @@ total 480
 -r--r--r--  1 carter  staff   3865 Jun  6 10:33 Makefile.in
 -r--r--r--  1 carter  staff   9681 Jun  6 10:33 NOTES
 -r--r--r--  1 carter  staff   2440 Jun  6 10:33 README
-drwxrwxr-x  3 carter  staff    102 Sep 15 16:11 archive
--rw-rw-r--  1 carter  staff  10117 Aug  2 09:15 bootp.h
+drwxr-xr-x  3 carter  staff    102 Sep 15 16:11 archive
+-rw-r--r--  1 carter  staff  10117 Aug  2 09:15 bootp.h
 -r--r--r--  1 carter  staff   7036 Jun  2 18:16 interface.h
--rw-rw-r--  1 carter  staff  20935 Jun  6 09:08 print-bootp.c
+-rw-r--r--  1 carter  staff  20935 Jun  6 09:08 print-bootp.c
 -r--r--r--  1 carter  staff  22930 Aug 22 00:38 rabootp.c
 -r--r--r--  1 carter  staff  11173 Aug 22 00:32 rabootp.h
--r--r--r--  1 carter  staff  39640 Sep 13 10:40 radhcp.c
+-r--r--r--  1 carter  staff  39640 Sep 19 21:55 radhcp.c
 -rw-r--r--  1 carter  staff  22210 Jun  6 09:21 radump-bootp.c
 -r--r--r--  1 carter  staff  66865 Jun  8 00:59 rasql.c
 -r--r--r--  1 carter  staff   7605 Jun  6 10:33 rasql.h
@@ -202,7 +202,7 @@ total 464
 -r--r--r--  1 carter  staff   9652 Apr  1 14:24 NOTES
 -r--r--r--  1 carter  staff   2425 Mar 16  2016 README
 -r--r--r--  1 carter  staff   7036 Mar 16  2016 interface.h
--r--r--r--  1 carter  staff  66812 Sep 13 10:40 radns.c
+-r--r--r--  1 carter  staff  66812 Sep 19 21:55 radns.c
 -r--r--r--  1 carter  staff  38172 Jun  8 00:19 radomain.c
 -r--r--r--  1 carter  staff  16648 Jun  6 10:32 radomain.h
 -r--r--r--  1 carter  staff  66863 Jun  8 00:59 rasql.c
@@ -221,14 +221,14 @@ total 2232
 -r--r--r--  1 carter  staff   6654 Mar 16  2016 ipsec_doi.h
 -r--r--r--  1 carter  staff  13250 Mar 16  2016 isakmp.h
 -r--r--r--  1 carter  staff   2866 Mar 16  2016 l2tp.h
--rwxrwxr-x  1 carter  staff   1969 Mar 16  2016 l2vpn.c
+-rwxr-xr-x  1 carter  staff   1969 Mar 16  2016 l2vpn.c
 -r-xr-xr-x  1 carter  staff    826 Mar 16  2016 l2vpn.h
 -r--r--r--  1 carter  staff  26956 Mar 16  2016 mib.h
 -r--r--r--  1 carter  staff  10708 Mar 16  2016 nameser.h
 -r--r--r--  1 carter  staff  21403 Mar 16  2016 nlpid.h
 -r--r--r--  1 carter  staff   5234 Mar 16  2016 ntp.h
 -r--r--r--  1 carter  staff   5606 Mar 16  2016 oakley.h
--rw-rw-r--  1 carter  staff  56128 Mar 16  2016 ofp-print.c
+-rw-r--r--  1 carter  staff  56128 Mar 16  2016 ofp-print.c
 -r--r--r--  1 carter  staff   1371 Mar 16  2016 ofp-print.h
 -r--r--r--  1 carter  staff   5947 Mar 16  2016 oui.h
 -r--r--r--  1 carter  staff  14578 Jun  7 23:55 print-aodv.c
@@ -272,7 +272,7 @@ total 2232
 total 96
 -r--r--r--  1 carter  staff   3904 Mar 16  2016 Makefile.in
 -r--r--r--  1 carter  staff  20644 Mar 16  2016 README
--r--r--r--  1 carter  staff  11381 Sep 14 23:15 raevent.c
+-r--r--r--  1 carter  staff  11381 Sep 19 21:55 raevent.c
 -r--r--r--  1 carter  staff   7078 Mar 16  2016 raevent.h
 
 ./examples/rafilter:
@@ -280,7 +280,7 @@ total 48
 -r--r--r--  1 carter  staff   3864 Mar 16  2016 Makefile.in
 -r--r--r--  1 carter  staff    351 Mar 16  2016 NOTES
 -r--r--r--  1 carter  staff    906 Mar 16  2016 README
--r--r--r--  1 carter  staff  11717 Mar 25 00:34 rafilteraddr.c
+-r--r--r--  1 carter  staff  11717 Mar 25  2016 rafilteraddr.c
 
 ./examples/ragraph:
 total 272
@@ -293,13 +293,13 @@ total 272
 total 56
 -r--r--r--  1 carter  staff   3898 Mar 16  2016 Makefile.in
 -r--r--r--  1 carter  staff    911 Mar 16  2016 README
--r--r--r--  1 carter  staff  20400 Mar 25 00:34 ragrep.c
+-r--r--r--  1 carter  staff  20400 Mar 25  2016 ragrep.c
 
 ./examples/rahisto:
 total 72
 -r--r--r--  1 carter  staff   3907 Mar 16  2016 Makefile.in
 -r--r--r--  1 carter  staff    915 Mar 16  2016 README
--r--r--r--  1 carter  staff  27933 Mar 25 00:34 rahisto.c
+-r--r--r--  1 carter  staff  27933 Mar 25  2016 rahisto.c
 
 ./examples/rahosts:
 total 40
@@ -312,52 +312,54 @@ total 40
 total 40
 -r--r--r--  1 carter  staff   3321 Mar 16  2016 Makefile.in
 -r--r--r--  1 carter  staff    894 Mar 16  2016 README
--r--r--r--  1 carter  staff  11512 Mar 25 00:34 ralabel.c
+-r--r--r--  1 carter  staff  11512 Mar 25  2016 ralabel.c
 
 ./examples/ramatrix:
 total 120
 -r--r--r--  1 carter  staff   3914 Mar 16  2016 Makefile.in
 -r--r--r--  1 carter  staff    912 Mar 16  2016 README
--r--r--r--  1 carter  staff  53232 Sep 20 14:16 ramatrix.c
+-r--r--r--  1 carter  staff  53232 Sep 20 14:36 ramatrix.c
 
 ./examples/rampc:
 total 856
 -r--r--r--  1 carter  staff    4016 Jun  7 23:30 Makefile.in
--r--r--r--  1 carter  staff   91422 Sep 20 14:24 raclient.c
--r--r--r--  1 carter  staff  221830 Mar 25 00:34 racurses.c
+-r--r--r--  1 carter  staff   91422 Sep 20 14:36 raclient.c
+-r--r--r--  1 carter  staff  221830 Mar 25  2016 racurses.c
 -r--r--r--  1 carter  staff   16041 Mar 16  2016 racurses.h
--r--r--r--  1 carter  staff   86917 Sep 20 14:24 rampcd.c
+-r--r--r--  1 carter  staff   86917 Sep 20 14:36 rampcd.c
 -r--r--r--  1 carter  staff    7204 Mar 16  2016 rampcd.h
 
 ./examples/ramysql:
-total 672
--r--r--r--  1 carter  staff   4087 Mar 16  2016 Makefile.in
+total 840
+-r--r--r--  1 carter  staff   4382 Sep 27 19:37 Makefile.in
 -r--r--r--  1 carter  staff   2381 Mar 16  2016 README
--r--r--r--  1 carter  staff  95954 Sep 20 14:24 raclient.c
--r--r--r--  1 carter  staff  65710 Mar 16  2016 rasql.c
+-r--r--r--  1 carter  staff  95954 Sep 27 10:38 raclient.c
+-r--r--r--  1 carter  staff  65725 Sep 27 10:38 rasql.c
+-r--r--r--  1 carter  staff  49809 Sep 27 20:13 rasqlcheckconf.c
+-r--r--r--  1 carter  staff  25496 Sep 27 16:35 rasqlcheckconf.h
 -r--r--r--  1 carter  staff  72743 Jun 13 13:43 rasqlinsert.c
 -r--r--r--  1 carter  staff  16393 Mar 16  2016 rasqlinsert.h
--r--r--r--  1 carter  staff  62551 Mar 16  2016 rasqltimeindex.c
+-r--r--r--  1 carter  staff  62566 Sep 27 10:38 rasqltimeindex.c
 -r--r--r--  1 carter  staff   4843 Mar 16  2016 rasqltimeindex.h
 
 ./examples/rap:
 total 104
 -r--r--r--  1 carter  staff   3161 Mar 16  2016 Makefile.in
 -r--r--r--  1 carter  staff   3314 Mar 16  2016 README
--r--r--r--  1 carter  staff  43094 Sep 20 14:24 rap.c
+-r--r--r--  1 carter  staff  43094 Sep 20 14:36 rap.c
 
 ./examples/rapath:
 total 152
 -r--r--r--  1 carter  staff   3443 Mar 16  2016 Makefile.in
 -r--r--r--  1 carter  staff  31015 Mar 16  2016 README
--r--r--r--  1 carter  staff  35349 Sep 20 14:24 rapath.c
+-r--r--r--  1 carter  staff  35349 Sep 20 14:36 rapath.c
 -r--r--r--  1 carter  staff   1371 Mar 16  2016 rapath.h
 
 ./examples/rapolicy:
 total 128
 -r--r--r--  1 carter  staff   3331 Mar 16  2016 Makefile.in
 -r--r--r--  1 carter  staff   1183 Mar 16  2016 README
--r--r--r--  1 carter  staff  55243 Sep 13 10:40 rapolicy.c
+-r--r--r--  1 carter  staff  55243 Sep 19 21:55 rapolicy.c
 
 ./examples/raports:
 total 24
@@ -369,13 +371,13 @@ total 24
 total 72
 -r--r--r--  1 carter  staff   3849 Mar 16  2016 Makefile.in
 -r--r--r--  1 carter  staff   1890 Mar 16  2016 README
--r--r--r--  1 carter  staff  26310 Mar 25 00:34 raqsort.c
+-r--r--r--  1 carter  staff  26310 Mar 25  2016 raqsort.c
 
 ./examples/rarpwatch:
 total 88
 -r--r--r--  1 carter  staff   3845 Mar 16  2016 Makefile.in
 -r--r--r--  1 carter  staff   3311 Aug 22 00:32 README
--r--r--r--  1 carter  staff  29863 Sep 20 14:24 rarpwatch.c
+-r--r--r--  1 carter  staff  29863 Sep 20 14:36 rarpwatch.c
 -r--r--r--  1 carter  staff    975 Mar 16  2016 rarpwatch.h
 
 ./examples/rascanner:
@@ -389,551 +391,551 @@ total 120
 total 112
 -r--r--r--  1 carter  staff   3584 Mar 16  2016 Makefile.in
 -r--r--r--  1 carter  staff    949 Mar 16  2016 README
--r--r--r--  1 carter  staff  13239 Mar 25 00:34 raservices.c
--r--r--r--  1 carter  staff  30664 Sep 20 14:24 rauserdata.c
+-r--r--r--  1 carter  staff  13239 Mar 25  2016 raservices.c
+-r--r--r--  1 carter  staff  30664 Sep 20 14:36 rauserdata.c
 
 ./examples/rasnort:
 total 1280
--rw-r--r--   1 carter  staff    3834 Sep 20 14:26 Makefile
--rw-rw-r--   1 carter  staff    3817 Oct 12  2012 Makefile.in
--rw-rw-r--   1 carter  staff    3557 Oct 12  2012 Makefile.in.orig
--rw-rw-r--   1 carter  staff    2919 Oct 12  2012 bounds.h
--rw-rw-r--   1 carter  staff     439 Oct 12  2012 byte_extract.h
--rw-rw-r--   1 carter  staff    3616 Oct 12  2012 cdefs.h
--rw-rw-r--   1 carter  staff    6301 Oct 12  2012 checksum.h
--rw-rw-r--   1 carter  staff     951 Oct 12  2012 codes.h
--rw-rw-r--   1 carter  staff    2891 Oct 12  2012 debug.h
--rw-rw-r--   1 carter  staff   42333 Oct 12  2012 decode.h
--rw-rw-r--   1 carter  staff    3373 Oct 12  2012 detect.h
-drwxrwxr-x  87 carter  staff    2958 Sep 15 16:11 detection-plugins
-drwxrwxr-x  14 carter  staff     476 Sep 15 16:11 etc
--rw-rw-r--   1 carter  staff    2016 Oct 12  2012 event.h
--rw-rw-r--   1 carter  staff     758 Oct 12  2012 event_wrapper.h
--rw-rw-r--   1 carter  staff    1199 Oct 12  2012 fatal.h
--rw-rw-r--   1 carter  staff    2773 Oct 12  2012 fpcreate.h
--rw-rw-r--   1 carter  staff    1581 Oct 12  2012 fpdetect.h
--rw-rw-r--   1 carter  staff   16350 Oct 12  2012 generators.h
--rw-rw-r--   1 carter  staff    2788 Oct 12  2012 log.h
--rw-rw-r--   1 carter  staff    1690 Oct 12  2012 mempool.h
--rw-rw-r--   1 carter  staff    1526 Oct 12  2012 mstring.h
--rw-rw-r--   1 carter  staff     195 Oct 12  2012 packet_time.h
-drwxrwxr-x   9 carter  staff     306 Sep 15 16:11 parser
+-rw-r--r--   1 carter  staff    3862 Sep 27 20:20 Makefile
+-rw-r--r--   1 carter  staff    3817 Oct 12  2012 Makefile.in
+-rw-r--r--   1 carter  staff    3557 Oct 12  2012 Makefile.in.orig
+-rw-r--r--   1 carter  staff    2919 Oct 12  2012 bounds.h
+-rw-r--r--   1 carter  staff     439 Oct 12  2012 byte_extract.h
+-rw-r--r--   1 carter  staff    3616 Oct 12  2012 cdefs.h
+-rw-r--r--   1 carter  staff    6301 Oct 12  2012 checksum.h
+-rw-r--r--   1 carter  staff     951 Oct 12  2012 codes.h
+-rw-r--r--   1 carter  staff    2891 Oct 12  2012 debug.h
+-rw-r--r--   1 carter  staff   42333 Oct 12  2012 decode.h
+-rw-r--r--   1 carter  staff    3373 Oct 12  2012 detect.h
+drwxr-xr-x  87 carter  staff    2958 Sep 15 16:11 detection-plugins
+drwxr-xr-x  14 carter  staff     476 Sep 15 16:11 etc
+-rw-r--r--   1 carter  staff    2016 Oct 12  2012 event.h
+-rw-r--r--   1 carter  staff     758 Oct 12  2012 event_wrapper.h
+-rw-r--r--   1 carter  staff    1199 Oct 12  2012 fatal.h
+-rw-r--r--   1 carter  staff    2773 Oct 12  2012 fpcreate.h
+-rw-r--r--   1 carter  staff    1581 Oct 12  2012 fpdetect.h
+-rw-r--r--   1 carter  staff   16350 Oct 12  2012 generators.h
+-rw-r--r--   1 carter  staff    2788 Oct 12  2012 log.h
+-rw-r--r--   1 carter  staff    1690 Oct 12  2012 mempool.h
+-rw-r--r--   1 carter  staff    1526 Oct 12  2012 mstring.h
+-rw-r--r--   1 carter  staff     195 Oct 12  2012 packet_time.h
+drwxr-xr-x   9 carter  staff     306 Sep 15 16:11 parser
 -r--r--r--   1 carter  staff  329903 Oct 12  2012 parser.c
--rw-rw-r--   1 carter  staff    3072 Oct 12  2012 parser.h
--rw-rw-r--   1 carter  staff    4679 Oct 12  2012 pcrm.h
--rw-rw-r--   1 carter  staff    5995 Oct 12  2012 plugbase.h
--rw-rw-r--   1 carter  staff     873 Oct 12  2012 plugin_enum.h
-drwxrwxr-x  62 carter  staff    2108 Sep 15 16:11 preprocessors
--rw-rw-r--   1 carter  staff    3024 Oct 12  2012 prototypes.h
+-rw-r--r--   1 carter  staff    3072 Oct 12  2012 parser.h
+-rw-r--r--   1 carter  staff    4679 Oct 12  2012 pcrm.h
+-rw-r--r--   1 carter  staff    5995 Oct 12  2012 plugbase.h
+-rw-r--r--   1 carter  staff     873 Oct 12  2012 plugin_enum.h
+drwxr-xr-x  62 carter  staff    2108 Sep 15 16:11 preprocessors
+-rw-r--r--   1 carter  staff    3024 Oct 12  2012 prototypes.h
 -r--r--r--   1 carter  staff    9606 Oct 12  2012 rasnort.c
-drwxrwxr-x  53 carter  staff    1802 Sep 15 16:11 rules
--rw-rw-r--   1 carter  staff    8702 Oct 12  2012 rules.h
--rw-rw-r--   1 carter  staff    2162 Oct 12  2012 sf_sdlist.h
--rw-rw-r--   1 carter  staff     514 Oct 12  2012 sfthreshold.h
-drwxrwxr-x  49 carter  staff    1666 Sep 15 16:11 sfutil
+drwxr-xr-x  53 carter  staff    1802 Sep 15 16:11 rules
+-rw-r--r--   1 carter  staff    8702 Oct 12  2012 rules.h
+-rw-r--r--   1 carter  staff    2162 Oct 12  2012 sf_sdlist.h
+-rw-r--r--   1 carter  staff     514 Oct 12  2012 sfthreshold.h
+drwxr-xr-x  49 carter  staff    1666 Sep 15 16:11 sfutil
 -r--r--r--   1 carter  staff   10294 Oct 12  2012 signature.c
--rw-rw-r--   1 carter  staff    2770 Oct 12  2012 signature.h
--rw-rw-r--   1 carter  staff    1841 Oct 12  2012 smalloc.h
--rw-rw-r--   1 carter  staff    9347 Oct 12  2012 snort.h
--rw-rw-r--   1 carter  staff    1955 Oct 12  2012 snprintf.h
--rw-rw-r--   1 carter  staff    2247 Oct 12  2012 spo_plugbase.h
--rw-rw-r--   1 carter  staff     970 Oct 12  2012 strlcatu.h
--rw-rw-r--   1 carter  staff     970 Oct 12  2012 strlcpyu.h
--rw-rw-r--   1 carter  staff    3658 Oct 12  2012 sys_include.h
--rw-rw-r--   1 carter  staff    1186 Oct 12  2012 tag.h
--rw-rw-r--   1 carter  staff    1622 Oct 12  2012 timersub.h
--rw-rw-r--   1 carter  staff   33957 Oct 12  2012 ubi_BinTree.h
--rw-rw-r--   1 carter  staff   12802 Oct 12  2012 ubi_SplayTree.h
--rw-rw-r--   1 carter  staff    2347 Oct 12  2012 util.h
+-rw-r--r--   1 carter  staff    2770 Oct 12  2012 signature.h
+-rw-r--r--   1 carter  staff    1841 Oct 12  2012 smalloc.h
+-rw-r--r--   1 carter  staff    9347 Oct 12  2012 snort.h
+-rw-r--r--   1 carter  staff    1955 Oct 12  2012 snprintf.h
+-rw-r--r--   1 carter  staff    2247 Oct 12  2012 spo_plugbase.h
+-rw-r--r--   1 carter  staff     970 Oct 12  2012 strlcatu.h
+-rw-r--r--   1 carter  staff     970 Oct 12  2012 strlcpyu.h
+-rw-r--r--   1 carter  staff    3658 Oct 12  2012 sys_include.h
+-rw-r--r--   1 carter  staff    1186 Oct 12  2012 tag.h
+-rw-r--r--   1 carter  staff    1622 Oct 12  2012 timersub.h
+-rw-r--r--   1 carter  staff   33957 Oct 12  2012 ubi_BinTree.h
+-rw-r--r--   1 carter  staff   12802 Oct 12  2012 ubi_SplayTree.h
+-rw-r--r--   1 carter  staff    2347 Oct 12  2012 util.h
 
 ./examples/rasnort/detection-plugins:
 total 5952
--rw-rw-r--  1 carter  staff     9950 Oct 12  2012 Makefile
--rw-rw-r--  1 carter  staff     1110 Oct 12  2012 Makefile.am
--rw-rw-r--  1 carter  staff     9284 Oct 12  2012 Makefile.in
--rw-rw-r--  1 carter  staff  1262460 Oct 12  2012 libspd.a
--rw-rw-r--  1 carter  staff    14660 Oct 12  2012 sp_byte_check.c
--rw-rw-r--  1 carter  staff      978 Oct 12  2012 sp_byte_check.h
--rw-rw-r--  1 carter  staff    59112 Oct 12  2012 sp_byte_check.o
--rw-rw-r--  1 carter  staff    12225 Oct 12  2012 sp_byte_jump.c
--rw-rw-r--  1 carter  staff      974 Oct 12  2012 sp_byte_jump.h
--rw-rw-r--  1 carter  staff    58336 Oct 12  2012 sp_byte_jump.o
--rw-rw-r--  1 carter  staff    11085 Oct 12  2012 sp_clientserver.c
--rw-rw-r--  1 carter  staff     1032 Oct 12  2012 sp_clientserver.h
--rw-rw-r--  1 carter  staff    55612 Oct 12  2012 sp_clientserver.o
--rw-rw-r--  1 carter  staff    10942 Oct 12  2012 sp_dsize_check.c
--rw-rw-r--  1 carter  staff      983 Oct 12  2012 sp_dsize_check.h
--rw-rw-r--  1 carter  staff    45232 Oct 12  2012 sp_dsize_check.o
--rw-rw-r--  1 carter  staff    14309 Oct 12  2012 sp_flowbits.c
--rw-rw-r--  1 carter  staff      235 Oct 12  2012 sp_flowbits.h
--rw-rw-r--  1 carter  staff    65000 Oct 12  2012 sp_flowbits.o
--rw-rw-r--  1 carter  staff     7414 Oct 12  2012 sp_icmp_code_check.c
--rw-rw-r--  1 carter  staff     1002 Oct 12  2012 sp_icmp_code_check.h
--rw-rw-r--  1 carter  staff    44124 Oct 12  2012 sp_icmp_code_check.o
--rw-rw-r--  1 carter  staff     6212 Oct 12  2012 sp_icmp_id_check.c
--rw-rw-r--  1 carter  staff     1017 Oct 12  2012 sp_icmp_id_check.h
--rw-rw-r--  1 carter  staff    42904 Oct 12  2012 sp_icmp_id_check.o
--rw-rw-r--  1 carter  staff     6263 Oct 12  2012 sp_icmp_seq_check.c
--rw-rw-r--  1 carter  staff     1023 Oct 12  2012 sp_icmp_seq_check.h
--rw-rw-r--  1 carter  staff    42976 Oct 12  2012 sp_icmp_seq_check.o
--rw-rw-r--  1 carter  staff     7220 Oct 12  2012 sp_icmp_type_check.c
--rw-rw-r--  1 carter  staff     1266 Oct 12  2012 sp_icmp_type_check.h
--rw-rw-r--  1 carter  staff    44132 Oct 12  2012 sp_icmp_type_check.o
--rw-rw-r--  1 carter  staff    15033 Oct 12  2012 sp_ip_fragbits.c
--rw-rw-r--  1 carter  staff     1073 Oct 12  2012 sp_ip_fragbits.h
--rw-rw-r--  1 carter  staff    48428 Oct 12  2012 sp_ip_fragbits.o
--rw-rw-r--  1 carter  staff     5201 Oct 12  2012 sp_ip_id_check.c
--rw-rw-r--  1 carter  staff      982 Oct 12  2012 sp_ip_id_check.h
--rw-rw-r--  1 carter  staff    42696 Oct 12  2012 sp_ip_id_check.o
--rw-rw-r--  1 carter  staff     6589 Oct 12  2012 sp_ip_proto.c
--rw-rw-r--  1 carter  staff     1162 Oct 12  2012 sp_ip_proto.h
--rw-rw-r--  1 carter  staff    44276 Oct 12  2012 sp_ip_proto.o
--rw-rw-r--  1 carter  staff     5445 Oct 12  2012 sp_ip_same_check.c
--rw-rw-r--  1 carter  staff     1039 Oct 12  2012 sp_ip_same_check.h
--rw-rw-r--  1 carter  staff    42592 Oct 12  2012 sp_ip_same_check.o
--rw-rw-r--  1 carter  staff     5763 Oct 12  2012 sp_ip_tos_check.c
--rw-rw-r--  1 carter  staff      987 Oct 12  2012 sp_ip_tos_check.h
--rw-rw-r--  1 carter  staff    42988 Oct 12  2012 sp_ip_tos_check.o
--rw-rw-r--  1 carter  staff     7201 Oct 12  2012 sp_ipoption_check.c
--rw-rw-r--  1 carter  staff      998 Oct 12  2012 sp_ipoption_check.h
--rw-rw-r--  1 carter  staff    43880 Oct 12  2012 sp_ipoption_check.o
--rw-rw-r--  1 carter  staff     7438 Oct 12  2012 sp_isdataat.c
--rw-rw-r--  1 carter  staff      980 Oct 12  2012 sp_isdataat.h
--rw-rw-r--  1 carter  staff    55112 Oct 12  2012 sp_isdataat.o
--rw-rw-r--  1 carter  staff    40671 Oct 12  2012 sp_pattern_match.c
--rw-rw-r--  1 carter  staff     2204 Oct 12  2012 sp_pattern_match.h
--rw-rw-r--  1 carter  staff    87084 Oct 12  2012 sp_pattern_match.o
--rw-rw-r--  1 carter  staff    13810 Oct 12  2012 sp_pcre.c
--rw-rw-r--  1 carter  staff     1207 Oct 12  2012 sp_pcre.h
--rw-rw-r--  1 carter  staff    60948 Oct 12  2012 sp_pcre.o
--rw-rw-r--  1 carter  staff    16943 Oct 12  2012 sp_react.c
--rw-rw-r--  1 carter  staff     1010 Oct 12  2012 sp_react.h
--rw-rw-r--  1 carter  staff     1252 Oct 12  2012 sp_react.o
--rw-rw-r--  1 carter  staff    11969 Oct 12  2012 sp_respond.c
--rw-rw-r--  1 carter  staff     1209 Oct 12  2012 sp_respond.h
--rw-rw-r--  1 carter  staff     1256 Oct 12  2012 sp_respond.o
--rw-rw-r--  1 carter  staff     8863 Oct 12  2012 sp_rpc_check.c
--rw-rw-r--  1 carter  staff      973 Oct 12  2012 sp_rpc_check.h
--rw-rw-r--  1 carter  staff    53352 Oct 12  2012 sp_rpc_check.o
--rw-rw-r--  1 carter  staff    10554 Oct 12  2012 sp_session.c
--rw-rw-r--  1 carter  staff     1005 Oct 12  2012 sp_session.h
--rw-rw-r--  1 carter  staff    55724 Oct 12  2012 sp_session.o
--rw-rw-r--  1 carter  staff     5244 Oct 12  2012 sp_tcp_ack_check.c
--rw-rw-r--  1 carter  staff      992 Oct 12  2012 sp_tcp_ack_check.h
--rw-rw-r--  1 carter  staff    42856 Oct 12  2012 sp_tcp_ack_check.o
--rw-rw-r--  1 carter  staff     9510 Oct 12  2012 sp_tcp_flag_check.c
--rw-rw-r--  1 carter  staff      966 Oct 12  2012 sp_tcp_flag_check.h
--rw-rw-r--  1 carter  staff    47628 Oct 12  2012 sp_tcp_flag_check.o
--rw-rw-r--  1 carter  staff     5284 Oct 12  2012 sp_tcp_seq_check.c
--rw-rw-r--  1 carter  staff      992 Oct 12  2012 sp_tcp_seq_check.h
--rw-rw-r--  1 carter  staff    42856 Oct 12  2012 sp_tcp_seq_check.o
--rw-rw-r--  1 carter  staff     5870 Oct 12  2012 sp_tcp_win_check.c
--rw-rw-r--  1 carter  staff      991 Oct 12  2012 sp_tcp_win_check.h
--rw-rw-r--  1 carter  staff    43108 Oct 12  2012 sp_tcp_win_check.o
--rw-rw-r--  1 carter  staff    10423 Oct 12  2012 sp_ttl_check.c
--rw-rw-r--  1 carter  staff      973 Oct 12  2012 sp_ttl_check.h
--rw-rw-r--  1 carter  staff    44716 Oct 12  2012 sp_ttl_check.o
+-rw-r--r--  1 carter  staff     9950 Oct 12  2012 Makefile
+-rw-r--r--  1 carter  staff     1110 Oct 12  2012 Makefile.am
+-rw-r--r--  1 carter  staff     9284 Oct 12  2012 Makefile.in
+-rw-r--r--  1 carter  staff  1262460 Oct 12  2012 libspd.a
+-rw-r--r--  1 carter  staff    14660 Oct 12  2012 sp_byte_check.c
+-rw-r--r--  1 carter  staff      978 Oct 12  2012 sp_byte_check.h
+-rw-r--r--  1 carter  staff    59112 Oct 12  2012 sp_byte_check.o
+-rw-r--r--  1 carter  staff    12225 Oct 12  2012 sp_byte_jump.c
+-rw-r--r--  1 carter  staff      974 Oct 12  2012 sp_byte_jump.h
+-rw-r--r--  1 carter  staff    58336 Oct 12  2012 sp_byte_jump.o
+-rw-r--r--  1 carter  staff    11085 Oct 12  2012 sp_clientserver.c
+-rw-r--r--  1 carter  staff     1032 Oct 12  2012 sp_clientserver.h
+-rw-r--r--  1 carter  staff    55612 Oct 12  2012 sp_clientserver.o
+-rw-r--r--  1 carter  staff    10942 Oct 12  2012 sp_dsize_check.c
+-rw-r--r--  1 carter  staff      983 Oct 12  2012 sp_dsize_check.h
+-rw-r--r--  1 carter  staff    45232 Oct 12  2012 sp_dsize_check.o
+-rw-r--r--  1 carter  staff    14309 Oct 12  2012 sp_flowbits.c
+-rw-r--r--  1 carter  staff      235 Oct 12  2012 sp_flowbits.h
+-rw-r--r--  1 carter  staff    65000 Oct 12  2012 sp_flowbits.o
+-rw-r--r--  1 carter  staff     7414 Oct 12  2012 sp_icmp_code_check.c
+-rw-r--r--  1 carter  staff     1002 Oct 12  2012 sp_icmp_code_check.h
+-rw-r--r--  1 carter  staff    44124 Oct 12  2012 sp_icmp_code_check.o
+-rw-r--r--  1 carter  staff     6212 Oct 12  2012 sp_icmp_id_check.c
+-rw-r--r--  1 carter  staff     1017 Oct 12  2012 sp_icmp_id_check.h
+-rw-r--r--  1 carter  staff    42904 Oct 12  2012 sp_icmp_id_check.o
+-rw-r--r--  1 carter  staff     6263 Oct 12  2012 sp_icmp_seq_check.c
+-rw-r--r--  1 carter  staff     1023 Oct 12  2012 sp_icmp_seq_check.h
+-rw-r--r--  1 carter  staff    42976 Oct 12  2012 sp_icmp_seq_check.o
+-rw-r--r--  1 carter  staff     7220 Oct 12  2012 sp_icmp_type_check.c
+-rw-r--r--  1 carter  staff     1266 Oct 12  2012 sp_icmp_type_check.h
+-rw-r--r--  1 carter  staff    44132 Oct 12  2012 sp_icmp_type_check.o
+-rw-r--r--  1 carter  staff    15033 Oct 12  2012 sp_ip_fragbits.c
+-rw-r--r--  1 carter  staff     1073 Oct 12  2012 sp_ip_fragbits.h
+-rw-r--r--  1 carter  staff    48428 Oct 12  2012 sp_ip_fragbits.o
+-rw-r--r--  1 carter  staff     5201 Oct 12  2012 sp_ip_id_check.c
+-rw-r--r--  1 carter  staff      982 Oct 12  2012 sp_ip_id_check.h
+-rw-r--r--  1 carter  staff    42696 Oct 12  2012 sp_ip_id_check.o
+-rw-r--r--  1 carter  staff     6589 Oct 12  2012 sp_ip_proto.c
+-rw-r--r--  1 carter  staff     1162 Oct 12  2012 sp_ip_proto.h
+-rw-r--r--  1 carter  staff    44276 Oct 12  2012 sp_ip_proto.o
+-rw-r--r--  1 carter  staff     5445 Oct 12  2012 sp_ip_same_check.c
+-rw-r--r--  1 carter  staff     1039 Oct 12  2012 sp_ip_same_check.h
+-rw-r--r--  1 carter  staff    42592 Oct 12  2012 sp_ip_same_check.o
+-rw-r--r--  1 carter  staff     5763 Oct 12  2012 sp_ip_tos_check.c
+-rw-r--r--  1 carter  staff      987 Oct 12  2012 sp_ip_tos_check.h
+-rw-r--r--  1 carter  staff    42988 Oct 12  2012 sp_ip_tos_check.o
+-rw-r--r--  1 carter  staff     7201 Oct 12  2012 sp_ipoption_check.c
+-rw-r--r--  1 carter  staff      998 Oct 12  2012 sp_ipoption_check.h
+-rw-r--r--  1 carter  staff    43880 Oct 12  2012 sp_ipoption_check.o
+-rw-r--r--  1 carter  staff     7438 Oct 12  2012 sp_isdataat.c
+-rw-r--r--  1 carter  staff      980 Oct 12  2012 sp_isdataat.h
+-rw-r--r--  1 carter  staff    55112 Oct 12  2012 sp_isdataat.o
+-rw-r--r--  1 carter  staff    40671 Oct 12  2012 sp_pattern_match.c
+-rw-r--r--  1 carter  staff     2204 Oct 12  2012 sp_pattern_match.h
+-rw-r--r--  1 carter  staff    87084 Oct 12  2012 sp_pattern_match.o
+-rw-r--r--  1 carter  staff    13810 Oct 12  2012 sp_pcre.c
+-rw-r--r--  1 carter  staff     1207 Oct 12  2012 sp_pcre.h
+-rw-r--r--  1 carter  staff    60948 Oct 12  2012 sp_pcre.o
+-rw-r--r--  1 carter  staff    16943 Oct 12  2012 sp_react.c
+-rw-r--r--  1 carter  staff     1010 Oct 12  2012 sp_react.h
+-rw-r--r--  1 carter  staff     1252 Oct 12  2012 sp_react.o
+-rw-r--r--  1 carter  staff    11969 Oct 12  2012 sp_respond.c
+-rw-r--r--  1 carter  staff     1209 Oct 12  2012 sp_respond.h
+-rw-r--r--  1 carter  staff     1256 Oct 12  2012 sp_respond.o
+-rw-r--r--  1 carter  staff     8863 Oct 12  2012 sp_rpc_check.c
+-rw-r--r--  1 carter  staff      973 Oct 12  2012 sp_rpc_check.h
+-rw-r--r--  1 carter  staff    53352 Oct 12  2012 sp_rpc_check.o
+-rw-r--r--  1 carter  staff    10554 Oct 12  2012 sp_session.c
+-rw-r--r--  1 carter  staff     1005 Oct 12  2012 sp_session.h
+-rw-r--r--  1 carter  staff    55724 Oct 12  2012 sp_session.o
+-rw-r--r--  1 carter  staff     5244 Oct 12  2012 sp_tcp_ack_check.c
+-rw-r--r--  1 carter  staff      992 Oct 12  2012 sp_tcp_ack_check.h
+-rw-r--r--  1 carter  staff    42856 Oct 12  2012 sp_tcp_ack_check.o
+-rw-r--r--  1 carter  staff     9510 Oct 12  2012 sp_tcp_flag_check.c
+-rw-r--r--  1 carter  staff      966 Oct 12  2012 sp_tcp_flag_check.h
+-rw-r--r--  1 carter  staff    47628 Oct 12  2012 sp_tcp_flag_check.o
+-rw-r--r--  1 carter  staff     5284 Oct 12  2012 sp_tcp_seq_check.c
+-rw-r--r--  1 carter  staff      992 Oct 12  2012 sp_tcp_seq_check.h
+-rw-r--r--  1 carter  staff    42856 Oct 12  2012 sp_tcp_seq_check.o
+-rw-r--r--  1 carter  staff     5870 Oct 12  2012 sp_tcp_win_check.c
+-rw-r--r--  1 carter  staff      991 Oct 12  2012 sp_tcp_win_check.h
+-rw-r--r--  1 carter  staff    43108 Oct 12  2012 sp_tcp_win_check.o
+-rw-r--r--  1 carter  staff    10423 Oct 12  2012 sp_ttl_check.c
+-rw-r--r--  1 carter  staff      973 Oct 12  2012 sp_ttl_check.h
+-rw-r--r--  1 carter  staff    44716 Oct 12  2012 sp_ttl_check.o
 
 ./examples/rasnort/etc:
 total 552
--rw-rw-r--  1 carter  staff    6051 Oct 12  2012 Makefile
--rw-rw-r--  1 carter  staff     230 Oct 12  2012 Makefile.am
--rw-rw-r--  1 carter  staff    5464 Oct 12  2012 Makefile.in
--rw-rw-r--  1 carter  staff    3521 Oct 12  2012 classification.config
--rw-rw-r--  1 carter  staff    6799 Oct 12  2012 gen-msg.map
--rw-rw-r--  1 carter  staff    1622 Oct 12  2012 generators
--rw-rw-r--  1 carter  staff     608 Oct 12  2012 reference.config
--rw-rw-r--  1 carter  staff      59 Oct 12  2012 sid
--rw-rw-r--  1 carter  staff  148937 Oct 12  2012 sid-msg.map
--rw-rw-r--  1 carter  staff   22482 Oct 12  2012 snort.conf
--rw-rw-r--  1 carter  staff    2319 Oct 12  2012 threshold.conf
--rw-rw-r--  1 carter  staff   53841 Oct 12  2012 unicode.map
+-rw-r--r--  1 carter  staff    6051 Oct 12  2012 Makefile
+-rw-r--r--  1 carter  staff     230 Oct 12  2012 Makefile.am
+-rw-r--r--  1 carter  staff    5464 Oct 12  2012 Makefile.in
+-rw-r--r--  1 carter  staff    3521 Oct 12  2012 classification.config
+-rw-r--r--  1 carter  staff    6799 Oct 12  2012 gen-msg.map
+-rw-r--r--  1 carter  staff    1622 Oct 12  2012 generators
+-rw-r--r--  1 carter  staff     608 Oct 12  2012 reference.config
+-rw-r--r--  1 carter  staff      59 Oct 12  2012 sid
+-rw-r--r--  1 carter  staff  148937 Oct 12  2012 sid-msg.map
+-rw-r--r--  1 carter  staff   22482 Oct 12  2012 snort.conf
+-rw-r--r--  1 carter  staff    2319 Oct 12  2012 threshold.conf
+-rw-r--r--  1 carter  staff   53841 Oct 12  2012 unicode.map
 
 ./examples/rasnort/parser:
 total 256
--rw-rw-r--  1 carter  staff   9034 Oct 12  2012 IpAddrSet.c
--rw-rw-r--  1 carter  staff   1442 Oct 12  2012 IpAddrSet.h
--rw-rw-r--  1 carter  staff  43020 Oct 12  2012 IpAddrSet.o
--rw-rw-r--  1 carter  staff   8314 Oct 12  2012 Makefile
--rw-rw-r--  1 carter  staff    143 Oct 12  2012 Makefile.am
--rw-rw-r--  1 carter  staff   7661 Oct 12  2012 Makefile.in
--rw-rw-r--  1 carter  staff  43222 Oct 12  2012 libparser.a
+-rw-r--r--  1 carter  staff   9034 Oct 12  2012 IpAddrSet.c
+-rw-r--r--  1 carter  staff   1442 Oct 12  2012 IpAddrSet.h
+-rw-r--r--  1 carter  staff  43020 Oct 12  2012 IpAddrSet.o
+-rw-r--r--  1 carter  staff   8314 Oct 12  2012 Makefile
+-rw-r--r--  1 carter  staff    143 Oct 12  2012 Makefile.am
+-rw-r--r--  1 carter  staff   7661 Oct 12  2012 Makefile.in
+-rw-r--r--  1 carter  staff  43222 Oct 12  2012 libparser.a
 
 ./examples/rasnort/preprocessors:
 total 5432
-drwxrwxr-x  16 carter  staff      544 Sep 15 16:11 HttpInspect
--rw-rw-r--   1 carter  staff    12608 Oct 12  2012 Makefile
--rw-rw-r--   1 carter  staff      717 Oct 12  2012 Makefile.am
--rw-rw-r--   1 carter  staff    11948 Oct 12  2012 Makefile.in
-drwxrwxr-x  33 carter  staff     1122 Sep 15 16:11 flow
--rw-rw-r--   1 carter  staff  1036644 Oct 12  2012 libspp.a
--rw-rw-r--   1 carter  staff    27300 Oct 12  2012 perf-base.c
--rw-rw-r--   1 carter  staff     3784 Oct 12  2012 perf-base.h
--rw-rw-r--   1 carter  staff    57132 Oct 12  2012 perf-base.o
--rw-rw-r--   1 carter  staff     3022 Oct 12  2012 perf-event.c
--rw-rw-r--   1 carter  staff     1636 Oct 12  2012 perf-event.h
--rw-rw-r--   1 carter  staff    44080 Oct 12  2012 perf-event.o
--rw-rw-r--   1 carter  staff    12321 Oct 12  2012 perf-flow.c
--rw-rw-r--   1 carter  staff     2612 Oct 12  2012 perf-flow.h
--rw-rw-r--   1 carter  staff    52424 Oct 12  2012 perf-flow.o
--rw-rw-r--   1 carter  staff     5442 Oct 12  2012 perf.c
--rw-rw-r--   1 carter  staff     2740 Oct 12  2012 perf.h
--rw-rw-r--   1 carter  staff    22344 Oct 12  2012 perf.o
--rw-rw-r--   1 carter  staff     6873 Oct 12  2012 sfprocpidstats.c
--rw-rw-r--   1 carter  staff     1403 Oct 12  2012 sfprocpidstats.h
--rw-rw-r--   1 carter  staff     1264 Oct 12  2012 sfprocpidstats.o
--rw-rw-r--   1 carter  staff    64451 Oct 12  2012 snort_httpinspect.c
--rw-rw-r--   1 carter  staff      292 Oct 12  2012 snort_httpinspect.h
--rw-rw-r--   1 carter  staff    80644 Oct 12  2012 snort_httpinspect.o
--rw-rw-r--   1 carter  staff    16660 Oct 12  2012 spp_arpspoof.c
--rw-rw-r--   1 carter  staff     1064 Oct 12  2012 spp_arpspoof.h
--rw-rw-r--   1 carter  staff    47384 Oct 12  2012 spp_arpspoof.o
--rw-rw-r--   1 carter  staff    11483 Oct 12  2012 spp_bo.c
--rw-rw-r--   1 carter  staff      986 Oct 12  2012 spp_bo.h
--rw-rw-r--   1 carter  staff    52172 Oct 12  2012 spp_bo.o
--rw-rw-r--   1 carter  staff    23186 Oct 12  2012 spp_conversation.c
--rw-rw-r--   1 carter  staff     2632 Oct 12  2012 spp_conversation.h
--rw-rw-r--   1 carter  staff    59844 Oct 12  2012 spp_conversation.o
--rw-rw-r--   1 carter  staff    11016 Oct 12  2012 spp_flow.c
--rw-rw-r--   1 carter  staff      195 Oct 12  2012 spp_flow.h
--rw-rw-r--   1 carter  staff    60844 Oct 12  2012 spp_flow.o
--rw-rw-r--   1 carter  staff    42394 Oct 12  2012 spp_frag2.c
--rw-rw-r--   1 carter  staff      932 Oct 12  2012 spp_frag2.h
--rw-rw-r--   1 carter  staff    80824 Oct 12  2012 spp_frag2.o
--rw-rw-r--   1 carter  staff     7452 Oct 12  2012 spp_httpinspect.c
--rw-rw-r--   1 carter  staff      185 Oct 12  2012 spp_httpinspect.h
--rw-rw-r--   1 carter  staff    46164 Oct 12  2012 spp_httpinspect.o
--rw-rw-r--   1 carter  staff    10665 Oct 12  2012 spp_perfmonitor.c
--rw-rw-r--   1 carter  staff     1044 Oct 12  2012 spp_perfmonitor.h
--rw-rw-r--   1 carter  staff    56252 Oct 12  2012 spp_perfmonitor.o
--rw-rw-r--   1 carter  staff    58663 Oct 12  2012 spp_portscan.c
--rw-rw-r--   1 carter  staff     1434 Oct 12  2012 spp_portscan.h
--rw-rw-r--   1 carter  staff    74140 Oct 12  2012 spp_portscan.o
--rw-rw-r--   1 carter  staff    43250 Oct 12  2012 spp_portscan2.c
--rw-rw-r--   1 carter  staff     1157 Oct 12  2012 spp_portscan2.h
--rw-rw-r--   1 carter  staff    71996 Oct 12  2012 spp_portscan2.o
--rw-rw-r--   1 carter  staff    18839 Oct 12  2012 spp_rpc_decode.c
--rw-rw-r--   1 carter  staff      979 Oct 12  2012 spp_rpc_decode.h
--rw-rw-r--   1 carter  staff    55944 Oct 12  2012 spp_rpc_decode.o
--rw-rw-r--   1 carter  staff   168419 Oct 12  2012 spp_stream4.c
--rw-rw-r--   1 carter  staff     1077 Oct 12  2012 spp_stream4.h
--rw-rw-r--   1 carter  staff   114592 Oct 12  2012 spp_stream4.o
--rw-rw-r--   1 carter  staff    10140 Oct 12  2012 spp_telnet_negotiation.c
--rw-rw-r--   1 carter  staff     1041 Oct 12  2012 spp_telnet_negotiation.h
--rw-rw-r--   1 carter  staff    52876 Oct 12  2012 spp_telnet_negotiation.o
+drwxr-xr-x  16 carter  staff      544 Sep 15 16:11 HttpInspect
+-rw-r--r--   1 carter  staff    12608 Oct 12  2012 Makefile
+-rw-r--r--   1 carter  staff      717 Oct 12  2012 Makefile.am
+-rw-r--r--   1 carter  staff    11948 Oct 12  2012 Makefile.in
+drwxr-xr-x  33 carter  staff     1122 Sep 15 16:11 flow
+-rw-r--r--   1 carter  staff  1036644 Oct 12  2012 libspp.a
+-rw-r--r--   1 carter  staff    27300 Oct 12  2012 perf-base.c
+-rw-r--r--   1 carter  staff     3784 Oct 12  2012 perf-base.h
+-rw-r--r--   1 carter  staff    57132 Oct 12  2012 perf-base.o
+-rw-r--r--   1 carter  staff     3022 Oct 12  2012 perf-event.c
+-rw-r--r--   1 carter  staff     1636 Oct 12  2012 perf-event.h
+-rw-r--r--   1 carter  staff    44080 Oct 12  2012 perf-event.o
+-rw-r--r--   1 carter  staff    12321 Oct 12  2012 perf-flow.c
+-rw-r--r--   1 carter  staff     2612 Oct 12  2012 perf-flow.h
+-rw-r--r--   1 carter  staff    52424 Oct 12  2012 perf-flow.o
+-rw-r--r--   1 carter  staff     5442 Oct 12  2012 perf.c
+-rw-r--r--   1 carter  staff     2740 Oct 12  2012 perf.h
+-rw-r--r--   1 carter  staff    22344 Oct 12  2012 perf.o
+-rw-r--r--   1 carter  staff     6873 Oct 12  2012 sfprocpidstats.c
+-rw-r--r--   1 carter  staff     1403 Oct 12  2012 sfprocpidstats.h
+-rw-r--r--   1 carter  staff     1264 Oct 12  2012 sfprocpidstats.o
+-rw-r--r--   1 carter  staff    64451 Oct 12  2012 snort_httpinspect.c
+-rw-r--r--   1 carter  staff      292 Oct 12  2012 snort_httpinspect.h
+-rw-r--r--   1 carter  staff    80644 Oct 12  2012 snort_httpinspect.o
+-rw-r--r--   1 carter  staff    16660 Oct 12  2012 spp_arpspoof.c
+-rw-r--r--   1 carter  staff     1064 Oct 12  2012 spp_arpspoof.h
+-rw-r--r--   1 carter  staff    47384 Oct 12  2012 spp_arpspoof.o
+-rw-r--r--   1 carter  staff    11483 Oct 12  2012 spp_bo.c
+-rw-r--r--   1 carter  staff      986 Oct 12  2012 spp_bo.h
+-rw-r--r--   1 carter  staff    52172 Oct 12  2012 spp_bo.o
+-rw-r--r--   1 carter  staff    23186 Oct 12  2012 spp_conversation.c
+-rw-r--r--   1 carter  staff     2632 Oct 12  2012 spp_conversation.h
+-rw-r--r--   1 carter  staff    59844 Oct 12  2012 spp_conversation.o
+-rw-r--r--   1 carter  staff    11016 Oct 12  2012 spp_flow.c
+-rw-r--r--   1 carter  staff      195 Oct 12  2012 spp_flow.h
+-rw-r--r--   1 carter  staff    60844 Oct 12  2012 spp_flow.o
+-rw-r--r--   1 carter  staff    42394 Oct 12  2012 spp_frag2.c
+-rw-r--r--   1 carter  staff      932 Oct 12  2012 spp_frag2.h
+-rw-r--r--   1 carter  staff    80824 Oct 12  2012 spp_frag2.o
+-rw-r--r--   1 carter  staff     7452 Oct 12  2012 spp_httpinspect.c
+-rw-r--r--   1 carter  staff      185 Oct 12  2012 spp_httpinspect.h
+-rw-r--r--   1 carter  staff    46164 Oct 12  2012 spp_httpinspect.o
+-rw-r--r--   1 carter  staff    10665 Oct 12  2012 spp_perfmonitor.c
+-rw-r--r--   1 carter  staff     1044 Oct 12  2012 spp_perfmonitor.h
+-rw-r--r--   1 carter  staff    56252 Oct 12  2012 spp_perfmonitor.o
+-rw-r--r--   1 carter  staff    58663 Oct 12  2012 spp_portscan.c
+-rw-r--r--   1 carter  staff     1434 Oct 12  2012 spp_portscan.h
+-rw-r--r--   1 carter  staff    74140 Oct 12  2012 spp_portscan.o
+-rw-r--r--   1 carter  staff    43250 Oct 12  2012 spp_portscan2.c
+-rw-r--r--   1 carter  staff     1157 Oct 12  2012 spp_portscan2.h
+-rw-r--r--   1 carter  staff    71996 Oct 12  2012 spp_portscan2.o
+-rw-r--r--   1 carter  staff    18839 Oct 12  2012 spp_rpc_decode.c
+-rw-r--r--   1 carter  staff      979 Oct 12  2012 spp_rpc_decode.h
+-rw-r--r--   1 carter  staff    55944 Oct 12  2012 spp_rpc_decode.o
+-rw-r--r--   1 carter  staff   168419 Oct 12  2012 spp_stream4.c
+-rw-r--r--   1 carter  staff     1077 Oct 12  2012 spp_stream4.h
+-rw-r--r--   1 carter  staff   114592 Oct 12  2012 spp_stream4.o
+-rw-r--r--   1 carter  staff    10140 Oct 12  2012 spp_telnet_negotiation.c
+-rw-r--r--   1 carter  staff     1041 Oct 12  2012 spp_telnet_negotiation.h
+-rw-r--r--   1 carter  staff    52876 Oct 12  2012 spp_telnet_negotiation.o
 
 ./examples/rasnort/preprocessors/HttpInspect:
 total 560
--rw-rw-r--   1 carter  staff   12614 Oct 12  2012 Makefile
--rw-rw-r--   1 carter  staff     704 Oct 12  2012 Makefile.am
--rw-rw-r--   1 carter  staff   11939 Oct 12  2012 Makefile.in
-drwxrwxr-x   8 carter  staff     272 Sep 15 16:11 anomaly_detection
-drwxrwxr-x  10 carter  staff     340 Sep 15 16:11 client
-drwxrwxr-x   8 carter  staff     272 Sep 15 16:11 event_output
-drwxrwxr-x  24 carter  staff     816 Sep 15 16:11 include
--rw-rw-r--   1 carter  staff  253910 Oct 12  2012 libhttp_inspect.a
-drwxrwxr-x   8 carter  staff     272 Sep 15 16:11 mode_inspection
-drwxrwxr-x   8 carter  staff     272 Sep 15 16:11 normalization
-drwxrwxr-x   8 carter  staff     272 Sep 15 16:11 server
-drwxrwxr-x   8 carter  staff     272 Sep 15 16:11 session_inspection
-drwxrwxr-x  10 carter  staff     340 Sep 15 16:11 user_interface
-drwxrwxr-x  12 carter  staff     408 Sep 15 14:43 utils
+-rw-r--r--   1 carter  staff   12614 Oct 12  2012 Makefile
+-rw-r--r--   1 carter  staff     704 Oct 12  2012 Makefile.am
+-rw-r--r--   1 carter  staff   11939 Oct 12  2012 Makefile.in
+drwxr-xr-x   8 carter  staff     272 Sep 15 16:11 anomaly_detection
+drwxr-xr-x  10 carter  staff     340 Sep 15 16:11 client
+drwxr-xr-x   8 carter  staff     272 Sep 15 16:11 event_output
+drwxr-xr-x  24 carter  staff     816 Sep 15 16:11 include
+-rw-r--r--   1 carter  staff  253910 Oct 12  2012 libhttp_inspect.a
+drwxr-xr-x   8 carter  staff     272 Sep 15 16:11 mode_inspection
+drwxr-xr-x   8 carter  staff     272 Sep 15 16:11 normalization
+drwxr-xr-x   8 carter  staff     272 Sep 15 16:11 server
+drwxr-xr-x   8 carter  staff     272 Sep 15 16:11 session_inspection
+drwxr-xr-x  10 carter  staff     340 Sep 15 16:11 user_interface
+drwxr-xr-x  12 carter  staff     408 Sep 15 14:43 utils
 
 ./examples/rasnort/preprocessors/HttpInspect/anomaly_detection:
 total 128
--rw-rw-r--  1 carter  staff   8914 Oct 12  2012 Makefile
--rw-rw-r--  1 carter  staff    633 Oct 12  2012 Makefile.am
--rw-rw-r--  1 carter  staff   8218 Oct 12  2012 Makefile.in
--rw-rw-r--  1 carter  staff   1774 Oct 12  2012 hi_ad.c
--rw-rw-r--  1 carter  staff  12780 Oct 12  2012 hi_ad.o
--rw-rw-r--  1 carter  staff  12944 Oct 12  2012 libhi_ad.a
+-rw-r--r--  1 carter  staff   8914 Oct 12  2012 Makefile
+-rw-r--r--  1 carter  staff    633 Oct 12  2012 Makefile.am
+-rw-r--r--  1 carter  staff   8218 Oct 12  2012 Makefile.in
+-rw-r--r--  1 carter  staff   1774 Oct 12  2012 hi_ad.c
+-rw-r--r--  1 carter  staff  12780 Oct 12  2012 hi_ad.o
+-rw-r--r--  1 carter  staff  12944 Oct 12  2012 libhi_ad.a
 
 ./examples/rasnort/preprocessors/HttpInspect/client:
 total 352
--rw-rw-r--  1 carter  staff   9005 Oct 12  2012 Makefile
--rw-rw-r--  1 carter  staff    664 Oct 12  2012 Makefile.am
--rw-rw-r--  1 carter  staff   8320 Oct 12  2012 Makefile.in
--rw-rw-r--  1 carter  staff  47596 Oct 12  2012 hi_client.c
--rw-rw-r--  1 carter  staff  27788 Oct 12  2012 hi_client.o
--rw-rw-r--  1 carter  staff   2556 Oct 12  2012 hi_client_norm.c
--rw-rw-r--  1 carter  staff  18080 Oct 12  2012 hi_client_norm.o
--rw-rw-r--  1 carter  staff  46202 Oct 12  2012 libhi_client.a
+-rw-r--r--  1 carter  staff   9005 Oct 12  2012 Makefile
+-rw-r--r--  1 carter  staff    664 Oct 12  2012 Makefile.am
+-rw-r--r--  1 carter  staff   8320 Oct 12  2012 Makefile.in
+-rw-r--r--  1 carter  staff  47596 Oct 12  2012 hi_client.c
+-rw-r--r--  1 carter  staff  27788 Oct 12  2012 hi_client.o
+-rw-r--r--  1 carter  staff   2556 Oct 12  2012 hi_client_norm.c
+-rw-r--r--  1 carter  staff  18080 Oct 12  2012 hi_client_norm.o
+-rw-r--r--  1 carter  staff  46202 Oct 12  2012 libhi_client.a
 
 ./examples/rasnort/preprocessors/HttpInspect/event_output:
 total 136
--rw-rw-r--  1 carter  staff   8907 Oct 12  2012 Makefile
--rw-rw-r--  1 carter  staff    637 Oct 12  2012 Makefile.am
--rw-rw-r--  1 carter  staff   8216 Oct 12  2012 Makefile.in
--rw-rw-r--  1 carter  staff   7162 Oct 12  2012 hi_eo_log.c
--rw-rw-r--  1 carter  staff  14924 Oct 12  2012 hi_eo_log.o
--rw-rw-r--  1 carter  staff  15116 Oct 12  2012 libhi_eo.a
+-rw-r--r--  1 carter  staff   8907 Oct 12  2012 Makefile
+-rw-r--r--  1 carter  staff    637 Oct 12  2012 Makefile.am
+-rw-r--r--  1 carter  staff   8216 Oct 12  2012 Makefile.in
+-rw-r--r--  1 carter  staff   7162 Oct 12  2012 hi_eo_log.c
+-rw-r--r--  1 carter  staff  14924 Oct 12  2012 hi_eo_log.o
+-rw-r--r--  1 carter  staff  15116 Oct 12  2012 libhi_eo.a
 
 ./examples/rasnort/preprocessors/HttpInspect/include:
 total 200
--rw-rw-r--  1 carter  staff  6359 Oct 12  2012 Makefile
--rw-rw-r--  1 carter  staff   352 Oct 12  2012 Makefile.am
--rw-rw-r--  1 carter  staff  5729 Oct 12  2012 Makefile.in
--rw-rw-r--  1 carter  staff   277 Oct 12  2012 hi_ad.h
--rw-rw-r--  1 carter  staff   997 Oct 12  2012 hi_client.h
--rw-rw-r--  1 carter  staff   453 Oct 12  2012 hi_client_norm.h
--rw-rw-r--  1 carter  staff  2342 Oct 12  2012 hi_eo.h
--rw-rw-r--  1 carter  staff  3258 Oct 12  2012 hi_eo_events.h
--rw-rw-r--  1 carter  staff   549 Oct 12  2012 hi_eo_log.h
--rw-rw-r--  1 carter  staff   178 Oct 12  2012 hi_include.h
--rw-rw-r--  1 carter  staff   431 Oct 12  2012 hi_mi.h
--rw-rw-r--  1 carter  staff   668 Oct 12  2012 hi_norm.h
--rw-rw-r--  1 carter  staff   876 Oct 12  2012 hi_return_codes.h
--rw-rw-r--  1 carter  staff   557 Oct 12  2012 hi_server.h
--rw-rw-r--  1 carter  staff  2740 Oct 12  2012 hi_si.h
--rw-rw-r--  1 carter  staff  4202 Oct 12  2012 hi_ui_config.h
--rw-rw-r--  1 carter  staff   556 Oct 12  2012 hi_ui_iis_unicode_map.h
--rw-rw-r--  1 carter  staff   732 Oct 12  2012 hi_ui_server_lookup.h
--rw-rw-r--  1 carter  staff  1118 Oct 12  2012 hi_util.h
--rw-rw-r--  1 carter  staff   455 Oct 12  2012 hi_util_hbm.h
--rw-rw-r--  1 carter  staff  1348 Oct 12  2012 hi_util_kmap.h
--rw-rw-r--  1 carter  staff   288 Oct 12  2012 hi_util_xmalloc.h
+-rw-r--r--  1 carter  staff  6359 Oct 12  2012 Makefile
+-rw-r--r--  1 carter  staff   352 Oct 12  2012 Makefile.am
+-rw-r--r--  1 carter  staff  5729 Oct 12  2012 Makefile.in
+-rw-r--r--  1 carter  staff   277 Oct 12  2012 hi_ad.h
+-rw-r--r--  1 carter  staff   997 Oct 12  2012 hi_client.h
+-rw-r--r--  1 carter  staff   453 Oct 12  2012 hi_client_norm.h
+-rw-r--r--  1 carter  staff  2342 Oct 12  2012 hi_eo.h
+-rw-r--r--  1 carter  staff  3258 Oct 12  2012 hi_eo_events.h
+-rw-r--r--  1 carter  staff   549 Oct 12  2012 hi_eo_log.h
+-rw-r--r--  1 carter  staff   178 Oct 12  2012 hi_include.h
+-rw-r--r--  1 carter  staff   431 Oct 12  2012 hi_mi.h
+-rw-r--r--  1 carter  staff   668 Oct 12  2012 hi_norm.h
+-rw-r--r--  1 carter  staff   876 Oct 12  2012 hi_return_codes.h
+-rw-r--r--  1 carter  staff   557 Oct 12  2012 hi_server.h
+-rw-r--r--  1 carter  staff  2740 Oct 12  2012 hi_si.h
+-rw-r--r--  1 carter  staff  4202 Oct 12  2012 hi_ui_config.h
+-rw-r--r--  1 carter  staff   556 Oct 12  2012 hi_ui_iis_unicode_map.h
+-rw-r--r--  1 carter  staff   732 Oct 12  2012 hi_ui_server_lookup.h
+-rw-r--r--  1 carter  staff  1118 Oct 12  2012 hi_util.h
+-rw-r--r--  1 carter  staff   455 Oct 12  2012 hi_util_hbm.h
+-rw-r--r--  1 carter  staff  1348 Oct 12  2012 hi_util_kmap.h
+-rw-r--r--  1 carter  staff   288 Oct 12  2012 hi_util_xmalloc.h
 
 ./examples/rasnort/preprocessors/HttpInspect/mode_inspection:
 total 112
--rw-rw-r--  1 carter  staff   8908 Oct 12  2012 Makefile
--rw-rw-r--  1 carter  staff    633 Oct 12  2012 Makefile.am
--rw-rw-r--  1 carter  staff   8214 Oct 12  2012 Makefile.in
--rw-rw-r--  1 carter  staff   2823 Oct 12  2012 hi_mi.c
--rw-rw-r--  1 carter  staff  11848 Oct 12  2012 hi_mi.o
--rw-rw-r--  1 carter  staff  12006 Oct 12  2012 libhi_mi.a
+-rw-r--r--  1 carter  staff   8908 Oct 12  2012 Makefile
+-rw-r--r--  1 carter  staff    633 Oct 12  2012 Makefile.am
+-rw-r--r--  1 carter  staff   8214 Oct 12  2012 Makefile.in
+-rw-r--r--  1 carter  staff   2823 Oct 12  2012 hi_mi.c
+-rw-r--r--  1 carter  staff  11848 Oct 12  2012 hi_mi.o
+-rw-r--r--  1 carter  staff  12006 Oct 12  2012 libhi_mi.a
 
 ./examples/rasnort/preprocessors/HttpInspect/normalization:
 total 280
--rw-rw-r--  1 carter  staff   8942 Oct 12  2012 Makefile
--rw-rw-r--  1 carter  staff    639 Oct 12  2012 Makefile.am
--rw-rw-r--  1 carter  staff   8250 Oct 12  2012 Makefile.in
--rw-rw-r--  1 carter  staff  45636 Oct 12  2012 hi_norm.c
--rw-rw-r--  1 carter  staff  28852 Oct 12  2012 hi_norm.o
--rw-rw-r--  1 carter  staff  29038 Oct 12  2012 libhi_norm.a
+-rw-r--r--  1 carter  staff   8942 Oct 12  2012 Makefile
+-rw-r--r--  1 carter  staff    639 Oct 12  2012 Makefile.am
+-rw-r--r--  1 carter  staff   8250 Oct 12  2012 Makefile.in
+-rw-r--r--  1 carter  staff  45636 Oct 12  2012 hi_norm.c
+-rw-r--r--  1 carter  staff  28852 Oct 12  2012 hi_norm.o
+-rw-r--r--  1 carter  staff  29038 Oct 12  2012 libhi_norm.a
 
 ./examples/rasnort/preprocessors/HttpInspect/server:
 total 144
--rw-rw-r--  1 carter  staff   8961 Oct 12  2012 Makefile
--rw-rw-r--  1 carter  staff    645 Oct 12  2012 Makefile.am
--rw-rw-r--  1 carter  staff   8276 Oct 12  2012 Makefile.in
--rw-rw-r--  1 carter  staff   4014 Oct 12  2012 hi_server.c
--rw-rw-r--  1 carter  staff  17308 Oct 12  2012 hi_server.o
--rw-rw-r--  1 carter  staff  17466 Oct 12  2012 libhi_server.a
+-rw-r--r--  1 carter  staff   8961 Oct 12  2012 Makefile
+-rw-r--r--  1 carter  staff    645 Oct 12  2012 Makefile.am
+-rw-r--r--  1 carter  staff   8276 Oct 12  2012 Makefile.in
+-rw-r--r--  1 carter  staff   4014 Oct 12  2012 hi_server.c
+-rw-r--r--  1 carter  staff  17308 Oct 12  2012 hi_server.o
+-rw-r--r--  1 carter  staff  17466 Oct 12  2012 libhi_server.a
 
 ./examples/rasnort/preprocessors/HttpInspect/session_inspection:
 total 160
--rw-rw-r--  1 carter  staff   8917 Oct 12  2012 Makefile
--rw-rw-r--  1 carter  staff    633 Oct 12  2012 Makefile.am
--rw-rw-r--  1 carter  staff   8220 Oct 12  2012 Makefile.in
--rw-rw-r--  1 carter  staff  11326 Oct 12  2012 hi_si.c
--rw-rw-r--  1 carter  staff  19628 Oct 12  2012 hi_si.o
--rw-rw-r--  1 carter  staff  19790 Oct 12  2012 libhi_si.a
+-rw-r--r--  1 carter  staff   8917 Oct 12  2012 Makefile
+-rw-r--r--  1 carter  staff    633 Oct 12  2012 Makefile.am
+-rw-r--r--  1 carter  staff   8220 Oct 12  2012 Makefile.in
+-rw-r--r--  1 carter  staff  11326 Oct 12  2012 hi_si.c
+-rw-r--r--  1 carter  staff  19628 Oct 12  2012 hi_si.o
+-rw-r--r--  1 carter  staff  19790 Oct 12  2012 libhi_si.a
 
 ./examples/rasnort/preprocessors/HttpInspect/user_interface:
 total 280
--rw-rw-r--  1 carter  staff   9034 Oct 12  2012 Makefile
--rw-rw-r--  1 carter  staff    690 Oct 12  2012 Makefile.am
--rw-rw-r--  1 carter  staff   8341 Oct 12  2012 Makefile.in
--rw-rw-r--  1 carter  staff   9164 Oct 12  2012 hi_ui_config.c
--rw-rw-r--  1 carter  staff  23960 Oct 12  2012 hi_ui_config.o
+-rw-r--r--  1 carter  staff   9034 Oct 12  2012 Makefile
+-rw-r--r--  1 carter  staff    690 Oct 12  2012 Makefile.am
+-rw-r--r--  1 carter  staff   8341 Oct 12  2012 Makefile.in
+-rw-r--r--  1 carter  staff   9164 Oct 12  2012 hi_ui_config.c
+-rw-r--r--  1 carter  staff  23960 Oct 12  2012 hi_ui_config.o
 -rw-r--r--  1 carter  staff   6085 Sep 11 11:58 hi_ui_iis_unicode_map.c
--rw-rw-r--  1 carter  staff   5742 Oct 12  2012 hi_ui_server_lookup.c
--rw-rw-r--  1 carter  staff  59278 Oct 12  2012 libhi_ui.a
+-rw-r--r--  1 carter  staff   5742 Oct 12  2012 hi_ui_server_lookup.c
+-rw-r--r--  1 carter  staff  59278 Oct 12  2012 libhi_ui.a
 
 ./examples/rasnort/preprocessors/HttpInspect/utils:
 total 280
--rw-rw-r--  1 carter  staff   9031 Oct 12  2012 Makefile
--rw-rw-r--  1 carter  staff    680 Oct 12  2012 Makefile.am
--rw-rw-r--  1 carter  staff   8347 Oct 12  2012 Makefile.in
--rw-rw-r--  1 carter  staff   2396 Oct 12  2012 hi_util_hbm.c
--rw-rw-r--  1 carter  staff   8944 Oct 12  2012 hi_util_hbm.o
--rw-rw-r--  1 carter  staff  10177 Oct 12  2012 hi_util_kmap.c
--rw-rw-r--  1 carter  staff  19100 Oct 12  2012 hi_util_kmap.o
--rw-rw-r--  1 carter  staff   1145 Oct 12  2012 hi_util_xmalloc.c
--rw-rw-r--  1 carter  staff  14160 Oct 12  2012 hi_util_xmalloc.o
--rw-rw-r--  1 carter  staff  42770 Oct 12  2012 libhi_utils.a
+-rw-r--r--  1 carter  staff   9031 Oct 12  2012 Makefile
+-rw-r--r--  1 carter  staff    680 Oct 12  2012 Makefile.am
+-rw-r--r--  1 carter  staff   8347 Oct 12  2012 Makefile.in
+-rw-r--r--  1 carter  staff   2396 Oct 12  2012 hi_util_hbm.c
+-rw-r--r--  1 carter  staff   8944 Oct 12  2012 hi_util_hbm.o
+-rw-r--r--  1 carter  staff  10177 Oct 12  2012 hi_util_kmap.c
+-rw-r--r--  1 carter  staff  19100 Oct 12  2012 hi_util_kmap.o
+-rw-r--r--  1 carter  staff   1145 Oct 12  2012 hi_util_xmalloc.c
+-rw-r--r--  1 carter  staff  14160 Oct 12  2012 hi_util_xmalloc.o
+-rw-r--r--  1 carter  staff  42770 Oct 12  2012 libhi_utils.a
 
 ./examples/rasnort/preprocessors/flow:
 total 1248
--rw-rw-r--   1 carter  staff   12978 Oct 12  2012 Makefile
--rw-rw-r--   1 carter  staff     514 Oct 12  2012 Makefile.am
--rw-rw-r--   1 carter  staff   12799 Oct 12  2012 Makefile.in
--rw-rw-r--   1 carter  staff     800 Oct 12  2012 common_defs.h
--rw-rw-r--   1 carter  staff    4502 Oct 12  2012 flow.c
--rw-rw-r--   1 carter  staff    2402 Oct 12  2012 flow.h
--rw-rw-r--   1 carter  staff   36940 Oct 12  2012 flow.o
--rw-rw-r--   1 carter  staff   16378 Oct 12  2012 flow_cache.c
--rw-rw-r--   1 carter  staff    1284 Oct 12  2012 flow_cache.h
--rw-rw-r--   1 carter  staff   47104 Oct 12  2012 flow_cache.o
--rw-rw-r--   1 carter  staff    2423 Oct 12  2012 flow_callback.c
--rw-rw-r--   1 carter  staff     833 Oct 12  2012 flow_callback.h
--rw-rw-r--   1 carter  staff   37152 Oct 12  2012 flow_callback.o
--rw-rw-r--   1 carter  staff     455 Oct 12  2012 flow_class.c
--rw-rw-r--   1 carter  staff     171 Oct 12  2012 flow_class.h
--rw-rw-r--   1 carter  staff   32144 Oct 12  2012 flow_class.o
--rw-rw-r--   1 carter  staff     121 Oct 12  2012 flow_config.h
--rw-rw-r--   1 carter  staff     241 Oct 12  2012 flow_error.h
--rw-rw-r--   1 carter  staff    2503 Oct 12  2012 flow_hash.c
--rw-rw-r--   1 carter  staff     542 Oct 12  2012 flow_hash.h
--rw-rw-r--   1 carter  staff   34556 Oct 12  2012 flow_hash.o
--rw-rw-r--   1 carter  staff    2002 Oct 12  2012 flow_print.c
--rw-rw-r--   1 carter  staff     234 Oct 12  2012 flow_print.h
--rw-rw-r--   1 carter  staff   22788 Oct 12  2012 flow_print.o
--rw-rw-r--   1 carter  staff    2898 Oct 12  2012 flow_stat.c
--rw-rw-r--   1 carter  staff     383 Oct 12  2012 flow_stat.h
--rw-rw-r--   1 carter  staff   37364 Oct 12  2012 flow_stat.o
-drwxrwxr-x   9 carter  staff     306 Sep 15 16:11 int-snort
--rw-rw-r--   1 carter  staff  249132 Oct 12  2012 libflow.a
-drwxrwxr-x  21 carter  staff     714 Sep 15 14:43 portscan
+-rw-r--r--   1 carter  staff   12978 Oct 12  2012 Makefile
+-rw-r--r--   1 carter  staff     514 Oct 12  2012 Makefile.am
+-rw-r--r--   1 carter  staff   12799 Oct 12  2012 Makefile.in
+-rw-r--r--   1 carter  staff     800 Oct 12  2012 common_defs.h
+-rw-r--r--   1 carter  staff    4502 Oct 12  2012 flow.c
+-rw-r--r--   1 carter  staff    2402 Oct 12  2012 flow.h
+-rw-r--r--   1 carter  staff   36940 Oct 12  2012 flow.o
+-rw-r--r--   1 carter  staff   16378 Oct 12  2012 flow_cache.c
+-rw-r--r--   1 carter  staff    1284 Oct 12  2012 flow_cache.h
+-rw-r--r--   1 carter  staff   47104 Oct 12  2012 flow_cache.o
+-rw-r--r--   1 carter  staff    2423 Oct 12  2012 flow_callback.c
+-rw-r--r--   1 carter  staff     833 Oct 12  2012 flow_callback.h
+-rw-r--r--   1 carter  staff   37152 Oct 12  2012 flow_callback.o
+-rw-r--r--   1 carter  staff     455 Oct 12  2012 flow_class.c
+-rw-r--r--   1 carter  staff     171 Oct 12  2012 flow_class.h
+-rw-r--r--   1 carter  staff   32144 Oct 12  2012 flow_class.o
+-rw-r--r--   1 carter  staff     121 Oct 12  2012 flow_config.h
+-rw-r--r--   1 carter  staff     241 Oct 12  2012 flow_error.h
+-rw-r--r--   1 carter  staff    2503 Oct 12  2012 flow_hash.c
+-rw-r--r--   1 carter  staff     542 Oct 12  2012 flow_hash.h
+-rw-r--r--   1 carter  staff   34556 Oct 12  2012 flow_hash.o
+-rw-r--r--   1 carter  staff    2002 Oct 12  2012 flow_print.c
+-rw-r--r--   1 carter  staff     234 Oct 12  2012 flow_print.h
+-rw-r--r--   1 carter  staff   22788 Oct 12  2012 flow_print.o
+-rw-r--r--   1 carter  staff    2898 Oct 12  2012 flow_stat.c
+-rw-r--r--   1 carter  staff     383 Oct 12  2012 flow_stat.h
+-rw-r--r--   1 carter  staff   37364 Oct 12  2012 flow_stat.o
+drwxr-xr-x   9 carter  staff     306 Sep 15 16:11 int-snort
+-rw-r--r--   1 carter  staff  249132 Oct 12  2012 libflow.a
+drwxr-xr-x  21 carter  staff     714 Sep 15 14:43 portscan
 
 ./examples/rasnort/preprocessors/flow/int-snort:
 total 192
--rw-rw-r--  1 carter  staff   8440 Oct 12  2012 Makefile
--rw-rw-r--  1 carter  staff    151 Oct 12  2012 Makefile.am
--rw-rw-r--  1 carter  staff   7759 Oct 12  2012 Makefile.in
--rw-rw-r--  1 carter  staff    102 Oct 12  2012 flow_packet.c
--rw-rw-r--  1 carter  staff   3676 Oct 12  2012 flow_packet.h
--rw-rw-r--  1 carter  staff  31380 Oct 12  2012 flow_packet.o
--rw-rw-r--  1 carter  staff  31512 Oct 12  2012 libintsnort.a
+-rw-r--r--  1 carter  staff   8440 Oct 12  2012 Makefile
+-rw-r--r--  1 carter  staff    151 Oct 12  2012 Makefile.am
+-rw-r--r--  1 carter  staff   7759 Oct 12  2012 Makefile.in
+-rw-r--r--  1 carter  staff    102 Oct 12  2012 flow_packet.c
+-rw-r--r--  1 carter  staff   3676 Oct 12  2012 flow_packet.h
+-rw-r--r--  1 carter  staff  31380 Oct 12  2012 flow_packet.o
+-rw-r--r--  1 carter  staff  31512 Oct 12  2012 libintsnort.a
 
 ./examples/rasnort/preprocessors/flow/portscan:
 total 1384
--rw-rw-r--  1 carter  staff    8728 Oct 12  2012 Makefile
--rw-rw-r--  1 carter  staff     348 Oct 12  2012 Makefile.am
--rw-rw-r--  1 carter  staff    8048 Oct 12  2012 Makefile.in
--rw-rw-r--  1 carter  staff   26263 Oct 12  2012 flowps.c
--rw-rw-r--  1 carter  staff    6497 Oct 12  2012 flowps.h
--rw-rw-r--  1 carter  staff   50800 Oct 12  2012 flowps.o
--rw-rw-r--  1 carter  staff   33562 Oct 12  2012 flowps_snort.c
--rw-rw-r--  1 carter  staff     231 Oct 12  2012 flowps_snort.h
--rw-rw-r--  1 carter  staff   77100 Oct 12  2012 flowps_snort.o
--rw-rw-r--  1 carter  staff  273628 Oct 12  2012 libportscan.a
--rw-rw-r--  1 carter  staff    9378 Oct 12  2012 scoreboard.c
--rw-rw-r--  1 carter  staff    1497 Oct 12  2012 scoreboard.h
--rw-rw-r--  1 carter  staff   46220 Oct 12  2012 scoreboard.o
--rw-rw-r--  1 carter  staff   13678 Oct 12  2012 server_stats.c
--rw-rw-r--  1 carter  staff    1233 Oct 12  2012 server_stats.h
--rw-rw-r--  1 carter  staff   57668 Oct 12  2012 server_stats.o
--rw-rw-r--  1 carter  staff    6277 Oct 12  2012 unique_tracker.c
--rw-rw-r--  1 carter  staff     590 Oct 12  2012 unique_tracker.h
--rw-rw-r--  1 carter  staff   40152 Oct 12  2012 unique_tracker.o
+-rw-r--r--  1 carter  staff    8728 Oct 12  2012 Makefile
+-rw-r--r--  1 carter  staff     348 Oct 12  2012 Makefile.am
+-rw-r--r--  1 carter  staff    8048 Oct 12  2012 Makefile.in
+-rw-r--r--  1 carter  staff   26263 Oct 12  2012 flowps.c
+-rw-r--r--  1 carter  staff    6497 Oct 12  2012 flowps.h
+-rw-r--r--  1 carter  staff   50800 Oct 12  2012 flowps.o
+-rw-r--r--  1 carter  staff   33562 Oct 12  2012 flowps_snort.c
+-rw-r--r--  1 carter  staff     231 Oct 12  2012 flowps_snort.h
+-rw-r--r--  1 carter  staff   77100 Oct 12  2012 flowps_snort.o
+-rw-r--r--  1 carter  staff  273628 Oct 12  2012 libportscan.a
+-rw-r--r--  1 carter  staff    9378 Oct 12  2012 scoreboard.c
+-rw-r--r--  1 carter  staff    1497 Oct 12  2012 scoreboard.h
+-rw-r--r--  1 carter  staff   46220 Oct 12  2012 scoreboard.o
+-rw-r--r--  1 carter  staff   13678 Oct 12  2012 server_stats.c
+-rw-r--r--  1 carter  staff    1233 Oct 12  2012 server_stats.h
+-rw-r--r--  1 carter  staff   57668 Oct 12  2012 server_stats.o
+-rw-r--r--  1 carter  staff    6277 Oct 12  2012 unique_tracker.c
+-rw-r--r--  1 carter  staff     590 Oct 12  2012 unique_tracker.h
+-rw-r--r--  1 carter  staff   40152 Oct 12  2012 unique_tracker.o
 
 ./examples/rasnort/rules:
 total 1416
--rw-rw-r--  1 carter  staff   6598 Oct 12  2012 Makefile
--rw-rw-r--  1 carter  staff    777 Oct 12  2012 Makefile.am
--rw-rw-r--  1 carter  staff   6009 Oct 12  2012 Makefile.in
--rw-rw-r--  1 carter  staff   4364 Oct 12  2012 attack-responses.rules
--rw-rw-r--  1 carter  staff  12580 Oct 12  2012 backdoor.rules
--rw-rw-r--  1 carter  staff   2971 Oct 12  2012 bad-traffic.rules
--rw-rw-r--  1 carter  staff   4488 Oct 12  2012 chat.rules
--rw-rw-r--  1 carter  staff   6702 Oct 12  2012 ddos.rules
--rw-rw-r--  1 carter  staff  54560 Oct 12  2012 deleted.rules
--rw-rw-r--  1 carter  staff   4930 Oct 12  2012 dns.rules
--rw-rw-r--  1 carter  staff   4087 Oct 12  2012 dos.rules
--rw-rw-r--  1 carter  staff    472 Oct 12  2012 experimental.rules
--rw-rw-r--  1 carter  staff  15599 Oct 12  2012 exploit.rules
--rw-rw-r--  1 carter  staff   3179 Oct 12  2012 finger.rules
--rw-rw-r--  1 carter  staff  17298 Oct 12  2012 ftp.rules
--rw-rw-r--  1 carter  staff  16017 Oct 12  2012 icmp-info.rules
--rw-rw-r--  1 carter  staff   4624 Oct 12  2012 icmp.rules
--rw-rw-r--  1 carter  staff   5462 Oct 12  2012 imap.rules
--rw-rw-r--  1 carter  staff   1493 Oct 12  2012 info.rules
--rw-rw-r--  1 carter  staff    205 Oct 12  2012 local.rules
--rw-rw-r--  1 carter  staff  12028 Oct 12  2012 misc.rules
--rw-rw-r--  1 carter  staff   1686 Oct 12  2012 multimedia.rules
--rw-rw-r--  1 carter  staff    829 Oct 12  2012 mysql.rules
--rw-rw-r--  1 carter  staff  17729 Oct 12  2012 netbios.rules
--rw-rw-r--  1 carter  staff   3280 Oct 12  2012 nntp.rules
--rw-rw-r--  1 carter  staff   6157 Oct 12  2012 oracle.rules
--rw-rw-r--  1 carter  staff   1401 Oct 12  2012 other-ids.rules
--rw-rw-r--  1 carter  staff   3501 Oct 12  2012 p2p.rules
--rw-rw-r--  1 carter  staff   5601 Oct 12  2012 policy.rules
--rw-rw-r--  1 carter  staff   1070 Oct 12  2012 pop2.rules
--rw-rw-r--  1 carter  staff   5416 Oct 12  2012 pop3.rules
--rw-rw-r--  1 carter  staff   5061 Oct 12  2012 porn.rules
--rw-rw-r--  1 carter  staff  51360 Oct 12  2012 rpc.rules
--rw-rw-r--  1 carter  staff   2877 Oct 12  2012 rservices.rules
--rw-rw-r--  1 carter  staff   4867 Oct 12  2012 scan.rules
--rw-rw-r--  1 carter  staff   4997 Oct 12  2012 shellcode.rules
--rw-rw-r--  1 carter  staff  13597 Oct 12  2012 smtp.rules
--rw-rw-r--  1 carter  staff   4073 Oct 12  2012 snmp.rules
--rw-rw-r--  1 carter  staff  12454 Oct 12  2012 sql.rules
--rw-rw-r--  1 carter  staff   3736 Oct 12  2012 telnet.rules
--rw-rw-r--  1 carter  staff   2665 Oct 12  2012 tftp.rules
--rw-rw-r--  1 carter  staff    822 Oct 12  2012 virus.rules
--rw-rw-r--  1 carter  staff  10366 Oct 12  2012 web-attacks.rules
--rw-rw-r--  1 carter  staff  92604 Oct 12  2012 web-cgi.rules
--rw-rw-r--  1 carter  staff   2595 Oct 12  2012 web-client.rules
--rw-rw-r--  1 carter  staff   8963 Oct 12  2012 web-coldfusion.rules
--rw-rw-r--  1 carter  staff   8447 Oct 12  2012 web-frontpage.rules
--rw-rw-r--  1 carter  staff  34672 Oct 12  2012 web-iis.rules
--rw-rw-r--  1 carter  staff  78770 Oct 12  2012 web-misc.rules
--rw-rw-r--  1 carter  staff  32630 Oct 12  2012 web-php.rules
--rw-rw-r--  1 carter  staff    578 Oct 12  2012 x11.rules
+-rw-r--r--  1 carter  staff   6598 Oct 12  2012 Makefile
+-rw-r--r--  1 carter  staff    777 Oct 12  2012 Makefile.am
+-rw-r--r--  1 carter  staff   6009 Oct 12  2012 Makefile.in
+-rw-r--r--  1 carter  staff   4364 Oct 12  2012 attack-responses.rules
+-rw-r--r--  1 carter  staff  12580 Oct 12  2012 backdoor.rules
+-rw-r--r--  1 carter  staff   2971 Oct 12  2012 bad-traffic.rules
+-rw-r--r--  1 carter  staff   4488 Oct 12  2012 chat.rules
+-rw-r--r--  1 carter  staff   6702 Oct 12  2012 ddos.rules
+-rw-r--r--  1 carter  staff  54560 Oct 12  2012 deleted.rules
+-rw-r--r--  1 carter  staff   4930 Oct 12  2012 dns.rules
+-rw-r--r--  1 carter  staff   4087 Oct 12  2012 dos.rules
+-rw-r--r--  1 carter  staff    472 Oct 12  2012 experimental.rules
+-rw-r--r--  1 carter  staff  15599 Oct 12  2012 exploit.rules
+-rw-r--r--  1 carter  staff   3179 Oct 12  2012 finger.rules
+-rw-r--r--  1 carter  staff  17298 Oct 12  2012 ftp.rules
+-rw-r--r--  1 carter  staff  16017 Oct 12  2012 icmp-info.rules
+-rw-r--r--  1 carter  staff   4624 Oct 12  2012 icmp.rules
+-rw-r--r--  1 carter  staff   5462 Oct 12  2012 imap.rules
+-rw-r--r--  1 carter  staff   1493 Oct 12  2012 info.rules
+-rw-r--r--  1 carter  staff    205 Oct 12  2012 local.rules
+-rw-r--r--  1 carter  staff  12028 Oct 12  2012 misc.rules
+-rw-r--r--  1 carter  staff   1686 Oct 12  2012 multimedia.rules
+-rw-r--r--  1 carter  staff    829 Oct 12  2012 mysql.rules
+-rw-r--r--  1 carter  staff  17729 Oct 12  2012 netbios.rules
+-rw-r--r--  1 carter  staff   3280 Oct 12  2012 nntp.rules
+-rw-r--r--  1 carter  staff   6157 Oct 12  2012 oracle.rules
+-rw-r--r--  1 carter  staff   1401 Oct 12  2012 other-ids.rules
+-rw-r--r--  1 carter  staff   3501 Oct 12  2012 p2p.rules
+-rw-r--r--  1 carter  staff   5601 Oct 12  2012 policy.rules
+-rw-r--r--  1 carter  staff   1070 Oct 12  2012 pop2.rules
+-rw-r--r--  1 carter  staff   5416 Oct 12  2012 pop3.rules
+-rw-r--r--  1 carter  staff   5061 Oct 12  2012 porn.rules
+-rw-r--r--  1 carter  staff  51360 Oct 12  2012 rpc.rules
+-rw-r--r--  1 carter  staff   2877 Oct 12  2012 rservices.rules
+-rw-r--r--  1 carter  staff   4867 Oct 12  2012 scan.rules
+-rw-r--r--  1 carter  staff   4997 Oct 12  2012 shellcode.rules
+-rw-r--r--  1 carter  staff  13597 Oct 12  2012 smtp.rules
+-rw-r--r--  1 carter  staff   4073 Oct 12  2012 snmp.rules
+-rw-r--r--  1 carter  staff  12454 Oct 12  2012 sql.rules
+-rw-r--r--  1 carter  staff   3736 Oct 12  2012 telnet.rules
+-rw-r--r--  1 carter  staff   2665 Oct 12  2012 tftp.rules
+-rw-r--r--  1 carter  staff    822 Oct 12  2012 virus.rules
+-rw-r--r--  1 carter  staff  10366 Oct 12  2012 web-attacks.rules
+-rw-r--r--  1 carter  staff  92604 Oct 12  2012 web-cgi.rules
+-rw-r--r--  1 carter  staff   2595 Oct 12  2012 web-client.rules
+-rw-r--r--  1 carter  staff   8963 Oct 12  2012 web-coldfusion.rules
+-rw-r--r--  1 carter  staff   8447 Oct 12  2012 web-frontpage.rules
+-rw-r--r--  1 carter  staff  34672 Oct 12  2012 web-iis.rules
+-rw-r--r--  1 carter  staff  78770 Oct 12  2012 web-misc.rules
+-rw-r--r--  1 carter  staff  32630 Oct 12  2012 web-php.rules
+-rw-r--r--  1 carter  staff    578 Oct 12  2012 x11.rules
 
 ./examples/rasnort/sfutil:
 total 1840
--rw-rw-r--  1 carter  staff    9122 Oct 12  2012 Makefile
--rw-rw-r--  1 carter  staff     713 Oct 12  2012 Makefile.am
--rw-rw-r--  1 carter  staff    8467 Oct 12  2012 Makefile.in
--rw-rw-r--  1 carter  staff   13822 Oct 12  2012 acsmx.c
--rw-rw-r--  1 carter  staff    2350 Oct 12  2012 acsmx.h
--rw-rw-r--  1 carter  staff   22900 Oct 12  2012 acsmx.o
--rw-rw-r--  1 carter  staff    6082 Oct 12  2012 bitop.h
--rw-rw-r--  1 carter  staff   21727 Oct 12  2012 ipobj.c
--rw-rw-r--  1 carter  staff    3020 Oct 12  2012 ipobj.h
--rw-rw-r--  1 carter  staff   32768 Oct 12  2012 ipobj.o
--rw-rw-r--  1 carter  staff  293648 Oct 12  2012 libsfutil.a
--rw-rw-r--  1 carter  staff    4759 Oct 12  2012 mpse.c
--rw-rw-r--  1 carter  staff    2000 Oct 12  2012 mpse.h
--rw-rw-r--  1 carter  staff   19808 Oct 12  2012 mpse.o
--rw-rw-r--  1 carter  staff   41042 Oct 12  2012 mwm.c
--rw-rw-r--  1 carter  staff    5319 Oct 12  2012 mwm.h
--rw-rw-r--  1 carter  staff   33348 Oct 12  2012 mwm.o
--rw-rw-r--  1 carter  staff   17467 Oct 12  2012 sfghash.c
--rw-rw-r--  1 carter  staff    2293 Oct 12  2012 sfghash.h
--rw-rw-r--  1 carter  staff   24904 Oct 12  2012 sfghash.o
--rw-rw-r--  1 carter  staff    2223 Oct 12  2012 sfhashfcn.c
--rw-rw-r--  1 carter  staff    1044 Oct 12  2012 sfhashfcn.h
--rw-rw-r--  1 carter  staff   15232 Oct 12  2012 sfhashfcn.o
--rw-rw-r--  1 carter  staff   12934 Oct 12  2012 sfksearch.c
--rw-rw-r--  1 carter  staff    2306 Oct 12  2012 sfksearch.h
--rw-rw-r--  1 carter  staff   20624 Oct 12  2012 sfksearch.o
--rw-rw-r--  1 carter  staff    6929 Oct 12  2012 sflsq.c
--rw-rw-r--  1 carter  staff    2966 Oct 12  2012 sflsq.h
--rw-rw-r--  1 carter  staff   22160 Oct 12  2012 sflsq.o
--rw-rw-r--  1 carter  staff    2464 Oct 12  2012 sfmemcap.c
--rw-rw-r--  1 carter  staff     569 Oct 12  2012 sfmemcap.h
--rw-rw-r--  1 carter  staff   15352 Oct 12  2012 sfmemcap.o
--rw-rw-r--  1 carter  staff   33227 Oct 12  2012 sfthd.c
--rw-rw-r--  1 carter  staff    4375 Oct 12  2012 sfthd.h
--rw-rw-r--  1 carter  staff   26088 Oct 12  2012 sfthd.o
--rw-rw-r--  1 carter  staff   27665 Oct 12  2012 sfxhash.c
--rw-rw-r--  1 carter  staff    4047 Oct 12  2012 sfxhash.h
--rw-rw-r--  1 carter  staff   27044 Oct 12  2012 sfxhash.o
--rw-rw-r--  1 carter  staff     581 Oct 12  2012 util_math.c
--rw-rw-r--  1 carter  staff     353 Oct 12  2012 util_math.h
--rw-rw-r--  1 carter  staff    2144 Oct 12  2012 util_math.o
--rw-rw-r--  1 carter  staff    2068 Oct 12  2012 util_net.c
--rw-rw-r--  1 carter  staff     345 Oct 12  2012 util_net.h
--rw-rw-r--  1 carter  staff   18936 Oct 12  2012 util_net.o
--rw-rw-r--  1 carter  staff    2424 Oct 12  2012 util_str.c
--rw-rw-r--  1 carter  staff     370 Oct 12  2012 util_str.h
--rw-rw-r--  1 carter  staff    8592 Oct 12  2012 util_str.o
+-rw-r--r--  1 carter  staff    9122 Oct 12  2012 Makefile
+-rw-r--r--  1 carter  staff     713 Oct 12  2012 Makefile.am
+-rw-r--r--  1 carter  staff    8467 Oct 12  2012 Makefile.in
+-rw-r--r--  1 carter  staff   13822 Oct 12  2012 acsmx.c
+-rw-r--r--  1 carter  staff    2350 Oct 12  2012 acsmx.h
+-rw-r--r--  1 carter  staff   22900 Oct 12  2012 acsmx.o
+-rw-r--r--  1 carter  staff    6082 Oct 12  2012 bitop.h
+-rw-r--r--  1 carter  staff   21727 Oct 12  2012 ipobj.c
+-rw-r--r--  1 carter  staff    3020 Oct 12  2012 ipobj.h
+-rw-r--r--  1 carter  staff   32768 Oct 12  2012 ipobj.o
+-rw-r--r--  1 carter  staff  293648 Oct 12  2012 libsfutil.a
+-rw-r--r--  1 carter  staff    4759 Oct 12  2012 mpse.c
+-rw-r--r--  1 carter  staff    2000 Oct 12  2012 mpse.h
+-rw-r--r--  1 carter  staff   19808 Oct 12  2012 mpse.o
+-rw-r--r--  1 carter  staff   41042 Oct 12  2012 mwm.c
+-rw-r--r--  1 carter  staff    5319 Oct 12  2012 mwm.h
+-rw-r--r--  1 carter  staff   33348 Oct 12  2012 mwm.o
+-rw-r--r--  1 carter  staff   17467 Oct 12  2012 sfghash.c
+-rw-r--r--  1 carter  staff    2293 Oct 12  2012 sfghash.h
+-rw-r--r--  1 carter  staff   24904 Oct 12  2012 sfghash.o
+-rw-r--r--  1 carter  staff    2223 Oct 12  2012 sfhashfcn.c
+-rw-r--r--  1 carter  staff    1044 Oct 12  2012 sfhashfcn.h
+-rw-r--r--  1 carter  staff   15232 Oct 12  2012 sfhashfcn.o
+-rw-r--r--  1 carter  staff   12934 Oct 12  2012 sfksearch.c
+-rw-r--r--  1 carter  staff    2306 Oct 12  2012 sfksearch.h
+-rw-r--r--  1 carter  staff   20624 Oct 12  2012 sfksearch.o
+-rw-r--r--  1 carter  staff    6929 Oct 12  2012 sflsq.c
+-rw-r--r--  1 carter  staff    2966 Oct 12  2012 sflsq.h
+-rw-r--r--  1 carter  staff   22160 Oct 12  2012 sflsq.o
+-rw-r--r--  1 carter  staff    2464 Oct 12  2012 sfmemcap.c
+-rw-r--r--  1 carter  staff     569 Oct 12  2012 sfmemcap.h
+-rw-r--r--  1 carter  staff   15352 Oct 12  2012 sfmemcap.o
+-rw-r--r--  1 carter  staff   33227 Oct 12  2012 sfthd.c
+-rw-r--r--  1 carter  staff    4375 Oct 12  2012 sfthd.h
+-rw-r--r--  1 carter  staff   26088 Oct 12  2012 sfthd.o
+-rw-r--r--  1 carter  staff   27665 Oct 12  2012 sfxhash.c
+-rw-r--r--  1 carter  staff    4047 Oct 12  2012 sfxhash.h
+-rw-r--r--  1 carter  staff   27044 Oct 12  2012 sfxhash.o
+-rw-r--r--  1 carter  staff     581 Oct 12  2012 util_math.c
+-rw-r--r--  1 carter  staff     353 Oct 12  2012 util_math.h
+-rw-r--r--  1 carter  staff    2144 Oct 12  2012 util_math.o
+-rw-r--r--  1 carter  staff    2068 Oct 12  2012 util_net.c
+-rw-r--r--  1 carter  staff     345 Oct 12  2012 util_net.h
+-rw-r--r--  1 carter  staff   18936 Oct 12  2012 util_net.o
+-rw-r--r--  1 carter  staff    2424 Oct 12  2012 util_str.c
+-rw-r--r--  1 carter  staff     370 Oct 12  2012 util_str.h
+-rw-r--r--  1 carter  staff    8592 Oct 12  2012 util_str.o
 
 ./examples/rastream:
 total 136
 -r--r--r--  1 carter  staff   3331 Mar 16  2016 Makefile.in
 -r--r--r--  1 carter  staff   2673 Mar 16  2016 README
--r--r--r--  1 carter  staff  60569 Sep 20 14:24 rastream.c
+-r--r--r--  1 carter  staff  60569 Sep 20 14:36 rastream.c
 
 ./examples/rastrip:
 total 128
 -r--r--r--  1 carter  staff   3322 Mar 16  2016 Makefile.in
 -r--r--r--  1 carter  staff    905 Mar 16  2016 README
--rw-rw-r--  1 carter  staff  39254 Apr 22  2015 index.html
--r--r--r--  1 carter  staff  12773 Mar 25 00:34 rastrip.c
+-rw-r--r--  1 carter  staff  39254 Apr 22  2015 index.html
+-r--r--r--  1 carter  staff  12773 Mar 25  2016 rastrip.c
 
 ./examples/ratemplate:
 total 40
@@ -949,18 +951,18 @@ total 40
 
 ./examples/ratod:
 total 144
--r--r--r--  1 carter  staff   3849 Sep 10 17:46 Makefile.in
+-r--r--r--  1 carter  staff   3849 Sep 19 21:55 Makefile.in
 -r--r--r--  1 carter  staff   2990 Mar 16  2016 README
--rw-rw-r--  1 carter  staff  14259 Oct  7  2014 rarc
--r--r--r--  1 carter  staff  47588 Mar 25 00:34 ratod.c
+-rw-r--r--  1 carter  staff  14259 Oct  7  2014 rarc
+-r--r--r--  1 carter  staff  47588 Mar 25  2016 ratod.c
 
 ./examples/ratop:
 total 696
 -r--r--r--  1 carter  staff    3863 Mar 16  2016 Makefile.in
 -r--r--r--  1 carter  staff    3714 Mar 16  2016 NOTES
 -r--r--r--  1 carter  staff    1990 Mar 16  2016 README
--r--r--r--  1 carter  staff   96299 Sep 20 14:24 raclient.c
--r--r--r--  1 carter  staff  227350 Sep 13 10:40 racurses.c
+-r--r--r--  1 carter  staff   96299 Sep 20 14:36 raclient.c
+-r--r--r--  1 carter  staff  227350 Sep 19 21:55 racurses.c
 -r--r--r--  1 carter  staff   16145 Mar 16  2016 racurses.h
 
 ./examples/ratop.orig:
@@ -972,13 +974,13 @@ total 528
 
 ./examples/ratrace:
 total 64
--r--r--r--  1 carter  staff   3859 Sep 13 10:40 Makefile.in
--r--r--r--  1 carter  staff  28242 Sep 20 14:24 ratrace.c
+-r--r--r--  1 carter  staff   3859 Sep 19 21:55 Makefile.in
+-r--r--r--  1 carter  staff  28242 Sep 20 14:36 ratrace.c
 
 ./examples/ratree:
 total 40
--r--r--r--  1 carter  staff   3854 Sep 13 10:40 Makefile.in
--r--r--r--  1 carter  staff  15248 Sep 20 14:24 ratree.c
+-r--r--r--  1 carter  staff   3854 Sep 19 21:55 Makefile.in
+-r--r--r--  1 carter  staff  15248 Sep 20 14:36 ratree.c
 
 ./examples/routers:
 total 8
@@ -987,14 +989,14 @@ total 8
 ./include:
 total 1416
 -r--r--r--   1 carter  staff    2291 Mar 16  2016 Makefile.in
-drwxrwxr-x  15 carter  staff     510 Sep 15 16:11 argus
+drwxr-xr-x  15 carter  staff     510 Sep 19 21:55 argus
 -r--r--r--   1 carter  staff     612 Mar 16  2016 argus_8021q.h
--r--r--r--   1 carter  staff   55664 Sep 13 16:02 argus_client.h
--r--r--r--   1 carter  staff   50703 Sep 20 14:24 argus_cluster.h
--r--r--r--   1 carter  staff    7410 Sep 13 10:40 argus_compat.h
+-r--r--r--   1 carter  staff   55664 Sep 19 21:55 argus_client.h
+-r--r--r--   1 carter  staff   50703 Sep 20 14:36 argus_cluster.h
+-r--r--r--   1 carter  staff    7410 Sep 19 21:55 argus_compat.h
 -r--r--r--   1 carter  staff   16592 Mar 16  2016 argus_config.h.in
 -r--r--r--   1 carter  staff    2193 Mar 16  2016 argus_debug.h
--r--r--r--   1 carter  staff  101105 Sep 13 16:02 argus_def.h
+-r--r--r--   1 carter  staff  101578 Sep 27 20:09 argus_def.h
 -r--r--r--   1 carter  staff    3014 Mar 16  2016 argus_dscodepoints.h
 -r--r--r--   1 carter  staff    4010 Mar 16  2016 argus_encapsulations.h
 -r--r--r--   1 carter  staff   11854 Mar 16  2016 argus_ethernames.h
@@ -1005,7 +1007,7 @@ drwxrwxr-x  15 carter  staff     510 Sep 15 16:11 argus
 -r--r--r--   1 carter  staff    1267 Mar 16  2016 argus_grep.h
 -r--r--r--   1 carter  staff    4687 Mar 16  2016 argus_histo.h
 -r--r--r--   1 carter  staff    3418 Mar 16  2016 argus_int.h
--r--r--r--   1 carter  staff   18645 Sep 13 10:40 argus_isis.h
+-r--r--r--   1 carter  staff   18645 Sep 19 21:55 argus_isis.h
 -r--r--r--   1 carter  staff   12089 Jun  1 10:28 argus_label.h
 -r--r--r--   1 carter  staff    4025 Mar 16  2016 argus_llc.h
 -r--r--r--   1 carter  staff   10738 Mar 16  2016 argus_main.h
@@ -1013,18 +1015,18 @@ drwxrwxr-x  15 carter  staff     510 Sep 15 16:11 argus
 -r--r--r--   1 carter  staff   27882 Mar 16  2016 argus_metric.h
 -r--r--r--   1 carter  staff    1947 Mar 16  2016 argus_namedb.h
 -r--r--r--   1 carter  staff    5636 Mar 16  2016 argus_os.h
--r--r--r--   1 carter  staff   33590 Sep 13 16:02 argus_out.h
--r--r--r--   1 carter  staff    7462 Sep 13 16:02 argus_output.h
--r--r--r--   1 carter  staff   14918 Sep 13 16:02 argus_parser.h
+-r--r--r--   1 carter  staff   33590 Sep 19 21:55 argus_out.h
+-r--r--r--   1 carter  staff    7462 Sep 19 21:55 argus_output.h
+-r--r--r--   1 carter  staff   14950 Sep 27 20:09 argus_parser.h
 -r--r--r--   1 carter  staff   19385 Mar 16  2016 argus_sort.h
 -r--r--r--   1 carter  staff    4529 Mar  7  2014 argus_sql.h
 -r--r--r--   1 carter  staff    2476 Mar 16  2016 argus_udt.h
--r--r--r--   1 carter  staff  123163 Sep 13 16:02 argus_util.h
-drwxrwxr-x   8 carter  staff     272 Sep 15 16:11 cygwin-include
-drwxrwxr-x   3 carter  staff     102 Sep 15 16:11 net
-drwxrwxr-x   3 carter  staff     102 Sep 15 16:11 netinet
+-r--r--r--   1 carter  staff  123208 Sep 27 20:09 argus_util.h
+drwxr-xr-x   8 carter  staff     272 Sep 15 16:11 cygwin-include
+drwxr-xr-x   3 carter  staff     102 Sep 15 16:11 net
+drwxr-xr-x   3 carter  staff     102 Sep 15 16:11 netinet
 -r--r--r--   1 carter  staff    1226 Mar 16  2016 rabins.h
--r--r--r--   1 carter  staff    6158 Sep 13 16:02 radium.h
+-r--r--r--   1 carter  staff    6158 Sep 19 21:55 radium.h
 -r--r--r--   1 carter  staff   65288 Mar 16  2016 rapolicy.h
 -r--r--r--   1 carter  staff    2734 Mar 16  2016 rasplit.h
 
@@ -1037,7 +1039,7 @@ total 312
 -r--r--r--  1 carter  staff   5040 Mar 16  2016 cons_out.h
 -r--r--r--  1 carter  staff   8393 Mar 16  2016 extract.h
 -r--r--r--  1 carter  staff   3732 Mar 16  2016 fddi.h
--r--r--r--  1 carter  staff  10718 Sep 14 23:15 gencode.h
+-r--r--r--  1 carter  staff  10718 Sep 19 21:55 gencode.h
 -r--r--r--  1 carter  staff    956 Mar 16  2016 global.h
 -r--r--r--  1 carter  staff   1470 Mar 16  2016 md5.h
 -r--r--r--  1 carter  staff   2424 Mar 16  2016 ppp.h
@@ -1046,12 +1048,12 @@ total 312
 
 ./include/cygwin-include:
 total 0
-drwxrwxr-x   3 carter  staff  102 Sep 15 16:11 arpa
-drwxrwxr-x   4 carter  staff  136 Sep 15 16:11 linux
-drwxrwxr-x   3 carter  staff  102 Sep 15 16:11 net
-drwxrwxr-x  15 carter  staff  510 Sep 15 16:11 netinet
-drwxrwxr-x   3 carter  staff  102 Sep 15 16:11 protocols
-drwxrwxr-x   3 carter  staff  102 Sep 15 14:43 sys
+drwxr-xr-x   3 carter  staff  102 Sep 15 16:11 arpa
+drwxr-xr-x   4 carter  staff  136 Sep 15 16:11 linux
+drwxr-xr-x   3 carter  staff  102 Sep 15 16:11 net
+drwxr-xr-x  15 carter  staff  510 Sep 19 21:55 netinet
+drwxr-xr-x   3 carter  staff  102 Sep 15 16:11 protocols
+drwxr-xr-x   3 carter  staff  102 Sep 15 14:43 sys
 
 ./include/cygwin-include/arpa:
 total 8
@@ -1068,7 +1070,7 @@ total 8
 
 ./include/cygwin-include/netinet:
 total 136
--r--r--r--  1 carter  staff  8927 Sep 10 11:42 icmp6.h
+-r--r--r--  1 carter  staff  8927 Sep 19 21:55 icmp6.h
 -r--r--r--  1 carter  staff  1951 Mar 16  2016 if_ether.h
 -r--r--r--  1 carter  staff  3480 Mar 16  2016 igmp.h
 -r--r--r--  1 carter  staff   749 Mar 16  2016 in_systm.h
@@ -1101,16 +1103,16 @@ total 8
 ./lib:
 total 24
 -r--r--r--  1 carter  staff   364 Mar 16  2016 argus-clients.pc.in
--r--r--r--  1 carter  staff  4397 Sep 20 14:08 argus-clients.spec
+-r--r--r--  1 carter  staff  4397 Sep 20 14:36 argus-clients.spec
 
 ./man:
 total 0
-drwxrwxr-x  26 carter  staff  884 Sep 15 16:11 man1
-drwxrwxr-x   8 carter  staff  272 Sep 15 16:11 man5
-drwxrwxr-x   3 carter  staff  102 Sep 15 14:43 man8
+drwxr-xr-x  27 carter  staff  918 Sep 27 20:07 man1
+drwxr-xr-x   8 carter  staff  272 Sep 15 16:11 man5
+drwxr-xr-x   3 carter  staff  102 Sep 15 14:43 man8
 
 ./man/man1:
-total 456
+total 464
 -r--r--r--  1 carter  staff  50118 Mar 16  2016 ra.1
 -r--r--r--  1 carter  staff  18266 Mar 16  2016 rabins.1
 -r--r--r--  1 carter  staff   8056 Jun 17 11:22 racluster.1
@@ -1130,6 +1132,7 @@ total 456
 -r--r--r--  1 carter  staff   4707 Mar 16  2016 rasort.1
 -r--r--r--  1 carter  staff   6898 Mar 16  2016 rasplit.1
 -r--r--r--  1 carter  staff   2313 Mar 16  2016 rasql.1
+-r--r--r--  1 carter  staff   3350 Sep 27 20:07 rasqlcheckconf.1
 -r--r--r--  1 carter  staff   6884 Mar 16  2016 rasqlinsert.1
 -r--r--r--  1 carter  staff   2439 Mar 16  2016 rasqltimeindex.1
 -r--r--r--  1 carter  staff   8863 Mar 16  2016 rastream.1
@@ -1153,15 +1156,15 @@ total 16
 total 40
 -r--r--r--  1 carter  staff   4231 Mar 16  2016 README
 -r--r--r--  1 carter  staff  10554 Mar 16  2016 radium.conf
-drwxrwxr-x  6 carter  staff    204 Sep 15 16:11 rhel
-drwxrwxr-x  4 carter  staff    136 Sep 15 14:43 ubuntu
+drwxr-xr-x  6 carter  staff    204 Sep 15 16:11 rhel
+drwxr-xr-x  4 carter  staff    136 Sep 15 14:43 ubuntu
 
 ./pkg/rhel:
 total 24
-drwxrwxr-x  4 carter  staff    136 Sep 15 16:11 init.d
+drwxr-xr-x  4 carter  staff    136 Sep 15 16:11 init.d
 -r--r--r--  1 carter  staff  10554 Mar 16  2016 radium.conf
-drwxrwxr-x  4 carter  staff    136 Sep 15 16:11 sysconfig
-drwxr-xr-x  4 carter  staff    136 Sep 15 14:43 systemd
+drwxr-xr-x  4 carter  staff    136 Sep 15 16:11 sysconfig
+drwxr-xr-x  4 carter  staff    136 Sep 20 15:08 systemd
 
 ./pkg/rhel/init.d:
 total 16
@@ -1175,13 +1178,13 @@ total 16
 
 ./pkg/rhel/systemd:
 total 16
--r--r--r--  1 carter  staff  1027 Sep 15 14:30 radium.service
--rw-r--r--  1 carter  staff  1042 Sep 15 14:32 rasplit.service
+-r--r--r--  1 carter  staff  1028 Sep 20 15:08 radium.service
+-r--r--r--  1 carter  staff  1042 Sep 20 15:08 rasplit.service
 
 ./pkg/ubuntu:
 total 0
-drwxrwxr-x  4 carter  staff  136 Sep 15 16:11 default
-drwxrwxr-x  4 carter  staff  136 Sep 15 14:43 init.d
+drwxr-xr-x  4 carter  staff  136 Sep 15 16:11 default
+drwxr-xr-x  4 carter  staff  136 Sep 15 14:43 init.d
 
 ./pkg/ubuntu/default:
 total 16
@@ -1195,10 +1198,10 @@ total 32
 
 ./support:
 total 0
-drwxrwxr-x  26 carter  staff  884 Sep 15 16:11 Config
-drwxrwxr-x   4 carter  staff  136 Sep 15 16:11 Database
-drwxrwxr-x   8 carter  staff  272 Sep 15 16:43 Startup
-drwxrwxr-x   3 carter  staff  102 Sep 15 14:43 System
+drwxr-xr-x  26 carter  staff  884 Sep 15 16:11 Config
+drwxr-xr-x   4 carter  staff  136 Sep 15 16:11 Database
+drwxr-xr-x   8 carter  staff  272 Sep 15 16:43 Startup
+drwxr-xr-x   3 carter  staff  102 Sep 15 14:43 System
 
 ./support/Config:
 total 22904
@@ -1211,7 +1214,7 @@ total 22904
 -r--r--r--  1 carter  staff    24990 Mar 16  2016 iana-ipv4-address
 -r--r--r--  1 carter  staff    28071 Mar 16  2016 iana-multicast-address
 -r--r--r--  1 carter  staff   756315 Mar 16  2016 iana-port-numbers
--rw-rw-r--  1 carter  staff      856 Jun 18  2012 ieee-address-file
+-rw-r--r--  1 carter  staff      856 Jun 18  2012 ieee-address-file
 -r--r--r--  1 carter  staff     1187 Mar 16  2016 local.addrs
 -r--r--r--  1 carter  staff     2415 Mar 16  2016 racluster.conf
 -r-xr-xr-x  1 carter  staff     1608 Mar 16  2016 racolor.conf
@@ -1237,7 +1240,7 @@ total 56
 -r--r--r--  1 carter  staff  4348 Mar 16  2016 README
 -r--r--r--  1 carter  staff   689 Mar 16  2016 com.qosient.radium.plist
 -r--r--r--  1 carter  staff   866 Mar 16  2016 com.qosient.rasplit.plist
--rw-rw-r--  1 carter  staff  1054 Nov 18  2014 com.qosient.rastream.plist
+-rw-r--r--  1 carter  staff  1054 Nov 18  2014 com.qosient.rastream.plist
 -r-xr-xr-x  1 carter  staff  2736 Mar 16  2016 radium
 -r-xr-xr-x  1 carter  staff  2673 Mar 16  2016 rasplit
 

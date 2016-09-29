@@ -1647,6 +1647,8 @@ ArgusCheckClientStatus (struct ArgusOutputStruct *output, int s)
                   ArgusLog (LOG_ERR, "ArgusCheckClientStatus: ArgusGenerateInitialMar error %s", strerror(errno));
 
 #ifdef ARGUS_SASL
+               if (ArgusMaxSsf == 0)
+                  goto no_auth;
 #ifdef ARGUSDEBUG
                ArgusDebug (2, "ArgusCheckClientStatus: SASL enabled\n");
 #endif
@@ -1725,6 +1727,7 @@ ArgusCheckClientStatus (struct ArgusOutputStruct *output, int s)
                }
 
                output->ArgusInitMar->argus_mar.status |= htonl(ARGUS_SASL_AUTHENTICATE);
+no_auth:
 #endif
                len = ntohs(output->ArgusInitMar->hdr.len) * 4;
 
@@ -1747,6 +1750,7 @@ ArgusCheckClientStatus (struct ArgusOutputStruct *output, int s)
                   }
 
                } else {
+                     ArgusAddToQueue(output->ArgusClients, &client->qhdr, ARGUS_NOLOCK);
                }
 #else
                ArgusAddToQueue(output->ArgusClients, &client->qhdr, ARGUS_NOLOCK);
@@ -3213,6 +3217,9 @@ ArgusAuthenticateClient (struct ArgusClientData *client)
 // int SASLOpts = (SASL_SEC_NOPLAINTEXT | SASL_SEC_NOANONYMOUS);
    FILE *in, *out;
 
+   if (ArgusMaxSsf == 0)
+       goto no_auth;
+
    conn = client->sasl_conn;
 
    if ((retn = sasl_listmech(conn, NULL, "{", ", ", "}", &data, &rlen, &mechnum)) != SASL_OK)
@@ -3300,6 +3307,7 @@ ArgusAuthenticateClient (struct ArgusClientData *client)
    if (retn == SASL_OK)
       ArgusSendSaslString(out, NULL, 0, SASL_OK);
 
+no_auth:
 #endif
 #ifdef ARGUSDEBUG
    ArgusDebug (1, "ArgusAuthenticateClient() returning %d\n", retn);

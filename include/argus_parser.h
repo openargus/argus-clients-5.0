@@ -295,7 +295,7 @@ struct ArgusParserStruct {
    char *ArgusProgramName, *RaTimeFormat, *RaTimeZone;
    char *ArgusProgramArgs, *ArgusProgramOptions;
    char *ArgusSQLStatement, *MySQLDBEngine;
-   char *ArgusSearchString;
+   char *ArgusSearchString, *RaMarInfName;
 
    struct timeval ArgusRealTime, ArgusGlobalTime;
    struct timeval ArgusStartRealTime, ArgusEndRealTime;

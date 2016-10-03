@@ -217,6 +217,7 @@ extern "C" {
 
    The values in the Argus Option Field are specific to each cause.
 */
+#define ARGUS_SRC_RADIUM                        0x08   /* Argus Radium Node Appliance */
 
 /*
    Argus Start Option Messages
@@ -294,6 +295,7 @@ extern "C" {
 
 #define ARGUS_INIT_MAR				0x00100000
 
+#define ARGUS_ID_INC_INF                        0x00100000
 #define ARGUS_IDIS_STRING                       0x00200000
 #define ARGUS_IDIS_INT                          0x00400000
 #define ARGUS_IDIS_IPV6                         0x00600000

@@ -19,9 +19,9 @@
  */
 
 /* 
- * $Id: //depot/gargoyle/clients/clients/ra.c#12 $
- * $DateTime: 2016/03/25 00:30:13 $
- * $Change: 3127 $
+ * $Id: //depot/gargoyle/clients/clients/ra.c#13 $
+ * $DateTime: 2016/10/06 00:01:32 $
+ * $Change: 3216 $
  */
 
 /*
@@ -460,6 +460,8 @@ RaProcessThisRecord (struct ArgusParserStruct *parser, struct ArgusRecordStruct 
          } else {
             if (!parser->qflag) {
                int retn = 0;
+
+               argus->rank = RaPrintCounter++;
                if (parser->Lflag && !(parser->ArgusPrintXml)) {
                   if (parser->RaLabel == NULL)
                      parser->RaLabel = ArgusGenerateLabel(parser, argus);
@@ -577,8 +579,9 @@ RaProcessManRecord (struct ArgusParserStruct *parser, struct ArgusRecordStruct *
       }
 
    } else {
-
       if ((parser->ArgusPrintMan) && (!parser->qflag)) {
+         argus->rank = RaPrintCounter++;
+
          if (parser->Lflag && !(parser->ArgusPrintXml)) {
             if (parser->RaLabel == NULL)
                parser->RaLabel = ArgusGenerateLabel(parser, argus);
@@ -650,6 +653,7 @@ RaProcessEventRecord (struct ArgusParserStruct *parser, struct ArgusRecordStruct
    } else {
 
       if ((parser->ArgusPrintEvent) && (!parser->qflag)) {
+         argus->rank = RaPrintCounter++;
          if (parser->Lflag && !(parser->ArgusPrintXml)) {
             if (parser->RaLabel == NULL)
                parser->RaLabel = ArgusGenerateLabel(parser, argus);

@@ -18,32 +18,32 @@
  *
  */
 
-Gargoyle Clients 5.0.3 distribution
+Gargoyle Clients 5.0.3.2 distribution
 total 1080
 -r--r--r--   1 carter  staff     523 Mar 16  2016 AUTHORS
 -r--r--r--   1 carter  staff    7292 Mar 16  2016 CHANGES
 -r--r--r--   1 carter  staff    3908 Mar 16  2016 CREDITS
--rw-r--r--   1 carter  staff   37333 Sep 28 14:17 ChangeLog
+-r--r--r--   1 carter  staff   37493 Oct  3 10:21 ChangeLog
 -r--r--r--   1 carter  staff    8526 Mar 16  2016 INSTALL
--rw-r--r--   1 carter  staff   62017 Sep 29 10:10 MANIFEST
+-r--r--r--   1 carter  staff   62088 Oct 13 08:42 MANIFEST
 -rw-r--r--   1 carter  staff    9213 Sep 28 14:17 Makefile.in
 -r--r--r--   1 carter  staff    3810 Mar 16  2016 README
--r--r--r--   1 carter  staff       6 Sep 19 21:55 VERSION
+-r--r--r--   1 carter  staff       8 Oct 13 08:41 VERSION
 -r--r--r--   1 carter  staff    7852 Mar 16  2016 aclocal.m4
 -r--r--r--   1 carter  staff   59385 Mar 16  2016 acsite.m4
-drwxr-xr-x   4 carter  staff     136 Sep 29 10:10 bin
-drwxr-xr-x  13 carter  staff     442 Sep 29 10:10 clients
-drwxr-xr-x  18 carter  staff     612 Sep 29 10:10 common
-drwxr-xr-x   6 carter  staff     204 Sep 28 14:28 config
--rwxr-xr-x   1 carter  staff  307968 Sep 11 11:59 configure
--r--r--r--   1 carter  staff   12480 Sep 19 21:55 configure.ac
-drwxr-xr-x  14 carter  staff     476 Sep 28 14:28 debian
-drwxr-xr-x  40 carter  staff    1360 Sep 29 10:10 examples
-drwxr-xr-x  43 carter  staff    1462 Sep 29 10:10 include
-drwxr-xr-x   4 carter  staff     136 Sep 29 10:10 lib
-drwxr-xr-x   5 carter  staff     170 Sep 28 14:28 man
-drwxr-xr-x   6 carter  staff     204 Sep 28 14:28 pkg
-drwxr-xr-x   6 carter  staff     204 Sep 28 14:28 support
+drwxr-xr-x   4 carter  staff     136 Oct 13 08:41 bin
+drwxr-xr-x  13 carter  staff     442 Oct 13 08:41 clients
+drwxr-xr-x  18 carter  staff     612 Oct 13 08:41 common
+drwxr-xr-x   6 carter  staff     204 Oct  9 17:33 config
+-rwxr-xr-x   1 carter  staff  308315 Oct 10 23:15 configure
+-r--r--r--   1 carter  staff   12519 Oct 10 23:14 configure.ac
+drwxr-xr-x  14 carter  staff     476 Oct  9 17:33 debian
+drwxr-xr-x  40 carter  staff    1360 Oct 13 08:41 examples
+drwxr-xr-x  44 carter  staff    1496 Oct 13 08:41 include
+drwxr-xr-x   4 carter  staff     136 Oct 13 08:41 lib
+drwxr-xr-x   5 carter  staff     170 Oct  9 17:33 man
+drwxr-xr-x   6 carter  staff     204 Oct  9 17:33 pkg
+drwxr-xr-x   6 carter  staff     204 Oct  9 17:33 support
 
 ./bin:
 total 32
@@ -51,37 +51,37 @@ total 32
 -r-xr-xr-x  1 carter  staff  2395 Mar 16  2016 mkdep
 
 ./clients:
-total 704
+total 712
 -r--r--r--  1 carter  staff   4976 Mar 16  2016 Makefile.in
 -r--r--r--  1 carter  staff   2390 Mar 16  2016 README
--r--r--r--  1 carter  staff  27829 Mar 25  2016 ra.c
--r--r--r--  1 carter  staff  48148 Mar 25  2016 rabins.c
--r--r--r--  1 carter  staff  44642 Sep 20 14:36 racluster.c
--r--r--r--  1 carter  staff  41448 Mar 16  2016 racount.c
--r--r--r--  1 carter  staff  35700 Sep 19 21:55 radium.c
--r--r--r--  1 carter  staff  77089 Mar 25  2016 ranonymize.c
+-r--r--r--  1 carter  staff  27987 Oct 13 07:13 ra.c
+-r--r--r--  1 carter  staff  51490 Oct 13 07:13 rabins.c
+-r--r--r--  1 carter  staff  44289 Oct 13 08:28 racluster.c
+-r--r--r--  1 carter  staff  41448 Oct 13 07:13 racount.c
+-r--r--r--  1 carter  staff  33576 Oct 13 07:13 radium.c
+-r--r--r--  1 carter  staff  77089 Oct 13 07:13 ranonymize.c
 -r--r--r--  1 carter  staff   1833 Mar 16  2016 ranonymize.h
--r--r--r--  1 carter  staff  17516 Mar 25  2016 rasort.c
--r--r--r--  1 carter  staff  39476 Sep 20 14:36 rasplit.c
+-r--r--r--  1 carter  staff  17516 Oct 13 07:13 rasort.c
+-r--r--r--  1 carter  staff  39484 Oct 13 07:13 rasplit.c
 
 ./common:
-total 4952
+total 5024
 -r--r--r--  1 carter  staff    5705 Mar 16  2016 Makefile.in
 -r--r--r--  1 carter  staff   19229 Sep 20 14:36 argus_auth.c
--r--r--r--  1 carter  staff  718548 Sep 20 14:36 argus_client.c
--r--r--r--  1 carter  staff  154596 Sep 19 21:55 argus_code.c
+-r--r--r--  1 carter  staff  738267 Oct 13 08:28 argus_client.c
+-r--r--r--  1 carter  staff  155725 Oct 10 23:14 argus_code.c
 -r--r--r--  1 carter  staff    2124 Mar 16  2016 argus_debug.h
 -r--r--r--  1 carter  staff   22538 Jul 13 18:38 argus_event.c
 -r--r--r--  1 carter  staff   87225 Jul 13 18:38 argus_filter.c
 -r--r--r--  1 carter  staff    4469 Jul 13 18:38 argus_grep.c
 -r--r--r--  1 carter  staff  175162 Jul 13 18:38 argus_import.c
 -r--r--r--  1 carter  staff  179740 Sep 19 21:55 argus_label.c
--r--r--r--  1 carter  staff   14234 Jul 13 18:38 argus_main.c
--r--r--r--  1 carter  staff  120846 Sep 28 14:24 argus_output.c
+-r--r--r--  1 carter  staff   14299 Oct 13 07:13 argus_main.c
+-r--r--r--  1 carter  staff  121111 Oct  5 23:56 argus_output.c
 -r--r--r--  1 carter  staff   13080 Sep 20 14:36 argus_parser.c
--r--r--r--  1 carter  staff  951419 Sep 20 14:36 argus_util.c
--r--r--r--  1 carter  staff   16617 Sep 19 21:55 grammar.y
--r--r--r--  1 carter  staff   12976 Sep 19 21:55 scanner.l
+-r--r--r--  1 carter  staff  964731 Oct 13 08:28 argus_util.c
+-r--r--r--  1 carter  staff   16805 Oct  3 10:21 grammar.y
+-r--r--r--  1 carter  staff   13018 Oct  3 10:21 scanner.l
 
 ./config:
 total 184
@@ -103,7 +103,7 @@ total 88
 -r-xr-xr-x  1 carter  staff   795 Mar 16  2016 preinst
 -r-xr-xr-x  1 carter  staff   210 Mar 16  2016 prerm
 -r-xr-xr-x  1 carter  staff   442 Mar 16  2016 rules
-drwxr-xr-x  3 carter  staff   102 Sep 28 14:28 source
+drwxr-xr-x  3 carter  staff   102 Oct  9 17:33 source
 
 ./debian/source:
 total 8
@@ -113,42 +113,42 @@ total 8
 total 16
 -r--r--r--   1 carter  staff  3966 Jun  6 10:32 Makefile.in
 -rw-r--r--   1 carter  staff  4023 Sep 28 14:17 README
-drwxr-xr-x   7 carter  staff   238 Sep 29 10:10 race
-drwxr-xr-x   6 carter  staff   204 Sep 29 10:10 raconvert
-drwxr-xr-x   5 carter  staff   170 Sep 28 14:28 radark
-drwxr-xr-x   5 carter  staff   170 Sep 29 10:10 radecode
-drwxr-xr-x  15 carter  staff   510 Sep 29 10:10 radhcp
-drwxr-xr-x  11 carter  staff   374 Sep 29 10:10 radns
-drwxr-xr-x  61 carter  staff  2074 Sep 29 10:10 radump
-drwxr-xr-x   6 carter  staff   204 Sep 29 10:10 raevent
-drwxr-xr-x   6 carter  staff   204 Sep 29 10:10 rafilter
-drwxr-xr-x   6 carter  staff   204 Sep 29 10:10 ragraph
-drwxr-xr-x   5 carter  staff   170 Sep 29 10:10 ragrep
-drwxr-xr-x   5 carter  staff   170 Sep 29 10:10 rahisto
-drwxr-xr-x   6 carter  staff   204 Sep 29 10:10 rahosts
-drwxr-xr-x   5 carter  staff   170 Sep 29 10:10 ralabel
-drwxr-xr-x   5 carter  staff   170 Sep 29 10:10 ramatrix
-drwxr-xr-x   8 carter  staff   272 Sep 29 10:10 rampc
-drwxr-xr-x  12 carter  staff   408 Sep 29 10:10 ramysql
-drwxr-xr-x   5 carter  staff   170 Sep 29 10:10 rap
-drwxr-xr-x   7 carter  staff   238 Sep 29 10:10 rapath
-drwxr-xr-x   5 carter  staff   170 Sep 29 10:10 rapolicy
-drwxr-xr-x   5 carter  staff   170 Sep 29 10:10 raports
-drwxr-xr-x   5 carter  staff   170 Sep 29 10:10 raqsort
-drwxr-xr-x   6 carter  staff   204 Sep 29 10:10 rarpwatch
-drwxr-xr-x   6 carter  staff   204 Sep 29 10:10 rascanner
-drwxr-xr-x   6 carter  staff   204 Sep 29 10:10 raservices
-drwxr-xr-x  53 carter  staff  1802 Sep 28 23:10 rasnort
-drwxr-xr-x   5 carter  staff   170 Sep 29 10:10 rastream
-drwxr-xr-x   6 carter  staff   204 Sep 29 10:10 rastrip
-drwxr-xr-x   5 carter  staff   170 Sep 29 10:10 ratemplate
-drwxr-xr-x   5 carter  staff   170 Sep 29 10:10 ratimerange
-drwxr-xr-x   6 carter  staff   204 Sep 29 10:10 ratod
-drwxr-xr-x   8 carter  staff   272 Sep 29 10:10 ratop
-drwxr-xr-x   6 carter  staff   204 Sep 28 14:28 ratop.orig
-drwxr-xr-x   4 carter  staff   136 Sep 29 10:10 ratrace
-drwxr-xr-x   4 carter  staff   136 Sep 29 10:10 ratree
-drwxr-xr-x   3 carter  staff   102 Sep 28 14:28 routers
+drwxr-xr-x   7 carter  staff   238 Oct 13 08:41 race
+drwxr-xr-x   6 carter  staff   204 Oct 13 08:41 raconvert
+drwxr-xr-x   5 carter  staff   170 Oct  9 17:33 radark
+drwxr-xr-x   5 carter  staff   170 Oct 13 08:41 radecode
+drwxr-xr-x  15 carter  staff   510 Oct 13 08:41 radhcp
+drwxr-xr-x  11 carter  staff   374 Oct 13 08:41 radns
+drwxr-xr-x  61 carter  staff  2074 Oct 13 08:41 radump
+drwxr-xr-x   6 carter  staff   204 Oct 13 08:41 raevent
+drwxr-xr-x   6 carter  staff   204 Oct 13 08:41 rafilter
+drwxr-xr-x   6 carter  staff   204 Oct 13 08:41 ragraph
+drwxr-xr-x   5 carter  staff   170 Oct 13 08:41 ragrep
+drwxr-xr-x   5 carter  staff   170 Oct 13 08:41 rahisto
+drwxr-xr-x   6 carter  staff   204 Oct 13 08:41 rahosts
+drwxr-xr-x   5 carter  staff   170 Oct 13 08:41 ralabel
+drwxr-xr-x   5 carter  staff   170 Oct 13 08:41 ramatrix
+drwxr-xr-x   8 carter  staff   272 Oct 13 08:41 rampc
+drwxr-xr-x  12 carter  staff   408 Oct 13 08:41 ramysql
+drwxr-xr-x   5 carter  staff   170 Oct 13 08:41 rap
+drwxr-xr-x   7 carter  staff   238 Oct 13 08:41 rapath
+drwxr-xr-x   5 carter  staff   170 Oct 13 08:41 rapolicy
+drwxr-xr-x   5 carter  staff   170 Oct 13 08:41 raports
+drwxr-xr-x   5 carter  staff   170 Oct 13 08:41 raqsort
+drwxr-xr-x   6 carter  staff   204 Oct 13 08:41 rarpwatch
+drwxr-xr-x   6 carter  staff   204 Oct 13 08:41 rascanner
+drwxr-xr-x   6 carter  staff   204 Oct 13 08:41 raservices
+drwxr-xr-x  53 carter  staff  1802 Oct 10 23:15 rasnort
+drwxr-xr-x   5 carter  staff   170 Oct 13 08:41 rastream
+drwxr-xr-x   6 carter  staff   204 Oct 13 08:41 rastrip
+drwxr-xr-x   5 carter  staff   170 Oct 13 08:41 ratemplate
+drwxr-xr-x   5 carter  staff   170 Oct 13 08:41 ratimerange
+drwxr-xr-x   6 carter  staff   204 Oct 13 08:41 ratod
+drwxr-xr-x   8 carter  staff   272 Oct 13 08:41 ratop
+drwxr-xr-x   6 carter  staff   204 Oct  9 17:33 ratop.orig
+drwxr-xr-x   4 carter  staff   136 Oct 13 08:41 ratrace
+drwxr-xr-x   4 carter  staff   136 Oct 13 08:41 ratree
+drwxr-xr-x   3 carter  staff   102 Oct  9 17:33 routers
 
 ./examples/race:
 total 192
@@ -182,7 +182,7 @@ total 480
 -r--r--r--  1 carter  staff   3865 Jun  6 10:33 Makefile.in
 -r--r--r--  1 carter  staff   9681 Jun  6 10:33 NOTES
 -r--r--r--  1 carter  staff   2440 Jun  6 10:33 README
-drwxr-xr-x  3 carter  staff    102 Sep 28 14:28 archive
+drwxr-xr-x  3 carter  staff    102 Oct  9 17:33 archive
 -rw-r--r--  1 carter  staff  10117 Aug  2 09:15 bootp.h
 -r--r--r--  1 carter  staff   7036 Jun  2 18:16 interface.h
 -rw-r--r--  1 carter  staff  20935 Jun  6 09:08 print-bootp.c
@@ -200,7 +200,7 @@ total 80
 ./examples/radns:
 total 464
 -r--r--r--  1 carter  staff   3861 Jun  1 10:28 Makefile.in
--r--r--r--  1 carter  staff   9652 Apr  1 14:24 NOTES
+-r--r--r--  1 carter  staff   9652 Apr  1  2016 NOTES
 -r--r--r--  1 carter  staff   2425 Mar 16  2016 README
 -r--r--r--  1 carter  staff   7036 Mar 16  2016 interface.h
 -r--r--r--  1 carter  staff  66812 Sep 19 21:55 radns.c
@@ -339,7 +339,7 @@ total 848
 -rw-r--r--  1 carter  staff  95954 Sep 28 14:17 raclient.c
 -rw-r--r--  1 carter  staff  65725 Sep 28 14:17 rasql.c
 -r--r--r--  1 carter  staff  55268 Sep 29 10:09 rasqlcheckconf.c
--rw-r--r--  1 carter  staff  25496 Sep 28 14:17 rasqlcheckconf.h
+-r--r--r--  1 carter  staff  25590 Oct  7 16:58 rasqlcheckconf.h
 -r--r--r--  1 carter  staff  72743 Jun 13 13:43 rasqlinsert.c
 -r--r--r--  1 carter  staff  16393 Mar 16  2016 rasqlinsert.h
 -rw-r--r--  1 carter  staff  62566 Sep 28 14:17 rasqltimeindex.c
@@ -400,7 +400,7 @@ total 112
 
 ./examples/rasnort:
 total 1280
--rw-r--r--   1 carter  staff    3900 Sep 28 23:10 Makefile
+-rw-r--r--   1 carter  staff    3862 Oct 10 23:15 Makefile
 -rw-r--r--   1 carter  staff    3817 Oct 12  2012 Makefile.in
 -rw-r--r--   1 carter  staff    3557 Oct 12  2012 Makefile.in.orig
 -rw-r--r--   1 carter  staff    2919 Oct 12  2012 bounds.h
@@ -411,8 +411,8 @@ total 1280
 -rw-r--r--   1 carter  staff    2891 Oct 12  2012 debug.h
 -rw-r--r--   1 carter  staff   42333 Oct 12  2012 decode.h
 -rw-r--r--   1 carter  staff    3373 Oct 12  2012 detect.h
-drwxr-xr-x  87 carter  staff    2958 Sep 28 14:28 detection-plugins
-drwxr-xr-x  14 carter  staff     476 Sep 28 14:28 etc
+drwxr-xr-x  87 carter  staff    2958 Oct  9 17:33 detection-plugins
+drwxr-xr-x  14 carter  staff     476 Oct  9 17:33 etc
 -rw-r--r--   1 carter  staff    2016 Oct 12  2012 event.h
 -rw-r--r--   1 carter  staff     758 Oct 12  2012 event_wrapper.h
 -rw-r--r--   1 carter  staff    1199 Oct 12  2012 fatal.h
@@ -423,20 +423,20 @@ drwxr-xr-x  14 carter  staff     476 Sep 28 14:28 etc
 -rw-r--r--   1 carter  staff    1690 Oct 12  2012 mempool.h
 -rw-r--r--   1 carter  staff    1526 Oct 12  2012 mstring.h
 -rw-r--r--   1 carter  staff     195 Oct 12  2012 packet_time.h
-drwxr-xr-x   9 carter  staff     306 Sep 28 14:28 parser
+drwxr-xr-x   9 carter  staff     306 Oct  9 17:33 parser
 -r--r--r--   1 carter  staff  329903 Oct 12  2012 parser.c
 -rw-r--r--   1 carter  staff    3072 Oct 12  2012 parser.h
 -rw-r--r--   1 carter  staff    4679 Oct 12  2012 pcrm.h
 -rw-r--r--   1 carter  staff    5995 Oct 12  2012 plugbase.h
 -rw-r--r--   1 carter  staff     873 Oct 12  2012 plugin_enum.h
-drwxr-xr-x  62 carter  staff    2108 Sep 28 14:28 preprocessors
+drwxr-xr-x  62 carter  staff    2108 Oct  9 17:33 preprocessors
 -rw-r--r--   1 carter  staff    3024 Oct 12  2012 prototypes.h
 -r--r--r--   1 carter  staff    9606 Oct 12  2012 rasnort.c
-drwxr-xr-x  53 carter  staff    1802 Sep 28 14:28 rules
+drwxr-xr-x  53 carter  staff    1802 Oct  9 17:33 rules
 -rw-r--r--   1 carter  staff    8702 Oct 12  2012 rules.h
 -rw-r--r--   1 carter  staff    2162 Oct 12  2012 sf_sdlist.h
 -rw-r--r--   1 carter  staff     514 Oct 12  2012 sfthreshold.h
-drwxr-xr-x  49 carter  staff    1666 Sep 28 14:28 sfutil
+drwxr-xr-x  49 carter  staff    1666 Oct  9 17:33 sfutil
 -r--r--r--   1 carter  staff   10294 Oct 12  2012 signature.c
 -rw-r--r--   1 carter  staff    2770 Oct 12  2012 signature.h
 -rw-r--r--   1 carter  staff    1841 Oct 12  2012 smalloc.h
@@ -567,11 +567,11 @@ total 256
 
 ./examples/rasnort/preprocessors:
 total 5432
-drwxr-xr-x  16 carter  staff      544 Sep 28 14:28 HttpInspect
+drwxr-xr-x  16 carter  staff      544 Oct  9 17:33 HttpInspect
 -rw-r--r--   1 carter  staff    12608 Oct 12  2012 Makefile
 -rw-r--r--   1 carter  staff      717 Oct 12  2012 Makefile.am
 -rw-r--r--   1 carter  staff    11948 Oct 12  2012 Makefile.in
-drwxr-xr-x  33 carter  staff     1122 Sep 28 14:28 flow
+drwxr-xr-x  33 carter  staff     1122 Oct  9 17:33 flow
 -rw-r--r--   1 carter  staff  1036644 Oct 12  2012 libspp.a
 -rw-r--r--   1 carter  staff    27300 Oct 12  2012 perf-base.c
 -rw-r--r--   1 carter  staff     3784 Oct 12  2012 perf-base.h
@@ -633,17 +633,17 @@ total 560
 -rw-r--r--   1 carter  staff   12614 Oct 12  2012 Makefile
 -rw-r--r--   1 carter  staff     704 Oct 12  2012 Makefile.am
 -rw-r--r--   1 carter  staff   11939 Oct 12  2012 Makefile.in
-drwxr-xr-x   8 carter  staff     272 Sep 28 14:28 anomaly_detection
-drwxr-xr-x  10 carter  staff     340 Sep 28 14:28 client
-drwxr-xr-x   8 carter  staff     272 Sep 28 14:28 event_output
-drwxr-xr-x  24 carter  staff     816 Sep 28 14:28 include
+drwxr-xr-x   8 carter  staff     272 Oct  9 17:33 anomaly_detection
+drwxr-xr-x  10 carter  staff     340 Oct  9 17:33 client
+drwxr-xr-x   8 carter  staff     272 Oct  9 17:33 event_output
+drwxr-xr-x  24 carter  staff     816 Oct  9 17:33 include
 -rw-r--r--   1 carter  staff  253910 Oct 12  2012 libhttp_inspect.a
-drwxr-xr-x   8 carter  staff     272 Sep 28 14:28 mode_inspection
-drwxr-xr-x   8 carter  staff     272 Sep 28 14:28 normalization
-drwxr-xr-x   8 carter  staff     272 Sep 28 14:28 server
-drwxr-xr-x   8 carter  staff     272 Sep 28 14:28 session_inspection
-drwxr-xr-x  10 carter  staff     340 Sep 28 14:28 user_interface
-drwxr-xr-x  12 carter  staff     408 Sep 28 14:28 utils
+drwxr-xr-x   8 carter  staff     272 Oct  9 17:33 mode_inspection
+drwxr-xr-x   8 carter  staff     272 Oct  9 17:33 normalization
+drwxr-xr-x   8 carter  staff     272 Oct  9 17:33 server
+drwxr-xr-x   8 carter  staff     272 Oct  9 17:33 session_inspection
+drwxr-xr-x  10 carter  staff     340 Oct  9 17:33 user_interface
+drwxr-xr-x  12 carter  staff     408 Oct  9 17:33 utils
 
 ./examples/rasnort/preprocessors/HttpInspect/anomaly_detection:
 total 128
@@ -788,9 +788,9 @@ total 1248
 -rw-r--r--   1 carter  staff    2898 Oct 12  2012 flow_stat.c
 -rw-r--r--   1 carter  staff     383 Oct 12  2012 flow_stat.h
 -rw-r--r--   1 carter  staff   37364 Oct 12  2012 flow_stat.o
-drwxr-xr-x   9 carter  staff     306 Sep 28 14:28 int-snort
+drwxr-xr-x   9 carter  staff     306 Oct  9 17:33 int-snort
 -rw-r--r--   1 carter  staff  249132 Oct 12  2012 libflow.a
-drwxr-xr-x  21 carter  staff     714 Sep 28 14:28 portscan
+drwxr-xr-x  21 carter  staff     714 Oct  9 17:33 portscan
 
 ./examples/rasnort/preprocessors/flow/int-snort:
 total 192
@@ -951,7 +951,7 @@ total 40
 total 40
 -r--r--r--  1 carter  staff  3354 Mar 16  2016 Makefile.in
 -r--r--r--  1 carter  staff   890 Mar 16  2016 README
--r--r--r--  1 carter  staff  8823 Mar 16  2016 ratimerange.c
+-r--r--r--  1 carter  staff  9810 Oct 13 07:13 ratimerange.c
 
 ./examples/ratod:
 total 144
@@ -991,16 +991,17 @@ total 8
 -r--r--r--  1 carter  staff  2559 Mar 16  2016 routers.pl
 
 ./include:
-total 1416
+total 1456
 -r--r--r--   1 carter  staff    2291 Mar 16  2016 Makefile.in
-drwxr-xr-x  15 carter  staff     510 Sep 28 14:28 argus
+drwxr-xr-x  15 carter  staff     510 Oct  9 17:33 argus
 -r--r--r--   1 carter  staff     612 Mar 16  2016 argus_8021q.h
 -r--r--r--   1 carter  staff   55664 Sep 19 21:55 argus_client.h
--r--r--r--   1 carter  staff   50703 Sep 20 14:36 argus_cluster.h
+-r--r--r--   1 carter  staff   51806 Oct 10 23:14 argus_cluster.h
 -r--r--r--   1 carter  staff    7410 Sep 19 21:55 argus_compat.h
--r--r--r--   1 carter  staff   16592 Mar 16  2016 argus_config.h.in
+-r--r--r--   1 carter  staff   16754 Oct  7 16:56 argus_config.h.in
+-r--r--r--   1 carter  staff   16592 Mar 16  2016 argus_config.h.in~
 -r--r--r--   1 carter  staff    2193 Mar 16  2016 argus_debug.h
--rw-r--r--   1 carter  staff  101578 Sep 28 14:17 argus_def.h
+-r--r--r--   1 carter  staff  101726 Oct  3 10:21 argus_def.h
 -r--r--r--   1 carter  staff    3014 Mar 16  2016 argus_dscodepoints.h
 -r--r--r--   1 carter  staff    4010 Mar 16  2016 argus_encapsulations.h
 -r--r--r--   1 carter  staff   11854 Mar 16  2016 argus_ethernames.h
@@ -1016,19 +1017,19 @@ drwxr-xr-x  15 carter  staff     510 Sep 28 14:28 argus
 -r--r--r--   1 carter  staff    4025 Mar 16  2016 argus_llc.h
 -r--r--r--   1 carter  staff   10738 Mar 16  2016 argus_main.h
 -r--r--r--   1 carter  staff    5703 Mar 16  2016 argus_mdp.h
--r--r--r--   1 carter  staff   27882 Mar 16  2016 argus_metric.h
+-r--r--r--   1 carter  staff   28227 Oct  3 10:21 argus_metric.h
 -r--r--r--   1 carter  staff    1947 Mar 16  2016 argus_namedb.h
 -r--r--r--   1 carter  staff    5636 Mar 16  2016 argus_os.h
 -r--r--r--   1 carter  staff   33590 Sep 19 21:55 argus_out.h
 -r--r--r--   1 carter  staff    7462 Sep 19 21:55 argus_output.h
--rw-r--r--   1 carter  staff   14950 Sep 28 14:17 argus_parser.h
--r--r--r--   1 carter  staff   19385 Mar 16  2016 argus_sort.h
+-r--r--r--   1 carter  staff   15041 Oct 10 23:14 argus_parser.h
+-r--r--r--   1 carter  staff   19807 Oct 10 23:14 argus_sort.h
 -r--r--r--   1 carter  staff    4529 Mar  7  2014 argus_sql.h
 -r--r--r--   1 carter  staff    2476 Mar 16  2016 argus_udt.h
--rw-r--r--   1 carter  staff  123208 Sep 28 14:17 argus_util.h
-drwxr-xr-x   8 carter  staff     272 Sep 28 14:28 cygwin-include
-drwxr-xr-x   4 carter  staff     136 Sep 28 14:28 net
-drwxr-xr-x   3 carter  staff     102 Sep 28 14:28 netinet
+-r--r--r--   1 carter  staff  124346 Oct  3 10:21 argus_util.h
+drwxr-xr-x   8 carter  staff     272 Oct  9 17:33 cygwin-include
+drwxr-xr-x   4 carter  staff     136 Oct  9 17:33 net
+drwxr-xr-x   3 carter  staff     102 Oct  9 17:33 netinet
 -r--r--r--   1 carter  staff    1226 Mar 16  2016 rabins.h
 -r--r--r--   1 carter  staff    6158 Sep 19 21:55 radium.h
 -r--r--r--   1 carter  staff   65288 Mar 16  2016 rapolicy.h
@@ -1043,7 +1044,7 @@ total 312
 -r--r--r--  1 carter  staff   5040 Mar 16  2016 cons_out.h
 -r--r--r--  1 carter  staff   8393 Mar 16  2016 extract.h
 -r--r--r--  1 carter  staff   3732 Mar 16  2016 fddi.h
--r--r--r--  1 carter  staff  10718 Sep 19 21:55 gencode.h
+-r--r--r--  1 carter  staff  10757 Oct  3 10:21 gencode.h
 -r--r--r--  1 carter  staff    956 Mar 16  2016 global.h
 -r--r--r--  1 carter  staff   1470 Mar 16  2016 md5.h
 -r--r--r--  1 carter  staff   2424 Mar 16  2016 ppp.h
@@ -1052,12 +1053,12 @@ total 312
 
 ./include/cygwin-include:
 total 0
-drwxr-xr-x   3 carter  staff  102 Sep 28 14:28 arpa
-drwxr-xr-x   4 carter  staff  136 Sep 28 14:28 linux
-drwxr-xr-x   3 carter  staff  102 Sep 28 14:28 net
-drwxr-xr-x  15 carter  staff  510 Sep 28 14:28 netinet
-drwxr-xr-x   3 carter  staff  102 Sep 28 14:28 protocols
-drwxr-xr-x   3 carter  staff  102 Sep 28 14:28 sys
+drwxr-xr-x   3 carter  staff  102 Oct  9 17:33 arpa
+drwxr-xr-x   4 carter  staff  136 Oct  9 17:33 linux
+drwxr-xr-x   3 carter  staff  102 Oct  9 17:33 net
+drwxr-xr-x  15 carter  staff  510 Oct  9 17:33 netinet
+drwxr-xr-x   3 carter  staff  102 Oct  9 17:33 protocols
+drwxr-xr-x   3 carter  staff  102 Oct  9 17:33 sys
 
 ./include/cygwin-include/arpa:
 total 8
@@ -1108,13 +1109,13 @@ total 8
 ./lib:
 total 24
 -r--r--r--  1 carter  staff   364 Mar 16  2016 argus-clients.pc.in
--r--r--r--  1 carter  staff  4542 Sep 29 10:06 argus-clients.spec
+-r--r--r--  1 carter  staff  4544 Oct 13 08:41 argus-clients.spec
 
 ./man:
 total 0
-drwxr-xr-x  27 carter  staff  918 Sep 28 14:28 man1
-drwxr-xr-x   8 carter  staff  272 Sep 28 14:28 man5
-drwxr-xr-x   3 carter  staff  102 Sep 28 14:28 man8
+drwxr-xr-x  27 carter  staff  918 Oct  9 17:33 man1
+drwxr-xr-x   8 carter  staff  272 Oct  9 17:33 man5
+drwxr-xr-x   3 carter  staff  102 Oct  9 17:33 man8
 
 ./man/man1:
 total 464
@@ -1161,16 +1162,16 @@ total 16
 total 40
 -r--r--r--  1 carter  staff   4231 Mar 16  2016 README
 -r--r--r--  1 carter  staff  10554 Mar 16  2016 radium.conf
-drwxr-xr-x  7 carter  staff    238 Sep 28 14:28 rhel
-drwxr-xr-x  5 carter  staff    170 Sep 28 14:28 ubuntu
+drwxr-xr-x  7 carter  staff    238 Oct  9 17:33 rhel
+drwxr-xr-x  5 carter  staff    170 Oct  9 17:33 ubuntu
 
 ./pkg/rhel:
 total 32
 -r--r--r--  1 carter  staff   2070 Jun  1 15:16 README
-drwxr-xr-x  4 carter  staff    136 Sep 28 14:28 init.d
+drwxr-xr-x  4 carter  staff    136 Oct  9 17:33 init.d
 -r--r--r--  1 carter  staff  10554 Mar 16  2016 radium.conf
-drwxr-xr-x  4 carter  staff    136 Sep 28 14:28 sysconfig
-drwxr-xr-x  5 carter  staff    170 Sep 28 14:28 systemd
+drwxr-xr-x  4 carter  staff    136 Oct  9 17:33 sysconfig
+drwxr-xr-x  5 carter  staff    170 Oct  9 17:33 systemd
 
 ./pkg/rhel/init.d:
 total 16
@@ -1191,8 +1192,8 @@ total 24
 ./pkg/ubuntu:
 total 8
 -rw-r--r--  1 carter  staff  2099 Jun  1 15:16 README
-drwxr-xr-x  4 carter  staff   136 Sep 28 14:28 default
-drwxr-xr-x  4 carter  staff   136 Sep 28 14:28 init.d
+drwxr-xr-x  4 carter  staff   136 Oct  9 17:33 default
+drwxr-xr-x  4 carter  staff   136 Oct  9 17:33 init.d
 
 ./pkg/ubuntu/default:
 total 16
@@ -1206,10 +1207,10 @@ total 32
 
 ./support:
 total 0
-drwxr-xr-x  27 carter  staff  918 Sep 28 14:28 Config
-drwxr-xr-x   4 carter  staff  136 Sep 28 14:28 Database
-drwxr-xr-x   9 carter  staff  306 Sep 28 14:28 Startup
-drwxr-xr-x   3 carter  staff  102 Sep 28 14:28 System
+drwxr-xr-x  27 carter  staff  918 Oct  9 17:33 Config
+drwxr-xr-x   4 carter  staff  136 Oct  9 17:33 Database
+drwxr-xr-x   9 carter  staff  306 Oct  9 17:33 Startup
+drwxr-xr-x   3 carter  staff  102 Oct  9 17:33 System
 
 ./support/Config:
 total 22912
@@ -1227,7 +1228,7 @@ total 22912
 -r--r--r--  1 carter  staff     1187 Mar 16  2016 local.addrs
 -r--r--r--  1 carter  staff     2415 Mar 16  2016 racluster.conf
 -r-xr-xr-x  1 carter  staff     1608 Mar 16  2016 racolor.conf
--r--r--r--  1 carter  staff    10730 Mar 16  2016 radium.conf
+-r--r--r--  1 carter  staff    11131 Oct  2 11:08 radium.conf
 -r-xr-xr-x  1 carter  staff      999 Mar 16  2016 ragetcountrycodes.sh
 -r--r--r--  1 carter  staff     9064 Mar 16  2016 ralabel.conf
 -r--r--r--  1 carter  staff     1961 Mar 16  2016 ralocality.conf

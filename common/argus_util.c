@@ -40,9 +40,9 @@
  */
 
 /* 
- * $Id: //depot/gargoyle/clients/common/argus_util.c#78 $
- * $DateTime: 2016/10/06 00:01:32 $
- * $Change: 3216 $
+ * $Id: //depot/gargoyle/clients/common/argus_util.c#81 $
+ * $DateTime: 2016/10/13 08:28:01 $
+ * $Change: 3223 $
  */
 
 #ifdef HAVE_CONFIG_H
@@ -4638,14 +4638,17 @@ ArgusPrintRecord (struct ArgusParserStruct *parser, char *buf, struct ArgusRecor
                               case ARGUS_FAR:
                               case ARGUS_NETFLOW:
                                  if (tok) {
-                                    if (((parser->RaPrintAlgorithmList[parser->RaPrintIndex]->print     == ArgusPrintSrcPort) &&
-                                         (parser->RaPrintAlgorithmList[parser->RaPrintIndex - 1]->print == ArgusPrintSrcAddr)) ||
-                                        ((parser->RaPrintAlgorithmList[parser->RaPrintIndex]->print     == ArgusPrintDstPort) &&
-                                         (parser->RaPrintAlgorithmList[parser->RaPrintIndex - 1]->print == ArgusPrintDstAddr))) {
+                                    if ((parser->RaPrintAlgorithmList[parser->RaPrintIndex - 1] != NULL) && 
+                                        (parser->RaPrintAlgorithmList[parser->RaPrintIndex] != NULL)) {
+                                       if (((parser->RaPrintAlgorithmList[parser->RaPrintIndex]->print     == ArgusPrintSrcPort) &&
+                                            (parser->RaPrintAlgorithmList[parser->RaPrintIndex - 1]->print == ArgusPrintSrcAddr)) ||
+                                           ((parser->RaPrintAlgorithmList[parser->RaPrintIndex]->print     == ArgusPrintDstPort) &&
+                                            (parser->RaPrintAlgorithmList[parser->RaPrintIndex - 1]->print == ArgusPrintDstAddr))) {
 
-                                       if (parser->RaFieldDelimiter == '\0')
-                                          if (buf[strlen(buf) - 1] == ' ')
-                                             buf[strlen(buf) - 1] = '.';
+                                          if (parser->RaFieldDelimiter == '\0')
+                                             if (buf[strlen(buf) - 1] == ' ')
+                                                buf[strlen(buf) - 1] = '.';
+                                       }
                                     }
                                  }
                                  break;
@@ -5248,8 +5251,8 @@ ArgusPrintStartDate (struct ArgusParserStruct *parser, char *buf, struct ArgusRe
    switch (argus->hdr.type & 0xF0) {
       case ARGUS_MAR: {
          struct ArgusRecord *rec = (struct ArgusRecord *) argus->dsrs[0];
-         tvp->tv_sec  = rec->argus_mar.now.tv_sec;
-         tvp->tv_usec = rec->argus_mar.now.tv_usec;
+         tvp->tv_sec  = rec->argus_mar.startime.tv_sec;
+         tvp->tv_usec = rec->argus_mar.startime.tv_usec;
          break;
       }
 
@@ -5299,8 +5302,8 @@ ArgusPrintLastDate (struct ArgusParserStruct *parser, char *buf, struct ArgusRec
    switch (argus->hdr.type & 0xF0) {
       case ARGUS_MAR: {
          struct ArgusRecord *rec = (struct ArgusRecord *) argus->dsrs[0];
-         tvp->tv_sec  = rec->argus_mar.startime.tv_sec;
-         tvp->tv_usec = rec->argus_mar.startime.tv_usec;
+         tvp->tv_sec  = rec->argus_mar.now.tv_sec;
+         tvp->tv_usec = rec->argus_mar.now.tv_usec;
          break;
       }
 
@@ -8349,6 +8352,7 @@ ArgusPrintSrcAddr (struct ArgusParserStruct *parser, char *buf, struct ArgusReco
             }
          } 
 
+         parser->RaPrintIndex = ARGUSPRINTSRCADDR;
          ArgusPrintAddr (parser, buf, type, addr, objlen, masklen, len, ARGUS_SRC);
          break;
       }
@@ -8624,6 +8628,7 @@ ArgusPrintDstAddr (struct ArgusParserStruct *parser, char *buf, struct ArgusReco
             }
          }
 
+         parser->RaPrintIndex = ARGUSPRINTDSTADDR;
          ArgusPrintAddr (parser, buf, type, addr, objlen, masklen, len, ARGUS_DST);
          break;
       }
@@ -24982,11 +24987,16 @@ ArgusCheckTime (struct ArgusParserStruct *parser, struct ArgusRecordStruct *ns)
    if ((ns->hdr.type & 0xF0) == ARGUS_MAR) {
       struct ArgusRecord *rec = (void *)ns->dsrs[0];
       if (rec != NULL) {
-         start.tv_sec  = rec->argus_mar.startime.tv_sec;
-         start.tv_usec = rec->argus_mar.startime.tv_usec;
+         if (rec->hdr.cause & ARGUS_START) {
+            start.tv_sec  = rec->argus_mar.now.tv_sec;
+            start.tv_usec = rec->argus_mar.now.tv_usec;
+         } else {
+            start.tv_sec  = rec->argus_mar.startime.tv_sec;
+            start.tv_usec = rec->argus_mar.startime.tv_usec;
+         }
 
-         last.tv_sec   = rec->argus_mar.now.tv_sec;
-         last.tv_usec  = rec->argus_mar.now.tv_usec;
+            last.tv_sec   = rec->argus_mar.now.tv_sec;
+            last.tv_usec  = rec->argus_mar.now.tv_usec;
       } else {
          bzero(&start, sizeof(start));
          bzero(&last,  sizeof(last));

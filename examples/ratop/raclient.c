@@ -490,8 +490,9 @@ ArgusClientInit (struct ArgusParserStruct *parser)
 
          if (parser->ArgusFlowModelFile)
             parser->ArgusAggregator = ArgusParseAggregator(parser, parser->ArgusFlowModelFile, NULL);
-         else
-            parser->ArgusAggregator = ArgusNewAggregator(parser, NULL, ARGUS_RECORD_AGGREGATOR);
+         else {
+            parser->ArgusAggregator = ArgusNewAggregator(parser, "sid saddr daddr proto sport dport", ARGUS_RECORD_AGGREGATOR);
+         }
 
          if (parser->ArgusAggregator == NULL) {
             parser->RaCumulativeMerge = 0;
@@ -504,7 +505,7 @@ ArgusClientInit (struct ArgusParserStruct *parser)
             if ((input = (void *)parser->ArgusRemoteHosts->start) != NULL)
                parser->RaTasksToDo = RA_ACTIVE;
 
-         if ((ArgusEventAggregator = ArgusNewAggregator(parser, "srcid saddr daddr proto sport dport", ARGUS_RECORD_AGGREGATOR)) == NULL)
+         if ((ArgusEventAggregator = ArgusNewAggregator(parser, "sid saddr daddr proto sport dport", ARGUS_RECORD_AGGREGATOR)) == NULL)
             ArgusLog (LOG_ERR, "ArgusClientInit: ArgusNewAggregator error");
 
          if (parser->Hstr != NULL)
@@ -1509,7 +1510,6 @@ RaProcessThisLsOfEventRecord (struct ArgusParserStruct *parser, struct ArgusReco
    struct ArgusHashStruct *hstruct = NULL;
    int found = 0;
 
-
    if (ArgusParser->RaClientUpdate.tv_sec == 0) {
       ArgusParser->RaClientUpdate.tv_sec = parser->ArgusGlobalTime.tv_sec;
       ArgusParser->RaClientUpdate.tv_usec = 0;
@@ -1603,50 +1603,50 @@ RaProcessThisLsOfEventRecord (struct ArgusParserStruct *parser, struct ArgusReco
    }
 
    if (cns) {
-   if (!found)
-      if ((hstruct = ArgusGenerateHashStruct(agg, cns, flow)) == NULL)
-         ArgusLog (LOG_ERR, "RaProcessThisRecord: ArgusGenerateHashStruct error %s", strerror(errno));
+      if (!found)
+         if ((hstruct = ArgusGenerateHashStruct(agg, cns, flow)) == NULL)
+            ArgusLog (LOG_ERR, "RaProcessThisRecord: ArgusGenerateHashStruct error %s", strerror(errno));
 
-   switch (ns->hdr.type & 0xF0) {
-      case ARGUS_NETFLOW:
-      case ARGUS_FAR: {
-         tns = ArgusCopyRecordStruct(cns);
-         if (pns) {
-            if (parser->RaCumulativeMerge)
-               ArgusMergeRecords (ArgusParser->ArgusAggregator, pns, tns);
-            else {
-               int i;
-               for (i = 0; i < ARGUSMAXDSRTYPE; i++) {
-                  if (tns->dsrs[i] != NULL) {
-                     if (pns->dsrs[i] != NULL)
-                        ArgusFree(pns->dsrs[i]);
-                     pns->dsrs[i] = tns->dsrs[i];
-                     tns->dsrs[i] = NULL;
+      switch (ns->hdr.type & 0xF0) {
+         case ARGUS_NETFLOW:
+         case ARGUS_FAR: {
+            tns = ArgusCopyRecordStruct(cns);
+            if (pns) {
+               if (parser->RaCumulativeMerge)
+                  ArgusMergeRecords (ArgusParser->ArgusAggregator, pns, tns);
+               else {
+                  int i;
+                  for (i = 0; i < ARGUSMAXDSRTYPE; i++) {
+                     if (tns->dsrs[i] != NULL) {
+                        if (pns->dsrs[i] != NULL)
+                           ArgusFree(pns->dsrs[i]);
+                        pns->dsrs[i] = tns->dsrs[i];
+                        tns->dsrs[i] = NULL;
+                     }
                   }
                }
+
+               ArgusDeleteRecordStruct(ArgusParser, tns);
+               pns->status |= ARGUS_RECORD_MODIFIED;
+
+               ArgusRemoveFromQueue(RaEventProcess->queue, &pns->qhdr, ARGUS_NOLOCK);
+               ArgusAddToQueue (RaEventProcess->queue, &pns->qhdr, ARGUS_NOLOCK);
+
+            } else {
+               pns = tns;
+               pns->status |= ARGUS_RECORD_MODIFIED;
+               pns->htblhdr = ArgusAddHashEntry (RaEventProcess->htable, pns, hstruct);
+               ArgusAddToQueue (RaEventProcess->queue, &pns->qhdr, ARGUS_NOLOCK);
             }
-
-            ArgusDeleteRecordStruct(ArgusParser, tns);
-            pns->status |= ARGUS_RECORD_MODIFIED;
-
-            ArgusRemoveFromQueue(RaEventProcess->queue, &pns->qhdr, ARGUS_NOLOCK);
-            ArgusAddToQueue (RaEventProcess->queue, &pns->qhdr, ARGUS_NOLOCK);
-
-         } else {
-            pns = tns;
-            pns->status |= ARGUS_RECORD_MODIFIED;
-            pns->htblhdr = ArgusAddHashEntry (RaEventProcess->htable, pns, hstruct);
-            ArgusAddToQueue (RaEventProcess->queue, &pns->qhdr, ARGUS_NOLOCK);
+            RaWindowModified = RA_MODIFIED;
          }
-         RaWindowModified = RA_MODIFIED;
       }
-   }
 
-   ArgusDeleteRecordStruct(ArgusParser, cns);
+      ArgusDeleteRecordStruct(ArgusParser, cns);
    }
 
 #if defined(ARGUSDEBUG)
-   ArgusDebug (6, "RaProcessThisLsOfEventRecord () returning\n"); 
+   ArgusDebug (2, "RaProcessThisLsOfEventRecord () returning\n"); 
 #endif
 }
 

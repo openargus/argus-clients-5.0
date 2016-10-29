@@ -19,9 +19,9 @@
  */
 
 /* 
- * $Id: //depot/gargoyle/clients/include/argus_parser.h#38 $
- * $DateTime: 2016/10/10 23:14:45 $
- * $Change: 3219 $
+ * $Id: //depot/gargoyle/clients/include/argus_parser.h#39 $
+ * $DateTime: 2016/10/24 12:10:50 $
+ * $Change: 3226 $
  */
 
 
@@ -298,6 +298,7 @@ struct ArgusParserStruct {
    char *ArgusProgramArgs, *ArgusProgramOptions;
    char *ArgusSQLStatement, *MySQLDBEngine;
    char *ArgusSearchString, *RaMarInfName;
+   char *ArgusAliasFile;
 
    struct timeval ArgusRealTime, ArgusGlobalTime;
    struct timeval ArgusStartRealTime, ArgusEndRealTime;
@@ -368,8 +369,10 @@ struct ArgusParserStruct {
    char ArgusGenerateManRecords;
    char ArgusPrintMan, ArgusPrintEvent;
    char ArgusPrintXml, ArgusAsnFormat;
+   char ArgusPrintJson;
+   char ArgusPrintD3;
    char ArgusSrvInit;
-   char RaXMLStarted; 
+   char RaOutputStarted; 
    char ArgusGrepSource;
    char ArgusGrepDestination;
    char ArgusAutoId;
@@ -412,7 +415,7 @@ struct ArgusParserStruct {
 
    char tflag, uflag, Wflag, vflag, Vflag, iflag;
    char Iflag, rflag, Rflag, Sflag, sflag, Tflag, xflag;
-   char Xflag, XMLflag, yflag, zflag, Zflag, domainonly;
+   char Xflag, yflag, zflag, Zflag, domainonly;
    char Uflag, noflag;
 
    char *estr, *Hstr, *Mflag;

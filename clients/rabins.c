@@ -34,9 +34,9 @@
  */
 
 /* 
- * $Id: //depot/gargoyle/clients/clients/rabins.c#24 $
- * $DateTime: 2016/10/24 12:10:50 $
- * $Change: 3226 $
+ * $Id: //depot/gargoyle/clients/clients/rabins.c#28 $
+ * $DateTime: 2016/11/07 12:39:19 $
+ * $Change: 3240 $
  */
 
 #ifdef HAVE_CONFIG_H
@@ -68,7 +68,7 @@
 #include <signal.h>
 #include <ctype.h>
 
-int RaPrintCounter = 1;
+int RaPrintCounter = 0;
 int RaRealTime = 0;
 float RaUpdateRate = 1.0;
 
@@ -588,6 +588,7 @@ RaParseComplete (int sig)
                      }
                   }
                }
+
                exit(0);
                break;
             }
@@ -683,7 +684,7 @@ ArgusClientTimeout ()
 
                      for (i = 0; i < cnt; i++) {
                         if (agg->queue->array[i] != NULL)
-                           ((struct ArgusRecordStruct *)agg->queue->array[i])->rank = i + 1;
+                           ((struct ArgusRecordStruct *)agg->queue->array[i])->rank = i;
                         RaSendArgusRecord ((struct ArgusRecordStruct *) agg->queue->array[i]);
                      }
                      ArgusDeleteRecordStruct(ArgusParser, ArgusParser->ns);
@@ -830,11 +831,26 @@ RaProcessRecord (struct ArgusParserStruct *parser, struct ArgusRecordStruct *ns)
          break;
 
       case ARGUS_MAR:
-         RaProcessThisRecord(parser, ns);
+         if (parser->ArgusTotalRecords != 1)
+            RaProcessThisRecord(parser, ns);
          break;
 
       case ARGUS_NETFLOW:
       case ARGUS_FAR: {
+
+         if (parser->Vflag || parser->Aflag) {
+            ArgusProcessServiceAvailability(parser, ns);
+            if (parser->xflag) {
+               if ((parser->vflag && (ns->status & RA_SVCPASSED)) ||
+                  (!parser->vflag && (ns->status & RA_SVCFAILED))) {
+#ifdef ARGUSDEBUG
+                  ArgusDebug (3, "RaProcessRecord (0x%x, 0x%x) service test failed", parser, ns);
+#endif
+                  return;
+               }
+            }
+         }
+
          if (parser->RaMonMode) {
             struct ArgusRecordStruct *tns = ArgusCopyRecordStruct(ns);
             struct ArgusFlow *flow;
@@ -959,10 +975,9 @@ RaProcessThisRecord (struct ArgusParserStruct *parser, struct ArgusRecordStruct 
       }
 
       switch (argus->hdr.type & 0xF0) {
+         default:
          case ARGUS_EVENT:
          case ARGUS_MAR:
-            break;
-
          case ARGUS_NETFLOW:
          case ARGUS_FAR: {
             if (agg->grepstr) {
@@ -1000,9 +1015,6 @@ RaProcessThisRecord (struct ArgusParserStruct *parser, struct ArgusRecordStruct 
                   case ARGUS_MAR:
                      if (!(retn = ArgusInsertRecord(parser, RaBinProcess, tns, offset)))
                         ArgusDeleteRecordStruct(parser, tns);
-
-                     if (ns == tns)
-                        ns->status |= ARGUS_RECORD_PROCESSED;
                      break;
 
                   case ARGUS_NETFLOW:
@@ -1187,6 +1199,7 @@ RaSendArgusRecord(struct ArgusRecordStruct *argus)
 
                if (fprintf (stdout, "%s\n", buf) < 0)
                   RaParseComplete (SIGQUIT);
+
                fflush(stdout);
                break;
             }
@@ -1394,11 +1407,11 @@ RaDeleteBinProcess(struct ArgusParserStruct *parser, struct RaBinProcessStruct *
          }
 
          while (agg) {
-            int rank = 1;
+            int rank = 0;
             ArgusSortQueue(ArgusSorter, agg->queue, ARGUS_LOCK);
             while ((ns = (struct ArgusRecordStruct *) ArgusPopQueue(agg->queue, ARGUS_NOLOCK)) != NULL) {
                ns->rank = rank++;
-               if ((parser->eNoflag == 0 ) || ((parser->eNoflag >= ns->rank) && (parser->sNoflag <= ns->rank)))
+               if ((parser->eNoflag == 0 ) || ((parser->eNoflag >= (ns->rank + 1)) && (parser->sNoflag <= (ns->rank + 1))))
                   RaSendArgusRecord (ns);
                ArgusDeleteRecordStruct(parser, ns);
             }

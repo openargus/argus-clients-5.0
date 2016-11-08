@@ -23,9 +23,9 @@
  */
 
 /* 
- * $Id: //depot/gargoyle/clients/examples/ramysql/rasqltimeindex.c#9 $
- * $DateTime: 2016/10/27 23:31:56 $
- * $Change: 3233 $
+ * $Id: //depot/gargoyle/clients/examples/ramysql/rasqltimeindex.c#10 $
+ * $DateTime: 2016/10/31 23:30:40 $
+ * $Change: 3237 $
  */
 
 #ifdef HAVE_CONFIG_H
@@ -867,8 +867,6 @@ struct RaMySQLProbeTable {
 void
 ArgusClientInit (struct ArgusParserStruct *parser)
 {
-   struct ArgusModeStruct *mode = parser->ArgusModeList;
-   unsigned int RaThisNet = 0, RaThisHost = 0;
    int RaHashSize = 0x10000;
    char buf[2048];
    int oldpflag;
@@ -884,20 +882,6 @@ ArgusClientInit (struct ArgusParserStruct *parser)
 
       if (ArgusParser->Sflag)
          usage();
-
-      while (mode && mode->mode) {
-         if (!(strcasecmp (mode->mode, "host"))) {
-            mode = mode->nxt;
-            RaThisHost = **argus_nametoaddr(mode->mode);
-            RaThisNet = RaThisHost & ipaddrtonetmask(RaThisHost);
-         } else
-         if (!(strcasecmp (mode->mode, "net"))) {
-            mode = mode->nxt;
-            RaThisNet = **argus_nametoaddr(mode->mode);
-         }
-
-         mode = mode->nxt;
-      }
 
       if ((parser->ArgusAggregator = ArgusNewAggregator(parser, "sid", ARGUS_RECORD_AGGREGATOR)) == NULL)
          ArgusLog(LOG_ERR, "ArgusClientInit: ArgusNewAggregator error %s", strerror(errno));

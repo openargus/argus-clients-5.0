@@ -31,9 +31,9 @@
  */
 
 /*
- * $Id: //depot/gargoyle/clients/examples/raconvert/raconvert.c#9 $
- * $DateTime: 2016/06/08 00:19:40 $
- * $Change: 3165 $
+ * $Id: //depot/gargoyle/clients/examples/raconvert/raconvert.c#11 $
+ * $DateTime: 2016/11/07 12:39:19 $
+ * $Change: 3240 $
  */
 
 #ifdef HAVE_CONFIG_H
@@ -734,7 +734,7 @@ RaConvertReadFile (struct ArgusParserStruct *parser, struct ArgusInput *input)
                   } else {
                      if (!parser->qflag) {
                         static char buf[MAXSTRLEN];
-                        int retn = 0, RaPrintCounter = 1;
+                        int retn = 0, RaPrintCounter = 0;
 
                         if (parser->Lflag && !(parser->ArgusPrintXml)) {
                            if (parser->RaLabel == NULL)
@@ -751,7 +751,7 @@ RaConvertReadFile (struct ArgusParserStruct *parser, struct ArgusInput *input)
                         bzero (buf, sizeof(buf));
                         argus->rank = RaPrintCounter++;
 
-                        if ((ArgusParser->eNoflag == 0 ) || ((ArgusParser->eNoflag >= argus->rank) && (ArgusParser->sNoflag <= argus->rank))) {
+                        if ((ArgusParser->eNoflag == 0 ) || ((ArgusParser->eNoflag >= (argus->rank + 1)) && (ArgusParser->sNoflag <= (argus->rank + 1)))) {
                            ArgusPrintRecord(parser, buf, argus, MAXSTRLEN);
                
                            if ((retn = fprintf (stdout, "%s", buf)) < 0)
@@ -797,11 +797,12 @@ RaConvertReadFile (struct ArgusParserStruct *parser, struct ArgusInput *input)
                               }
                            }
                   
-                           fprintf (stdout, "\n");
+                           if (!(parser->ArgusPrintJson))
+                              fprintf (stdout, "\n");
                            fflush (stdout);
 
                         } else {
-                           if ((ArgusParser->eNoflag != 0 ) && (ArgusParser->eNoflag < argus->rank))
+                           if ((ArgusParser->eNoflag != 0 ) && (ArgusParser->eNoflag < (argus->rank + 1)))
                               RaParseComplete (SIGQUIT);
                         }
                      }

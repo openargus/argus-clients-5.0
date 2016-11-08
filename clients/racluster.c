@@ -27,9 +27,9 @@
  */
 
 /* 
- * $Id: //depot/gargoyle/clients/clients/racluster.c#23 $
- * $DateTime: 2016/10/13 08:28:01 $
- * $Change: 3223 $
+ * $Id: //depot/gargoyle/clients/clients/racluster.c#26 $
+ * $DateTime: 2016/11/07 12:39:19 $
+ * $Change: 3240 $
  */
 
 #ifdef HAVE_CONFIG_H
@@ -293,7 +293,7 @@ RaParseComplete (int sig)
          while (agg != NULL) {
             if (agg->queue->count) {
                struct ArgusRecordStruct *argus;
-               int rank = 1;
+               int rank = 0;
 
                if (!(ArgusSorter))
                   if ((ArgusSorter = ArgusNewSorter(ArgusParser)) == NULL)
@@ -330,7 +330,7 @@ RaParseComplete (int sig)
                   argus = (struct ArgusRecordStruct *) agg->queue->array[i];
                   argus->rank = rank++;
 
-                  if ((ArgusParser->eNoflag == 0 ) || ((ArgusParser->eNoflag >= argus->rank) && (ArgusParser->sNoflag <= argus->rank)))
+                  if ((ArgusParser->eNoflag == 0 ) || ((ArgusParser->eNoflag >= (argus->rank + 1)) && (ArgusParser->sNoflag <= (argus->rank + 1))))
                      RaSendArgusRecord (argus);
 
                   agg->queue->array[i] = NULL;
@@ -550,9 +550,6 @@ RaProcessRecord (struct ArgusParserStruct *parser, struct ArgusRecordStruct *ns)
          break;
 
       case ARGUS_MAR:
-         RaProcessThisRecord(parser, ns);
-         break;
-
       case ARGUS_NETFLOW:
       case ARGUS_FAR: {
          struct ArgusFlow *flow = (struct ArgusFlow *) ns->dsrs[ARGUS_FLOW_INDEX];
@@ -922,7 +919,7 @@ RaProcessThisRecord (struct ArgusParserStruct *parser, struct ArgusRecordStruct 
                         ArgusZeroRecord (tns);
 
                      } else {
-                        if (agg->statusint || agg->idleint) {   // if any timers, need to flush if needed
+                        if ((agg->statusint > 0) || (agg->idleint > 0)) {   // if any timers, need to flush if needed
                            double dur, nsst, tnsst, nslt, tnslt;
 
                            nsst  = ArgusFetchStartTime(ns);
@@ -932,7 +929,7 @@ RaProcessThisRecord (struct ArgusParserStruct *parser, struct ArgusRecordStruct 
 
                            dur = ((tnslt > nslt) ? tnslt : nslt) - ((nsst < tnsst) ? nsst : tnsst); 
                         
-                           if (agg->statusint && (dur >= agg->statusint)) {
+                           if ((agg->statusint > 0) && (dur >= agg->statusint)) {
                               RaSendArgusRecord(tns);
                               ArgusZeroRecord(tns);
                            } else {
@@ -957,15 +954,15 @@ RaProcessThisRecord (struct ArgusParserStruct *parser, struct ArgusRecordStruct 
                      tns = ns;
                      if ((hstruct = ArgusGenerateHashStruct(agg, tns, (struct ArgusFlow *)&agg->fstruct)) != NULL) {
                         tns->htblhdr = ArgusAddHashEntry (agg->htable, tns, hstruct);
-                        ArgusAddToQueue (agg->queue, &tns->qhdr, ARGUS_NOLOCK);
+                        ArgusAddToQueue (agg->queue, &tns->qhdr, ARGUS_LOCK);
                         agg->status |= ARGUS_AGGREGATOR_DIRTY;
                      }
                   }
                }
 
             } else {
-               ArgusAddToQueue (agg->queue, &ns->qhdr, ARGUS_NOLOCK);
-               agg->status |= ARGUS_AGGREGATOR_DIRTY;
+                  ArgusAddToQueue (agg->queue, &ns->qhdr, ARGUS_LOCK);
+                  agg->status |= ARGUS_AGGREGATOR_DIRTY;
             }
 
             if (agg->cont)
@@ -1043,8 +1040,9 @@ RaSendArgusRecord(struct ArgusRecordStruct *argus)
 
             *(int *)&buf = 0;
             ArgusPrintRecord(ArgusParser, buf, argus, MAXSTRLEN);
+
             if (fprintf (stdout, "%s\n", buf) < 0)
-               RaParseComplete(SIGQUIT);
+               RaParseComplete (SIGQUIT);
 
             if (ArgusParser->eflag == ARGUS_HEXDUMP) {
                int i;

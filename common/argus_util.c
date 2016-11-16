@@ -18644,6 +18644,7 @@ ArgusAddToQueue(struct ArgusQueueStruct *queue, struct ArgusQueueHeader *obj, in
          }
          queue->end = obj;
          queue->count++;
+         queue->status |= RA_MODIFIED;
 #if defined(ARGUS_THREADS)
          if (type == ARGUS_LOCK)
             pthread_mutex_unlock(&queue->lock); 
@@ -18656,8 +18657,6 @@ ArgusAddToQueue(struct ArgusQueueStruct *queue, struct ArgusQueueHeader *obj, in
             gettimeofday(&obj->lasttime, 0L);
          }
          retn = 1;
-
-         queue->status |= RA_MODIFIED;
 
       } else
          ArgusLog (LOG_ERR, "ArgusAddToQueue (%p, %p) obj in queue %p\n", queue, obj, obj->queue);

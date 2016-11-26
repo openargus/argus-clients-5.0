@@ -19,9 +19,9 @@
  */
 
 /* 
- * $Id: //depot/gargoyle/clients/include/rasplit.h#7 $
- * $DateTime: 2014/05/14 00:30:13 $
- * $Change: 2825 $
+ * $Id: //depot/gargoyle/clients/include/rasplit.h#8 $
+ * $DateTime: 2016/11/14 01:30:37 $
+ * $Change: 3244 $
  */
 
 #ifndef RaSplit_h
@@ -79,7 +79,7 @@ extern "C" {
 
 #if defined(ArgusClient)
 
-char *RaSplitModes[ARGUSSPLITMODENUM] = { 
+char *RaSplitModes[ARGUSSPLITMODENUM] = {
   "time",
   "count",  
   "size",    

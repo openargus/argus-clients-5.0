@@ -112,7 +112,7 @@ struct tm ArgusSaveTableTmStruct;
 time_t ArgusSaveTableSeconds = 0;
 
 int ArgusCreateSQLSaveTable(char *, char *);
-char *ArgusScheduleSQLQuery (struct ArgusParserStruct *, struct ArgusAggregatorStruct *, struct ArgusRecordStruct *, char *, char*, int, int);
+int ArgusScheduleSQLQuery (struct ArgusParserStruct *, struct ArgusAggregatorStruct *, struct ArgusRecordStruct *, char *, int);
 
 void RaMySQLDeleteRecords(struct ArgusParserStruct *, struct ArgusRecordStruct *);
 
@@ -396,21 +396,21 @@ int ArgusFetchWindowData(struct ArgusWindowStruct *);
 static void *
 ArgusOutputProcess (void *arg)
 {
+   const struct timespec ts = {0, 200000000};
+
    struct timeval ntvbuf, *ntvp = &ntvbuf;
    struct timeval tvbuf, *tvp = &tvbuf;
-   struct timespec tsbuf, *tsp = &tsbuf;
 
-   int cnt = 0;
-
+   gettimeofday(ntvp, NULL);
    ArgusOutputProcessInit();
 
    while (!ArgusCloseDown) {
+      int cnt = 0;
       gettimeofday(tvp, NULL);
 
 #if defined(ARGUS_THREADS)
       if (pthread_mutex_lock(&RaCursesLock) == 0) {
 #endif
-        
          if ((cnt = ArgusWindowQueue->count) > 0) {
             int i, retn;
 
@@ -435,11 +435,10 @@ ArgusOutputProcess (void *arg)
                            ntvp->tv_usec -= 1000000;
                         }
                         RaWindowImmediate = FALSE;
-//                      ArgusDisplayNeedsRefreshing = 1;
                      }
 
-                  } else
                      ArgusProcessSqlData(ws);
+                  }
                }
                ArgusAddToQueue (ArgusWindowQueue, &ws->qhdr, ARGUS_LOCK);
             }
@@ -449,9 +448,7 @@ ArgusOutputProcess (void *arg)
          pthread_mutex_unlock(&RaCursesLock);
       }
 #endif
-      tsp->tv_sec  = 0;
-      tsp->tv_nsec = 50000000;
-      nanosleep(tsp, NULL);
+      nanosleep (&ts, NULL);
    }
 
    ArgusOutputProcessClose();
@@ -481,7 +478,6 @@ ArgusProcessSqlData(struct ArgusWindowStruct *ws)
                 struct ArgusQueueHeader *qhdr = queue->start;
                 int i = 0;
                 struct ArgusRecordStruct *ns;
-                char *sbuf = calloc(1, MAXBUFFERLEN);
 
                 for (i = 0; qhdr && (i < queue->count); i++, qhdr = qhdr->nxt) {
                         ns = (struct ArgusRecordStruct *)qhdr;
@@ -489,11 +485,9 @@ ArgusProcessSqlData(struct ArgusWindowStruct *ws)
                            ns->status &= ~ARGUS_RECORD_MODIFIED;
                            ArgusScheduleSQLQuery (ArgusParser,
                                                   ArgusParser->ArgusAggregator,
-                                                  ns, RaSQLCurrentTable, sbuf,
-                                                  MAXBUFFERLEN, ARGUS_STATUS);
+                                                  ns, RaSQLCurrentTable, ARGUS_STATUS);
                         }
                 }
-                free(sbuf);
 #endif
 #if defined(ARGUS_THREADS)
                pthread_mutex_unlock(&queue->lock);
@@ -505,6 +499,9 @@ ArgusProcessSqlData(struct ArgusWindowStruct *ws)
          RaWindowImmediate = FALSE;
       }
    }
+#ifdef ARGUSDEBUG
+   ArgusDebug (7, "ArgusProcessSqlData(%p)\n", ws);
+#endif
 }
 
 
@@ -541,21 +538,26 @@ ArgusOutputProcessInit()
    ws->window = RaHeaderWindow;
    ws->desc = strdup("RaHeaderWindow");
    ws->data = ArgusFetchWindowData;
+
 #if defined(ARGUS_THREADS)
    pthread_mutex_init(&ws->lock, NULL);
 #endif
+
    ArgusAddToQueue (ArgusWindowQueue, &ws->qhdr, ARGUS_LOCK);
 
    if ((ws = (struct ArgusWindowStruct *)ArgusCalloc(1, sizeof(*ws))) == NULL)
       ArgusLog(LOG_ERR, "ArgusOutputProcessInit: ArgusCalloc error %s", strerror(errno));
 
    RaStatusWindowStruct = ws;
+
    ws->window = RaStatusWindow;
    ws->desc = strdup("RaStatusWindow");
    ws->data = ArgusFetchWindowData;
+
 #if defined(ARGUS_THREADS)
    pthread_mutex_init(&ws->lock, NULL);
 #endif
+
    ArgusAddToQueue (ArgusWindowQueue, &ws->qhdr, ARGUS_LOCK);
 
    if ((ws = (struct ArgusWindowStruct *)ArgusCalloc(1, sizeof(*ws))) == NULL)
@@ -565,9 +567,11 @@ ArgusOutputProcessInit()
    ws->window = RaDebugWindow;
    ws->desc = strdup("RaDebugWindow");
    ws->data = ArgusFetchWindowData;
+
 #if defined(ARGUS_THREADS)
    pthread_mutex_init(&ws->lock, NULL);
 #endif
+
    ArgusAddToQueue (ArgusWindowQueue, &ws->qhdr, ARGUS_LOCK);
 
    if ((ws = (struct ArgusWindowStruct *)ArgusCalloc(1, sizeof(*ws))) == NULL)
@@ -577,9 +581,11 @@ ArgusOutputProcessInit()
    ws->window = RaDisplayWindow;
    ws->desc = strdup("RaDisplayWindow");
    ws->data = ArgusFetchWindowData;
+
 #if defined(ARGUS_THREADS)
    pthread_mutex_init(&ws->lock, NULL);
 #endif
+
    ArgusAddToQueue (ArgusWindowQueue, &ws->qhdr, ARGUS_LOCK);
 
    if ((dom = (struct ArgusDomainStruct *) ArgusCalloc(1, sizeof(*dom))) == NULL)
@@ -611,7 +617,6 @@ ArgusOutputProcessClose()
        struct ArgusQueueHeader *qhdr = queue->start;
        int i = 0;
        struct ArgusRecordStruct *ns;
-       char *sbuf = calloc(1, MAXBUFFERLEN);
 
        for (i = 0; qhdr && (i < queue->count); i++, qhdr = qhdr->nxt) {
                ns = (struct ArgusRecordStruct *)qhdr;
@@ -619,11 +624,9 @@ ArgusOutputProcessClose()
                   ns->status &= ~ARGUS_RECORD_MODIFIED;
                   ArgusScheduleSQLQuery (ArgusParser,
                                          ArgusParser->ArgusAggregator,
-                                         ns, RaSQLCurrentTable, sbuf,
-                                         MAXBUFFERLEN, ARGUS_STATUS);
+                                         ns, RaSQLCurrentTable, ARGUS_STATUS);
                }
        }
-       free(sbuf);
    }
 #endif
 
@@ -655,8 +658,7 @@ ArgusUpdateScreen(void)
 {
    struct ArgusQueueStruct *queue;
 
-   RaWindowModified  = RA_MODIFIED;
-   RaWindowImmediate = TRUE;
+   ArgusTouchScreen();
 
    if ((queue = RaOutputProcess->queue) != NULL) {
       int i;
@@ -681,7 +683,11 @@ ArgusUpdateScreen(void)
       }
 #endif
    }
+#if defined(ARGUSDEBUG)
+   ArgusDebug (1, "ArgusUpdateScreen() returning\n");
+#endif
 }
+
 
 void
 ArgusWindowClose(void)
@@ -2027,8 +2033,6 @@ RaMySQLDeleteRecords(struct ArgusParserStruct *parser, struct ArgusRecordStruct 
 
 #if defined(ARGUS_MYSQL)
    if (RaSQLUpdateDB && strlen(RaSQLSaveTable)) {
-      char *sbuf = calloc(1, MAXBUFFERLEN);
-
       if (ns->htblhdr != NULL) {
          ArgusRemoveHashEntry(&ns->htblhdr);
          ns->htblhdr = NULL;
@@ -2040,10 +2044,8 @@ RaMySQLDeleteRecords(struct ArgusParserStruct *parser, struct ArgusRecordStruct 
       }
 
       if (RaSQLDBDeletes)
-         if (ArgusScheduleSQLQuery (ArgusParser, ArgusParser->ArgusAggregator, ns, RaSQLSaveTable, sbuf, MAXBUFFERLEN, ARGUS_STOP) == NULL)
+         if (ArgusScheduleSQLQuery (ArgusParser, ArgusParser->ArgusAggregator, ns, RaSQLSaveTable, ARGUS_STOP) != 0)
             ArgusLog(LOG_ERR, "RaMySQLDeleteRecords: ArgusScheduleSQLQuery error %s", strerror(errno));
-
-      free(sbuf);
    }
 #endif
 
@@ -2062,16 +2064,17 @@ RaMySQLDeleteRecords(struct ArgusParserStruct *parser, struct ArgusRecordStruct 
 // If we are inserting the record, ArgusSOptionRecord == 1, we need to generate a mysql escaped record.
 
 
-char *
-ArgusScheduleSQLQuery (struct ArgusParserStruct *parser, struct ArgusAggregatorStruct *agg, struct ArgusRecordStruct *ns, char *tbl, char *sbuf, int slen, int state)
+int
+ArgusScheduleSQLQuery (struct ArgusParserStruct *parser, struct ArgusAggregatorStruct *agg, struct ArgusRecordStruct *ns, char *tbl, int state)
 {
-   char *retn = NULL;
+   int retn = 0;
 
    if ((agg == NULL) || (agg->mask == 0))
       if (!(ns->status & ARGUS_SQL_INSERT))
          return retn;
 
    if (tbl != NULL) {
+      char *sbuf = malloc(MAXSTRLEN);
       char tbuf[1024], fbuf[1024], ubuf[1024], *ptr, *tptr;
       char vbuf[1024], ibuf[1024];
       char *rbuf = NULL;
@@ -2092,8 +2095,7 @@ ArgusScheduleSQLQuery (struct ArgusParserStruct *parser, struct ArgusAggregatorS
       nflag = parser->nflag;
       parser->nflag = 2;
 
-      retn = sbuf;
-      bzero(retn, 8);
+      bzero(sbuf, 8);
       tbuf[0] = '\0';
       fbuf[0] = '\0';
       ubuf[0] = '\0';
@@ -2195,20 +2197,20 @@ ArgusScheduleSQLQuery (struct ArgusParserStruct *parser, struct ArgusAggregatorS
             if (!(ns->status & ARGUS_SQL_INSERT)) {
                if (ArgusSOptionRecord) {
                   if (strlen(ibuf)) {
-                     snprintf (retn, slen, "UPDATE %s SET %s,record=\"%s\" WHERE %s", tbl, ibuf, mbuf, ubuf);
+                     snprintf (sbuf, MAXSTRLEN, "UPDATE %s SET %s,record=\"%s\" WHERE %s", tbl, ibuf, mbuf, ubuf);
 #ifdef ARGUSDEBUG
                      snprintf (dbuf, MAXSTRLEN, "UPDATE %s SET %s,record=\"...\" WHERE %s", tbl, ibuf, ubuf);
 #endif
                   } else {
-                     snprintf (retn, slen, "UPDATE %s SET record=\"%s\" WHERE %s", tbl, mbuf, ubuf);
+                     snprintf (sbuf, MAXSTRLEN, "UPDATE %s SET record=\"%s\" WHERE %s", tbl, mbuf, ubuf);
 #ifdef ARGUSDEBUG
                      snprintf (dbuf, MAXSTRLEN, "UPDATE %s SET record=\"...\" WHERE %s", tbl, ubuf);
 #endif
                   }
                } else {
-                  snprintf (retn, slen, "UPDATE %s SET %s WHERE %s", tbl, ibuf, ubuf);
+                  snprintf (sbuf, MAXSTRLEN, "UPDATE %s SET %s WHERE %s", tbl, ibuf, ubuf);
 #ifdef ARGUSDEBUG
-                  snprintf (dbuf, MAXSTRLEN, "%s", retn);
+                  snprintf (dbuf, MAXSTRLEN, "%s", sbuf);
 #endif
                }
                ns->status |= ARGUS_SQL_UPDATE;
@@ -2216,19 +2218,19 @@ ArgusScheduleSQLQuery (struct ArgusParserStruct *parser, struct ArgusAggregatorS
             } else {
                if (ArgusSOptionRecord) {
                   int tlen;
-                  snprintf (retn, slen, "INSERT INTO %s (%s,record) VALUES (%s,\"", tbl, vbuf, fbuf);
-                  tlen = strlen(retn);
-                  bcopy(mbuf, &retn[tlen], len + 1);
-                  tlen = strlen(retn);
-                  snprintf (&retn[tlen], slen - tlen, "\")");
+                  snprintf (sbuf, MAXSTRLEN, "INSERT INTO %s (%s,record) VALUES (%s,\"", tbl, vbuf, fbuf);
+                  tlen = strlen(sbuf);
+                  bcopy(mbuf, &sbuf[tlen], len + 1);
+                  tlen = strlen(sbuf);
+                  snprintf (&sbuf[tlen], MAXSTRLEN - tlen, "\")");
 #ifdef ARGUSDEBUG
                   snprintf (dbuf, MAXSTRLEN, "INSERT INTO %s (%s,record) VALUES (%s,...)", tbl, vbuf, fbuf);
 #endif
 
                } else {
-                  snprintf (retn, slen, "INSERT INTO %s (%s) VALUES (%s)", tbl, vbuf, fbuf);
+                  snprintf (sbuf, MAXSTRLEN, "INSERT INTO %s (%s) VALUES (%s)", tbl, vbuf, fbuf);
 #ifdef ARGUSDEBUG
-                  snprintf (dbuf, MAXSTRLEN, "%s", retn);
+                  snprintf (dbuf, MAXSTRLEN, "%s", sbuf);
 #endif
                }
 
@@ -2246,9 +2248,9 @@ ArgusScheduleSQLQuery (struct ArgusParserStruct *parser, struct ArgusAggregatorS
          ns->status &= ~(ARGUS_SQL_STATUS);
          ns->status |= ARGUS_SQL_DELETE;
 
-         snprintf (retn, slen, "DELETE FROM %s WHERE %s", tbl, ubuf);
+         snprintf (sbuf, MAXSTRLEN, "DELETE FROM %s WHERE %s", tbl, ubuf);
 #ifdef ARGUSDEBUG
-         snprintf (dbuf, MAXSTRLEN, "%s", retn);
+         snprintf (dbuf, MAXSTRLEN, "%s", sbuf);
          ArgusDebug (3, "ArgusScheduleSQLQuery (0x%x, 0x%x, 0x%x, %s, %s, %d) done\n", parser, agg, ns, tbl, dbuf, state);
 #endif
       }
@@ -2259,7 +2261,7 @@ ArgusScheduleSQLQuery (struct ArgusParserStruct *parser, struct ArgusAggregatorS
          ArgusLog(LOG_ERR, "ArgusScheduleSQLQuery: ArgusCalloc error %s", strerror(errno));
 
       sqry->tbl  = strdup(tbl);
-      sqry->sptr = strdup(retn);
+      sqry->sptr = strdup(sbuf);
 #ifdef ARGUSDEBUG
       sqry->dptr = strdup(dbuf);
 #endif
@@ -2285,6 +2287,7 @@ ArgusScheduleSQLQuery (struct ArgusParserStruct *parser, struct ArgusAggregatorS
       free(mbuf);
 
       if (rbuf != NULL) free(rbuf);
+      if (sbuf != NULL) free(sbuf);
    }
    return (retn);
 }

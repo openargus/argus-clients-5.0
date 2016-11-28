@@ -1385,6 +1385,7 @@ struct ArgusRecordStruct *ArgusSubtractRecord (struct ArgusRecordStruct *, struc
 
 void ArgusProcessDirection (struct ArgusParserStruct *, struct ArgusRecordStruct *);
 int RaProcessAddress (struct ArgusParserStruct *, struct ArgusLabelerStruct *, unsigned int *, int, int, int); 
+int RaProcessAddressLocality (struct ArgusParserStruct *, struct ArgusLabelerStruct *, unsigned int *, int, int, int); 
 
 struct ArgusQueueStruct *ArgusNewQueue (void);
 void ArgusDeleteQueue (struct ArgusQueueStruct *);
@@ -1719,6 +1720,7 @@ extern struct ArgusRecordStruct *ArgusSubtractRecord (struct ArgusRecordStruct *
 
 extern void ArgusProcessDirection (struct ArgusParserStruct *, struct ArgusRecordStruct *);
 extern int RaProcessAddress (struct ArgusParserStruct *, struct ArgusLabelerStruct *, unsigned int *, int, int, int); 
+extern int RaProcessAddressLocality (struct ArgusParserStruct *, struct ArgusLabelerStruct *, unsigned int *, int, int, int); 
 
 extern struct ArgusQueueStruct *ArgusNewQueue (void);
 extern void ArgusDeleteQueue (struct ArgusQueueStruct *);

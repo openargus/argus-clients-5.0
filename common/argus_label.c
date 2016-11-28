@@ -1275,7 +1275,8 @@ RaFindAddress (struct ArgusParserStruct *parser, struct RaAddressStruct *tree, s
                }
                
                if ((mode == ARGUS_NODE_MATCH) && (retn == NULL)) {
-                  retn = tree;
+                  if ((tree->addr.masklen > 16) || ((tree->addr.masklen + 4) > node->addr.masklen))
+                     retn = tree;
                   done++;
                }
 

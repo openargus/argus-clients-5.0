@@ -961,8 +961,8 @@ RaProcessThisRecord (struct ArgusParserStruct *parser, struct ArgusRecordStruct 
                }
 
             } else {
-                  ArgusAddToQueue (agg->queue, &ns->qhdr, ARGUS_LOCK);
-                  agg->status |= ARGUS_AGGREGATOR_DIRTY;
+               ArgusAddToQueue (agg->queue, &ns->qhdr, ARGUS_LOCK);
+               agg->status |= ARGUS_AGGREGATOR_DIRTY;
             }
 
             if (agg->cont)

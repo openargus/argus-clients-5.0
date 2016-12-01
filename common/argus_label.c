@@ -19,9 +19,9 @@
  */
 
 /*
- * $Id: //depot/gargoyle/clients/common/argus_label.c#50 $
- * $DateTime: 2016/09/13 10:40:12 $
- * $Change: 3180 $
+ * $Id: //depot/gargoyle/clients/common/argus_label.c#51 $
+ * $DateTime: 2016/11/30 00:54:11 $
+ * $Change: 3245 $
  */
 
 /*

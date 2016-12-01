@@ -22,9 +22,9 @@
  */
 
 /*
- * $Id: //depot/gargoyle/clients/examples/ratop/raclient.c#37 $
- * $DateTime: 2016/11/09 23:17:55 $
- * $Change: 3242 $
+ * $Id: //depot/gargoyle/clients/examples/ratop/raclient.c#39 $
+ * $DateTime: 2016/11/30 12:38:04 $
+ * $Change: 3249 $
  */
 
 
@@ -1316,64 +1316,64 @@ RaProcessThisRecord (struct ArgusParserStruct *parser, struct ArgusRecordStruct 
                         if (agg->correct != NULL)
                            tryreverse = 1;
 
-                     switch (flow->hdr.argus_dsrvl8.qual & 0x1F) {
-                        case ARGUS_TYPE_IPV4: {
-                           switch (flow->ip_flow.ip_p) {
-                              case IPPROTO_ESP:
-                                 tryreverse = 0;
-                                 break;
+                        switch (flow->hdr.argus_dsrvl8.qual & 0x1F) {
+                           case ARGUS_TYPE_IPV4: {
+                              switch (flow->ip_flow.ip_p) {
+                                 case IPPROTO_ESP:
+                                    tryreverse = 0;
+                                    break;
+                              }
+                              break;
                            }
-                           break;
-                        }
-                        case ARGUS_TYPE_IPV6: {
-                           switch (flow->ipv6_flow.ip_p) {
-                              case IPPROTO_ESP:
-                                 tryreverse = 0;
-                                 break;
+                           case ARGUS_TYPE_IPV6: {
+                              switch (flow->ipv6_flow.ip_p) {
+                                 case IPPROTO_ESP:
+                                    tryreverse = 0;
+                                    break;
+                              }
+                              break;
                            }
-                           break;
                         }
-                     }
 
-                     if (!parser->RaMonMode && tryreverse) {
-                        struct ArgusRecordStruct *dns = ArgusCopyRecordStruct(cns);
+                        if (!parser->RaMonMode && tryreverse) {
+                           struct ArgusRecordStruct *dns = ArgusCopyRecordStruct(cns);
 
-                        ArgusReverseRecord (dns);
+                           ArgusReverseRecord (dns);
 
-                        ArgusGenerateNewFlow(agg, dns);
-                        flow = (struct ArgusFlow *) dns->dsrs[ARGUS_FLOW_INDEX];
+                           ArgusGenerateNewFlow(agg, dns);
+                           flow = (struct ArgusFlow *) dns->dsrs[ARGUS_FLOW_INDEX];
 
-                        if ((hstruct = ArgusGenerateHashStruct(agg, dns, flow)) == NULL)
-                           ArgusLog (LOG_ERR, "RaProcessThisRecord: ArgusGenerateHashStruct error %s", strerror(errno));
-
-                        if ((pns = ArgusFindRecord(RaCursesProcess->htable, hstruct)) != NULL) {
-                           ArgusDeleteRecordStruct(ArgusParser, cns);
-                           cns = dns;
-
-                        } else {
-                           ArgusDeleteRecordStruct(ArgusParser, dns);
-                           flow = (struct ArgusFlow *) cns->dsrs[ARGUS_FLOW_INDEX];
-                           if ((hstruct = ArgusGenerateHashStruct(agg, cns, flow)) == NULL)
+                           if ((hstruct = ArgusGenerateHashStruct(agg, dns, flow)) == NULL)
                               ArgusLog (LOG_ERR, "RaProcessThisRecord: ArgusGenerateHashStruct error %s", strerror(errno));
+
+                           if ((pns = ArgusFindRecord(RaCursesProcess->htable, hstruct)) != NULL) {
+                              ArgusDeleteRecordStruct(ArgusParser, cns);
+                              cns = dns;
+
+                           } else {
+                              ArgusDeleteRecordStruct(ArgusParser, dns);
+                              flow = (struct ArgusFlow *) cns->dsrs[ARGUS_FLOW_INDEX];
+                              if ((hstruct = ArgusGenerateHashStruct(agg, cns, flow)) == NULL)
+                                 ArgusLog (LOG_ERR, "RaProcessThisRecord: ArgusGenerateHashStruct error %s", strerror(errno));
+                           }
                         }
                      }
                   }
+
+                  if ((pns) && pns->qhdr.queue) {
+                     if (pns->qhdr.queue != RaCursesProcess->queue)
+                        ArgusRemoveFromQueue (pns->qhdr.queue, &pns->qhdr, ARGUS_LOCK);
+                     else
+                        ArgusRemoveFromQueue (pns->qhdr.queue, &pns->qhdr, ARGUS_NOLOCK);
+
+                     ArgusAddToQueue (RaCursesProcess->queue, &pns->qhdr, ARGUS_NOLOCK);
+                     pns->status |= ARGUS_RECORD_MODIFIED;
+
+                  } else {
+                     tagg = agg;
+                     agg = agg->nxt;
+                  }
                }
-
-               if ((pns) && pns->qhdr.queue) {
-                  if (pns->qhdr.queue != RaCursesProcess->queue)
-                     ArgusRemoveFromQueue (pns->qhdr.queue, &pns->qhdr, ARGUS_LOCK);
-                  else
-                     ArgusRemoveFromQueue (pns->qhdr.queue, &pns->qhdr, ARGUS_NOLOCK);
-
-                  ArgusAddToQueue (RaCursesProcess->queue, &pns->qhdr, ARGUS_NOLOCK);
-                  pns->status |= ARGUS_RECORD_MODIFIED;
-
-               } else {
-                  tagg = agg;
-                  agg = agg->nxt;
-               }
-            }
             }
             found++;
 
@@ -2530,7 +2530,7 @@ RaClientSortQueue (struct ArgusSorterStruct *sorter, struct ArgusQueueStruct *qu
             qhdr = qhdr->nxt;
          }
 
-         queue->array[i] = NULL;
+         queue->array[x] = NULL;
          qsort ((char *) queue->array, x, sizeof (struct ArgusQueueHeader *), ArgusSortRoutine);
 
          for (i = 0; i < x; i++) {

@@ -23,9 +23,9 @@
  */
 
 /* 
- * $Id: //depot/gargoyle/clients/examples/ramysql/rasqlinsert.c#37 $
- * $DateTime: 2016/11/30 12:36:40 $
- * $Change: 3248 $
+ * $Id: //depot/gargoyle/clients/examples/ramysql/rasqlinsert.c#39 $
+ * $DateTime: 2016/12/01 11:58:56 $
+ * $Change: 3251 $
  */
 
 
@@ -1936,6 +1936,11 @@ ArgusCreateSQLSaveTable(char *db, char *table)
       char *tbl = RaSQLCurrentTable;
       RaSQLCurrentTable = NULL;
       free(tbl);
+
+      for (i = 0; i < RA_MAXTABLES; i++) {
+         if (RaTableCreateNames[i] != NULL){free (RaTableCreateNames[i]); RaTableCreateNames[i] = NULL;}
+         if (RaTableCreateString[i] != NULL){free (RaTableCreateString[i]); RaTableCreateString[i] = NULL;}
+      }
    }
 
    MUTEX_UNLOCK(&RaMySQLlock);
@@ -1994,13 +1999,13 @@ ArgusScheduleSQLQuery (struct ArgusParserStruct *parser, struct ArgusAggregatorS
          return retn;
 
    if (tbl != NULL) {
-      char *sbuf = ArgusMalloc(MAXBUFFERLEN);
+      char *tmpbuf = ArgusMalloc(MAXBUFFERLEN);
+      char   *sbuf = ArgusMalloc(MAXBUFFERLEN);
+      char   *mbuf = ArgusMalloc((ARGUS_MAXRECORDSIZE * 2) + 1);
+
       char tbuf[1024], fbuf[1024], ubuf[1024], *ptr, *tptr;
       char vbuf[1024], ibuf[1024];
       char *rbuf = NULL;
-
-      char   *mbuf = ArgusMalloc((ARGUS_MAXRECORDSIZE * 2) + 1);
-      char *tmpbuf = ArgusMalloc(MAXBUFFERLEN);
 
 #ifdef ARGUSDEBUG
       char dbuf[MAXSTRLEN];
@@ -2139,15 +2144,17 @@ ArgusScheduleSQLQuery (struct ArgusParserStruct *parser, struct ArgusAggregatorS
                   int slen, tlen;
 
                   snprintf (sbuf, MAXBUFFERLEN, "INSERT INTO %s (%s,record) VALUES (%s,\"", tbl, vbuf, fbuf);
-                  slen = strlen(sbuf);
-
-                  bcopy(mbuf, &sbuf[slen], len + 1);
-
-                  slen = strlen(sbuf);
-                  snprintf (&sbuf[slen], MAXBUFFERLEN - slen, "\")");
 #ifdef ARGUSDEBUG
                   snprintf (dbuf, MAXSTRLEN, "INSERT INTO %s (%s,record) VALUES (%s,...)", tbl, vbuf, fbuf);
 #endif
+                  slen = strlen(sbuf);
+
+                  if ((tlen = (slen + len)) < (MAXBUFFERLEN - 3))  {
+                     bcopy(mbuf, &sbuf[slen], len + 1);
+                     snprintf (&sbuf[tlen], MAXBUFFERLEN - tlen, "\")");
+                  } else {
+                     snprintf (&sbuf[slen], MAXBUFFERLEN - slen, "\")");
+                  }
 
                } else {
                   snprintf (sbuf, MAXBUFFERLEN, "INSERT INTO %s (%s) VALUES (%s)", tbl, vbuf, fbuf);
@@ -2160,6 +2167,7 @@ ArgusScheduleSQLQuery (struct ArgusParserStruct *parser, struct ArgusAggregatorS
                ArgusDebug (3, "ArgusScheduleSQLQuery (0x%x, 0x%x, 0x%x, %s, %s, %d) done\n", parser, agg, ns, tbl, dbuf, state);
 #endif
             }
+
          } else {
 #ifdef ARGUSDEBUG
             ArgusDebug (3, "ArgusScheduleSQLQuery: query too large for allocated buffer\n", len);
@@ -2187,13 +2195,11 @@ ArgusScheduleSQLQuery (struct ArgusParserStruct *parser, struct ArgusAggregatorS
 #ifdef ARGUSDEBUG
       sqry->dptr = strdup(dbuf);
 #endif
-
       switch (ns->status & ARGUS_SQL_STATUS) {
          case ARGUS_SQL_INSERT:  
             ArgusPushBackList (ArgusSQLInsertQueryList, (struct ArgusListRecord *)&sqry->nxt, ARGUS_LOCK);
             COND_SIGNAL(&ArgusSQLInsertQueryList->cond);
             break;
-
          case ARGUS_SQL_UPDATE:  
             ArgusPushBackList (ArgusSQLUpdateQueryList, (struct ArgusListRecord *)&sqry->nxt, ARGUS_LOCK);
             COND_SIGNAL(&ArgusSQLUpdateQueryList->cond);
@@ -2203,6 +2209,7 @@ ArgusScheduleSQLQuery (struct ArgusParserStruct *parser, struct ArgusAggregatorS
             COND_SIGNAL(&ArgusSQLSelectQueryList->cond);
             break;
       }
+
       ns->status &= ~(ARGUS_SQL_STATUS);
 
       if (tmpbuf) ArgusFree(tmpbuf);
@@ -2210,6 +2217,7 @@ ArgusScheduleSQLQuery (struct ArgusParserStruct *parser, struct ArgusAggregatorS
       if (  sbuf) ArgusFree(sbuf);
       if (  rbuf) ArgusFree(rbuf);
    }
+
    return (retn);
 }
 

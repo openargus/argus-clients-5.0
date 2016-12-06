@@ -24,9 +24,9 @@
  */
 
 /* 
- * $Id: //depot/gargoyle/clients/examples/ramysql/rasql.c#16 $
- * $DateTime: 2016/12/01 12:19:10 $
- * $Change: 3252 $
+ * $Id: //depot/gargoyle/clients/examples/ramysql/rasql.c#17 $
+ * $DateTime: 2016/12/05 11:55:57 $
+ * $Change: 3256 $
  */
 
 #ifdef HAVE_CONFIG_H
@@ -383,7 +383,7 @@ RaProcessThisRecord (struct ArgusParserStruct *parser, struct ArgusRecordStruct 
             }
          }
 
-         if (!(parser->ArgusPrintJson))
+         if (strlen(buf) && !(parser->ArgusPrintJson))
             fprintf (stdout, "\n");
          fflush (stdout);
       }
@@ -720,9 +720,12 @@ RaSQLQueryTable (char **tables)
 
    bcopy((char *)&ArgusInput->ArgusInitCon, (char *)&ArgusParser->ArgusInitCon, sizeof (ArgusParser->ArgusInitCon));
 
+   if (ArgusParser->ArgusSQLStatement != NULL)
+      strcpy(ArgusSQLStatement, ArgusParser->ArgusSQLStatement);
+
    if (ArgusParser->tflag) {
       char *timeField = NULL;
-      int i;
+      int i, slen = 0;
 
       for (i = 0; (ArgusTableColumnName[i] != NULL) && (i < ARGUSSQLMAXCOLUMNS); i++) {
          if (!(strcmp("ltime", ArgusTableColumnName[i]))) {
@@ -736,11 +739,12 @@ RaSQLQueryTable (char **tables)
       if (timeField == NULL) 
          timeField = "second";
 
-      if (ArgusParser->ArgusSQLStatement != NULL) {
-      } else {
-         snprintf (ArgusSQLStatement, MAXSTRLEN, "%s >= %d and %s <= %d", timeField, (int)ArgusParser->startime_t.tv_sec, timeField, (int)ArgusParser->lasttime_t.tv_sec);
-         ArgusParser->ArgusSQLStatement = strdup(ArgusSQLStatement);
+      if ((slen = strlen(ArgusSQLStatement)) > 0) {
+         snprintf (&ArgusSQLStatement[strlen(ArgusSQLStatement)], MAXSTRLEN - slen, " and ");
+         slen = strlen(ArgusSQLStatement);
       }
+
+      snprintf (&ArgusSQLStatement[slen], MAXSTRLEN - slen, "%s >= %d and %s <= %d", timeField, (int)ArgusParser->startime_t.tv_sec, timeField, (int)ArgusParser->lasttime_t.tv_sec);
    }
 
    for (i = 0; ((table = tables[i]) != NULL); i++) {
@@ -753,8 +757,8 @@ RaSQLQueryTable (char **tables)
          else
             sprintf (buf, "SELECT record from %s", table);
 
-         if (ArgusParser->ArgusSQLStatement != NULL)
-            sprintf (&buf[strlen(buf)], " WHERE %s", ArgusParser->ArgusSQLStatement);
+         if (strlen(ArgusSQLStatement) > 0)
+            sprintf (&buf[strlen(buf)], " WHERE %s", ArgusSQLStatement);
 
 #ifdef ARGUSDEBUG
          ArgusDebug (1, "SQL Query %s\n", buf);

@@ -18568,6 +18568,7 @@ ArgusDeleteQueue (struct ArgusQueueStruct *queue)
       }
 
 #if defined(ARGUS_THREADS)
+      pthread_mutex_unlock(&queue->lock);
       pthread_mutex_destroy(&queue->lock);
 #endif
       ArgusFree(queue);

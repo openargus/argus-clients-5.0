@@ -4901,7 +4901,6 @@ RaPrintLabelTree (struct ArgusLabelerStruct *labeler, struct RaAddressStruct *no
                   if ((level == 0) || (level >= RaPrintLabelStartTreeLevel)) {
                      printf ("\n%s]\n", RaAddrTreeArray);
                      RaAddrTreeArray[strlen(RaAddrTreeArray) - 1] = '\0';
-
                      printf ("%s}", RaAddrTreeArray);
                   }
 

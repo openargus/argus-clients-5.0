@@ -110,7 +110,9 @@ struct RaSrvSignature *RaBestGuess = NULL;
 int RaBestGuessScore = 0;
 
 
+int RaPrintLabelStartTreeLevel = 0;
 int RaPrintLabelTreeLevel = 1000000;
+
 int RaPrintLabelTreeDebug = 0;
 
 #define RALABEL_RCITEMS                         26
@@ -4677,6 +4679,25 @@ RaPrintLabelMol (struct ArgusLabelerStruct *labeler, struct RaAddressStruct *nod
 
 
 char RaAddrTreeArray[MAXSTRLEN];
+int RaPrintLabelTreeEntries (struct RaAddressStruct *);
+
+int
+RaPrintLabelTreeEntries (struct RaAddressStruct *node)
+{
+   int retn = 0, level = 0;
+   if (node != NULL) {
+      level = node->addr.masklen;
+      if (level > RaPrintLabelTreeLevel)
+         return(retn);
+
+      if (level >= RaPrintLabelStartTreeLevel)
+         retn++;
+
+      if (node->r) retn += RaPrintLabelTreeEntries(node->r);
+      if (node->l) retn += RaPrintLabelTreeEntries(node->l);
+   }
+   return(retn);
+}
 
 void
 RaPrintLabelTree (struct ArgusLabelerStruct *labeler, struct RaAddressStruct *node, int level, int dir)
@@ -4685,14 +4706,15 @@ RaPrintLabelTree (struct ArgusLabelerStruct *labeler, struct RaAddressStruct *no
    int olen = strlen(RaAddrTreeArray);
    char str[MAXSTRLEN], chr = ' ';
 
-   if (level > RaPrintLabelTreeLevel)
-      return;
-
    bzero(str, MAXSTRLEN);
 
    if (node != NULL) {
-      switch (labeler->RaPrintLabelTreeMode) {
+      level = node->addr.masklen;
 
+      if (level > RaPrintLabelTreeLevel)
+         return;
+
+      switch (labeler->RaPrintLabelTreeMode) {
          case ARGUS_TREE:
          case ARGUS_TREE_VISITED: {
             if (node->status & ARGUS_VISITED) {
@@ -4827,6 +4849,61 @@ RaPrintLabelTree (struct ArgusLabelerStruct *labeler, struct RaAddressStruct *no
                      RaPrintLabelTree(labeler, node->l, level + 1, RA_SRV_RIGHT);
                   }
                }
+            }
+            break;
+         }
+
+         case ARGUS_JSON: {
+            if (node->status & ARGUS_VISITED) {
+               char nbuf[1024];
+               int rcnt = 0, lcnt = 0;
+
+               if (level >= RaPrintLabelStartTreeLevel)
+                  strcat (RaAddrTreeArray, " ");
+
+               if (node->addr.str)
+                  snprintf (nbuf, 1024, "%s", node->addr.str);
+               else  {
+                  if (node->addr.masklen > 0) {
+                     snprintf (nbuf, 1024, "%s/%d", intoa(node->addr.addr[0] & (0xFFFFFFFF << (32 - node->addr.masklen))), node->addr.masklen);
+                  } else
+                     snprintf (nbuf, 1024, "0.0.0.0/0");
+               }
+
+               if ((level == 0) || (level >= RaPrintLabelStartTreeLevel))
+                  printf ("%s{", RaAddrTreeArray);
+
+               rcnt = RaPrintLabelTreeEntries(node->r); 
+               lcnt = RaPrintLabelTreeEntries(node->l);
+
+               if (rcnt || lcnt) {
+                  if ((level == 0) || (level >= RaPrintLabelStartTreeLevel)) {
+                     strcat (RaAddrTreeArray, " ");
+                     printf ("\n%s\"name\": \"%s\"", RaAddrTreeArray, nbuf);
+                     printf (",\n%s\"children\": [\n", RaAddrTreeArray);
+                  }
+
+                  if (rcnt) RaPrintLabelTree(labeler, node->r, level + 1, RA_SRV_RIGHT);
+                  if (rcnt && lcnt) printf (",\n");
+                  if (lcnt) RaPrintLabelTree(labeler, node->l, level + 1, RA_SRV_LEFT);
+
+                  if ((level == 0) || (level >= RaPrintLabelStartTreeLevel)) {
+                     printf ("\n%s]\n", RaAddrTreeArray);
+                     RaAddrTreeArray[strlen(RaAddrTreeArray) - 1] = '\0';
+     
+                     printf ("%s}", RaAddrTreeArray);
+                  }
+                  
+               } else {
+                  if ((level == 0) || (level >= RaPrintLabelStartTreeLevel))
+                     printf ("\"name\": \"%s\"}", nbuf);
+               }
+
+               for (i = olen, len = strlen(RaAddrTreeArray); i < len; i++)
+                  RaAddrTreeArray[i] = '\0';
+
+               if (level == 0)
+                  printf ("\n");
             }
             break;
          }

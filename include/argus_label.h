@@ -58,6 +58,7 @@ extern "C" {
 #define ARGUS_VISITED               0x10
 #define ARGUS_MOL                   0x20
 #define ARGUS_GRAPH                 0x40
+#define ARGUS_JSON                  0x80
 
 #define ARGUS_UNION		    0x01
 #define ARGUS_INTERSECT		    0x02

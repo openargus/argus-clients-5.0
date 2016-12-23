@@ -292,7 +292,6 @@ struct ArgusParserStruct {
    char ArgusCorrelateEvents, ArgusPerformCorrection;
    char ArgusExitStatus, ArgusPassNum;
    char ArgusLoadingData, ArgusFractionalDate;
-   char ArgusPruneTree;
 
    char *ArgusProgramName, *RaTimeFormat, *RaTimeZone;
    char *ArgusProgramArgs, *ArgusProgramOptions;
@@ -463,6 +462,7 @@ struct ArgusParserStruct {
    char RaMonMode;
    char RaUniMode;
    char RaZeroMode;
+   char RaPruneMode;
    char RaPrintMode;
    char RaCursesMode;
    char RaExplicitDate;

@@ -4880,6 +4880,17 @@ RaPrintLabelTree (struct ArgusLabelerStruct *labeler, struct RaAddressStruct *no
                   if ((level == 0) || (level >= RaPrintLabelStartTreeLevel)) {
                      strcat (RaAddrTreeArray, " ");
                      printf ("\n%s\"name\": \"%s\"", RaAddrTreeArray, nbuf);
+                     if (node->ns) {
+                        char sbuf[256], *sptr = sbuf;
+                        bzero(sbuf, 256);
+                        ArgusPrintRecord(ArgusParser, sbuf, node->ns, 256);
+                        if ((sptr = strchr(sbuf, '{')) != NULL) {
+                           char *tptr = strchr(sbuf, '}');
+                           if (tptr != NULL) *tptr = '\0';
+                           sptr++;
+                           printf (", %s", sptr);
+                        }
+                     }
                      printf (",\n%s\"children\": [\n", RaAddrTreeArray);
                   }
 
@@ -4895,8 +4906,21 @@ RaPrintLabelTree (struct ArgusLabelerStruct *labeler, struct RaAddressStruct *no
                   }
 
                } else {
-                  if ((level == 0) || (level >= RaPrintLabelStartTreeLevel))
-                     printf ("\"name\": \"%s\"}", nbuf);
+                  if ((level == 0) || (level >= RaPrintLabelStartTreeLevel)) {
+                     printf ("\"name\": \"%s\"", nbuf);
+                     if (node->ns) {
+                        char sbuf[256], *sptr = sbuf;
+                        bzero(sbuf, 256);
+                        ArgusPrintRecord(ArgusParser, sbuf, node->ns, 256);
+                        if ((sptr = strchr(sbuf, '{')) != NULL) {
+                           char *tptr = strchr(sbuf, '}');
+                           if (tptr != NULL) *tptr = '\0';
+                           sptr++;
+                           printf (", %s", sptr);
+                        }
+                     }
+                     printf ("}");
+                  }
                }
 
                for (i = olen, len = strlen(RaAddrTreeArray); i < len; i++)

@@ -161,6 +161,11 @@ int RaPort = 0;
 struct ArgusInput *ArgusInput = NULL;
 void RaMySQLInit (void);
 
+/* Do not try to create a database.  Allows read-only operations
+ * with fewer database permissions.
+ */
+static int RaSQLNoCreate = 0;
+
 MYSQL_ROW row;
 MYSQL mysql, *RaMySQL = NULL;
 
@@ -599,11 +604,13 @@ RaMySQLInit ()
    if ((ArgusSQLBulkBuffer = calloc(1, ArgusSQLBulkInsertSize)) == NULL)
       ArgusLog(LOG_WARNING, "ArgusMySQLInit: cannot alloc bulk buffer size %d\n", ArgusSQLBulkInsertSize);
 
-   bzero(sbuf, sizeof(sbuf));
-   sprintf (sbuf, "CREATE DATABASE IF NOT EXISTS %s", RaDatabase);
+   if (!RaSQLNoCreate) {
+      bzero(sbuf, sizeof(sbuf));
+      sprintf (sbuf, "CREATE DATABASE IF NOT EXISTS %s", RaDatabase);
 
-   if ((retn = mysql_real_query(RaMySQL, sbuf, strlen(sbuf))) != 0)  
-      ArgusLog(LOG_ERR, "mysql_real_query error %s", mysql_error(RaMySQL));
+      if ((retn = mysql_real_query(RaMySQL, sbuf, strlen(sbuf))) != 0)
+         ArgusLog(LOG_ERR, "mysql_real_query error %s", mysql_error(RaMySQL));
+   }
 
    sprintf (sbuf, "USE %s", RaDatabase);
 
@@ -1300,8 +1307,12 @@ ArgusClientInit (struct ArgusParserStruct *parser)
                         parser->ArgusTimeMultiplier = value;
                   }
                } else
-               if (!(strncasecmp (mode->mode, "oui", 3)))
+               if (!(strncasecmp (mode->mode, "oui", 3))) {
                   parser->ArgusPrintEthernetVendors++;
+               } else
+               if (!strncasecmp (mode->mode, "nocreate", 8)) {
+                  RaSQLNoCreate = 1;
+               }
             }
 
             mode = mode->nxt;

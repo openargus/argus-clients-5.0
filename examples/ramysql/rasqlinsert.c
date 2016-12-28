@@ -633,6 +633,9 @@ ArgusTouchScreen(void)
    RaWindowImmediate = TRUE;
 }
 
+/* ArgusUpdateScreen: calling thread should have already aquired
+ * the RaOutputProcess->queue mutex.
+ */
 void
 ArgusUpdateScreen(void)
 {
@@ -641,22 +644,18 @@ ArgusUpdateScreen(void)
    ArgusTouchScreen();
 
    if ((queue = RaOutputProcess->queue) != NULL) {
+      struct ArgusQueueHeader *qhdr;
+      struct ArgusRecordStruct *ns;
       int i;
 
-      if (MUTEX_LOCK(&queue->lock) == 0) {
-         if (ArgusParser->ns)
-            ArgusParser->ns->status |= ARGUS_RECORD_MODIFIED;
+      if (ArgusParser->ns)
+         ArgusParser->ns->status |= ARGUS_RECORD_MODIFIED;
 
-         if (queue->array) {
-            for (i = 0; i < queue->count; i++) {
-               struct ArgusRecordStruct *ns;
-               if ((ns = (struct ArgusRecordStruct *)queue->array[i]) == NULL)
-                  break;
-               ns->status |= ARGUS_RECORD_MODIFIED;
-            }
-         }
-
-         MUTEX_UNLOCK(&queue->lock);
+      for (i = 0, qhdr = queue->start;
+           qhdr && (i < queue->count);
+           i++, qhdr = qhdr->nxt) {
+         ns = (struct ArgusRecordStruct *)qhdr;
+         ns->status |= ARGUS_RECORD_MODIFIED;
       }
    }
 #if defined(ARGUSDEBUG)

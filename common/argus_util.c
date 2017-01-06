@@ -21095,7 +21095,6 @@ ArgusPrintTime(struct ArgusParserStruct *parser, char *buf, struct timeval *tvp)
 }
 
 void ArgusPrintCountryCode (struct ArgusParserStruct *, struct ArgusRecordStruct *, unsigned int *, int, int, char *);
-extern struct RaAddressStruct *RaFindAddress (struct ArgusParserStruct *, struct RaAddressStruct *, struct RaAddressStruct *, int);
 
 void
 ArgusPrintCountryCode (struct ArgusParserStruct *parser, struct ArgusRecordStruct *argus, unsigned int *addr, int type, int len, char *buf)

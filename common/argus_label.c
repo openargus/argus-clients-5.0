@@ -1259,7 +1259,7 @@ RaFindAddress (struct ArgusParserStruct *parser, struct RaAddressStruct *tree, s
                         retn = tree;
                      else
                      if ((tree->l == NULL) && (tree->r == NULL)) {
-                        retn = NULL;
+                        retn = tree;
 
                      } else {
                         if ((node->addr.addr[0] >> (32 - (tree->addr.masklen + 1))) & 0x01)

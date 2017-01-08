@@ -4747,14 +4747,14 @@ RaPrintLabelTree (struct ArgusLabelerStruct *labeler, struct RaAddressStruct *no
    bzero(str, MAXSTRLEN);
 
    if (node != NULL) {
-      level = node->addr.masklen;
 
-      if (level > RaPrintLabelTreeLevel)
+      if (node->addr.masklen > RaPrintLabelTreeLevel)
          return;
 
       switch (labeler->RaPrintLabelTreeMode) {
          case ARGUS_TREE:
          case ARGUS_TREE_VISITED: {
+            level = node->addr.masklen;
             if (node->status & ARGUS_VISITED) {
                if (dir == RA_SRV_LEFT) {
                   strcat (str, "   |");
@@ -4831,6 +4831,7 @@ RaPrintLabelTree (struct ArgusLabelerStruct *labeler, struct RaAddressStruct *no
          }
 
          case ARGUS_GRAPH: {
+            level = node->addr.masklen;
             if (node->status & ARGUS_VISITED) {
                if (node->r || node->l) {
                   if (node->r) {
@@ -4892,10 +4893,10 @@ RaPrintLabelTree (struct ArgusLabelerStruct *labeler, struct RaAddressStruct *no
          }
 
          case ARGUS_JSON: {
-            if (node->status & ARGUS_VISITED) {
                char nbuf[1024];
                int rcnt = 0, lcnt = 0;
 
+               level = node->addr.masklen;
                if (level >= RaPrintLabelStartTreeLevel)
                   strcat (RaAddrTreeArray, " ");
 
@@ -4908,16 +4909,46 @@ RaPrintLabelTree (struct ArgusLabelerStruct *labeler, struct RaAddressStruct *no
                      snprintf (nbuf, 1024, "0.0.0.0/0");
                }
 
-               if ((level == 0) || (level >= RaPrintLabelStartTreeLevel))
+               if (level == 0) 
+                  printf ("{\n");
+
+               if (level >= RaPrintLabelStartTreeLevel)
                   printf ("%s{", RaAddrTreeArray);
 
-               rcnt = RaPrintLabelTreeEntries(node->r); 
-               lcnt = RaPrintLabelTreeEntries(node->l);
+               if (node->r || node->l) {
+                  rcnt = RaPrintLabelTreeEntries(node->r); 
+                  lcnt = RaPrintLabelTreeEntries(node->l);
 
-               if (rcnt || lcnt) {
-                  if ((level == 0) || (level >= RaPrintLabelStartTreeLevel)) {
-                     strcat (RaAddrTreeArray, " ");
-                     printf ("\n%s\"name\": \"%s\"", RaAddrTreeArray, nbuf);
+                  if (rcnt || lcnt) {
+                     if ((level >= RaPrintLabelStartTreeLevel)) {
+                        strcat (RaAddrTreeArray, " ");
+                        printf ("\n%s\"name\": \"%s\"", RaAddrTreeArray, nbuf);
+                        if (node->ns) {
+                           char sbuf[256], *sptr = sbuf;
+                           bzero(sbuf, 256);
+                           ArgusPrintRecord(ArgusParser, sbuf, node->ns, 256);
+                           if ((sptr = strchr(sbuf, '{')) != NULL) {
+                              char *tptr = strchr(sbuf, '}');
+                              if (tptr != NULL) *tptr = '\0';
+                              sptr++;
+                              printf (", %s", sptr);
+                           }
+                        }
+                        printf (",\n%s\"children\": [\n", RaAddrTreeArray);
+                     }
+
+                     if (rcnt) RaPrintLabelTree(labeler, node->r, level + 1, RA_SRV_RIGHT);
+                     if (rcnt && lcnt) printf (",\n");
+                     if (lcnt) RaPrintLabelTree(labeler, node->l, level + 1, RA_SRV_LEFT);
+
+                     if ((level >= RaPrintLabelStartTreeLevel)) {
+                        printf ("\n%s]\n", RaAddrTreeArray);
+                        RaAddrTreeArray[strlen(RaAddrTreeArray) - 1] = '\0';
+                        printf ("%s}", RaAddrTreeArray);
+                     }
+
+                  } else {
+                     printf ("\"name\": \"%s\"", nbuf);
                      if (node->ns) {
                         char sbuf[256], *sptr = sbuf;
                         bzero(sbuf, 256);
@@ -4929,21 +4960,10 @@ RaPrintLabelTree (struct ArgusLabelerStruct *labeler, struct RaAddressStruct *no
                            printf (", %s", sptr);
                         }
                      }
-                     printf (",\n%s\"children\": [\n", RaAddrTreeArray);
+                     printf ("}");
                   }
-
-                  if (rcnt) RaPrintLabelTree(labeler, node->r, level + 1, RA_SRV_RIGHT);
-                  if (rcnt && lcnt) printf (",\n");
-                  if (lcnt) RaPrintLabelTree(labeler, node->l, level + 1, RA_SRV_LEFT);
-
-                  if ((level == 0) || (level >= RaPrintLabelStartTreeLevel)) {
-                     printf ("\n%s]\n", RaAddrTreeArray);
-                     RaAddrTreeArray[strlen(RaAddrTreeArray) - 1] = '\0';
-                     printf ("%s}", RaAddrTreeArray);
-                  }
-
                } else {
-                  if ((level == 0) || (level >= RaPrintLabelStartTreeLevel)) {
+                  if ((level >= RaPrintLabelStartTreeLevel)) {
                      printf ("\"name\": \"%s\"", nbuf);
                      if (node->ns) {
                         char sbuf[256], *sptr = sbuf;
@@ -4960,14 +4980,46 @@ RaPrintLabelTree (struct ArgusLabelerStruct *labeler, struct RaAddressStruct *no
                   }
                }
 
-               for (i = olen, len = strlen(RaAddrTreeArray); i < len; i++)
-                  RaAddrTreeArray[i] = '\0';
+           for (i = olen, len = strlen(RaAddrTreeArray); i < len; i++)
+              RaAddrTreeArray[i] = '\0';
 
-               if (level == 0)
-                  printf ("\n");
-            }
-            break;
-         }
+           if (level == 0)
+              printf ("\n}\n");
+           break;
+        }
+
+        case ARGUS_NEWICK: {
+           char nbuf[1024];
+           int rcnt, lcnt;
+
+           if (node->r || node->l) {
+              rcnt = RaPrintLabelTreeEntries(node->r);
+              lcnt = RaPrintLabelTreeEntries(node->l);
+
+              if (rcnt || lcnt) {
+                 printf ("(");
+                 if (rcnt) RaPrintLabelTree(labeler, node->r, level + 1, RA_SRV_RIGHT);
+                 if (rcnt && lcnt) printf (",");
+                 if (lcnt) RaPrintLabelTree(labeler, node->l, level + 1, RA_SRV_LEFT);
+                 printf (")");
+              }
+
+           } else {
+              if ((level >= RaPrintLabelStartTreeLevel)) {
+              }
+           }
+           if (node->addr.str)
+              snprintf (nbuf, 1024, "%s", node->addr.str);
+           else  {
+              if (node->addr.masklen > 0) {
+                 snprintf (nbuf, 1024, "%s", intoa(node->addr.addr[0] & (0xFFFFFFFF << (32 - node->addr.masklen))));
+              } else
+                 snprintf (nbuf, 1024, "0.0.0.0");
+           }
+           printf ("%s:%d", nbuf, node->addr.masklen);
+           if (level == 0) printf (";\n");
+           break;
+        }
       }
    }
    fflush(stdout);

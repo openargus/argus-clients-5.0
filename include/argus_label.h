@@ -54,9 +54,9 @@ extern "C" {
 #define ARGUS_TREE_VISITED          0x02
 #define ARGUS_TREE_POPULATED        0x04
 #define ARGUS_NODE                  0x08
-
 #define ARGUS_VISITED               0x10
-#define ARGUS_MOL                   0x20
+
+#define ARGUS_NEWICK                0x20
 #define ARGUS_GRAPH                 0x40
 #define ARGUS_JSON                  0x80
 

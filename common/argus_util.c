@@ -1149,7 +1149,14 @@ ArgusParseArgs (struct ArgusParserStruct *parser, int argc, char **argv)
                   parser->RaFieldWidth = RA_VARIABLE_WIDTH;
                   parser->RaFieldQuoted = RA_DOUBLE_QUOTED;
                   parser->cflag++;
-                  parser->Lflag = 0;
+                  ArgusAddMode = 0;
+               } else
+               if (!(strcmp (optarg, "newick"))) {
+                  parser->ArgusPrintNewick++;
+                  parser->RaFieldDelimiter = ',';
+                  parser->RaFieldWidth = RA_VARIABLE_WIDTH;
+                  parser->RaFieldQuoted = RA_DOUBLE_QUOTED;
+                  parser->cflag++;
                   ArgusAddMode = 0;
                } else
                if (!(strcmp (optarg, "xml"))) {

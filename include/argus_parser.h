@@ -368,7 +368,7 @@ struct ArgusParserStruct {
    char ArgusGenerateManRecords;
    char ArgusPrintMan, ArgusPrintEvent;
    char ArgusPrintXml, ArgusAsnFormat;
-   char ArgusPrintJson;
+   char ArgusPrintJson, ArgusPrintNewick;
    char ArgusPrintD3;
    char ArgusSrvInit;
    char RaOutputStarted; 

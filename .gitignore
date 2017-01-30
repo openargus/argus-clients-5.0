@@ -1,9 +1,28 @@
+# xcode noise
+build/*
+*.pbxuser
+*.mode1v3
+
+# old skool
+.svn
+
+# osx noise
+.DS_Store
+profile
+
+argus-clients.xcodeproj/project.xcworkspace/
+argus-clients.xcodeproj/xcuserdata/
+
+.gitattributes
+.gitignore
+.debug
+.devel
+
 *.o
 *.swp
 Makefile
 lib/argus-clients.pc
 pkg/rhel/systemd/rasqlinsert-setup
-.debug
 bin/*
 !bin/argusclientbug
 !bin/mkdep

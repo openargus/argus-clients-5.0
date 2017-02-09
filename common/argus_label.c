@@ -2596,7 +2596,7 @@ RaReadAddressConfig (struct ArgusParserStruct *parser, struct ArgusLabelerStruct
          fclose(fd);
 
       } else
-         ArgusLog (LOG_ERR, "%s: %s", file, strerror(errno));
+         ArgusLog (LOG_WARNING, "%s: %s", file, strerror(errno));
 
       if (labeler->prune) 
          RaPruneAddressTree(labeler, labeler->ArgusAddrTree[AF_INET], ARGUS_TREE_PRUNE_ADJ, 0);

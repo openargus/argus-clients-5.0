@@ -9802,7 +9802,7 @@ V_INCLS_EXAMPLES=`echo $V_INCLS | sed -e 's/\.\./..\/../'`
 
 
 
-ac_config_files="$ac_config_files Makefile ./common/Makefile ./include/Makefile ./clients/Makefile ./lib/argus-clients.pc ./pkg/rhel/systemd/rasqlinsert-setup"
+ac_config_files="$ac_config_files Makefile ./common/Makefile ./include/Makefile ./clients/Makefile ./lib/argus-clients.pc ./pkg/rhel/systemd/rasqlinsert-setup ./pkg/win7/argus-clients.wxs ./pkg/win7/Makefile"
 
 
 if test "$with_examples" != no; then :
@@ -10518,6 +10518,8 @@ do
     "./clients/Makefile") CONFIG_FILES="$CONFIG_FILES ./clients/Makefile" ;;
     "./lib/argus-clients.pc") CONFIG_FILES="$CONFIG_FILES ./lib/argus-clients.pc" ;;
     "./pkg/rhel/systemd/rasqlinsert-setup") CONFIG_FILES="$CONFIG_FILES ./pkg/rhel/systemd/rasqlinsert-setup" ;;
+    "./pkg/win7/argus-clients.wxs") CONFIG_FILES="$CONFIG_FILES ./pkg/win7/argus-clients.wxs" ;;
+    "./pkg/win7/Makefile") CONFIG_FILES="$CONFIG_FILES ./pkg/win7/Makefile" ;;
     "./examples/Makefile") CONFIG_FILES="$CONFIG_FILES ./examples/Makefile" ;;
     "./examples/race/Makefile") CONFIG_FILES="$CONFIG_FILES ./examples/race/Makefile" ;;
     "./examples/raconvert/Makefile") CONFIG_FILES="$CONFIG_FILES ./examples/raconvert/Makefile" ;;

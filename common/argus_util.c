@@ -1841,7 +1841,6 @@ ArgusParseResourceFile(struct ArgusParserStruct *parser, char *file,
                                  parser->ArgusFractionalDate = 1;
 
                               gettimeofday(tvp, 0L);
-                              bzero(tbuf, sizeof(tbuf));
                               ArgusPrintTime(parser, tbuf, sizeof(tbuf), tvp);
 
                               if ((len = strlen(tbuf)) > 0)
@@ -4888,8 +4887,8 @@ ArgusPrintRecord (struct ArgusParserStruct *parser, char *buf, struct ArgusRecor
          char ArgusSourceId[64];
          struct timeval tvpbuf, *tvp = &tvpbuf;
 
-         bzero(StartDateBuf, sizeof(StartDateBuf));
-         bzero(CurrentDateBuf, sizeof(CurrentDateBuf));
+         StartDateBuf[0] = '\0';
+         CurrentDateBuf[0] = '\0';
          bzero(ArgusSourceId, sizeof(ArgusSourceId));
 
          tvp->tv_sec  = rec->argus_mar.startime.tv_sec;
@@ -5372,7 +5371,7 @@ ArgusPrintStartDate (struct ArgusParserStruct *parser, char *buf, struct ArgusRe
       }
    }
              
-   bzero(tbuf, sizeof(tbuf));
+   tbuf[0] = '\0';
    ArgusPrintTime(parser, tbuf, sizeof(tbuf), tvp);
 
    if (strchr (tbuf, '.'))
@@ -5426,7 +5425,7 @@ ArgusPrintLastDate (struct ArgusParserStruct *parser, char *buf, struct ArgusRec
       }
    }
 
-   bzero(tbuf, sizeof(tbuf));
+   tbuf[0] = '\0';
    ArgusPrintTime(parser, tbuf, sizeof(tbuf), tvp);
 
    if (parser->ArgusPrintXml) {
@@ -5481,7 +5480,7 @@ ArgusPrintSrcStartDate (struct ArgusParserStruct *parser, char *buf, struct Argu
       }
    }
              
-   bzero(tbuf, sizeof(tbuf));
+   tbuf[0] = '\0';
    ArgusPrintTime(parser, tbuf, sizeof(tbuf), tvp);
 
    if (parser->ArgusPrintXml) {
@@ -5534,7 +5533,7 @@ ArgusPrintSrcLastDate (struct ArgusParserStruct *parser, char *buf, struct Argus
       }
    }
 
-   bzero(tbuf, sizeof(tbuf));
+   tbuf[0] = '\0';
    ArgusPrintTime(parser, tbuf, sizeof(tbuf), tvp);
 
    if (parser->ArgusPrintXml) {
@@ -5587,7 +5586,7 @@ ArgusPrintDstStartDate (struct ArgusParserStruct *parser, char *buf, struct Argu
       }
    }
              
-   bzero(tbuf, sizeof(tbuf));
+   tbuf[0] = '\0';
    ArgusPrintTime(parser, tbuf, sizeof(tbuf), tvp);
 
    if (parser->ArgusPrintXml) {
@@ -5641,7 +5640,7 @@ ArgusPrintDstLastDate (struct ArgusParserStruct *parser, char *buf, struct Argus
       }
    }
 
-   bzero(tbuf, sizeof(tbuf));
+   tbuf[0] = '\0';
    ArgusPrintTime(parser, tbuf, sizeof(tbuf), tvp);
 
    if (parser->ArgusPrintXml) {
@@ -22523,7 +22522,7 @@ ArgusDebug (int d, char *fmt, ...)
 
    if (ArgusParser && (d <= ArgusParser->debugflag)) {
       gettimeofday (&tvp, 0L);
-      bzero(buf, MAXSTRLEN);
+      buf[0] = '\0';
 
 #if defined(ARGUS_THREADS)
       {
@@ -22591,7 +22590,6 @@ ArgusDebug (int d, char *fmt, ...)
                *tptr++ = buf[i];
             }
 
-            memset(buf, 0, MAXSTRLEN);
             strncpy(buf, tbuf, MAXSTRLEN);
          }
          
@@ -24796,7 +24794,7 @@ ArgusLog (int priority, char *fmt, ...)
 
    gettimeofday (&now, 0L);
 
-   bzero(buf, sizeof(buf));
+   buf[0] = '\0';
    gettimeofday (&now, 0L);
 
 #ifdef ARGUS_SYSLOG
@@ -24818,7 +24816,7 @@ ArgusLog (int priority, char *fmt, ...)
       char pbuf[128];
       int i;
 
-      bzero(pbuf, sizeof(pbuf));
+      pbuf[0] = '\0';
       ptid = pthread_self();
       for (i = 0; i < sizeof(ptid); i++) {
          snprintf (&pbuf[i*2], 3, "%02hhx", ((char *)&ptid)[i]);
@@ -24890,7 +24888,6 @@ ArgusLog (int priority, char *fmt, ...)
             *tptr++ = buf[i];
          }
 
-         memset(buf, 0, MAXSTRLEN);
          strncpy(buf, tbuf, MAXSTRLEN);
       }
  

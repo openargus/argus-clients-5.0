@@ -1822,7 +1822,8 @@ AC_DEFUN([AC_QOSIENT_GEOIP], [
    AC_ARG_WITH(GeoIP,
             [AC_HELP_STRING([--with-GeoIP=DIR],[Compile with GeoIP in <DIR>])],
             with_geoip="$withval",
-            with_geoip="yes")
+            with_geoip="yes",
+            with_geoip="no")
    dnl
    dnl save a copy before locating libGeoIP.la
    dnl

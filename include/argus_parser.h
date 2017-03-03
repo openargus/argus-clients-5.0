@@ -303,8 +303,9 @@ struct ArgusParserStruct {
    char *ArgusProgramName, *RaTimeFormat, *RaTimeZone;
    char *ArgusProgramArgs, *ArgusProgramOptions;
    char *ArgusSQLStatement, *MySQLDBEngine;
-   char *ArgusSearchString, *RaMarInfName;
-   char *ArgusAliasFile;
+   char *ArgusAliasFile, *RadiumSrcidConvertFile;
+   char *ArgusSourceIDString, *RaMarInfName;
+   char *ArgusSearchString;
 
    struct timeval ArgusRealTime, ArgusGlobalTime;
    struct timeval ArgusStartRealTime, ArgusEndRealTime;
@@ -391,6 +392,7 @@ struct ArgusParserStruct {
    char ArgusStripFields;
    char ArgusDSRFields[ARGUSMAXDSRTYPE];
 
+   char *RadiumOutputVersion;
    char *RadiumArchive;
    char *ArgusMatchLabel;
 

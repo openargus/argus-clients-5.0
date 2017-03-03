@@ -1,6 +1,6 @@
 /*
  * Gargoyle Client Software. Tools to read, analyze and manage Argus data.
- * Copyright (c) 2000-2014 QoSient, LLC
+ * Copyright (c) 2000-2017 QoSient, LLC
  * All rights reserved.
  *
  * THE ACCOMPANYING PROGRAM IS PROPRIETARY SOFTWARE OF QoSIENT, LLC,
@@ -1167,7 +1167,7 @@ int ArgusProcessFileIndependantly = 0;
 struct ArgusAggregatorStruct *ArgusParseAggregator (struct ArgusParserStruct *, char *, char **);
 
 struct ArgusRecordStruct *ArgusGenerateRecordStruct (struct ArgusParserStruct *, struct ArgusInput *, struct ArgusRecord *);
-struct ArgusRecord *ArgusGenerateRecord (struct ArgusRecordStruct *, unsigned char, char *);
+struct ArgusRecord *ArgusGenerateRecord (struct ArgusRecordStruct *, unsigned char, char *, int);
 int ArgusGenerateCiscoRecord (struct ArgusRecordStruct *, unsigned char, char *);
 
 void ArgusDeleteRecordStruct (struct ArgusParserStruct *, struct ArgusRecordStruct *); 
@@ -1328,7 +1328,7 @@ extern int ArgusProcessFileIndependantly;
 
 extern struct ArgusAggregatorStruct *ArgusParseAggregator (struct ArgusParserStruct *, char *, char **);
 extern struct ArgusRecordStruct *ArgusGenerateRecordStruct (struct ArgusParserStruct *, struct ArgusInput *, struct ArgusRecord *);
-extern struct ArgusRecord *ArgusGenerateRecord (struct ArgusRecordStruct *, unsigned char, char *);
+extern struct ArgusRecord *ArgusGenerateRecord (struct ArgusRecordStruct *, unsigned char, char *, int);
 extern int ArgusGenerateCiscoRecord (struct ArgusRecordStruct *, unsigned char, char *);
 
 extern void ArgusDeleteRecordStruct (struct ArgusParserStruct *, struct ArgusRecordStruct *); 

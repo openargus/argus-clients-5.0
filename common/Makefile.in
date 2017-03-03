@@ -79,7 +79,7 @@ TAGHDR = bpf/net/bpf.h
 
 TAGFILES = $(SRC) $(HDR) $(TAGHDR)
 
-LIBS = @INSTALL_LIB@/argus_parse.a @INSTALL_LIB@/argus_common.a @INSTALL_LIB@/argus_client.a @INSTALL_LIB@/argus_event.a @INSTALL_LIB@/argus_output.a @INSTALL_LIB@/argus_timer.a
+LIBS = @INSTALL_LIB@/argus_parse.a @INSTALL_LIB@/argus_common.a @INSTALL_LIB@/argus_client.a @INSTALL_LIB@/argus_event.a @INSTALL_LIB@/argus_timer.a
 
 OBJ =	$(COMMONOBJ) $(PARSEOBJ) $(CLIENTOBJ) $(OUTPUTOBJ) $(EVENTOBJ) $(TIMEROBJ)
 CLEANFILES = $(LIBS) $(OBJ) $(GENSRC) $(GENHDR) $(VSRC) lex.yy.c 
@@ -91,11 +91,8 @@ COMMONOBJ = argus_code.o argus_filter.o argus_util.o argus_auth.o argus_parser.o
 PARSESRC  = argus_main.c
 PARSEOBJ  = argus_main.o
 
-CLIENTSRC = argus_client.c argus_import.c argus_label.c argus_grep.c
-CLIENTOBJ = argus_client.o argus_import.o argus_label.o argus_grep.o
-
-OUTPUTSRC = argus_output.c
-OUTPUTOBJ = argus_output.o
+CLIENTSRC = argus_client.c argus_import.c argus_label.c argus_grep.c argus_output.c
+CLIENTOBJ = argus_client.o argus_import.o argus_label.o argus_grep.o argus_output.o
 
 EVENTSRC  = argus_event.c
 EVENTOBJ  = argus_event.o
@@ -117,10 +114,6 @@ all: $(LIBS)
 
 @INSTALL_LIB@/argus_client.a: $(CLIENTOBJ)
 	rm -f $@; ar qc $@ $(CLIENTOBJ)
-	-$(RANLIB) $@
-
-@INSTALL_LIB@/argus_output.a: $(OUTPUTOBJ)
-	rm -f $@; ar qc $@ $(OUTPUTOBJ)
 	-$(RANLIB) $@
 
 @INSTALL_LIB@/argus_event.a: $(EVENTOBJ)

@@ -65,8 +65,7 @@ extern int ArgusTotalFarRecords;
 
 extern struct ArgusParserStruct *ArgusParser;
 
-int RaPrintCounter = 0;
-
+int RaPrintCounter = 1;
 
 void
 ArgusClientInit (struct ArgusParserStruct *parser)
@@ -480,7 +479,6 @@ RaProcessThisRecord (struct ArgusParserStruct *parser, struct ArgusRecordStruct 
                }
       
                bzero (buf, sizeof(buf));
-               argus->rank = RaPrintCounter++;
 
                if ((ArgusParser->eNoflag == 0 ) || ((ArgusParser->eNoflag >= argus->rank) && (ArgusParser->sNoflag <= argus->rank))) {
                   ArgusPrintRecord(parser, buf, argus, MAXSTRLEN);

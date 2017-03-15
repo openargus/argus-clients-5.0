@@ -177,6 +177,9 @@ struct ArgusAdjustStruct {
 
 struct RaBinStruct {
    int status;
+#if defined(ARGUS_THREADS)
+   pthread_mutex_t lock;
+#endif
    long long value, size;
    struct timeval stime, etime, timeout;
    struct ArgusAggregatorStruct *agg;

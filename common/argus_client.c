@@ -10799,17 +10799,15 @@ ArgusShiftArray (struct ArgusParserStruct *parser, struct RaBinProcessStruct *rb
 //                     you should be able to figure out if there is an index to put the 
 //                     record in, or if we need to adjust the array to accept the record.
 //                     
-//                     ArgusInsertRecord returns 1 for an insertion, 0 for an update.
-
+//                     ArgusInsertRecord returns 1 for an insertion, 0 for an update, -1 for an error.
 
 int
-ArgusInsertRecord (struct ArgusParserStruct *parser, struct RaBinProcessStruct *rbps, struct ArgusRecordStruct *argus, int offset)
+ArgusInsertRecord (struct ArgusParserStruct *parser, struct RaBinProcessStruct *rbps, struct ArgusRecordStruct *argus, int offset,  struct ArgusRecordStruct **rec)
 {
    struct ArgusAggregatorStruct *agg = NULL;
    struct RaBinStruct *bin = NULL;
    long long val = 0;
-   int ind = 0;
-   int retn = 0;
+   int retn = -1, ind = 0;
 
 #if defined(ARGUS_THREADS)
    pthread_mutex_lock(&rbps->lock);
@@ -11062,7 +11060,7 @@ ArgusInsertRecord (struct ArgusParserStruct *parser, struct RaBinProcessStruct *
             int found = 0;
 
             while (agg && !found) {
-               int retn = 0, fretn = -1, lretn = -1;
+               int tretn = 0, fretn = -1, lretn = -1;
                if (agg->filterstr) {
                   struct nff_insn *fcode = agg->filter.bf_insns;
                   fretn = ArgusFilterRecord (fcode, argus);
@@ -11079,9 +11077,9 @@ ArgusInsertRecord (struct ArgusParserStruct *parser, struct RaBinProcessStruct *
                      lretn = 0;
                }
 
-               retn = (lretn < 0) ? ((fretn < 0) ? 1 : fretn) : ((fretn < 0) ? lretn : (lretn && fretn));
+               tretn = (lretn < 0) ? ((fretn < 0) ? 1 : fretn) : ((fretn < 0) ? lretn : (lretn && fretn));
 
-               if (retn != 0) {
+               if (tretn != 0) {
                   struct ArgusRecordStruct *tns, *ns;
                   struct ArgusHashStruct *hstruct = NULL;
 
@@ -11336,6 +11334,8 @@ ArgusInsertRecord (struct ArgusParserStruct *parser, struct RaBinProcessStruct *
 
                            ArgusDeleteRecordStruct(parser, ns);
                            agg->status |= ARGUS_AGGREGATOR_DIRTY;
+                           *rec = tns;
+                           retn = 0;
 
                         } else {
                            tns = ns;
@@ -11343,6 +11343,8 @@ ArgusInsertRecord (struct ArgusParserStruct *parser, struct RaBinProcessStruct *
                               tns->htblhdr = ArgusAddHashEntry (agg->htable, tns, hstruct);
                               ArgusAddToQueue (agg->queue, &tns->qhdr, ARGUS_NOLOCK);
                               agg->status |= ARGUS_AGGREGATOR_DIRTY;
+                              *rec = tns;
+                              retn = 1;
                            }
                         }
                      }
@@ -11353,6 +11355,8 @@ ArgusInsertRecord (struct ArgusParserStruct *parser, struct RaBinProcessStruct *
                      else {
                         ArgusAddToQueue (agg->queue, &ns->qhdr, ARGUS_NOLOCK);
                         agg->status |= ARGUS_AGGREGATOR_DIRTY;
+                        *rec = ns;
+                        retn = 1;
                      }
                   }
 

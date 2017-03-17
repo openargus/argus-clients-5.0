@@ -1,7 +1,7 @@
 #!@PERLBIN@
 # 
 #  Gargoyle Client Software. Tools to read, analyze and manage Argus data.
-#  Copyright (c) 2000-2014 QoSient, LLC
+#  Copyright (c) 2000-2017 QoSient, LLC
 #  All rights reserved.
 # 
 #  THE ACCOMPANYING PROGRAM IS PROPRIETARY SOFTWARE OF QoSIENT, LLC,
@@ -32,6 +32,9 @@ use strict;
 
 # Used modules
 use POSIX;
+use URI::URL;
+use DBI;
+
 use Socket;
 
 # Global variables
@@ -40,8 +43,7 @@ my $tmpconf = $tmpfile . ".conf";
 
 my $Program = `which ra`;
 my $Options = "-L -1 -n -s saddr:32 daddr:32 proto -c , ";
-my $VERSION = "3.0.1";                
-my @arglist = ();
+my $VERSION = "5.0";                
 
 chomp $Program;
 
@@ -49,16 +51,23 @@ our ($mode, %items, %addrs, $saddr, $daddr, $taddr, $baddr, $proto);
 
 my $quiet = 0;
 my $done = 0;
-my @arglist;
 my @args;
 
 my ($sx, $sy, $sz, $sw);
 my ($dx, $dy, $dz, $dw);
 
+my $uri     = 0;
+my $scheme;
+my $netloc;
+my $path;
+
+my @arglist = ();
+
 ARG: while (my $arg = shift(@ARGV)) {
    if (!$done) {
       for ($arg) {
          s/^-q//    && do { $quiet++; next ARG; };
+         s/^-w//    && do { $uri = shift (@ARGV); next ARG; };
       }
 
    } else {
@@ -68,14 +77,16 @@ ARG: while (my $arg = shift(@ARGV)) {
       }
    }
 
-   $args[@args + 0] = $arg;
+   $arglist[@arglist + 0] = $arg;
 }
 
-@arglist = ($Program, $Options, @args);
 
 # Start the program
+chomp $Program;
+my @args = ($Program, $Options, @arglist);
 
-open(SESAME, "@arglist |");
+open(SESAME, "@args |");
+
 while (my $data = <SESAME>) {
    chomp $data;
    ($saddr, $daddr, $proto) = split (/,/, $data);
@@ -91,56 +102,178 @@ while (my $data = <SESAME>) {
       }
    }
 }
-
 close(SESAME);
 
-for $saddr ( sort internet keys(%items) ) {
-   my $startseries = 0;
-   my $lastseries = 0;
 
-   if ($addrs{$saddr} >= 1) {
-      if ( scalar(keys(%{$items{$saddr} })) > 0 ) {
-         my $count = RaGetAddressCount($saddr);
-         print "$saddr: ($count) ";
 
-         if ( $quiet == 0 ) {
-         for $sx ( sort numerically keys(%{$items{$saddr} })) {
-            if ( scalar(keys(%{$items{$saddr}{$sx} })) > 0 ) {
-               for $sy ( sort numerically keys(%{$items{$saddr}{$sx}})) {
-                  if ( scalar(keys(%{$items{$saddr}{$sx}{$sy}})) > 0 ) {
-                     for $sz ( sort numerically keys(%{$items{$saddr}{$sx}{$sy}})) {
-                        if ( scalar(keys(%{$items{$saddr}{$sx}{$sy}{$sz}})) > 0 ) {
-                           for $sw ( sort numerically keys(%{$items{$saddr}{$sx}{$sy}{$sz}})) {
-                              my $addr = "$sx.$sy.$sz.$sw";
-                              my $ipaddr = inet_aton($addr);
-                              my $naddr = unpack "N", $ipaddr;
+my $startseries = 0;
+my $lastseries = 0;
+my ($user, $pass, $host, $port, $space, $db, $table);
+my $dbh;
 
-                              if ($startseries > 0) {
-                                 if ($naddr == ($lastseries + 1)) {
-                                    $lastseries = $naddr;  
-                                 } else {
-                                    my ($a1, $a2, $a3, $a4) = unpack('C4', pack("N", $lastseries));
-                                    if ((($a4 == 254) && ($sw == 0)) && (($a3 + 1) == $sz)) {
-                                       $lastseries = $naddr;
-                                    } else {
-                                       my $startaddr = inet_ntoa(pack "N", $startseries);
-                                       my $lastaddr  = inet_ntoa(pack "N", $lastseries);
+my $hoststring;
 
-                                       if ($startseries != $lastseries) {
-                                          print "$startaddr - $lastaddr, ";
-                                          $startseries = $naddr;
-                                          $lastseries = $naddr;
+
+if ($uri) {
+   my $url = URI::URL->new($uri);
+
+   $scheme = $url->scheme;
+   $netloc = $url->netloc;
+   $path   = $url->path;
+
+   if ($netloc ne "") {
+      ($user, $host) = split /@/, $netloc;
+      if ($user =~ m/:/) {
+         ($user , $pass) = split/:/, $user;
+      }
+      if ($host =~ m/:/) {
+         ($host , $port) = split/:/, $host;
+      }
+   }
+   if ($path ne "") {
+      ($space, $db, $table)  = split /\//, $path;
+   }
+
+   $dbh = DBI->connect("DBI:$scheme:$db", $user, $pass) || die "Could not connect to database: $DBI::errstr";
+
+   # Drop table 'foo'. This may fail, if 'foo' doesn't exist
+   # Thus we put an eval around it.
+
+   {
+      local $dbh->{RaiseError} = 0;
+      local $dbh->{PrintError} = 0;
+
+      eval { $dbh->do("DROP TABLE $table") };
+   }
+
+   # Create a new table 'foo'. This must not fail, thus we don't catch errors.
+
+   $dbh->do("CREATE TABLE $table (addr VARCHAR(64) NOT NULL, count INTEGER, hoststring TEXT, PRIMARY KEY ( addr ))");
+
+   for $saddr ( sort internet keys(%items) ) {
+      if ($addrs{$saddr} >= 1) {
+         if ( scalar(keys(%{$items{$saddr} })) > 0 ) {
+            my $count = RaGetAddressCount($saddr);
+
+            $startseries = 0;
+            $lastseries = 0;
+            $hoststring = "";
+
+            if ( $quiet == 0 ) {
+               for $sx ( sort numerically keys(%{$items{$saddr} })) {
+                  if ( scalar(keys(%{$items{$saddr}{$sx} })) > 0 ) {
+                     for $sy ( sort numerically keys(%{$items{$saddr}{$sx}})) {
+                        if ( scalar(keys(%{$items{$saddr}{$sx}{$sy}})) > 0 ) {
+                           for $sz ( sort numerically keys(%{$items{$saddr}{$sx}{$sy}})) {
+                              if ( scalar(keys(%{$items{$saddr}{$sx}{$sy}{$sz}})) > 0 ) {
+                                 for $sw ( sort numerically keys(%{$items{$saddr}{$sx}{$sy}{$sz}})) {
+                                    my $addr = "$sx.$sy.$sz.$sw";
+                                    my $ipaddr = inet_aton($addr);
+                                    my $naddr = unpack "N", $ipaddr;
+
+                                    if ($startseries > 0) {
+                                       if ($naddr == ($lastseries + 1)) {
+                                          $lastseries = $naddr;  
                                        } else {
-                                          print "$startaddr, ";
-                                          $startseries = $naddr;
-                                          $lastseries = $naddr;
+                                          my ($a1, $a2, $a3, $a4) = unpack('C4', pack("N", $lastseries));
+                                          if ((($a4 == 254) && ($sw == 0)) && (($a3 + 1) == $sz)) {
+                                             $lastseries = $naddr;
+                                          } else {
+                                             my $startaddr = inet_ntoa(pack "N", $startseries);
+                                             my $lastaddr  = inet_ntoa(pack "N", $lastseries);
+
+                                             if ($startseries != $lastseries) {
+                                                $hoststring .= "$startaddr - $lastaddr, ";
+                                                $startseries = $naddr;
+                                                $lastseries = $naddr;
+                                             } else {
+                                                $hoststring .= "$startaddr, ";
+                                                $startseries = $naddr;
+                                                $lastseries = $naddr;
+                                             }
+                                          }
                                        }
+
+                                    } else {
+                                       $startseries = $naddr;
+                                       $lastseries = $naddr;
                                     }
                                  }
+                              }
+                           }
+                        }
+                     }
+                  }
+               }
+            }
+       
+            if ($startseries > 0) {
+               my $startaddr = inet_ntoa(pack "N", $startseries);
+               my $lastaddr  = inet_ntoa(pack "N", $lastseries);
 
-                              } else {
-                                 $startseries = $naddr;
-                                 $lastseries = $naddr;
+               if ($startseries != $lastseries) {
+                  $hoststring .= "$startaddr - $lastaddr";
+               } else {
+                  $hoststring .= "$startaddr";
+               }
+            }
+
+            $dbh->do("INSERT INTO $table VALUES(?, ?, ?)", undef, $saddr, $count, $hoststring);
+         }
+      }
+   }
+
+   $dbh->disconnect();
+
+} else {
+   for $saddr ( sort internet keys(%items) ) {
+      $startseries = 0;
+      $lastseries = 0;
+
+      if ($addrs{$saddr} >= 1) {
+         if ( scalar(keys(%{$items{$saddr} })) > 0 ) {
+            my $count = RaGetAddressCount($saddr);
+            print "$saddr: ($count) ";
+
+            if ( $quiet == 0 ) {
+            for $sx ( sort numerically keys(%{$items{$saddr} })) {
+               if ( scalar(keys(%{$items{$saddr}{$sx} })) > 0 ) {
+                  for $sy ( sort numerically keys(%{$items{$saddr}{$sx}})) {
+                     if ( scalar(keys(%{$items{$saddr}{$sx}{$sy}})) > 0 ) {
+                        for $sz ( sort numerically keys(%{$items{$saddr}{$sx}{$sy}})) {
+                           if ( scalar(keys(%{$items{$saddr}{$sx}{$sy}{$sz}})) > 0 ) {
+                              for $sw ( sort numerically keys(%{$items{$saddr}{$sx}{$sy}{$sz}})) {
+                                 my $addr = "$sx.$sy.$sz.$sw";
+                                 my $ipaddr = inet_aton($addr);
+                                 my $naddr = unpack "N", $ipaddr;
+
+                                 if ($startseries > 0) {
+                                    if ($naddr == ($lastseries + 1)) {
+                                       $lastseries = $naddr;  
+                                    } else {
+                                       my ($a1, $a2, $a3, $a4) = unpack('C4', pack("N", $lastseries));
+                                       if ((($a4 == 254) && ($sw == 0)) && (($a3 + 1) == $sz)) {
+                                          $lastseries = $naddr;
+                                       } else {
+                                          my $startaddr = inet_ntoa(pack "N", $startseries);
+                                          my $lastaddr  = inet_ntoa(pack "N", $lastseries);
+
+                                          if ($startseries != $lastseries) {
+                                             print "$startaddr - $lastaddr, ";
+                                             $startseries = $naddr;
+                                             $lastseries = $naddr;
+                                          } else {
+                                             print "$startaddr, ";
+                                             $startseries = $naddr;
+                                             $lastseries = $naddr;
+                                          }
+                                       }
+                                    }
+
+                                 } else {
+                                    $startseries = $naddr;
+                                    $lastseries = $naddr;
+                                 }
                               }
                            }
                         }
@@ -149,20 +282,20 @@ for $saddr ( sort internet keys(%items) ) {
                }
             }
          }
-      }
-    
-      if ($startseries > 0) {
-         my $startaddr = inet_ntoa(pack "N", $startseries);
-         my $lastaddr  = inet_ntoa(pack "N", $lastseries);
+       
+         if ($startseries > 0) {
+            my $startaddr = inet_ntoa(pack "N", $startseries);
+            my $lastaddr  = inet_ntoa(pack "N", $lastseries);
 
-         if ($startseries != $lastseries) {
-            print "$startaddr - $lastaddr";
-         } else {
-            print "$startaddr";
+            if ($startseries != $lastseries) {
+               print "$startaddr - $lastaddr";
+            } else {
+               print "$startaddr";
+            }
          }
+         }
+         print "\n";
       }
-      }
-      print "\n";
    }
 }
 

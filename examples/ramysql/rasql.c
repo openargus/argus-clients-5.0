@@ -1112,6 +1112,7 @@ ArgusClientInit (struct ArgusParserStruct *parser)
    struct ArgusAdjustStruct *nadp = NULL;
    struct ArgusModeStruct *mode;
    int x, retn, tableIndex;
+   char *table = NULL;
 
    if (!(parser->RaInitialized)) {
       char ArgusSQLStatement[MAXSTRLEN];
@@ -1349,11 +1350,6 @@ ArgusClientInit (struct ArgusParserStruct *parser)
 // call so we can test some values here.
 // 
          RaTables = ArgusCreateSQLTimeTableNames(parser, RaTable);
-/*
-         if (strchr(RaTable, '%') || strchr(RaTable, '$')) {
-            RaTables = ArgusCreateSQLTimeTableNames(parser, RaTable);
-         }
-*/
       }
 
       if (RaTables == NULL) {
@@ -1369,11 +1365,12 @@ ArgusClientInit (struct ArgusParserStruct *parser)
 
       tableIndex = 0;
       retn = -1;
-      while (RaTables[tableIndex] != NULL) {
-         if (strcmp("Seconds", RaTables[tableIndex])) {
-            sprintf (ArgusSQLStatement, "desc %s", RaTables[tableIndex]);
-            if ((retn = mysql_real_query(RaMySQL, ArgusSQLStatement , strlen(ArgusSQLStatement))) == 0)
-               break;
+      while ((table = RaTables[tableIndex]) != NULL) {
+         if (strcmp("Seconds", table)) {
+            sprintf (ArgusSQLStatement, "desc %s", table);
+            if ((retn = mysql_real_query(RaMySQL, ArgusSQLStatement , strlen(ArgusSQLStatement))) != 0)
+               ArgusLog(LOG_ERR, "mysql_real_qauery error %s", mysql_error(RaMySQL));
+            break;
          }
          tableIndex++;
       }

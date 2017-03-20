@@ -380,6 +380,7 @@ struct ArgusParserStruct {
    char ArgusGrepDestination;
    char ArgusAutoId;
    char ArgusPrintPortZero;
+   char ArgusPrintHashZero;
 
    char ArgusStripFields;
    char ArgusDSRFields[ARGUSMAXDSRTYPE];

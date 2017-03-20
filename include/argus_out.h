@@ -750,6 +750,11 @@ struct ArgusTimeStruct {
    struct ArgusTime start, end;
 };
 
+struct ArgusHashObject {
+   struct ArgusDSRHeader hdr;
+   unsigned long long hash;
+};
+
 struct ArgusTimeObject {
    struct ArgusDSRHeader hdr;
    struct ArgusTimeStruct src, dst;
@@ -1003,6 +1008,7 @@ struct ArgusCanonRecord {
    struct ArgusRecordHeader      hdr;
    struct ArgusFlow              flow;
    struct ArgusTransportStruct   trans;
+   struct ArgusHashObject        hash;
    struct ArgusTimeObject        time;
    struct ArgusEncapsStruct      encaps;
    struct ArgusAsnStruct         asn;

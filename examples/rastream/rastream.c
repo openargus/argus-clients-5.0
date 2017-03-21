@@ -70,54 +70,64 @@ struct ArgusFileCacheStruct {
    struct ArgusHashStruct hstruct;
 };
 
-struct ArgusFileCacheStruct *ArgusThisFileCache = NULL;
-struct timeval ArgusLastFileTime = {0, 0};
+static struct ArgusFileCacheStruct *ArgusThisFileCache = NULL;
+static struct timeval ArgusLastFileTime = {0, 0};
 
-struct ArgusHashTable ArgusProbeTable;
-struct ArgusQueueStruct *ArgusProbeQueue = NULL;
-struct ArgusProbeStruct *ArgusThisProbe = NULL;
+static struct ArgusHashTable ArgusProbeTable;
+static struct ArgusQueueStruct *ArgusProbeQueue = NULL;
+static struct ArgusProbeStruct *ArgusThisProbe = NULL;
 
-struct ArgusAdjustStruct adata, *ArgusNadp = &adata;
-int RaProcessSplitOptionSrcId = 0;
-
-
-int ArgusInitNewFilename(struct ArgusParserStruct *, struct ArgusWfileStruct *, char *);
-struct ArgusFileCacheStruct *ArgusFindFileCache (struct ArgusHashTable *, struct ArgusHashStruct *);
-void ArgusProcessFileCache(struct ArgusFileCacheStruct *);
-struct ArgusFileCacheStruct *ArgusNewFileCache(void);
-void ArgusDeleteFileCache(struct ArgusFileCacheStruct *);
-
-struct ArgusWfileStruct *ArgusFindTimeInFileCache(struct ArgusFileCacheStruct *, time_t);
-
-int RaRealTime = 0;
-float RaUpdateRate = 1.0;
-
-struct timeval ArgusLastRealTime = {0, 0};
-struct timeval ArgusLastTime     = {0, 0};
-struct timeval ArgusThisTime     = {0, 0};
+static struct ArgusAdjustStruct adata, *ArgusNadp = &adata;
+static int RaProcessSplitOptionSrcId = 0;
 
 
-struct timeval dLastTime = {0, 0};
-struct timeval dRealTime = {0, 0};
-struct timeval dThisTime = {0, 0};
-struct timeval dTime     = {0, 0};
+static int ArgusInitNewFilename(struct ArgusParserStruct *,
+                                struct ArgusWfileStruct *, char *);
+static struct ArgusFileCacheStruct *
+   ArgusFindFileCache(struct ArgusHashTable *, struct ArgusHashStruct *);
+static void ArgusProcessFileCache(struct ArgusFileCacheStruct *);
+static struct ArgusFileCacheStruct *ArgusNewFileCache(void);
+static void ArgusDeleteFileCache(struct ArgusFileCacheStruct *);
 
-long long thisUsec = 0;
+static struct ArgusWfileStruct *
+   ArgusFindTimeInFileCache(struct ArgusFileCacheStruct *, time_t);
 
-int ArgusRunFileScript (struct ArgusParserStruct *, struct ArgusWfileStruct *, int);
-int ArgusRunScript (struct ArgusParserStruct *, struct ArgusScriptStruct *, int);
+static int RaRealTime = 0;
+static float RaUpdateRate = 1.0;
 
-struct ArgusHashTable ArgusFileTable;
+static struct timeval ArgusLastRealTime = {0, 0};
+static struct timeval ArgusLastTime     = {0, 0};
+static struct timeval ArgusThisTime     = {0, 0};
 
-struct ArgusListStruct *ArgusScriptList = NULL;
-struct ArgusScriptStruct *ArgusCurrentScript = NULL;
 
-struct ArgusWfileStruct *ArgusThisFilename(struct ArgusParserStruct *, struct ArgusWfileStruct *, struct ArgusRecordStruct *);
-struct ArgusWfileStruct *ArgusFindFilename(struct ArgusParserStruct *, struct ArgusFileCacheStruct *, char *);
-struct ArgusHashStruct  *ArgusGenerateFileHash(struct ArgusParserStruct *, char *);
+static struct timeval dLastTime = {0, 0};
+static struct timeval dRealTime = {0, 0};
+static struct timeval dThisTime = {0, 0};
+static struct timeval dTime     = {0, 0};
 
-struct ArgusWfileStruct *ArgusAddFilename(struct ArgusParserStruct *, struct ArgusFileCacheStruct *, char *);
-int ArgusRemoveFilename(struct ArgusFileCacheStruct *, struct ArgusWfileStruct *, char *);
+static long long thisUsec = 0;
+
+static int ArgusRunFileScript(struct ArgusParserStruct *,
+                              struct ArgusWfileStruct *, int);
+static int ArgusRunScript(struct ArgusParserStruct *,
+                          struct ArgusScriptStruct *, int);
+
+static struct ArgusHashTable ArgusFileTable;
+
+static struct ArgusListStruct *ArgusScriptList = NULL;
+static struct ArgusScriptStruct *ArgusCurrentScript = NULL;
+
+static struct ArgusWfileStruct *ArgusFindFilename(struct ArgusParserStruct *,
+                                                  struct ArgusFileCacheStruct *,
+                                                  char *);
+static struct ArgusHashStruct *ArgusGenerateFileHash(struct ArgusParserStruct *,
+                                                     char *);
+
+static struct ArgusWfileStruct *ArgusAddFilename(struct ArgusParserStruct *,
+                                                 struct ArgusFileCacheStruct *,
+                                                 char *);
+static int ArgusRemoveFilename(struct ArgusFileCacheStruct *,
+                               struct ArgusWfileStruct *, char *);
 
 
 void
@@ -975,6 +985,7 @@ RaProcessRecord (struct ArgusParserStruct *parser, struct ArgusRecordStruct *ns)
 }
 
 
+static
 int
 ArgusInitNewFilename(struct ArgusParserStruct *parser, struct ArgusWfileStruct *tfile, char *filename)
 {
@@ -1459,6 +1470,7 @@ RaProcessSplitOptions(struct ArgusParserStruct *parser, char *str, int len, stru
    return (retn);
 }
 
+static
 struct ArgusFileCacheStruct *
 ArgusFindFileCache (struct ArgusHashTable *htable, struct ArgusHashStruct *hstruct)
 {
@@ -1515,6 +1527,7 @@ ArgusFindFileCache (struct ArgusHashTable *htable, struct ArgusHashStruct *hstru
 struct ArgusHashStruct ArgusFileHash;
 unsigned int ArgusFileHashBuf[(MAXSTRLEN + 1)/4];
 
+static
 struct ArgusHashStruct *
 ArgusGenerateFileHash(struct ArgusParserStruct *parser, char *filename)
 {
@@ -1540,6 +1553,7 @@ ArgusGenerateFileHash(struct ArgusParserStruct *parser, char *filename)
    return (retn);
 }
 
+static
 struct ArgusWfileStruct *
 ArgusFindFilename(struct ArgusParserStruct *parser, struct ArgusFileCacheStruct *fcache, char *filename)
 {
@@ -1557,6 +1571,7 @@ ArgusFindFilename(struct ArgusParserStruct *parser, struct ArgusFileCacheStruct 
    return(retn);
 }
 
+static
 struct ArgusWfileStruct *
 ArgusAddFilename(struct ArgusParserStruct *parser, struct ArgusFileCacheStruct *fcache, char *filename)
 {
@@ -1580,6 +1595,7 @@ ArgusAddFilename(struct ArgusParserStruct *parser, struct ArgusFileCacheStruct *
    return(retn);
 }
 
+static
 int
 ArgusRemoveFilename(struct ArgusFileCacheStruct *fcache, struct ArgusWfileStruct *tfile, char *filename)
 {
@@ -1606,7 +1622,7 @@ ArgusRemoveFilename(struct ArgusFileCacheStruct *fcache, struct ArgusWfileStruct
    return(retn);
 }
 
-
+static
 struct ArgusFileCacheStruct *
 ArgusNewFileCache(void)
 {
@@ -1629,6 +1645,7 @@ ArgusNewFileCache(void)
    return(retn);
 }
 
+static
 void 
 ArgusProcessFileCache(struct ArgusFileCacheStruct *fcache)
 {
@@ -1658,6 +1675,7 @@ ArgusProcessFileCache(struct ArgusFileCacheStruct *fcache)
 #endif
 }
 
+static
 void
 ArgusDeleteFileCache(struct ArgusFileCacheStruct *fcache)
 {
@@ -1671,6 +1689,7 @@ ArgusDeleteFileCache(struct ArgusFileCacheStruct *fcache)
    return;
 }
 
+static
 struct ArgusWfileStruct * 
 ArgusFindTimeInFileCache(struct ArgusFileCacheStruct *fcache, time_t secs)
 {
@@ -1692,6 +1711,7 @@ ArgusFindTimeInFileCache(struct ArgusFileCacheStruct *fcache, time_t secs)
    return (retn);
 }
 
+static
 int
 ArgusRunFileScript (struct ArgusParserStruct *parser, struct ArgusWfileStruct *file, int status)
 {
@@ -1741,6 +1761,7 @@ ArgusRunFileScript (struct ArgusParserStruct *parser, struct ArgusWfileStruct *f
    return (retn);
 }
 
+static
 int
 ArgusRunScript (struct ArgusParserStruct *parser, struct ArgusScriptStruct *script, int status)
 {

@@ -2110,7 +2110,7 @@ ArgusParseResourceFile (struct ArgusParserStruct *parser, char *file)
 #ifdef ARGUS_SASL
                                  ArgusMinSsf = atoi(optarg);
 #ifdef ARGUSDEBUG
-                              ArgusDebug (2, "ArgusParseResourceFile: ArgusMinSsf \"%s\" \n", ArgusMinSsf);
+                              ArgusDebug (2, "ArgusParseResourceFile: ArgusMinSsf \"%d\" \n", ArgusMinSsf);
 #endif
 #endif
                               }
@@ -2122,7 +2122,7 @@ ArgusParseResourceFile (struct ArgusParserStruct *parser, char *file)
 #ifdef ARGUS_SASL
                                  ArgusMaxSsf = atoi(optarg);
 #ifdef ARGUSDEBUG
-                                 ArgusDebug (2, "ArgusParseResourceFile: ArgusMaxSsf \"%s\" \n", ArgusMaxSsf);
+                                 ArgusDebug (2, "ArgusParseResourceFile: ArgusMaxSsf \"%d\" \n", ArgusMaxSsf);
 #endif
 #endif
                               }

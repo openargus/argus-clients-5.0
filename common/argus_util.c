@@ -26342,8 +26342,12 @@ ArgusReadConnection (struct ArgusParserStruct *parser, struct ArgusInput *input,
 {
    struct ArgusRecord argus;
    u_char *ptr = (u_char *)&argus;
-   u_char buf[MAXARGUSRECORD];
+   u_char *buf;
    int cnt, retn = -1, found = 0, len;
+
+   buf = ArgusMalloc(MAXARGUSRECORD);
+   if (buf == NULL)
+      return -1;
 
    ArgusParser->ArgusCurrentInput = input;
 
@@ -26390,7 +26394,7 @@ ArgusReadConnection (struct ArgusParserStruct *parser, struct ArgusInput *input,
 #endif
                            pclose(input->pipe);
                            input->pipe = NULL;
-                           return (retn);
+                           goto out;
                         } else {
 #ifdef ARGUSDEBUG
                            ArgusDebug (1, "ArgusReadConnection() read %d bytes from pipe\n", cnt);
@@ -26424,7 +26428,7 @@ ArgusReadConnection (struct ArgusParserStruct *parser, struct ArgusInput *input,
                                     fclose (input->file);
                                  }
                                  input->file = NULL;
-                                 return (retn);
+                                 goto out;
                               }
 */
                            }
@@ -26475,7 +26479,7 @@ ArgusReadConnection (struct ArgusParserStruct *parser, struct ArgusInput *input,
                                        fclose (input->file);
                                     }
                                     input->file = NULL;
-                                    return (retn);
+                                    goto out;
                                  }
                               }
 
@@ -26499,7 +26503,7 @@ ArgusReadConnection (struct ArgusParserStruct *parser, struct ArgusInput *input,
                                           fclose (input->file);
                                        }
                                        input->file = NULL;
-                                       return (retn);
+                                       goto out;
                                     }
 
                                     input->offset += cnt;
@@ -26562,7 +26566,8 @@ ArgusReadConnection (struct ArgusParserStruct *parser, struct ArgusInput *input,
                               fclose (input->file);
                            }
                            input->file = NULL;
-                           return (-1);
+                           retn = -1;
+                           goto out;
    
                         } else {
 #ifdef _LITTLE_ENDIAN
@@ -26797,12 +26802,12 @@ ArgusReadConnection (struct ArgusParserStruct *parser, struct ArgusInput *input,
                                     ArgusLog (LOG_ALERT, "remote access denied.");
                                     close (input->fd);
                                     input->fd = -1;
-                                    return (retn);
+                                    goto out;
                                  case ARGUS_MAXLISTENEXCD:
                                     ArgusLog (LOG_ALERT, "remote exceed listen error.");
                                     close (input->fd);
                                     input->fd = -1;
-                                    return (retn);
+                                    goto out;
                               }
                               break;
 
@@ -26827,7 +26832,7 @@ ArgusReadConnection (struct ArgusParserStruct *parser, struct ArgusInput *input,
                                              close (input->fd);
                                           }
                                           input->fd = -1;
-                                          return (retn);
+                                          goto out;
                                        }
                                     }
                                  }
@@ -26868,7 +26873,7 @@ ArgusReadConnection (struct ArgusParserStruct *parser, struct ArgusInput *input,
                                  ArgusLog (LOG_ALERT, "remote exceed listen error.");
                                  close (input->fd);
                                  input->fd = -1;
-                                 return (retn);
+                                 goto out;
                               }
                            }
 
@@ -26886,7 +26891,7 @@ ArgusReadConnection (struct ArgusParserStruct *parser, struct ArgusInput *input,
 #endif
                                     close (input->fd);
                                     input->fd = -1;
-                                    return (retn);
+                                    goto out;
                                  }
 
                                  input->offset += cnt;
@@ -26929,7 +26934,7 @@ ArgusReadConnection (struct ArgusParserStruct *parser, struct ArgusInput *input,
                            if (!(ArgusAuthenticate(input))) {
                               close(input->fd);
                               input->fd = -1;
-                              return (retn);
+                              goto out;
                            }
                         }
 
@@ -26943,7 +26948,7 @@ ArgusReadConnection (struct ArgusParserStruct *parser, struct ArgusInput *input,
                                  ArgusLog (LOG_ALERT, "%s: write remote filter error %s.", strerror(errno));
                                  close(input->fd);
                                  input->fd = -1;
-                                 return (retn);
+                                 goto out;
                               } 
 
                               if (input->major_version >= MAJOR_VERSION_3) {
@@ -26952,7 +26957,7 @@ ArgusReadConnection (struct ArgusParserStruct *parser, struct ArgusInput *input,
                                     ArgusLog (LOG_ALERT, "remote Filter error");
                                     close(input->fd);
                                     input->fd = -1;
-                                    return (retn);
+                                    goto out;
                                  }
 
                                  if (strncmp((char *)buf, "OK", 2)) {
@@ -26962,7 +26967,7 @@ ArgusReadConnection (struct ArgusParserStruct *parser, struct ArgusInput *input,
                                        ArgusLog (LOG_ALERT, "remote filter compiler timed out.");
                                     close(input->fd);
                                     input->fd = -1;
-                                    return (retn);
+                                    goto out;
                                  }
                               }
                            }
@@ -26975,7 +26980,7 @@ ArgusReadConnection (struct ArgusParserStruct *parser, struct ArgusInput *input,
                                  ArgusLog (LOG_ALERT, "%s: write FILE indication error %s.", strerror(errno));
                                  close(input->fd);
                                  input->fd = -1;
-                                 return (retn);
+                                 goto out;
                               }
 #ifdef ARGUSDEBUG
                               ArgusDebug (3, "ArgusReadConnection() sent %s to remote\n", buf);
@@ -26984,7 +26989,7 @@ ArgusReadConnection (struct ArgusParserStruct *parser, struct ArgusInput *input,
                                  ArgusLog (LOG_ALERT, "remote error recv %d bytes, %s", cnt, strerror(errno));
                                  close(input->fd);
                                  input->fd = -1;
-                                 return (retn);
+                                 goto out;
 
                               } else {
                                  unsigned int filesize;
@@ -27001,7 +27006,7 @@ ArgusReadConnection (struct ArgusParserStruct *parser, struct ArgusInput *input,
 
                                     close(input->fd);
                                     input->fd = -1;
-                                    return (retn);
+                                    goto out;
                                  }
                               }
                            }
@@ -27014,7 +27019,7 @@ ArgusReadConnection (struct ArgusParserStruct *parser, struct ArgusInput *input,
                                     ArgusLog (LOG_ALERT, "%s: write remote START msg error %s.", strerror(errno));
                                     close(input->fd);
                                     input->fd = -1;
-                                    return (retn);
+                                    goto out;
                                  }
                               }
                            }
@@ -27035,7 +27040,7 @@ ArgusReadConnection (struct ArgusParserStruct *parser, struct ArgusInput *input,
 #endif
                                        close (input->fd);
                                        input->fd = -1;
-                                       return (retn);
+                                       goto out;
                                     } else {
 #ifdef ARGUSDEBUG
                                        ArgusDebug (5, "ArgusReadConnection() read %d bytes\n", cnt);
@@ -27073,7 +27078,7 @@ ArgusReadConnection (struct ArgusParserStruct *parser, struct ArgusInput *input,
                                              ArgusLog (LOG_ALERT, "remote exceed listen error.");
                                              close (input->fd);
                                              input->fd = -1;
-                                             return (retn);
+                                             goto out;
                                           }
                                        }
 
@@ -27091,7 +27096,7 @@ ArgusReadConnection (struct ArgusParserStruct *parser, struct ArgusInput *input,
 #endif
                                                 close (input->fd);
                                                 input->fd = -1;
-                                                return (retn);
+                                                goto out;
                                              }
 
                                              input->offset += cnt;
@@ -27114,7 +27119,7 @@ ArgusReadConnection (struct ArgusParserStruct *parser, struct ArgusInput *input,
                                              ArgusLog (LOG_ALERT, "ArgusReadConnection: not Argus-2.0 data stream.");
                                              close (input->fd);
                                              input->fd = -1;
-                                             return (retn);
+                                             goto out;
                                           }
                                        }
                                     }
@@ -27124,7 +27129,7 @@ ArgusReadConnection (struct ArgusParserStruct *parser, struct ArgusInput *input,
                                  ArgusLog (LOG_ALERT, "ArgusReadConnection: %s", strerror(errno));
                                  close (input->fd);
                                  input->fd = -1;
-                                 return (retn);
+                                 goto out;
                               }
                            }
                         }
@@ -27136,7 +27141,7 @@ ArgusReadConnection (struct ArgusParserStruct *parser, struct ArgusInput *input,
                      if (input->fd >= 0) {
                         close (input->fd);
                         input->fd = -1;
-                        return (retn);
+                        goto out;
                      }
                   }
                }
@@ -27182,10 +27187,12 @@ ArgusReadConnection (struct ArgusParserStruct *parser, struct ArgusInput *input,
 
    ArgusParser->ArgusCurrentInput = NULL;
 
+out:
 #ifdef ARGUSDEBUG
    ArgusDebug (3, "ArgusReadConnection(0x%x, %d) returning %d\n", input, type, retn);
 #endif
 
+   ArgusFree(buf);
    return (retn);
 }
 

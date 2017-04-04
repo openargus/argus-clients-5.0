@@ -736,7 +736,7 @@ RaConvertReadFile (struct ArgusParserStruct *parser, struct ArgusInput *input)
                         static char buf[MAXSTRLEN];
                         int retn = 0, RaPrintCounter = 0;
 
-                        if (parser->Lflag && !(parser->ArgusPrintXml)) {
+                        if (parser->Lflag && (!(parser->ArgusPrintXml) && !(ArgusParser->ArgusPrintJson))) {
                            if (parser->RaLabel == NULL)
                               parser->RaLabel = ArgusGenerateLabel(parser, argus);
                 

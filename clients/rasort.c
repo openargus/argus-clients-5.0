@@ -172,9 +172,6 @@ RaParseComplete (int sig)
       if (!(ArgusParser->RaParseCompleting++)) {
          int rank = 0;
 
-         if (ArgusParser->ArgusPrintJson)
-            fprintf (stdout, "\n");
-
          ArgusParser->RaParseCompleting += sig;
 
          if (ArgusParser->ArgusReplaceMode && file) {
@@ -418,7 +415,7 @@ RaSendArgusRecord(struct ArgusRecordStruct *ns)
    } else {
       char buf[MAXSTRLEN];
       if (!ArgusParser->qflag) {
-         if (ArgusParser->Lflag) {
+         if (!(ArgusParser->ArgusPrintJson) && (ArgusParser->Lflag)) {
             if (ArgusParser->RaLabel == NULL)
                ArgusParser->RaLabel = ArgusGenerateLabel(ArgusParser, ns);
  

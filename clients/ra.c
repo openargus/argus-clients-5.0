@@ -466,7 +466,7 @@ RaProcessThisRecord (struct ArgusParserStruct *parser, struct ArgusRecordStruct 
                int retn = 0;
 
                argus->rank = RaPrintCounter++;
-               if (parser->Lflag && !(parser->ArgusPrintXml)) {
+               if (parser->Lflag && (!(parser->ArgusPrintXml) && !(ArgusParser->ArgusPrintJson))) {
                   if (parser->RaLabel == NULL)
                      parser->RaLabel = ArgusGenerateLabel(parser, argus);
        
@@ -585,7 +585,7 @@ RaProcessManRecord (struct ArgusParserStruct *parser, struct ArgusRecordStruct *
       if ((parser->ArgusPrintMan) && (!parser->qflag)) {
          argus->rank = RaPrintCounter++;
 
-         if (parser->Lflag && !(parser->ArgusPrintXml)) {
+         if (parser->Lflag && (!(parser->ArgusPrintXml) && !(ArgusParser->ArgusPrintJson))) {
             if (parser->RaLabel == NULL)
                parser->RaLabel = ArgusGenerateLabel(parser, argus);
  
@@ -658,7 +658,7 @@ RaProcessEventRecord (struct ArgusParserStruct *parser, struct ArgusRecordStruct
 
       if ((parser->ArgusPrintEvent) && (!parser->qflag)) {
          argus->rank = RaPrintCounter++;
-         if (parser->Lflag && !(parser->ArgusPrintXml)) {
+         if (parser->Lflag && (!(parser->ArgusPrintXml) && !(ArgusParser->ArgusPrintJson))) {
             if (parser->RaLabel == NULL)
                parser->RaLabel = ArgusGenerateLabel(parser, argus);
  

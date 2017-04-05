@@ -1165,7 +1165,7 @@ RaSendArgusRecord(struct ArgusRecordStruct *argus)
 
             default: {
                char buf[MAXSTRLEN];
-               if (ArgusParser->Lflag) {
+               if (!(ArgusParser->ArgusPrintJson) && (ArgusParser->Lflag)) {
                   int printReturn = 0;
 
                   if (ArgusParser->RaLabel == NULL)

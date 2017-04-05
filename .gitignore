@@ -36,3 +36,5 @@ include/argus_config.h
 /lib/*.a
 /autom4te.cache
 /argus-clients-*.tar.gz
+/lib/argus-clients.spec
+/pkg/win7/argus-clients.wxs

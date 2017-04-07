@@ -20228,7 +20228,7 @@ etheraddr_oui(struct ArgusParserStruct *parser, u_char *ep)
       }
    }
 
-   return (NULL);
+   return ("Uknown");
 }
 
 char *
@@ -20643,8 +20643,7 @@ ArgusInitEtherarray(void)
       }
 
       if (ArgusParser->ArgusEthernetVendorFile != NULL)
-         if (ArgusParser->ArgusPrintEthernetVendors)
-            ArgusParserWiresharkManufFile(ArgusParser, ArgusParser->ArgusEthernetVendorFile);
+         ArgusParserWiresharkManufFile(ArgusParser, ArgusParser->ArgusEthernetVendorFile);
    }
 }
 

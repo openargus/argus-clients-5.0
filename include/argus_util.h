@@ -384,8 +384,6 @@ int ArgusSOptionRecord = 1;
 
 long thiszone;
 
-void ArgusParseArgs (struct ArgusParserStruct *, int, char **);
-
 char *ArgusTrimString (char *str);
 char *ArgusGetString (struct ArgusParserStruct *, u_char *, int);
 char *ArgusGetUuidString (struct ArgusParserStruct *, u_char *, int);

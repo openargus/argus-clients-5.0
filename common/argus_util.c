@@ -162,6 +162,7 @@ void RaClearConfiguration (struct ArgusParserStruct *);
 
 static int ArgusParseTimeArg (char **, char **, int, struct tm *);
 static int ArgusParseResourceFile(struct ArgusParserStruct *, char *);
+static void ArgusParseArgs(struct ArgusParserStruct *, int, char **);
 
 #define ARGUS_RCITEMS                           77
 
@@ -868,7 +869,7 @@ ArgusMainInit (struct ArgusParserStruct *parser, int argc, char **argv)
       (void) signal (SIGPIPE, (void (*)(int)) RaParseComplete);
 }
 
-void
+static void
 ArgusParseArgs (struct ArgusParserStruct *parser, int argc, char **argv)
 {
    extern char *optarg;

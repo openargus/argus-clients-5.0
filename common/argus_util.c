@@ -161,6 +161,7 @@ char *ArgusAbbreviateMetric(struct ArgusParserStruct *, char *, int, double);
 void RaClearConfiguration (struct ArgusParserStruct *);
 
 static int ArgusParseTimeArg (char **, char **, int, struct tm *);
+static int ArgusParseResourceFile(struct ArgusParserStruct *, char *);
 
 #define ARGUS_RCITEMS                           77
 
@@ -1605,7 +1606,7 @@ ArgusParseArgs (struct ArgusParserStruct *parser, int argc, char **argv)
       exit (0);
 }
 
-int
+static int
 ArgusParseResourceFile (struct ArgusParserStruct *parser, char *file)
 {
    int retn = 0, i, len, Soption = 0, roption = 0, found = 0, lines = 0;

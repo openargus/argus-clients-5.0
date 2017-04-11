@@ -1412,7 +1412,6 @@ void *ArgusMallocListRecord (struct ArgusParserStruct *, int);
 void ArgusFreeListRecord (struct ArgusParserStruct *, void *buf);
 int ArgusParseResourceFile (struct ArgusParserStruct *, char *);
 int ArgusParserWiresharkManufFile (struct ArgusParserStruct *, char *);
-int ArgusParseTimeArg (char **, char **, int, struct tm *);
 
 void ArgusAdjustGlobalTime (struct ArgusParserStruct *parser, struct timeval *now);
 void ArgusReverseRecordWithFlag (struct ArgusRecordStruct *, int); 
@@ -1748,8 +1747,6 @@ extern int ArgusParseResourceFile (struct ArgusParserStruct *, char *);
 extern int ArgusParserWiresharkManufFile (struct ArgusParserStruct *, char *);
 
 extern char *ArgusTrimString (char *str);
-
-extern int ArgusParseTimeArg (char **, char **, int, struct tm *);
 
 extern void ArgusAdjustGlobalTime (struct ArgusParserStruct *parser, struct timeval *now);
 extern void ArgusReverseRecordWithFlag (struct ArgusRecordStruct *, int);

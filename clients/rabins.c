@@ -69,6 +69,8 @@
 #include <signal.h>
 #include <ctype.h>
 
+extern int ArgusTimeRangeStrategy;
+
 int RaPrintCounter = 0;
 int RaRealTime = 0;
 float RaUpdateRate = 1.0;
@@ -961,7 +963,6 @@ void
 RaProcessThisRecord (struct ArgusParserStruct *parser, struct ArgusRecordStruct *argus)
 {
    extern struct RaBinProcessStruct *RaBinProcess;
-   extern int ArgusTimeRangeStrategy;
    struct ArgusAggregatorStruct *agg = parser->ArgusAggregator;
    int found = 0, offset, tstrat;
 
@@ -1013,7 +1014,7 @@ RaProcessThisRecord (struct ArgusParserStruct *parser, struct ArgusRecordStruct 
          offset = (ArgusParser->Bflag * 1000000)/RaBinProcess->nadp.size;
 
          while (!(ns->status & ARGUS_RECORD_PROCESSED) && ((tns = ArgusAlignRecord(parser, ns, &RaBinProcess->nadp)) != NULL)) {
-            if ((tretn = ArgusCheckTime (parser, tns)) != 0) {
+            if ((tretn = ArgusCheckTime (parser, tns, ArgusTimeRangeStrategy)) != 0) {
                struct ArgusRecordStruct *rec = NULL;
 
                switch (ns->hdr.type & 0xF0) {
@@ -1122,7 +1123,7 @@ RaSendArgusRecord(struct ArgusRecordStruct *argus)
 
    argus->rank = RaPrintCounter++;
 
-   if (!(retn = ArgusCheckTime (ArgusParser, argus)))
+   if (!(retn = ArgusCheckTime (ArgusParser, argus, ArgusTimeRangeStrategy)))
       return (retn);
 
    if ((ArgusParser->ArgusWfileList != NULL) && (!(ArgusListEmpty(ArgusParser->ArgusWfileList)))) {

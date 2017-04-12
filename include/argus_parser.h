@@ -471,7 +471,6 @@ struct ArgusParserStruct {
    char RaPruneMode;
    char RaPrintMode;
    char RaCursesMode;
-   char RaExplicitDate;
    char RaWildCardDate;
    char RaDebugStatus;
 

@@ -384,8 +384,6 @@ int ArgusSOptionRecord = 1;
 
 long thiszone;
 
-void ArgusParseArgs (struct ArgusParserStruct *, int, char **);
-
 char *ArgusTrimString (char *str);
 char *ArgusGetString (struct ArgusParserStruct *, u_char *, int);
 char *ArgusGetUuidString (struct ArgusParserStruct *, u_char *, int);
@@ -1410,9 +1408,7 @@ void *ArgusCalloc (int, int);
 void *ArgusMallocAligned(int, size_t);
 void *ArgusMallocListRecord (struct ArgusParserStruct *, int);
 void ArgusFreeListRecord (struct ArgusParserStruct *, void *buf);
-int ArgusParseResourceFile (struct ArgusParserStruct *, char *);
 int ArgusParserWiresharkManufFile (struct ArgusParserStruct *, char *);
-int ArgusParseTimeArg (char **, char **, int, struct tm *);
 
 void ArgusAdjustGlobalTime (struct ArgusParserStruct *parser, struct timeval *now);
 void ArgusReverseRecordWithFlag (struct ArgusRecordStruct *, int); 
@@ -1744,12 +1740,9 @@ extern void *ArgusCalloc (int, int);
 extern void *ArgusMallocAligned(int, size_t);
 extern void *ArgusMallocListRecord (struct ArgusParserStruct *, int);
 extern void ArgusFreeListRecord (struct ArgusParserStruct *, void *buf);
-extern int ArgusParseResourceFile (struct ArgusParserStruct *, char *);
 extern int ArgusParserWiresharkManufFile (struct ArgusParserStruct *, char *);
 
 extern char *ArgusTrimString (char *str);
-
-extern int ArgusParseTimeArg (char **, char **, int, struct tm *);
 
 extern void ArgusAdjustGlobalTime (struct ArgusParserStruct *parser, struct timeval *now);
 extern void ArgusReverseRecordWithFlag (struct ArgusRecordStruct *, int);

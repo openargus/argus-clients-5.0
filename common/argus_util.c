@@ -143,6 +143,15 @@ struct protoidmem protoidtable[HASHNAMESIZE];
 struct enamemem *check_emem(struct enamemem *table, const u_char *ep);
 struct enamemem *lookup_emem(struct enamemem *table, const u_char *ep);
 
+#include <ctype.h>
+#define ARGUS_INTERSECTS_TIME		1
+#define ARGUS_SPANS_TIME		2
+#define ARGUS_INCLUDES_TIME		2
+#define ARGUS_CONTAINS_TIME		3
+
+int ArgusTimeRangeStrategy = ARGUS_INTERSECTS_TIME;
+int ArgusTimeRangeNegation = 0;
+
 int target_flags = 0;
 extern void ArgusLog (int, char *, ...);
 extern void RaParseComplete (int);
@@ -159,6 +168,10 @@ void ArgusPrintEspSpi (struct ArgusParserStruct *, char *, struct ArgusRecordStr
 char *ArgusAbbreviateMetric(struct ArgusParserStruct *, char *, int, double);
 
 void RaClearConfiguration (struct ArgusParserStruct *);
+
+static int ArgusParseTimeArg (char **, char **, int, struct tm *, int *);
+static int ArgusParseResourceFile(struct ArgusParserStruct *, char *, int *);
+static void ArgusParseArgs(struct ArgusParserStruct *, int, char **, int *);
 
 #define ARGUS_RCITEMS                           77
 
@@ -827,12 +840,12 @@ ArgusMainInit (struct ArgusParserStruct *parser, int argc, char **argv)
       snprintf (path, MAXPATHNAMELEN - 1, "/etc/ra.conf");
 
       if (stat (path, &statbuf) == 0)
-         ArgusParseResourceFile (parser, path);
+         ArgusParseResourceFile (parser, path, &ArgusTimeRangeStrategy);
 
       if ((RaHomePath = getenv("ARGUSHOME")) != NULL) {
          snprintf (path, MAXPATHNAMELEN - 1, "%s/ra.conf", RaHomePath);
          if (stat (path, &statbuf) == 0) {
-            ArgusParseResourceFile (parser, path);
+            ArgusParseResourceFile (parser, path, &ArgusTimeRangeStrategy);
          }
       }
 
@@ -840,7 +853,7 @@ ArgusMainInit (struct ArgusParserStruct *parser, int argc, char **argv)
          while ((RaHomePath = strtok(envstr, ":")) != NULL) {
             snprintf (path, MAXPATHNAMELEN - 1, "%s/.rarc", RaHomePath);
             if (stat (path, &statbuf) == 0) {
-               ArgusParseResourceFile (parser, path);
+               ArgusParseResourceFile (parser, path, &ArgusTimeRangeStrategy);
                break;
             }
             envstr = NULL;
@@ -852,7 +865,7 @@ ArgusMainInit (struct ArgusParserStruct *parser, int argc, char **argv)
             if ((RaHomePath = getenv(envstr)) != NULL) {
                snprintf (path, MAXPATHNAMELEN, "%s/.rarc", RaHomePath);
                if (stat (path, &statbuf) == 0) {
-                  ArgusParseResourceFile (parser, path);
+                  ArgusParseResourceFile (parser, path, &ArgusTimeRangeStrategy);
                   break;
                }
             }
@@ -860,13 +873,14 @@ ArgusMainInit (struct ArgusParserStruct *parser, int argc, char **argv)
       }
    }
 
-   ArgusParseArgs (parser, argc, argv);
+   ArgusParseArgs (parser, argc, argv, &ArgusTimeRangeStrategy);
    if (parser->ArgusWfileList == NULL)
       (void) signal (SIGPIPE, (void (*)(int)) RaParseComplete);
 }
 
-void
-ArgusParseArgs (struct ArgusParserStruct *parser, int argc, char **argv)
+static void
+ArgusParseArgs(struct ArgusParserStruct *parser, int argc, char **argv,
+               int *time_strategy)
 {
    extern char *optarg;
    extern int optind, opterr;
@@ -1001,7 +1015,7 @@ ArgusParseArgs (struct ArgusParserStruct *parser, int argc, char **argv)
             break;
          }
          case 'F': 
-            if (!(ArgusParseResourceFile (parser, optarg)))
+            if (!(ArgusParseResourceFile (parser, optarg, time_strategy)))
                ArgusLog(LOG_ERR, "%s: %s", optarg, strerror(errno));
             break;
 
@@ -1442,7 +1456,9 @@ ArgusParseArgs (struct ArgusParserStruct *parser, int argc, char **argv)
          case 't': {
             parser->timearg = strdup(optarg);
             if (parser->timearg != NULL) {
-               if ((retn = ArgusParseTimeArg (&parser->timearg, argv, optind, &parser->RaTmStruct)) < 0) {
+               if ((retn = ArgusParseTimeArg(&parser->timearg, argv, optind,
+                                             &parser->RaTmStruct,
+                                             time_strategy)) < 0) {
                   usage ();
                } else {
                   parser->tflag++; 
@@ -1603,8 +1619,9 @@ ArgusParseArgs (struct ArgusParserStruct *parser, int argc, char **argv)
       exit (0);
 }
 
-int
-ArgusParseResourceFile (struct ArgusParserStruct *parser, char *file)
+static int
+ArgusParseResourceFile(struct ArgusParserStruct *parser, char *file,
+                       int *time_strategy)
 {
    int retn = 0, i, len, Soption = 0, roption = 0, found = 0, lines = 0;
    char strbuf[MAXSTRLEN], *str = strbuf, *optarg = NULL, *ptr = NULL;
@@ -1745,7 +1762,9 @@ ArgusParseResourceFile (struct ArgusParserStruct *parser, char *file)
 
                            case RA_TIMERANGE:
                               parser->timearg = strdup(optarg);
-                              if ((ArgusParseTimeArg (&parser->timearg, NULL, 0, &parser->RaTmStruct)) < 0)
+                              if ((ArgusParseTimeArg (&parser->timearg, NULL,
+                                                      0, &parser->RaTmStruct,
+                                                      time_strategy)) < 0)
                                  usage ();
                               break;
 
@@ -3018,7 +3037,7 @@ ArgusHandleRecord (struct ArgusParserStruct *parser, struct ArgusInput *input, s
                if (parser->sNflag && (parser->sNflag >= parser->ArgusTotalRecords))
                   return (argus->hdr.len * 4);
 
-               if ((retn = ArgusCheckTime (parser, argus)) != 0) {
+               if ((retn = ArgusCheckTime (parser, argus, ArgusTimeRangeStrategy)) != 0) {
                   if (parser->ArgusWfileList != NULL) {
                      if (parser->RaWriteOut) {
                         if (parser->ArgusWfileList != NULL) {
@@ -3162,7 +3181,7 @@ ArgusHandleRecordStruct (struct ArgusParserStruct *parser, struct ArgusInput *in
          if (parser->sNflag && (parser->sNflag >= parser->ArgusTotalRecords))
             return (argus->hdr.len * 4);
 
-         if ((retn = ArgusCheckTime (parser, argus)) != 0) {
+         if ((retn = ArgusCheckTime (parser, argus, ArgusTimeRangeStrategy)) != 0) {
             if (parser->ArgusWfileList != NULL) {
                if (parser->RaWriteOut) {
                   if (parser->ArgusWfileList != NULL) {
@@ -24896,19 +24915,10 @@ ArgusDiffTime (struct ArgusTime *s1, struct ArgusTime *s2, struct timeval *diff)
 }
 
 
-#include <ctype.h>
 
-
-#define ARGUS_INTERSECTS_TIME		1
-#define ARGUS_SPANS_TIME		2
-#define ARGUS_INCLUDES_TIME		2
-#define ARGUS_CONTAINS_TIME		3
-
-int ArgusTimeRangeStrategy = ARGUS_INTERSECTS_TIME;
-int ArgusTimeRangeNegation = 0;
-
-int
-ArgusParseTimeArg (char **argp, char *args[], int ind, struct tm *tm)
+static int
+ArgusParseTimeArg(char **argp, char *args[], int ind, struct tm *tm,
+                  int *strategy)
 {
    char buf[64], *ptr = buf, *tmp, *end = NULL;
    char *arg = *argp;
@@ -24922,10 +24932,10 @@ ArgusParseTimeArg (char **argp, char *args[], int ind, struct tm *tm)
          arg++;
       }
       switch (*arg) {
-         case 'i': ArgusTimeRangeStrategy = ARGUS_INTERSECTS_TIME; ptr = &buf[1]; break;  // intersects
-         case 'c': ArgusTimeRangeStrategy = ARGUS_CONTAINS_TIME;   ptr = &buf[1]; break;  // contains the record
-         case 'n': ArgusTimeRangeStrategy = ARGUS_SPANS_TIME;      ptr = &buf[1]; break;  // includes the specified time range
-         case 's': ArgusTimeRangeStrategy = ARGUS_SPANS_TIME;      ptr = &buf[1]; break;
+         case 'i': *strategy = ARGUS_INTERSECTS_TIME; ptr = &buf[1]; break;  // intersects
+         case 'c': *strategy = ARGUS_CONTAINS_TIME;   ptr = &buf[1]; break;  // contains the record
+         case 'n': *strategy = ARGUS_SPANS_TIME;      ptr = &buf[1]; break;  // includes the specified time range
+         case 's': *strategy = ARGUS_SPANS_TIME;      ptr = &buf[1]; break;
       }
    }
 
@@ -25024,8 +25034,8 @@ ArgusCheckTimeFormat (struct tm *tm, char *str)
       while (isspace((int) *ptr))
          ptr++;
       
-      if ((retn = ArgusParseTime (ArgusParser, &ArgusParser->RaStartFilter, tm, buf, ' ', &startfrac)) > 0)
-         ArgusParseTime (ArgusParser, &ArgusParser->RaLastFilter, &ArgusParser->RaStartFilter, ptr, mode, &lastfrac);
+      if ((retn = ArgusParseTime (&ArgusParser->RaWildCardDate, &ArgusParser->RaStartFilter, tm, buf, ' ', &startfrac, 0)) > 0)
+         ArgusParseTime (&ArgusParser->RaWildCardDate, &ArgusParser->RaLastFilter, &ArgusParser->RaStartFilter, ptr, mode, &lastfrac, 1);
 
       if (retn >= 0)
          retn = 0;
@@ -25045,7 +25055,7 @@ ArgusCheckTimeFormat (struct tm *tm, char *str)
          bcopy ((char *)tm, (char *)&ArgusParser->RaStartFilter, sizeof(struct tm));
          bcopy ((char *)tm, (char *)&ArgusParser->RaLastFilter, sizeof(struct tm));
 
-         if ((retn = ArgusParseTime (ArgusParser, &ArgusParser->RaStartFilter, &ArgusParser->RaLastFilter, buf, mode, &startfrac)) > 0) {
+         if ((retn = ArgusParseTime (&ArgusParser->RaWildCardDate, &ArgusParser->RaStartFilter, &ArgusParser->RaLastFilter, buf, mode, &startfrac, 0)) > 0) {
             lastfrac = startfrac;
             if (*buf != '-') {
                bcopy ((char *)&ArgusParser->RaStartFilter, (char *)&ArgusParser->RaLastFilter, sizeof(struct tm));
@@ -25069,7 +25079,7 @@ ArgusCheckTimeFormat (struct tm *tm, char *str)
                }
 
             } else 
-               ArgusParseTime (ArgusParser, &ArgusParser->RaLastFilter, &ArgusParser->RaStartFilter, &buf[1], '+', &lastfrac);
+               ArgusParseTime (&ArgusParser->RaWildCardDate, &ArgusParser->RaLastFilter, &ArgusParser->RaStartFilter, &buf[1], '+', &lastfrac, 1);
 
             retn = 0;
          }
@@ -25100,9 +25110,13 @@ ArgusCheckTimeFormat (struct tm *tm, char *str)
    return (retn);
 }
 
-
+/* The "continued" parameter should be != 0 when parsing the second
+ * part (that after a +/-).  Or can we determine that just from the
+ * mode parameter???
+ */
 int
-ArgusParseTime (struct ArgusParserStruct *parser, struct tm *tm, struct tm *ctm, char *buf, char mode, int *frac)
+ArgusParseTime (char *wildcarddate, struct tm *tm, struct tm *ctm, char *buf,
+                char mode, int *frac, int continued)
 {
    char *hptr = NULL, *dptr = NULL, *mptr = NULL, *yptr = NULL, *pptr = NULL;
    char *minptr = NULL, *secptr = NULL, *ptr;
@@ -25128,7 +25142,7 @@ ArgusParseTime (struct ArgusParserStruct *parser, struct tm *tm, struct tm *ctm,
          int status = 0;
 
          if (mode == ' ') {
-            if (tm != &ArgusParser->RaLastFilter)
+            if (!continued)
                bcopy ((u_char *) ctm, (u_char *) tm, sizeof (struct tm));
          } else
             bcopy ((u_char *) ctm, (u_char *) tm, sizeof (struct tm));
@@ -25149,12 +25163,12 @@ ArgusParseTime (struct ArgusParserStruct *parser, struct tm *tm, struct tm *ctm,
                   case 'm': i =    0; status |= (1 << RAWILDCARDMIN); break;
                   case 's': i =    0; status |= (1 << RAWILDCARDSEC); break;
                }
-               parser->RaWildCardDate = status;
+               *wildcarddate = status;
                
             } else  {
                i = strtod(str, &endptr);
                if (endptr == str)
-                  ArgusLog (LOG_ERR, "time syntax error %s", parser->timearg);
+                  ArgusLog (LOG_ERR, "time syntax error %s", buf);
             }
 
             if ((i >= 0) && (mode == ' ')) {
@@ -25168,11 +25182,11 @@ ArgusParseTime (struct ArgusParserStruct *parser, struct tm *tm, struct tm *ctm,
                }
 
             } else {
-               if (tm != &ArgusParser->RaLastFilter)
+               if (!continued)
                   i++;
 
                if (wildcard)
-                  ArgusLog (LOG_ERR, "time syntax error %s", parser->timearg);
+                  ArgusLog (LOG_ERR, "time syntax error %s", buf);
 
                switch (mode) {
                   case '-': sign = -1; break;
@@ -25249,7 +25263,7 @@ ArgusParseTime (struct ArgusParserStruct *parser, struct tm *tm, struct tm *ctm,
          }
          
       } else {
-         int status = parser->RaWildCardDate;
+         int status = *wildcarddate;
 
          bcopy ((u_char *) ctm, (u_char *) tm, sizeof (struct tm));
          year  = tm->tm_year;
@@ -25475,7 +25489,7 @@ ArgusParseTime (struct ArgusParserStruct *parser, struct tm *tm, struct tm *ctm,
                retn = -1;
          }
 
-         parser->RaWildCardDate = status;
+         *wildcarddate = status;
 
          if (retn >= 0) {
 #if HAVE_STRUCT_TM_TM_ZONE
@@ -25504,9 +25518,6 @@ ArgusParseTime (struct ArgusParserStruct *parser, struct tm *tm, struct tm *ctm,
          if (pptr != NULL)
             *pptr = '.';
       }
-
-      if (!(parser->RaWildCardDate))
-         ArgusParser->RaExplicitDate = 1;
    }
 
 #ifdef ARGUSDEBUG
@@ -25521,7 +25532,9 @@ ArgusParseTime (struct ArgusParserStruct *parser, struct tm *tm, struct tm *ctm,
          case ARGUS_SEC:   rstr = "sec"; break;
       }
 
-      ArgusDebug (3, "ArgusParseTime (%p, %p, %p, \"%s\", '%c', 0.%06d) retn %s(%d)\n", parser, tm, ctm, buf, mode, *frac, rstr, thistime);
+      ArgusDebug (3, "ArgusParseTime (%p, %p, %p, \"%s\", '%c', 0.%06d, %d) retn %s(%d)\n",
+                  wildcarddate, tm, ctm, buf, mode, *frac, continued, rstr,
+                  thistime);
    }
 #endif
    return (retn);
@@ -25529,7 +25542,8 @@ ArgusParseTime (struct ArgusParserStruct *parser, struct tm *tm, struct tm *ctm,
 
 
 int
-ArgusCheckTime (struct ArgusParserStruct *parser, struct ArgusRecordStruct *ns)
+ArgusCheckTime(struct ArgusParserStruct *parser, struct ArgusRecordStruct *ns,
+               int strategy)
 {
    struct ArgusTimeObject *dtime = NULL;
    struct timeval start, last, pstart, plast;
@@ -25639,7 +25653,7 @@ ArgusCheckTime (struct ArgusParserStruct *parser, struct ArgusRecordStruct *ns)
       bzero((char *)&pstart, sizeof(pstart));
       bzero((char *)&plast, sizeof(plast));
 
-      if (!parser->RaExplicitDate) {
+      if (parser->RaWildCardDate) {
          char *timearg = parser->timearg;
 
          tsec = start.tv_sec;
@@ -25737,7 +25751,7 @@ ArgusCheckTime (struct ArgusParserStruct *parser, struct ArgusRecordStruct *ns)
 // #define ARGUS_INCLUDES_TIME             2
 // #define ARGUS_CONTAINS_TIME             3
 
-         switch (ArgusTimeRangeStrategy) {
+         switch (strategy) {
             case ARGUS_INTERSECTS_TIME:  // the record intersects the range in any way
                if ((((pstart.tv_sec  < start.tv_sec) ||
                     ((pstart.tv_sec == start.tv_sec) && (pstart.tv_usec <= start.tv_usec))) &&

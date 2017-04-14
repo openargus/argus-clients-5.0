@@ -93,6 +93,7 @@ extern gid_t new_gid;
 
 void ArgusSetChroot(char *);
 
+extern int ArgusTimeRangeStrategy;
 
 void
 ArgusClientInit (struct ArgusParserStruct *parser)
@@ -814,7 +815,7 @@ RaProcessRecord (struct ArgusParserStruct *parser, struct ArgusRecordStruct *arg
       RaBinProcess->nadp.dtperiod = 0.0;
   
       while ((tns = ArgusAlignRecord(parser, ns, &RaBinProcess->nadp)) != NULL) {
-         if ((retn = ArgusCheckTime (parser, tns)) != 0) {
+         if ((retn = ArgusCheckTime (parser, tns, ArgusTimeRangeStrategy)) != 0) {
             struct ArgusMetricStruct *metric = (void *)tns->dsrs[ARGUS_METRIC_INDEX];
             struct ArgusRecordStruct *rec = NULL;
   
@@ -843,7 +844,7 @@ RaSendArgusRecord(struct ArgusRecordStruct *argus)
       if (argus->status & ARGUS_RECORD_WRITTEN)
          return (retn);
 
-      if (!(retn = ArgusCheckTime (ArgusParser, argus)))
+      if (!(retn = ArgusCheckTime (ArgusParser, argus, ArgusTimeRangeStrategy)))
          return (retn);
 
       if (ArgusParser->RaBinProcess->nadp.hard) {
@@ -1696,7 +1697,7 @@ RaCloseBinProcess(struct ArgusParserStruct *parser, struct RaBinProcessStruct *r
       struct RaBinStruct *bin = NULL;
       struct ArgusRecordStruct *ns = NULL;
 
-      int max = ((parser->tflag && parser->RaExplicitDate) ? rbps->nadp.count : rbps->max) + 1;
+      int max = ((parser->tflag && !parser->RaWildCardDate) ? rbps->nadp.count : rbps->max) + 1;
       int startsecs = 0, endsecs = 0, i;
 
       char stimebuf[128], dtimebuf[128], etimebuf[128];

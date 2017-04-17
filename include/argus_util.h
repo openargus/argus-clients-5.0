@@ -1312,9 +1312,9 @@ RaPrintAlgorithmTable[MAX_PRINT_ALG_TYPES] = {
 #define ARGUSPRINTSCORE			217
    { "score", "%d", 5 , 1, 0, ARGUSPRINTSCORE, ArgusPrintScore, ArgusPrintScoreLabel, "tinyint", 0},
 #define ARGUSPRINTSRCNAME		218
-   { "sname", "%s", 5 , 1, 0, ARGUSPRINTSRCNAME, ArgusPrintSrcName, ArgusPrintDstNameLabel, "varchar(64)", 0},
+   { "sname", "%s", 16 , 1, 0, ARGUSPRINTSRCNAME, ArgusPrintSrcName, ArgusPrintSrcNameLabel, "varchar(64)", 0},
 #define ARGUSPRINTDSTNAME		219
-   { "dname", "%s", 5 , 1, 0, ARGUSPRINTDSTNAME, ArgusPrintDstName, ArgusPrintDstNameLabel, "varchar(64)", 0},
+   { "dname", "%s", 16 , 1, 0, ARGUSPRINTDSTNAME, ArgusPrintDstName, ArgusPrintDstNameLabel, "varchar(64)", 0},
 };
 
 

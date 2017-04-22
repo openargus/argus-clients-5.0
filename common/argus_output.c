@@ -408,7 +408,8 @@ ArgusEstablishListen (struct ArgusParserStruct *parser, int port, char *baddr)
 
 
 struct ArgusOutputStruct *
-ArgusNewOutput (struct ArgusParserStruct *parser)
+ArgusNewOutput (struct ArgusParserStruct *parser, int sasl_min_ssf,
+                int sasl_max_ssf)
 {
    struct ArgusOutputStruct *retn = NULL;
    int i;
@@ -447,6 +448,8 @@ ArgusNewOutput (struct ArgusParserStruct *parser)
    }
 
    retn->ArgusLastMarUpdateTime   = retn->ArgusGlobalTime;
+   retn->sasl_min_ssf = sasl_min_ssf;
+   retn->sasl_max_ssf = sasl_max_ssf;
 
    ArgusInitOutput(retn);
 
@@ -1000,7 +1003,7 @@ ArgusCloseOutput(struct ArgusOutputStruct *output)
 }
 
 
-void ArgusCheckClientStatus (struct ArgusOutputStruct *, int);
+static void ArgusCheckClientStatus (struct ArgusOutputStruct *, int);
 int ArgusCheckClientMessage (struct ArgusOutputStruct *, struct ArgusClientData *);
 int ArgusCheckControlMessage (struct ArgusOutputStruct *, struct ArgusClientData *);
 int ArgusCongested = 0;
@@ -1431,17 +1434,16 @@ ArgusControlChannelProcess(void *arg)
    return __ArgusOutputProcess(arg, portnum, checkmessage, __func__);
 }
 
-int ArgusAuthenticateClient (struct ArgusClientData *);
+static int ArgusAuthenticateClient (struct ArgusClientData *, int);
 static char clienthost[NI_MAXHOST*2+1] = "[local]";
 
 #ifdef ARGUS_SASL
-static sasl_ssf_t extprops_ssf = 0;
-sasl_security_properties_t *mysasl_secprops(int);
+static sasl_security_properties_t *mysasl_secprops(int, int);
 #endif
 
 
 
-void
+static void
 ArgusCheckClientStatus (struct ArgusOutputStruct *output, int s)
 {
    struct sockaddr from;
@@ -1490,7 +1492,7 @@ ArgusCheckClientStatus (struct ArgusOutputStruct *output, int s)
                   ArgusLog (LOG_ERR, "ArgusCheckClientStatus: ArgusGenerateInitialMar error %s", strerror(errno));
 
 #ifdef ARGUS_SASL
-               if (ArgusMaxSsf == 0)
+               if (output->sasl_max_ssf == 0)
                   goto no_auth;
 #ifdef ARGUSDEBUG
                ArgusDebug (2, "ArgusCheckClientStatus: SASL enabled\n");
@@ -1549,10 +1551,7 @@ ArgusCheckClientStatus (struct ArgusOutputStruct *output, int s)
 
               /* set required security properties here */
 
-               if (extprops_ssf)
-                  sasl_setprop(conn, SASL_SSF_EXTERNAL, &extprops_ssf);
-
-               secprops = mysasl_secprops(0);
+               secprops = mysasl_secprops(output->sasl_min_ssf, output->sasl_max_ssf);
                sasl_setprop(conn, SASL_SEC_PROPS, secprops);
 
 
@@ -1580,11 +1579,11 @@ no_auth:
                }
 
 #ifdef ARGUS_SASL
-               if (ArgusMaxSsf > 0) {
+               if (output->sasl_max_ssf > 0) {
                   int flags = fcntl (fd, F_GETFL, 0);
 
                   fcntl (fd, F_SETFL, flags & ~O_NONBLOCK);
-                  if (ArgusAuthenticateClient (client)) {
+                  if (ArgusAuthenticateClient (client, output->sasl_max_ssf)) {
                      ArgusDeleteSocket(output, client);
                      ArgusLog (LOG_ALERT, "ArgusCheckClientStatus: ArgusAuthenticateClient failed\n");
                   } else {
@@ -2992,18 +2991,19 @@ ArgusSetChroot(char *dir)
  *   security properties 
  */
 #define PROT_BUFSIZE 4096
+static
 sasl_security_properties_t *
-mysasl_secprops(int flags)
+mysasl_secprops(int min_ssf, int max_ssf)
 {
     static sasl_security_properties_t ret;
 
     bzero((char *)&ret, sizeof(ret));
 
     ret.maxbufsize = PROT_BUFSIZE;
-    ret.min_ssf = ArgusMinSsf; /* minimum allowable security strength */
-    ret.max_ssf = ArgusMaxSsf; /* maximum allowable security strength */
+    ret.min_ssf = min_ssf; /* minimum allowable security strength */
+    ret.max_ssf = max_ssf; /* maximum allowable security strength */
 
-    ret.security_flags = flags;
+    ret.security_flags = 0;
     
     ret.property_names = NULL;
     ret.property_values = NULL;
@@ -3072,12 +3072,12 @@ mysasl_secprops(int flags)
 #endif
  
 
-int ArgusAuthenticateClient (struct ArgusClientData *);
+static int ArgusAuthenticateClient (struct ArgusClientData *, int);
 int ArgusGetSaslString(FILE *, char *, int);
 int ArgusSendSaslString(FILE *, const char *, int, int);
 
-int
-ArgusAuthenticateClient (struct ArgusClientData *client)
+static int
+ArgusAuthenticateClient (struct ArgusClientData *client, int use_sasl)
 {
    int retn = 1;
 
@@ -3091,7 +3091,7 @@ ArgusAuthenticateClient (struct ArgusClientData *client)
 // int SASLOpts = (SASL_SEC_NOPLAINTEXT | SASL_SEC_NOANONYMOUS);
    FILE *in, *out;
 
-   if (ArgusMaxSsf == 0)
+   if (use_sasl == 0)
        goto no_auth;
 
    conn = client->sasl_conn;

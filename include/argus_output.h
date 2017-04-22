@@ -145,6 +145,8 @@ struct ArgusOutputStruct {
    int ArgusUseWrapper, nflag;
    int ArgusLfd[ARGUS_MAXLISTEN];
    int ArgusListens;
+   int sasl_min_ssf;
+   int sasl_max_ssf;
  
    char *ArgusBindAddr;
 
@@ -221,7 +223,7 @@ struct ArgusRecordStruct *ArgusCopyRecordStruct (struct ArgusRecordStruct *);
 
 void *ArgusOutputProcess(void *);
 void ArgusInitOutput (struct ArgusOutputStruct *);
-struct ArgusOutputStruct *ArgusNewOutput (struct ArgusParserStruct *);
+struct ArgusOutputStruct *ArgusNewOutput (struct ArgusParserStruct *, int, int);
 void ArgusDeleteOutput (struct ArgusParserStruct *, struct ArgusOutputStruct *);
 void ArgusCloseOutput(struct ArgusOutputStruct *);
 

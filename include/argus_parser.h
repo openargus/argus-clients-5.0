@@ -371,7 +371,8 @@ struct ArgusParserStruct {
    char ArgusRemotes;
    char ArgusReplaceMode;
    char ArgusHostsActive;
-   char ArgusLfd[ARGUS_MAXLISTEN];
+   int ArgusLfd[ARGUS_MAXLISTEN];        /* listen file descriptors */
+   char ArgusLfdVersion[ARGUS_MAXLISTEN]; /* argus protocol version for this fd */
    char ArgusAdjustTime;
    char ArgusConnectTime;
    char ArgusReverse;

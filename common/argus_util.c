@@ -24778,7 +24778,7 @@ void
 ArgusLog (int priority, char *fmt, ...)
 {
    va_list ap;
-   char buf[MAXSTRLEN], *ptr = buf;
+   char buf[MAXSTRLEN];
    struct timeval now;
    char *label = NULL;
    int i;

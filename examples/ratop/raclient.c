@@ -1819,12 +1819,12 @@ RaParseAirportEventRecord (struct ArgusParserStruct *parser, char *dptr, struct 
    char *str;
    int i;
 
-   bzero (tbuf, sizeof(tbuf));
+   tbuf[0] = '\0';
    bzero (sptr, sizeof(sbuf));
    tvp->tv_sec  = time->src.start.tv_sec;
    tvp->tv_usec = time->src.start.tv_usec;
 
-   ArgusPrintTime(parser, tbuf, tvp);
+   ArgusPrintTime(parser, tbuf, sizeof(tbuf), tvp);
    ArgusPrintSourceID(parser, sptr, argus, 24);
 
    while (isspace((int)sbuf[strlen(sbuf) - 1]))
@@ -1926,12 +1926,12 @@ RaParseLsOfEventRecord (struct ArgusParserStruct *parser, char *dptr, struct Arg
    char *str;
    int title = 0;
 
-   bzero (tbuf, sizeof(tbuf));
+   tbuf[0] = '\0';
    bzero (sptr, sizeof(sbuf));
    tvp->tv_sec  = time->src.start.tv_sec;
    tvp->tv_usec = time->src.start.tv_usec;
  
-   ArgusPrintTime(parser, tbuf, tvp);
+   ArgusPrintTime(parser, tbuf, sizeof(tbuf), tvp);
    ArgusPrintSourceID(parser, sptr, argus, 24);
 
    while (isspace((int)sbuf[strlen(sbuf) - 1]))

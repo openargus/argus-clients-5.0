@@ -1501,12 +1501,12 @@ RaProcessEventRecord (struct ArgusParserStruct *parser, struct ArgusRecordStruct
       }
 
       if (strstr(dptr, "argus-lsof")) {
-         bzero (tbuf, 129);
+         tbuf[0] = '\0';
          bzero (sptr, 129);
          tvp->tv_sec  = time->src.start.tv_sec;
          tvp->tv_usec = time->src.start.tv_usec;
 
-         ArgusPrintTime(parser, tbuf, tvp);
+         ArgusPrintTime(parser, tbuf, sizeof(tbuf), tvp);
          ArgusPrintSourceID(parser, sptr, argus, 24);
 
          while (isspace((int)sbuf[strlen(sbuf) - 1]))

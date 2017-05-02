@@ -1452,7 +1452,7 @@ long long ArgusDiffTime (struct ArgusTime *, struct ArgusTime *, struct timeval 
 int RaDiffTime (struct timeval *, struct timeval *, struct timeval *);
 float RaDeltaFloatTime (struct timeval *, struct timeval *);
 
-void ArgusPrintTime(struct ArgusParserStruct *, char *, struct timeval *);
+int ArgusPrintTime(struct ArgusParserStruct *, char *, size_t, struct timeval *);
 char *ArgusGenerateLabel(struct ArgusParserStruct *, struct ArgusRecordStruct *);
 
 void ArgusPrintRecord (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *ptr, int);
@@ -1795,7 +1795,7 @@ extern float RaDeltaFloatTime (struct timeval *, struct timeval *);
 extern char *ArgusGetString (struct ArgusParserStruct *, u_char *, int);
 extern char *ArgusGetUuidString (struct ArgusParserStruct *, u_char *, int);
 
-extern void ArgusPrintTime(struct ArgusParserStruct *, char *, struct timeval *);
+extern int ArgusPrintTime(struct ArgusParserStruct *, char *, size_t, struct timeval *);
 extern char *ArgusGenerateLabel(struct ArgusParserStruct *, struct ArgusRecordStruct *);
 
 extern void ArgusPrintRecord (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *ptr, int);

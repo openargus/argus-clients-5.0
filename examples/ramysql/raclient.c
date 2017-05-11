@@ -1279,7 +1279,7 @@ RaProcessRecord (struct ArgusParserStruct *parser, struct ArgusRecordStruct *ns)
             }
 
             RaProcessThisRecord(parser, tns);
-            ArgusDeleteRecordStruct(parser, tns);
+            ArgusDeleteRecordStruct(parser, tns), tns = NULL;
 
          } else {
             struct ArgusAggregatorStruct *agg = parser->ArgusAggregator;
@@ -1441,8 +1441,6 @@ RaProcessThisRecord (struct ArgusParserStruct *parser, struct ArgusRecordStruct 
                   switch (ns->hdr.type & 0xF0) {
                      case ARGUS_EVENT:
                      case ARGUS_MAR:
-                        if (ArgusInsertRecord(parser, RaBinProcess, tns, offset, &rec) <= 0)       // if we updated the record or there was an error
-                           ArgusDeleteRecordStruct(parser, tns);
                         break;
 
                      case ARGUS_NETFLOW:
@@ -1450,9 +1448,7 @@ RaProcessThisRecord (struct ArgusParserStruct *parser, struct ArgusRecordStruct 
                         struct ArgusMetricStruct *metric = (void *)tns->dsrs[ARGUS_METRIC_INDEX];
 
                         if ((metric != NULL) && ((metric->src.pkts + metric->dst.pkts) > 0)) {
-                           if (ArgusInsertRecord(parser, RaBinProcess, tns, offset, &rec) <= 0)   // update or error
-                              ArgusDeleteRecordStruct(parser, tns);
-                           else {
+                           if (ArgusInsertRecord(parser, RaBinProcess, tns, offset, &rec) > 0) {
 #if defined(ARGUS_MYSQL)
                               if (rec != NULL) {
                                  struct RaBinStruct *bin = rec->bin;
@@ -1480,13 +1476,13 @@ RaProcessThisRecord (struct ArgusParserStruct *parser, struct ArgusRecordStruct 
 #endif
                            }
 
-                        } else 
-                           ArgusDeleteRecordStruct(parser, tns);
+                        }
                         break;
                      }
                   }
 
-               } else
+               }
+               if (tns)
                   ArgusDeleteRecordStruct(parser, tns);
             }
 

@@ -2314,6 +2314,7 @@ ArgusCheckSQLCache(struct ArgusParserStruct *parser, struct RaBinStruct *bin, st
 
       ArgusTotalSQLSearches++;
       ArgusTotalSelectSQLStatements++;
+      ArgusDeleteSQLQuery(sqry);
    }
 
    return (argus);

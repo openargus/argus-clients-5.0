@@ -200,7 +200,7 @@ ArgusPrintAddressResponse(char *string, struct RaAddressStruct *raddr, char **re
 #if defined(ARGUS_THREADS)
       if (pthread_mutex_lock(&raddr->dns->lock) == 0) {
 #endif
-         int auth = 0, cname = 0, alias = 0, refer = 0, ptr = 0;
+         int auth = 0, refer = 0, ptr = 0;
          int x, cnt = raddr->dns->count;
 
          tdns = raddr->dns->start;
@@ -815,9 +815,9 @@ usage ()
 }
 
 int RaProcessARecord (struct ArgusParserStruct *, struct ArgusDomainQueryStruct *, time_t);
-
 int RaProcessCRecord (struct ArgusParserStruct *, struct ArgusDomainQueryStruct *, time_t);
-
+int RaProcessSOARecord (struct ArgusParserStruct *, struct ArgusDomainQueryStruct *, time_t);
+int RaProcessNSRecord (struct ArgusParserStruct *, struct ArgusDomainQueryStruct *, time_t);
 int RaProcessPTRRecord (struct ArgusParserStruct *, struct ArgusDomainQueryStruct *, time_t);
 
 extern int RaInsertAddressTree (struct ArgusParserStruct *, struct ArgusLabelerStruct *, char *);
@@ -1177,6 +1177,108 @@ RaProcessCRecord (struct ArgusParserStruct *parser, struct ArgusDomainQueryStruc
    return retn;
 }
 
+
+//
+//
+//  RaProcessNSRecord
+//
+//  This routine will process a dns NS record.  The key is to insert the responses data
+//  record, and associate it with the domain name it referenced.
+//  
+//  NS records can provide scoping for names that we're tracking.  we can, not a hard
+//  attribute, but something that can be used to detect inconsistencies of DNS behavior.
+//
+//
+
+int
+RaProcessNSRecord (struct ArgusParserStruct *parser, struct ArgusDomainQueryStruct *res, time_t sec)
+{
+   struct nnamemem *ptr = NULL, *name = NULL;
+   struct ArgusLabelerStruct *labeler;
+   int retn = 0;
+
+   if ((labeler = parser->ArgusLabeler) == NULL) {
+      parser->ArgusLabeler = ArgusNewLabeler(parser, 0L);
+      labeler = parser->ArgusLabeler;
+      if (labeler->ArgusAddrTree == NULL)
+         if ((labeler->ArgusAddrTree = ArgusCalloc(128, sizeof(void *))) == NULL)
+            ArgusLog(LOG_ERR, "RaProcessCRecord: ArgusCalloc error");
+   }
+
+   if ((res != NULL) && (res->ns != NULL)) {
+      int x, count = res->ns->count;
+      for (x = 0; x < count; x++) {
+         struct ArgusListObjectStruct *list =  (struct ArgusListObjectStruct *)ArgusPopFrontList(res->ns, ARGUS_NOLOCK);
+         struct ArgusDomainResourceRecord *rr = list->list_union.obj;
+
+         if ((ptr = ArgusNameEntry(ArgusDNSNameTable, rr->name)) != NULL) {
+
+            if ((name = ArgusNameEntry(ArgusDNSNameTable, rr->data)) != NULL) {
+               char *nptr = strdup(rr->name);
+               char *tptr;
+
+               if ((tptr = nptr) != NULL) {
+                  free (nptr);
+               }
+            }
+         }
+
+         ArgusPushBackList(res->ns, (struct ArgusListRecord *)list, ARGUS_NOLOCK);
+      }
+   }
+
+   return retn;
+}
+
+
+
+//
+//
+//  RaProcessSOARecord
+//
+//  This routine will process a dns SOA record.  The key is to insert the responses data
+//  record, and associate it with the domain name it referenced.
+//  
+//  SOA records can provide scoping for names that we're tracking.  we can, not a hard
+//  attribute, but something that can be used to detect inconsistencies of DNS behavior.
+//
+//
+
+int
+RaProcessSOARecord (struct ArgusParserStruct *parser, struct ArgusDomainQueryStruct *res, time_t sec)
+{
+   struct nnamemem *ptr = NULL;
+   struct ArgusLabelerStruct *labeler;
+   char *data;
+   int retn = 0;
+
+   if ((labeler = parser->ArgusLabeler) == NULL) {
+      parser->ArgusLabeler = ArgusNewLabeler(parser, 0L);
+      labeler = parser->ArgusLabeler;
+      if (labeler->ArgusAddrTree == NULL)
+         if ((labeler->ArgusAddrTree = ArgusCalloc(128, sizeof(void *))) == NULL)
+            ArgusLog(LOG_ERR, "RaProcessCRecord: ArgusCalloc error");
+   }
+
+   if ((res != NULL) && (res->soa != NULL)) {
+      int x, count = res->soa->count;
+      for (x = 0; x < count; x++) {
+         struct ArgusListObjectStruct *list =  (struct ArgusListObjectStruct *)ArgusPopFrontList(res->soa, ARGUS_NOLOCK);
+         struct ArgusDomainResourceRecord *rr = list->list_union.obj;
+
+         if ((ptr = ArgusNameEntry(ArgusDNSNameTable, rr->name)) != NULL) {
+            if ((data = rr->data) != NULL) {
+            }
+         }
+         ArgusPushBackList(res->soa, (struct ArgusListRecord *)list, ARGUS_NOLOCK);
+      }
+   }
+
+   return retn;
+}
+
+
+
 //
 //
 //  RaProcessPTRRecord
@@ -1263,7 +1365,7 @@ RaProcessPTRRecord (struct ArgusParserStruct *parser, struct ArgusDomainQueryStr
 
                         for (i = 0; (ndns != 0) && (i < cnt); i++) {
                            struct nnamemem *tname = (struct nnamemem *) list->list_obj;
-                           if (tname == name)
+                           if (tname == ptr)
                               ndns = 0;
                            list = list->nxt;
                         }
@@ -1277,7 +1379,7 @@ RaProcessPTRRecord (struct ArgusParserStruct *parser, struct ArgusDomainQueryStr
                            ArgusLog(LOG_ERR, "ArgusCalloc: error %s", strerror(errno));
 
                         list->status = ARGUS_DNS_PTR;
-                        list->list_obj = name;
+                        list->list_obj = ptr;
                         ArgusPushFrontList(raddr->dns, (struct ArgusListRecord *)list, ARGUS_LOCK);
                      }
 
@@ -1497,9 +1599,14 @@ RaProcessRecord (struct ArgusParserStruct *parser, struct ArgusRecordStruct *arg
                      if ((req->name && strlen(req->name)) && (res->name && strlen(res->name))) {
                         if (req->seqnum == res->seqnum) {
                            if (!(strcasecmp(req->name, res->name))) {
-
                               if (res->ans)
                                  RaProcessARecord(parser, res, tsec);
+
+                              if (res->soa)
+                                 RaProcessSOARecord(parser, res, tsec);
+
+                              if (res->ns)
+                                 RaProcessNSRecord(parser, res, tsec);
 
                               if (res->cname)
                                  RaProcessCRecord(parser, res, tsec);
@@ -1517,40 +1624,70 @@ RaProcessRecord (struct ArgusParserStruct *parser, struct ArgusRecordStruct *arg
                                     int i, count = res->ans->count;
                                     type = (char *)tok2str(ns_type2str, "Type%d", res->qtype);
 
-                                    fprintf (stdout, "%s ", type);
                                     for (i = 0; i < count; i++) {
                                        struct ArgusListObjectStruct *list =  (struct ArgusListObjectStruct *)ArgusPopFrontList(res->ans, ARGUS_NOLOCK);
                                        struct ArgusDomainResourceRecord *rr = list->list_union.obj;
 
-                                       if (i == 0) fprintf (stdout, "%s %s[%d]", rr->name, rr->data, rr->ttl);
-                                       else fprintf (stdout, ", %s[%d]", rr->data, rr->ttl);
+                                       type = (char *)tok2str(ns_type2str, "Type%d", rr->type);
+                                       if (i == 0) fprintf (stdout, "%s %s %s[%d]", type, rr->name, rr->data, rr->ttl);
+                                       else fprintf (stdout, ",%s[%d]", rr->data, rr->ttl);
                                        ArgusPushBackList(res->ans, (struct ArgusListRecord *)list, ARGUS_NOLOCK);
                                     }
+                                 }
 
-                                    if (res->cname) {
-                                       int i, count = res->cname->count;
-                                       fprintf (stdout, " CNAME ");
-                                       for (i = 0; i < count; i++) {
-                                          struct ArgusListObjectStruct *list =  (struct ArgusListObjectStruct *)ArgusPopFrontList(res->cname, ARGUS_NOLOCK);
-                                          struct ArgusDomainResourceRecord *rr = list->list_union.obj;
+                                 if (res->cname) {
+                                    int i, count = res->cname->count;
+                                    for (i = 0; i < count; i++) {
+                                       struct ArgusListObjectStruct *list =  (struct ArgusListObjectStruct *)ArgusPopFrontList(res->cname, ARGUS_NOLOCK);
+                                       struct ArgusDomainResourceRecord *rr = list->list_union.obj;
 
-                                          if (i > 0) fprintf (stdout, ", ");
-                                          fprintf (stdout, "%s %s", rr->name, rr->data);
-                                          ArgusPushBackList(res->cname, (struct ArgusListRecord *)list, ARGUS_NOLOCK);
-                                       }
+                                       type = (char *)tok2str(ns_type2str, "Type%d", rr->type);
+                                       fprintf (stdout, "%s ", type);
+                                       if (i == 0) fprintf (stdout, "%s %s %s", type, rr->name, rr->data);
+                                       else fprintf (stdout, ",%s %s", rr->name, rr->data);
+                                       ArgusPushBackList(res->cname, (struct ArgusListRecord *)list, ARGUS_NOLOCK);
                                     }
-                                 } else
+                                 }
+
+                                 if (res->soa) {
+                                    int i, count = res->soa->count;
+
+                                    for (i = 0; i < count; i++) {
+                                       struct ArgusListObjectStruct *list =  (struct ArgusListObjectStruct *)ArgusPopFrontList(res->soa, ARGUS_NOLOCK);
+                                       struct ArgusDomainResourceRecord *rr = list->list_union.obj;
+
+                                       type = (char *)tok2str(ns_type2str, "Type%d", rr->type);
+
+                                       if (i == 0) fprintf (stdout, "%s %s %s %s %d %d %d %d %d", type, rr->name,
+                                          rr->mname, rr->rname, rr->serial, rr->refresh, rr->retry, rr->expire, rr->minimum);
+                                       else fprintf (stdout, ",%s", rr->mname);
+                                       ArgusPushBackList(res->soa, (struct ArgusListRecord *)list, ARGUS_NOLOCK);
+                                    }
+                                 }
+
+                                 if (res->ns) {
+                                    int i, count = res->ns->count;
+                                    
+                                    for (i = 0; i < count; i++) {
+                                       struct ArgusListObjectStruct *list =  (struct ArgusListObjectStruct *)ArgusPopFrontList(res->ns, ARGUS_NOLOCK);
+                                       struct ArgusDomainResourceRecord *rr = list->list_union.obj;
+                                       
+                                       type = (char *)tok2str(ns_type2str, "Type%d", rr->type);
+                                       if (i == 0) fprintf (stdout, "%s %s %s[%d]", type, rr->name, rr->data, rr->ttl);
+                                       else fprintf (stdout, ",%s[%d]", rr->data, rr->ttl);
+                                       ArgusPushBackList(res->ns, (struct ArgusListRecord *)list, ARGUS_NOLOCK);
+                                    }  
+                                 }
                                  if (res->ptr) {
                                     int i, count = res->ptr->count;
-                                    type = (char *)tok2str(ns_type2str, "Type%d", res->qtype);
 
-                                    fprintf (stdout, "%s ", type);
                                     for (i = 0; i < count; i++) {
                                        struct ArgusListObjectStruct *list =  (struct ArgusListObjectStruct *)ArgusPopFrontList(res->ptr, ARGUS_NOLOCK);
                                        struct ArgusDomainResourceRecord *rr = list->list_union.obj;
 
-                                       if (i == 0) fprintf (stdout, "%s %s[%d]", rr->name, rr->data, rr->ttl);
-                                       else fprintf (stdout, ", %s[%d]", rr->data, rr->ttl);
+                                       type = (char *)tok2str(ns_type2str, "Type%d", rr->type);
+                                       if (i == 0) fprintf (stdout, "%s %s %s[%d]", type, rr->name, rr->data, rr->ttl);
+                                       else fprintf (stdout, ",%s[%d]", rr->data, rr->ttl);
                                        ArgusPushBackList(res->ptr, (struct ArgusListRecord *)list, ARGUS_NOLOCK);
                                     }
                                  }

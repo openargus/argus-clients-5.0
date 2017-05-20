@@ -102,8 +102,11 @@ struct nnamemem {
    struct nnamemem *n_nxt;
    unsigned int status, hashval, secs, ref;
    char *n_name, *d_name;
+   struct ArgusListStruct *refers;
    struct ArgusListStruct *cidrs;
    struct ArgusListStruct *cnames;
+   struct ArgusListStruct *aliases;
+   struct ArgusListStruct *ptrs;
 };
 
 #define e_bs e_nsap        /* for byestringtable */
@@ -165,6 +168,7 @@ struct ArgusFileEntry {
 
 struct ArgusListObjectStruct {
    struct ArgusListObjectStruct *nxt, *prv;
+   unsigned int status;
    union {
       void *obj;
       unsigned int val;

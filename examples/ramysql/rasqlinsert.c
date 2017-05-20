@@ -1787,6 +1787,8 @@ ArgusCreateSQLSaveTable(char *db, char *table)
       }
 
       if (!exists) {
+         if (RaTableCreateNames[cindex])
+            free(RaTableCreateNames[cindex]);
          RaTableCreateNames[cindex] = strdup(stable);
 
          sprintf (sbuf, "CREATE table %s (", RaTableCreateNames[cindex]);
@@ -1876,6 +1878,9 @@ ArgusCreateSQLSaveTable(char *db, char *table)
             sprintf (&sbuf[strlen(sbuf)], ") ENGINE=%s", ArgusParser->MySQLDBEngine);
          else
             sprintf (&sbuf[strlen(sbuf)], ") TYPE=%s", ArgusParser->MySQLDBEngine);
+
+         if (RaTableCreateString[cindex])
+            free(RaTableCreateString[cindex]);
          RaTableCreateString[cindex] = strdup(sbuf);
 
          cindex++;
@@ -2314,6 +2319,7 @@ ArgusCheckSQLCache(struct ArgusParserStruct *parser, struct RaBinStruct *bin, st
 
       ArgusTotalSQLSearches++;
       ArgusTotalSelectSQLStatements++;
+      ArgusDeleteSQLQuery(sqry);
    }
 
    return (argus);

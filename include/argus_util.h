@@ -100,7 +100,9 @@ struct anamemem {
 
 struct nnamemem {
    struct nnamemem *n_nxt;
-   unsigned int status, hashval, secs, ref;
+   unsigned int status, hashval, ref;
+   struct timeval stime, ltime;
+
    char *n_name, *d_name;
    struct ArgusListStruct *refers;
    struct ArgusListStruct *cidrs;

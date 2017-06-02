@@ -472,7 +472,6 @@ ArgusNewOutput (struct ArgusParserStruct *parser, int sasl_min_ssf,
                 int sasl_max_ssf, int auth_localhost)
 {
    struct ArgusOutputStruct *retn = NULL;
-   int i;
 
    if ((retn = (struct ArgusOutputStruct *) ArgusCalloc (1, sizeof (struct ArgusOutputStruct))) == NULL)
      ArgusLog (LOG_ERR, "ArgusNewOutput() ArgusCalloc error %s\n", strerror(errno));
@@ -561,7 +560,6 @@ struct ArgusOutputStruct *
 ArgusNewControlChannel (struct ArgusParserStruct *parser)
 {
    struct ArgusOutputStruct *retn = NULL;
-   int i;
 
    if ((retn = (struct ArgusOutputStruct *) ArgusCalloc (1, sizeof (struct ArgusOutputStruct))) == NULL)
      ArgusLog (LOG_ERR, "ArgusNewControlChannel() ArgusCalloc error %s\n", strerror(errno));
@@ -3427,7 +3425,7 @@ void *ArgusListenProcess(void *arg)
 
          struct timeval wait = LISTEN_WAIT_INITIALIZER;
          fd_set readmask;
-         int i, width = 0;
+         int width = 0;
 
          /* Build new fd_set of listening sockets */
 
@@ -4013,8 +4011,6 @@ ArgusCheckClientStatus (struct ArgusOutputStruct *output, int s,
                {
                   char hbuf[NI_MAXHOST];
                   int niflags;
-                  int localaddr_lo = 0;  /* is loopback? */
-                  int remoteaddr_lo = 0;
 
                   salen = sizeof(remoteaddr);
                   bzero(hbuf, sizeof(hbuf));
@@ -5074,10 +5070,6 @@ ArgusDeleteSocket (struct ArgusOutputStruct *output, struct ArgusClientData *cli
    struct ArgusSocketStruct *asock = client->sock;
 
    if (asock != NULL) {
-      struct ArgusListStruct *list = asock->ArgusOutputList;
-      struct ArgusWireFmtBuffer *awf;
-      struct ArgusQueueNode *node;
-
       DrainArgusSocketQueue(client);
       ArgusDeleteList(asock->ArgusOutputList, ARGUS_OUTPUT_LIST);
 

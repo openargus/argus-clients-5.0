@@ -382,6 +382,7 @@ struct ArgusParserStruct {
    char ArgusAutoId;
    char ArgusPrintPortZero;
    char ArgusPrintHashZero;
+   char ArgusEtherFrameCnt;
 
    char ArgusStripFields;
    char ArgusDSRFields[ARGUSMAXDSRTYPE];

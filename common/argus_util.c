@@ -2927,7 +2927,6 @@ time that needs to lapse */
                      gettimeofday(&parser->ArgusRealTime, 0);
                      ArgusAdjustGlobalTime(parser, NULL);
 
-
                      if ((ArgusParser->ArgusRealTime.tv_sec  > timeoutValue.tv_sec) ||
                         ((ArgusParser->ArgusRealTime.tv_sec == timeoutValue.tv_sec) &&
                          (ArgusParser->ArgusRealTime.tv_usec > timeoutValue.tv_usec))) {

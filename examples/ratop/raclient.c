@@ -53,6 +53,7 @@ void ArgusThreadsInit(pthread_attr_t *);
 void RaInsertAddressTree (struct ArgusParserStruct *, struct ArgusLabelerStruct *labeler, char *);
 
 extern int ArgusCloseDown;
+int RaTopReplace = 0;;
 
 int ArgusProcessQueue (struct ArgusQueueStruct *);
 void ArgusGetInterfaceAddresses(struct ArgusParserStruct *);
@@ -66,6 +67,7 @@ char **ArgusHandleHighlightCommand (char *);
 char **ArgusHandleDisplayCommand (char *);
 char **ArgusHandleFilterCommand (char *);
 char **ArgusHandleSearchCommand (char *);
+
 
 struct ArgusWirelessStruct ArgusWirelessBuf, *ArgusWireless = &ArgusWirelessBuf;
  
@@ -489,10 +491,12 @@ ArgusClientInit (struct ArgusParserStruct *parser)
 
          if (parser->ArgusInputFileList != NULL) {
             parser->RaTasksToDo = RA_ACTIVE;
-            if (parser->ArgusRemoteHosts) {
-               if ((input = (void *)parser->ArgusRemoteHosts->start) == NULL) {
-                  parser->timeout.tv_sec  = 0;
-                  parser->timeout.tv_usec = 0;
+            if (parser->ProcessRealTime == 0) {
+               if (parser->ArgusRemoteHosts) {
+                  if ((input = (void *)parser->ArgusRemoteHosts->start) == NULL) {
+                     parser->timeout.tv_sec  = 0;
+                     parser->timeout.tv_usec = 0;
+                  }
                }
             }
          }
@@ -719,6 +723,9 @@ ArgusClientInit (struct ArgusParserStruct *parser)
                   }
 
                } else {
+                  if (!(strncasecmp (mode->mode, "replace", 9))) {
+                     RaTopReplace = 1;
+                  } else
                   if (!(strncasecmp (mode->mode, "oui", 3)))
                      parser->ArgusPrintEthernetVendors++;
                   else
@@ -832,14 +839,14 @@ ArgusClientInit (struct ArgusParserStruct *parser)
             parser->RaCumulativeMerge = 0;
             bzero(parser->RaSortOptionStrings, sizeof(parser->RaSortOptionStrings));
             parser->RaSortOptionIndex = 0;
-//          parser->RaSortOptionStrings[parser->RaSortOptionIndex++] = "stime";
+            parser->RaSortOptionStrings[parser->RaSortOptionIndex++] = "stime";
          }
 
          if (parser->ArgusRemoteHosts)
             if ((input = (void *)parser->ArgusRemoteHosts->start) != NULL)
                parser->RaTasksToDo = RA_ACTIVE;
 
-         if ((ArgusEventAggregator = ArgusNewAggregator(parser, "sid saddr daddr proto sport dport", ARGUS_RECORD_AGGREGATOR)) == NULL)
+         if ((ArgusEventAggregator = ArgusNewAggregator(parser, "sid inf saddr daddr proto sport dport", ARGUS_RECORD_AGGREGATOR)) == NULL)
             ArgusLog (LOG_ERR, "ArgusClientInit: ArgusNewAggregator error");
 
          if (parser->Hstr != NULL)
@@ -1303,7 +1310,7 @@ RaProcessThisRecord (struct ArgusParserStruct *parser, struct ArgusRecordStruct 
             cns = ArgusCopyRecordStruct(ns);
 
             if (agg->mask) {
-               if ((agg->rap = RaFlowModelOverRides(agg, cns)) == NULL)
+                  if ((agg->rap = RaFlowModelOverRides(agg, cns)) == NULL)
                   agg->rap = agg->drap;
 
                ArgusGenerateNewFlow(agg, cns);
@@ -1362,13 +1369,15 @@ RaProcessThisRecord (struct ArgusParserStruct *parser, struct ArgusRecordStruct 
                      }
                   }
 
-                  if ((pns) && pns->qhdr.queue) {
-                     if (pns->qhdr.queue != RaCursesProcess->queue)
-                        ArgusRemoveFromQueue (pns->qhdr.queue, &pns->qhdr, ARGUS_LOCK);
-                     else
-                        ArgusRemoveFromQueue (pns->qhdr.queue, &pns->qhdr, ARGUS_NOLOCK);
+                  if (pns) {
+                     if (pns->qhdr.queue) {
+                        if (pns->qhdr.queue != RaCursesProcess->queue)
+                           ArgusRemoveFromQueue (pns->qhdr.queue, &pns->qhdr, ARGUS_LOCK);
+                        else
+                           ArgusRemoveFromQueue (pns->qhdr.queue, &pns->qhdr, ARGUS_NOLOCK);
+                     }
 
-                     ArgusAddToQueue (RaCursesProcess->queue, &pns->qhdr, ARGUS_NOLOCK);
+//                   ArgusAddToQueue (RaCursesProcess->queue, &pns->qhdr, ARGUS_NOLOCK);
                      pns->status |= ARGUS_RECORD_MODIFIED;
 
                   } else {
@@ -1399,8 +1408,14 @@ RaProcessThisRecord (struct ArgusParserStruct *parser, struct ArgusRecordStruct 
 
          if (!(RaBinProcess && (RaBinProcess->nadp.mode == ARGUSSPLITRATE))) {
             if (pns) {
-               ArgusMergeRecords (ArgusParser->ArgusAggregator, pns, cns);
-               ArgusDeleteRecordStruct(ArgusParser, cns);
+               if (RaTopReplace) {
+                  ArgusReplaceRecords (ArgusParser->ArgusAggregator, pns, cns);
+                  ArgusDeleteRecordStruct(ArgusParser, pns);
+                  pns = cns;
+               } else {
+                  ArgusMergeRecords (ArgusParser->ArgusAggregator, pns, cns);
+                  ArgusDeleteRecordStruct(ArgusParser, cns);
+               }
                pns->status |= ARGUS_RECORD_MODIFIED;
             } else {
                pns = cns;
@@ -1410,9 +1425,10 @@ RaProcessThisRecord (struct ArgusParserStruct *parser, struct ArgusRecordStruct 
                      ArgusLog (LOG_ERR, "RaProcessThisRecord: ArgusGenerateHashStruct error %s", strerror(errno));
     
                pns->htblhdr = ArgusAddHashEntry (RaCursesProcess->htable, pns, hstruct);
-               ArgusAddToQueue (RaCursesProcess->queue, &pns->qhdr, ARGUS_NOLOCK);
                pns->status |= ARGUS_RECORD_NEW | ARGUS_RECORD_MODIFIED;
             }
+
+            ArgusAddToQueue (RaCursesProcess->queue, &pns->qhdr, ARGUS_NOLOCK);
 
          } else {
             ArgusAlignInit(parser, cns, &RaBinProcess->nadp);
@@ -1434,8 +1450,13 @@ RaProcessThisRecord (struct ArgusParserStruct *parser, struct ArgusRecordStruct 
                      pns->bins->status |= RA_DIRTYBINS;
          
                   } else {
-                     ArgusMergeRecords (ArgusParser->ArgusAggregator, pns, tns);
-                     ArgusDeleteRecordStruct(ArgusParser, tns);
+                     if (RaTopReplace) {
+                       ArgusDeleteRecordStruct(ArgusParser, pns);
+                       pns = tns;
+                     } else {
+                       ArgusMergeRecords (ArgusParser->ArgusAggregator, pns, tns);
+                       ArgusDeleteRecordStruct(ArgusParser, tns);
+                     }
                      pns->status |= ARGUS_RECORD_MODIFIED;
                   }
          

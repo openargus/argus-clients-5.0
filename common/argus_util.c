@@ -1153,6 +1153,10 @@ ArgusParseArgs(struct ArgusParserStruct *parser, int argc, char **argv,
                      free (parser->ArgusSQLStatement);
                   parser->ArgusSQLStatement = strdup(&optarg[4]);
                } else
+               if ((tzptr = strstr(optarg, "eframe=")) != NULL) {
+                  parser->ArgusEtherFrameCnt = (int)strtol(&tzptr[7], (char **)NULL, 10);
+                  ArgusAddMode = 0;
+               } else
                if (!(strcmp (optarg, "d3"))) {
                   parser->ArgusPrintD3++;
                   ArgusAddMode = 0;
@@ -10831,13 +10835,15 @@ ArgusPrintBytes (struct ArgusParserStruct *parser, char *buf, struct ArgusRecord
       case ARGUS_NETFLOW:
       case ARGUS_FAR: {
          if (argus && ((metric = (void *)argus->dsrs[ARGUS_METRIC_INDEX]) != NULL)) {
-            long long value = metric->src.bytes + metric->dst.bytes;
+            long long pkts = metric->src.pkts + metric->dst.pkts;
+            long long value = metric->src.bytes + metric->dst.bytes + (pkts * parser->ArgusEtherFrameCnt) ;
             float fvalue = 0.0;
 
             if (parser->Pctflag && parser->ns) {
                if ((nsmetric = (void *)parser->ns->dsrs[ARGUS_METRIC_INDEX]) != NULL) {
                   if (value > 0)
-                     fvalue = (value * 100.0) / ((nsmetric->src.bytes + nsmetric->dst.bytes) * 1.0);
+                     fvalue = (value * 100.0) / ((nsmetric->src.bytes + nsmetric->dst.bytes + 
+                        ((nsmetric->src.pkts + nsmetric->dst.pkts) * parser->ArgusEtherFrameCnt)) * 1.0);
                }
             }
 
@@ -10924,13 +10930,14 @@ ArgusPrintSrcBytes (struct ArgusParserStruct *parser, char *buf, struct ArgusRec
          bzero(pbuf, 4);
 
          if (argus && ((metric = (void *)argus->dsrs[ARGUS_METRIC_INDEX]) != NULL)) {
-            long long value = metric->src.bytes;
+            long long pkts = metric->src.pkts;
+            long long value = metric->src.bytes + (pkts * parser->ArgusEtherFrameCnt) ;
             float fvalue = 0.0;
 
             if (parser->Pctflag && parser->ns) {
                if ((nsmetric = (void *)parser->ns->dsrs[ARGUS_METRIC_INDEX]) != NULL) {
                   if (nsmetric->src.bytes > 0)
-                     fvalue = (metric->src.bytes * 100.0) / (nsmetric->src.bytes * 1.0);
+                     fvalue = (value * 100.0) / (nsmetric->src.bytes + ((nsmetric->src.pkts * parser->ArgusEtherFrameCnt) * 1.0));
                }
             }
 
@@ -11016,13 +11023,14 @@ ArgusPrintDstBytes (struct ArgusParserStruct *parser, char *buf, struct ArgusRec
          bzero(pbuf, 4);
 
          if (argus && ((metric = (void *)argus->dsrs[ARGUS_METRIC_INDEX]) != NULL)) {
-            long long value = metric->dst.bytes;
+            long long pkts = metric->dst.pkts;
+            long long value = metric->dst.bytes + (pkts * parser->ArgusEtherFrameCnt) ;
             float fvalue = 0.0;
 
             if (parser->Pctflag && parser->ns) {
                if ((nsmetric = (void *)parser->ns->dsrs[ARGUS_METRIC_INDEX]) != NULL) {
                   if (nsmetric->dst.bytes > 0)
-                     fvalue = (metric->dst.bytes * 100.0) / (nsmetric->dst.bytes * 1.0);
+                     fvalue = (value * 100.0) / (nsmetric->dst.bytes + ((nsmetric->dst.pkts * parser->ArgusEtherFrameCnt) * 1.0));
                }
             }
 

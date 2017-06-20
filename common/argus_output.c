@@ -1054,8 +1054,6 @@ ArgusOutputStatusTime(struct ArgusOutputStruct *output)
 }
 
 
-#define ARGUS_MAXPROCESS		0x10000
-
 typedef int (*ArgusCheckMessageFunc)(struct ArgusOutputStruct *output,
                                      struct ArgusClientData *client);
 

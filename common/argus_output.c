@@ -1,6 +1,6 @@
 /*
  * Gargoyle Client Software. Tools to read, analyze and manage Argus data.
- * Copyright (c) 2000-2016 QoSient, LLC
+ * Copyright (c) 2000-2017 QoSient, LLC
  * All rights reserved.
  *
  * THE ACCOMPANYING PROGRAM IS PROPRIETARY SOFTWARE OF QoSIENT, LLC,
@@ -16,12 +16,6 @@
  * ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
  * THIS SOFTWARE.
  *
- */
-
-/* 
- * $Id: //depot/argus/clients/clients/radium.c#7 $
- * $DateTime: 2012/12/13 11:07:52 $
- * $Change: 2514 $
  */
 
 /*

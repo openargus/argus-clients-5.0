@@ -1574,7 +1574,9 @@ ArgusOutputProcess(void *arg)
    ArgusCheckMessageFunc checkmessage = ArgusCheckClientMessage;
 
    rv = __ArgusOutputProcess(arg, portnum, checkmessage, __func__);
+#if defined(ARGUS_THREADS)
    RaParseComplete(1);
+#endif
    return rv;
 }
 

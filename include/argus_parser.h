@@ -255,7 +255,9 @@ struct ArgusCIDRAddr {
 };
 
 #define ARGUS_MAXTHREADS	128
-#define ARGUS_MAXLISTEN		32
+#define ARGUS_MAXLISTEN		8
+#define ARGUS_LISTEN_BACKLOG    32
+#define ARGUS_MAXCLIENTS        32
 
 #define ARGUS_REAL_TIME_PROCESS   	0x0100
 #define ARGUS_FILE_LIST_PROCESSED	0x1000
@@ -331,6 +333,7 @@ struct ArgusParserStruct {
 
 #if defined(ARGUS_THREADS)
    pthread_t thread, remote, output, timer, dns;
+   pthread_t listenthread;
    pthread_mutex_t lock;
    pthread_cond_t cond;
 #endif /* ARGUS_THREADS */
@@ -350,6 +353,7 @@ struct ArgusParserStruct {
 
    struct ArgusOutputStruct *ArgusOutput;
    struct ArgusOutputStruct *ArgusControlChannel;
+   struct ArgusOutputStruct *ArgusOutputs[ARGUS_MAXLISTEN];
    struct ArgusListStruct *ArgusOutputList, *ArgusInputList;
    struct ArgusListStruct *ArgusNameList, *ArgusProcessList;
 

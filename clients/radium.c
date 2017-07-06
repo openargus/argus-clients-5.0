@@ -84,6 +84,8 @@ static int RadiumMinSsf = 0;
 static int RadiumMaxSsf = 0;
 static int RadiumAuthLocalhost = 1;
 
+const static unsigned int ArgusClientMaxQueueDepth = 500000;
+
 extern char *chroot_dir;
 extern uid_t new_uid;
 extern gid_t new_gid;
@@ -171,11 +173,6 @@ ArgusClientInit (struct ArgusParserStruct *parser)
          }
       }
 
-      if (parser->ArgusPortNum != 0) {
-         if (ArgusEstablishListen (parser, parser->ArgusPortNum, parser->ArgusBindAddr) < 0)
-            ArgusLog (LOG_ERR, "setArgusPortNum: ArgusEstablishListen returned %s", strerror(errno));
-      }
-
       if (chroot_dir != NULL)
          ArgusSetChroot(chroot_dir);
  
@@ -218,6 +215,13 @@ ArgusClientInit (struct ArgusParserStruct *parser)
                                                 RadiumMaxSsf,
                                                 RadiumAuthLocalhost)) == NULL)
          ArgusLog (LOG_ERR, "could not create output: %s\n", strerror(errno));
+
+      /* Need valid parser->ArgusOutput before starting listener */
+      if (parser->ArgusPortNum != 0) {
+         if (ArgusEstablishListen (parser, parser->ArgusOutput,
+                                   parser->ArgusPortNum, parser->ArgusBindAddr) < 0)
+            ArgusLog (LOG_ERR, "setArgusPortNum: ArgusEstablishListen returned %s", strerror(errno));
+      }
 
 #if defined(ARGUS_THREADS)
       sigemptyset(&blocked_signals);
@@ -281,6 +285,7 @@ RaParseComplete (int sig)
          if ((rec = ArgusGenerateStatusMarRecord(ArgusParser->ArgusOutput, ARGUS_SHUTDOWN)) != NULL)
             ArgusPushBackList(ArgusParser->ArgusOutput->ArgusOutputList, (struct ArgusListRecord *)rec, ARGUS_LOCK);
       
+         ArgusCloseListen(ArgusParser);
          ArgusCloseOutput(ArgusParser->ArgusOutput);
          ArgusDeleteOutput(ArgusParser, ArgusParser->ArgusOutput);
          ArgusParser->ArgusOutput = NULL;
@@ -500,20 +505,21 @@ RaProcessRecord (struct ArgusParserStruct *parser, struct ArgusRecordStruct *arg
 
 #if defined(ARGUS_THREADS)
    if (parser->ArgusOutput && parser->ArgusOutput->ArgusOutputList) {
-      int cnt = 0;
-      pthread_cond_signal(&parser->ArgusOutput->ArgusOutputList->cond); 
+      unsigned int cnt;
 
       pthread_mutex_lock(&parser->ArgusOutput->ArgusOutputList->lock);
+      pthread_cond_signal(&parser->ArgusOutput->ArgusOutputList->cond);
       cnt = parser->ArgusOutput->ArgusOutputList->count;
       pthread_mutex_unlock(&parser->ArgusOutput->ArgusOutputList->lock);
 
-      if (cnt > 10000) {
+      if (cnt > ArgusClientMaxQueueDepth) {
          struct timespec tsbuf = {0, 10000000}, *ts = &tsbuf;
          nanosleep (ts, NULL);
       }
    }
 
 #else
+   ArgusListenProcess(parser);
    ArgusOutputProcess(parser->ArgusOutput);
 #endif
 

@@ -33,7 +33,6 @@ extern "C" {
 #endif
 
 #define ARGUS_MONITORPORT	561
-#define ARGUS_MAXLISTEN		32
 
 #include <unistd.h>
 #include <stdlib.h>
@@ -107,6 +106,7 @@ struct ArgusClientData {
    struct nff_program ArgusNFFcode;
    char *filename, *hostname, *filter;
    int format;
+   char readable;
 
 #if defined(HAVE_GETADDRINFO)
    struct addrinfo *host;
@@ -181,6 +181,7 @@ struct ArgusControlHandlerStruct {
 
 struct ArgusOutputStruct *ArgusOutputTask = NULL;
 
+void *ArgusListenProcess(void *arg);
 void *ArgusOutputProcess(void *);
 
 void ArgusUsr1Sig (int);
@@ -199,7 +200,9 @@ extern void clearArgusWfile(struct ArgusParserStruct *);
 int  ArgusTcpWrapper (struct ArgusOutputStruct *, int, struct sockaddr *, char *);
 
 int RadiumParseResourceFile (struct ArgusParserStruct *, char *);
-int ArgusEstablishListen (struct ArgusParserStruct *, int, char *);
+int ArgusEstablishListen(struct ArgusParserStruct *,
+                         struct ArgusOutputStruct *,
+                         int, char *);
 
 struct ArgusRecord *ArgusGenerateInitialMar (struct ArgusOutputStruct *);
 struct ArgusRecordStruct *ArgusGenerateInitialMarRecord (struct ArgusOutputStruct *);
@@ -222,6 +225,7 @@ void clearRadiumConfiguration (void);
 
 struct ArgusRecordStruct *ArgusCopyRecordStruct (struct ArgusRecordStruct *);
 
+void *ArgusListenProcess(void *arg);
 void *ArgusOutputProcess(void *);
 void ArgusInitOutput (struct ArgusOutputStruct *);
 struct ArgusOutputStruct *ArgusNewOutput (struct ArgusParserStruct *, int, int, int);

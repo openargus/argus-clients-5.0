@@ -393,7 +393,6 @@ struct ArgusParserStruct {
    char ArgusStripFields;
    char ArgusDSRFields[ARGUSMAXDSRTYPE];
 
-   char *RadiumOutputVersion;
    char *RadiumArchive;
    char *ArgusMatchLabel;
 
@@ -497,7 +496,7 @@ struct ArgusParserStruct {
    struct ArgusRecordStruct **RaHistoRecords;
 
    unsigned short ArgusSourcePort, ArgusPortNum;
-   unsigned short ArgusControlPort;
+   unsigned short ArgusControlPort, ArgusV3Port;
 
    int RaHistoBins, RaCloseInputFd;
    int RaPrintIndex;

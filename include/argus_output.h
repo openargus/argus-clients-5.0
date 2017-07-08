@@ -107,6 +107,7 @@ struct ArgusClientData {
    char *filename, *hostname, *filter;
    int format;
    char readable;
+   char version;
 
 #if defined(HAVE_GETADDRINFO)
    struct addrinfo *host;
@@ -144,6 +145,7 @@ struct ArgusOutputStruct {
    unsigned short ArgusPortNum, ArgusControlPort;
    int ArgusUseWrapper, nflag;
    int ArgusLfd[ARGUS_MAXLISTEN];
+   char ArgusLfdVersion[ARGUS_MAXLISTEN];
    int ArgusListens;
    int sasl_min_ssf;
    int sasl_max_ssf;
@@ -191,6 +193,9 @@ void ArgusChildExit (int);
 void ArgusClientError(void);
 void ArgusInitClientProcess(struct ArgusClientData *, struct ArgusWfileStruct *);
 
+void setArgusOutputVersion (struct ArgusOutputStruct *, char *);
+int getArgusOutputVersion (struct ArgusOutputStruct *);
+
 #else
 
 #define ARGUS_MAXPROCESS		0x10000
@@ -202,12 +207,13 @@ int  ArgusTcpWrapper (struct ArgusOutputStruct *, int, struct sockaddr *, char *
 int RadiumParseResourceFile (struct ArgusParserStruct *, char *);
 int ArgusEstablishListen(struct ArgusParserStruct *,
                          struct ArgusOutputStruct *,
-                         int, char *);
+                         int, char *, char);
 
-struct ArgusRecord *ArgusGenerateInitialMar (struct ArgusOutputStruct *);
-struct ArgusRecordStruct *ArgusGenerateInitialMarRecord (struct ArgusOutputStruct *);
-struct ArgusRecordStruct *ArgusGenerateStatusMarRecord (struct ArgusOutputStruct *, unsigned char);
+struct ArgusRecordStruct *
+ArgusGenerateStatusMarRecord (struct ArgusOutputStruct *, unsigned char, char);
 
+extern void setArgusOutputVersion (struct ArgusOutputStruct *, char *);
+extern int getArgusOutputVersion (struct ArgusOutputStruct *);
 void setArgusMarReportInterval (struct ArgusParserStruct *, char *);
 struct timeval *getArgusMarReportInterval(struct ArgusParserStruct *);
 void setArgusPortNum (struct ArgusParserStruct *, int, char *);
@@ -215,7 +221,7 @@ int getArgusPortNum(struct ArgusParserStruct *);
 void setArgusOflag(struct ArgusParserStruct *, unsigned int);
 void setArgusBindAddr (struct ArgusParserStruct *, char *);
 
-void setArgusID(struct ArgusParserStruct *, void *, int, unsigned int);
+void setParserArgusID(struct ArgusParserStruct *, void *, int, unsigned int);
 void ArgusParseSourceID (struct ArgusParserStruct *, char *);
 
 void setArgusZeroConf(struct ArgusParserStruct *, unsigned int);

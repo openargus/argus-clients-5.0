@@ -1,6 +1,6 @@
 /*
  * Gargoyle Software Common include files -  output structures
- * Copyright (c) 2000-2014 QoSient, LLC
+ * Copyright (c) 2000-2017 QoSient, LLC
  * All rights reserved.
  *
  * THE ACCOMPANYING PROGRAM IS PROPRIETARY SOFTWARE OF QoSIENT, LLC,

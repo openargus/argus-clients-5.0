@@ -98,6 +98,14 @@ struct anamemem {
    char *name, *alias;
 };
 
+struct cnamemem {
+   struct cnamemem *n_nxt;
+   unsigned int status, hashval, secs, ref;
+   char *name;
+   unsigned int type;
+   struct ArgusAddrStruct addr;
+};
+
 struct nnamemem {
    struct nnamemem *n_nxt;
    unsigned int status, hashval, ref;
@@ -394,13 +402,17 @@ char *ArgusTrimString (char *str);
 char *ArgusGetString (struct ArgusParserStruct *, u_char *, int);
 char *ArgusGetUuidString (struct ArgusParserStruct *, u_char *, int);
 
-void setArgusID(struct ArgusParserStruct *, void *, int, unsigned int);
-int getArgusID(struct ArgusParserStruct *, struct ArgusAddrStruct *);
+void setArgusID(struct ArgusAddrStruct *, void *, int, unsigned int);
+void setTransportArgusID(struct ArgusTransportStruct *, void *, int, unsigned int);
+void setParserArgusID(struct ArgusParserStruct *, void *, int, unsigned int);
 
 void setArgusManInf (struct ArgusParserStruct *, char *);
 char *getArgusManInf (struct ArgusParserStruct *);
 
+int getParserArgusID(struct ArgusParserStruct *, struct ArgusAddrStruct *);
 unsigned int getArgusIDType(struct ArgusParserStruct *);
+int ArgusCommonParseSourceID (struct ArgusAddrStruct *,
+                              struct ArgusParserStruct *, char *);
 void ArgusParseSourceID (struct ArgusParserStruct *, char *);
 
 void ArgusPrintBssid (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
@@ -1506,10 +1518,12 @@ void ArgusV2NtoH (struct ArgusV2Record *);
 void ArgusV2HtoN (struct ArgusV2Record *);
 
 extern unsigned int getnamehash(const u_char *);
+extern struct cnamemem *check_cmem(struct cnamemem *, const u_char *);
+extern struct cnamemem *lookup_cmem(struct cnamemem *, const u_char *);
 extern struct nnamemem *lookup_nmem(struct nnamemem *, const u_char *);
 extern struct nnamemem *check_nmem(struct nnamemem *, const u_char *);
 
-extern char *lookup_srcid(const u_char *);
+extern char *lookup_srcid(const u_char *, struct anamemem *);
 
 #else
 #define ARGUSPRINTSTARTDATE		0
@@ -1738,10 +1752,12 @@ extern char *ip_proto_string [];
 extern char *icmptypestr[];
 
 extern unsigned int getnamehash(const u_char *);
+extern struct cnamemem *lookup_cmem(struct cnamemem *, const u_char *);
+extern struct cnamemem *check_cmem(struct cnamemem *, const u_char *);
 extern struct nnamemem *lookup_nmem(struct nnamemem *, const u_char *);
 extern struct nnamemem *check_nmem(struct nnamemem *, const u_char *);
 
-extern char *lookup_srcid(const u_char *);
+extern char *lookup_srcid(const u_char *, struct anamemem *);
 
 extern struct enamemem *lookup_emem(struct enamemem *, const u_char *);
 extern struct enamemem *check_emem(struct enamemem *, const u_char *);
@@ -1786,7 +1802,11 @@ extern struct ArgusQueueHeader *ArgusPopQueue (struct ArgusQueueStruct *queue, i
 extern int ArgusAddToQueue(struct ArgusQueueStruct *, struct ArgusQueueHeader *, int);
 extern struct ArgusQueueHeader *ArgusRemoveFromQueue(struct ArgusQueueStruct *, struct ArgusQueueHeader *, int);
 
-extern int getArgusID(struct ArgusParserStruct *, struct ArgusAddrStruct *);
+extern void setArgusID(struct ArgusAddrStruct *, void *, int, unsigned int);
+extern void setTransportArgusID(struct ArgusTransportStruct *, void *, int, unsigned int);
+extern void setParserArgusID(struct ArgusParserStruct *, void *, int, unsigned int);
+
+extern int getParserArgusID(struct ArgusParserStruct *, struct ArgusAddrStruct *);
 extern unsigned int getArgusIDType(struct ArgusParserStruct *);
 
 extern void setArgusManInf (struct ArgusParserStruct *, char *);

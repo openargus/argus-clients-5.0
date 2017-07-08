@@ -303,8 +303,9 @@ struct ArgusParserStruct {
    char *ArgusProgramName, *RaTimeFormat, *RaTimeZone;
    char *ArgusProgramArgs, *ArgusProgramOptions;
    char *ArgusSQLStatement, *MySQLDBEngine;
-   char *ArgusSearchString, *RaMarInfName;
-   char *ArgusAliasFile;
+   char *ArgusAliasFile, *RadiumSrcidConvertFile;
+   char *ArgusSourceIDString, *RaMarInfName;
+   char *ArgusSearchString;
 
    struct timeval ArgusRealTime, ArgusGlobalTime;
    struct timeval ArgusStartRealTime, ArgusEndRealTime;
@@ -370,7 +371,8 @@ struct ArgusParserStruct {
    char ArgusRemotes;
    char ArgusReplaceMode;
    char ArgusHostsActive;
-   char ArgusLfd[ARGUS_MAXLISTEN];
+   int ArgusLfd[ARGUS_MAXLISTEN];        /* listen file descriptors */
+   char ArgusLfdVersion[ARGUS_MAXLISTEN]; /* argus protocol version for this fd */
    char ArgusAdjustTime;
    char ArgusConnectTime;
    char ArgusReverse;
@@ -494,7 +496,7 @@ struct ArgusParserStruct {
    struct ArgusRecordStruct **RaHistoRecords;
 
    unsigned short ArgusSourcePort, ArgusPortNum;
-   unsigned short ArgusControlPort;
+   unsigned short ArgusControlPort, ArgusV3Port;
 
    int RaHistoBins, RaCloseInputFd;
    int RaPrintIndex;

@@ -79,6 +79,8 @@ struct timeval dTime     = {0, 0};
 long long thisUsec = 0;
                                                                                                                            
 void RadiumSendFile (struct ArgusOutputStruct *, struct ArgusClientData *, char *, int);
+int RadiumParseSourceID (struct ArgusAddrStruct *, char *);
+int RadiumParseSrcidConversionFile (char *);
 
 static int RadiumMinSsf = 0;
 static int RadiumMaxSsf = 0;
@@ -219,8 +221,16 @@ ArgusClientInit (struct ArgusParserStruct *parser)
       /* Need valid parser->ArgusOutput before starting listener */
       if (parser->ArgusPortNum != 0) {
          if (ArgusEstablishListen (parser, parser->ArgusOutput,
-                                   parser->ArgusPortNum, parser->ArgusBindAddr) < 0)
+                                   parser->ArgusPortNum, parser->ArgusBindAddr,
+                                   ARGUS_VERSION) < 0)
             ArgusLog (LOG_ERR, "setArgusPortNum: ArgusEstablishListen returned %s", strerror(errno));
+      }
+      if (parser->ArgusV3Port != 0) {
+         if (ArgusEstablishListen (parser, parser->ArgusOutput,
+                                   parser->ArgusV3Port, parser->ArgusBindAddr,
+                                   ARGUS_VERSION_3) < 0)
+            ArgusLog (LOG_ERR, "%s: ArgusEstablishListen returned %s",
+                      __func__, strerror(errno));
       }
 
 #if defined(ARGUS_THREADS)
@@ -282,7 +292,7 @@ RaParseComplete (int sig)
       }
 
       if (ArgusParser->ArgusOutput) {
-         if ((rec = ArgusGenerateStatusMarRecord(ArgusParser->ArgusOutput, ARGUS_SHUTDOWN)) != NULL)
+         if ((rec = ArgusGenerateStatusMarRecord(ArgusParser->ArgusOutput, ARGUS_SHUTDOWN, ARGUS_VERSION)) != NULL)
             ArgusPushBackList(ArgusParser->ArgusOutput->ArgusOutputList, (struct ArgusListRecord *)rec, ARGUS_LOCK);
       
          ArgusCloseListen(ArgusParser);
@@ -538,7 +548,7 @@ void ArgusWindowClose(void) {
 #endif
 }
 
-#define RADIUM_RCITEMS                          25
+#define RADIUM_RCITEMS                          27
 
 #define RADIUM_MONITOR_ID                       0
 #define RADIUM_MONITOR_ID_INCLUDE_INF		1
@@ -564,7 +574,9 @@ void ArgusWindowClose(void) {
 #define RADIUM_SETGROUP_ID                      21
 #define RADIUM_CLASSIFIER_FILE                  22
 #define RADIUM_ZEROCONF_REGISTER                23
-#define RADIUM_AUTH_LOCALHOST                   24
+#define RADIUM_V3_ACCESS_PORT                   24
+#define RADIUM_SRCID_CONVERSION_FILE            25
+#define RADIUM_AUTH_LOCALHOST                   26
 
 char *RadiumResourceFileStr [] = {
    "RADIUM_MONITOR_ID=",
@@ -591,6 +603,8 @@ char *RadiumResourceFileStr [] = {
    "RADIUM_SETGROUP_ID=",
    "RADIUM_CLASSIFIER_FILE=",
    "RADIUM_ZEROCONF_REGISTER=",
+   "RADIUM_V3_ACCESS_PORT=",
+   "RADIUM_SRCID_CONVERSION_FILE=",
    "RADIUM_AUTH_LOCALHOST=",
 };
 
@@ -680,7 +694,7 @@ RadiumParseResourceFile (struct ArgusParserStruct *parser, char *file)
                               int slen = strlen(optarg);
                               if (slen > 4) optarg[4] = '\0';
                               if (optarg[3] == '\"') optarg[3] = '\0';
-                              setArgusID (parser, optarg, 4, ARGUS_TYPE_STRING);
+                              setParserArgusID (parser, optarg, 4, ARGUS_TYPE_STRING);
  
                            } else {
                               if (optarg && (*optarg == '`')) {
@@ -814,6 +828,15 @@ RadiumParseResourceFile (struct ArgusParserStruct *parser, char *file)
                            setArgusWfile (parser, optarg, filter);
                            break;
                         }
+
+                        case RADIUM_V3_ACCESS_PORT:
+                           parser->ArgusV3Port = atoi(optarg);
+                           break;
+
+                        case RADIUM_SRCID_CONVERSION_FILE:
+                           parser->RadiumSrcidConvertFile = strdup(optarg);
+                           RadiumParseSrcidConversionFile (parser->RadiumSrcidConvertFile);
+                           break;
 
                         case RADIUM_MAR_STATUS_INTERVAL:
                            setArgusMarReportInterval (parser, optarg);
@@ -981,7 +1004,7 @@ void
 clearRadiumConfiguration (void)
 {
    ArgusParser->dflag = 0;
-   setArgusID (ArgusParser, 0, 0, 0);
+   setParserArgusID (ArgusParser, 0, 0, 0);
 
    ArgusParser->ArgusPortNum = 0;
 
@@ -1006,4 +1029,96 @@ clearRadiumConfiguration (void)
 #ifdef ARGUSDEBUG
    ArgusDebug (1, "clearRadiumConfiguration () returning\n");
 #endif 
+}
+
+
+int
+RadiumParseSourceID (struct ArgusAddrStruct *srcid, char *optarg)
+{
+   return ArgusCommonParseSourceID(srcid, NULL, optarg);
+}
+
+
+/*
+   RadiumParseSrcidConversionFile (char *file)
+      srcid 	conversionValue
+*/
+
+extern struct cnamemem converttable[HASHNAMESIZE];
+
+int 
+RadiumParseSrcidConversionFile (char *file)
+{
+   struct stat statbuf;
+   FILE *fd = NULL;
+   int retn = 0;
+
+   if (file != NULL) {
+      if (stat(file, &statbuf) >= 0) {
+         if ((fd = fopen(file, "r")) != NULL) {
+            char strbuf[MAXSTRLEN], *str = strbuf, *optarg = NULL;
+            char *srcid = NULL, *convert = NULL;
+            int lines = 0;
+
+            retn = 1;
+
+            while ((fgets(strbuf, MAXSTRLEN, fd)) != NULL)  {
+               lines++;
+               str = strbuf;
+               while (*str && isspace((int)*str))
+                   str++;
+
+#define RA_READING_SRCID                0
+#define RA_READING_ALIAS                1
+
+               if (*str && (*str != '#') && (*str != '\n') && (*str != '!')) {
+                  int state = RA_READING_SRCID;
+                  struct cnamemem  *ap;
+                  int done = 0;
+                  u_int hash;
+
+                  while ((optarg = strtok(str, " \t\n")) != NULL) {
+                     switch (state) {
+                        case RA_READING_SRCID: {
+                           int i, len = strlen(optarg);
+                           for (i = 0; i < len; i++)
+                              optarg[i] = tolower(optarg[i]);
+                           srcid = optarg;
+                           state = RA_READING_ALIAS;
+                           break;
+                        }
+
+                        case RA_READING_ALIAS: {
+                           convert = optarg;
+                           done = 1;
+                           break;
+                        }
+                     }
+                     str = NULL;
+                    
+                     if (done)
+                        break;
+                  }
+
+                  hash = getnamehash((const u_char *)srcid);
+                  ap = &converttable[hash % (HASHNAMESIZE-1)];
+                  while (ap->n_nxt)
+                     ap = ap->n_nxt;
+     
+                  ap->hashval = hash;
+                  ap->name = strdup((char *) srcid);
+
+                  ap->type = RadiumParseSourceID(&ap->addr, convert);
+                  ap->n_nxt = (struct cnamemem *)calloc(1, sizeof(*ap));
+               }
+            }
+         }
+      }
+   }
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (2, "RadiumParseSrcidConversionFile (%s) returning %d\n", file, retn);
+#endif
+
+   return (retn);
 }

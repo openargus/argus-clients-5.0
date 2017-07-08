@@ -28762,20 +28762,25 @@ getArgusIDType(struct ArgusParserStruct *parser)
             char[4]
 */
 
-void
-ArgusParseSourceID (struct ArgusParserStruct *src, char *optarg)
+/* If src is non-NULL, set the parser's Source ID.  Otherwise,
+ * adjust the ArgusAddrStruct.
+ */
+int
+ArgusCommonParseSourceID(struct ArgusAddrStruct *srcid,
+                         struct ArgusParserStruct *src, char *optarg)
 {
-   struct ArgusTransportStruct *trans = &src->trans;
    int retn = 0, type = 0, slen = 0, subsid = 0;
    char *ptr = NULL, *sptr = NULL, *iptr = NULL;
    unsigned char buf[32];
    char *prefix = NULL;
 
-
    if (optarg  == NULL)
-      return;
+      return 0;
 
-   type = trans->hdr.argus_dsrvl8.qual;
+   if (src) {
+      srcid = &src->trans.srcid; /* prefer srcid in parser structure */
+      type = src->trans.hdr.argus_dsrvl8.qual;
+   }
 
    bzero(buf, sizeof(buf));
    if ((sptr = strdup(optarg)) != NULL) {
@@ -28812,7 +28817,7 @@ ArgusParseSourceID (struct ArgusParserStruct *src, char *optarg)
          }
       }
 
-// process the optional inf part. 
+// process the optional inf part.
       if ((iptr = strchr(optarg, '/')) != NULL) {
          if (strlen(iptr + 1) > 4)
             ArgusLog(LOG_ERR, "ArgusParseSourceID error: %s: interface len gt 4 char", optarg);
@@ -28825,34 +28830,34 @@ ArgusParseSourceID (struct ArgusParserStruct *src, char *optarg)
       if (subsid) {
          switch (type & ~ARGUS_TYPE_INTERFACE) {
             case ARGUS_TYPE_STRING: {
-               slen = strlen((const char *)&src->trans.srcid.a_un.str);
-               bcopy(&src->trans.srcid.a_un.str, buf, slen);
+               slen = strlen((const char *)&srcid->a_un.str);
+               bcopy(&srcid->a_un.str, buf, slen);
                type = ARGUS_TYPE_STRING;
                break;
             }
             case ARGUS_TYPE_INT: {
-               slen = sizeof(src->trans.srcid.a_un.value);
-               bcopy(&src->trans.srcid.a_un.value, buf, slen); 
+               slen = sizeof(srcid->a_un.value);
+               bcopy(&srcid->a_un.value, buf, slen);
                type = ARGUS_TYPE_INT;
                break;
             }
             case ARGUS_TYPE_IPV4: {
-               unsigned int saddr = ntohl(src->trans.srcid.a_un.ipv4);
-               slen = sizeof(src->trans.srcid.a_un.ipv4);
-               bcopy(&saddr, buf, slen); 
+               unsigned int saddr = ntohl(srcid->a_un.ipv4);
+               slen = sizeof(srcid->a_un.ipv4);
+               bcopy(&saddr, buf, slen);
                type = ARGUS_TYPE_IPV4;
                break;
             }
             case ARGUS_TYPE_IPV6: {
-               slen = sizeof(src->trans.srcid.a_un.ipv6);
-               bcopy(&src->trans.srcid.a_un.ipv6, buf, slen); 
+               slen = sizeof(srcid->a_un.ipv6);
+               bcopy(&srcid->a_un.ipv6, buf, slen);
                type = ARGUS_TYPE_IPV6;
                break;
             }
 
             case ARGUS_TYPE_UUID  : {
-               slen = sizeof(src->trans.srcid.a_un.uuid);
-               bcopy(&src->trans.srcid.a_un.uuid, buf, slen); 
+               slen = sizeof(srcid->a_un.uuid);
+               bcopy(&srcid->a_un.uuid, buf, slen);
                type = ARGUS_TYPE_UUID;
                break;
             }
@@ -28958,7 +28963,7 @@ ArgusParseSourceID (struct ArgusParserStruct *src, char *optarg)
 
       if (iptr != NULL) {
          int len;
-         if (strcmp(iptr, "inf") == 0) {
+         if (src && strcmp(iptr, "inf") == 0) {
             char *inf = getArgusManInf(src);
             if (inf != NULL) {
                if ((len = strlen(inf)) > 4) {
@@ -28980,15 +28985,26 @@ ArgusParseSourceID (struct ArgusParserStruct *src, char *optarg)
          }
       }
 
-      if (type)
-         setParserArgusID (src, buf, slen, type);
-      else
+      if (type) {
+         if (src)
+            setParserArgusID (src, buf, slen, type);
+         else
+            setArgusID (srcid, buf, slen, type);
+      } else
          retn = 1;
 
       free (sptr);
       if (retn > 0)
          ArgusLog (LOG_ERR, "Srcid format error: %s\n", sptr);
    }
+
+   return type;
+}
+
+void
+ArgusParseSourceID (struct ArgusParserStruct *src, char *optarg)
+{
+   (void)ArgusCommonParseSourceID(&src->trans.srcid, src, optarg);
 }
 
 void

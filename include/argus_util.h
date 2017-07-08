@@ -411,6 +411,8 @@ char *getArgusManInf (struct ArgusParserStruct *);
 
 int getParserArgusID(struct ArgusParserStruct *, struct ArgusAddrStruct *);
 unsigned int getArgusIDType(struct ArgusParserStruct *);
+int ArgusCommonParseSourceID (struct ArgusAddrStruct *,
+                              struct ArgusParserStruct *, char *);
 void ArgusParseSourceID (struct ArgusParserStruct *, char *);
 
 void ArgusPrintBssid (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);

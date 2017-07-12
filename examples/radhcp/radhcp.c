@@ -49,8 +49,17 @@
 #include <argus_main.h>
 #include <argus_filter.h>
 #include <argus_label.h>
-
 #include <argus_output.h>
+#include "argus_threads.h"
+#include "rabootp_timer.h"
+#include "rabootp_proto_timers.h"
+#include "rabootp_interval_tree.h" /* for ArgusHandleSearchCommand.  maybe move this function */
+#include "rabootp_memory.h" /* for ArgusHandleSearchCommand.  maybe move this function */
+#include "rabootp_print.h"
+#include "rabootp_patricia_tree.h"
+#include "rabootp_lease_pullup.h"
+#include "argus_format_json.h"
+#include "rabootp_l2addr_list.h"
 
 #if defined(ARGUS_MYSQL)
 #include <mysql.h>
@@ -90,8 +99,6 @@ extern MYSQL *RaMySQL;
 #include <signal.h>
 #include <ctype.h>
 
-const u_char *snapend = NULL;
-
 char ArgusBuf[MAXSTRLEN];
 
 int ArgusThisEflag = 0;
@@ -122,16 +129,273 @@ char *ArgusHandleResponseArray[1024];
 char **ArgusHandleTreeCommand (char *);
 char **ArgusHandleSearchCommand (char *);
 
+static struct RabootpTimerStruct *timer = NULL;
+static pthread_t timer_thread;
+
+int ArgusParseTime (char *, struct tm *, struct tm *, char *, char, int *, int);
+static char temporary[32];
+static char *invecstr;
+static char *global_query_str;
+static const unsigned long INVECSTRLEN = 1024*1024; /* 1 MB */
+static const struct ArgusFormatterTable *fmtable = &ArgusJsonFormatterTable;
+
+static const size_t INTVL_NODE_ARRAY_MAX = 64;
+
+struct invecTimeRangeStruct {
+   struct invecStruct *x;
+   const struct timeval * starttime;
+   const struct timeval * endtime;
+};
+
+static int
+__search_ipaddr_cb(struct rabootp_l2addr_entry *e, void *arg)
+{
+   struct invecTimeRangeStruct *itr = arg;
+   struct invecStruct *x = itr->x;
+   ssize_t count;
+
+   count = IntvlTreeOverlapsRange(e->datum,
+                                  itr->starttime,
+                                  itr->endtime,
+                                  &x->invec[x->used],
+                                  x->nitems - x->used);
+
+   if (count > 0)
+      x->used += count;
+
+   return 0;
+}
+
+static int
+__search_ipaddr(const struct in_addr * const addr,
+                const struct timeval * const starttime,
+                const struct timeval * const endtime,
+                struct ArgusDhcpIntvlNode *invec,
+                size_t invec_nitems)
+{
+   struct RaAddressStruct *ras;
+   struct invecTimeRangeStruct itr;
+   struct invecStruct x;
+   size_t i;
+   int rv = 0;
+
+   MUTEX_LOCK(&ArgusParser->lock);
+
+   ras = RabootpPatriciaTreeFind(&addr->s_addr, ArgusParser);
+   if (ras == NULL)
+     goto out;
+
+   x.nitems = invec_nitems;
+   x.used = 0;
+   x.invec = invec;
+
+   if (x.invec == NULL)
+      goto out;
+
+   itr.x = &x;
+   itr.starttime = starttime;
+   itr.endtime = endtime;
+
+   rabootp_l2addr_list_foreach(ras->obj, __search_ipaddr_cb, &itr);
+
+   rv = (int)x.used;
+
+out:
+   MUTEX_UNLOCK(&ArgusParser->lock);
+   return rv;
+}
+
+/* SEARCH: <argus-time-string> */
 char **
 ArgusHandleSearchCommand (char *command)
 {
+   int res = 0; /* ok */
    char *string = &command[8];
    char **retn = ArgusHandleResponseArray;
+   struct ArgusDhcpIntvlNode *invec;
+   size_t invec_nitems = 256; /* needs to be tunable? or automatic? */
+   ssize_t invec_used;
+
+   struct tm starttime = {0, };
+   struct tm endtime = {0, };
+   int frac;
+   time_t tsec = ArgusParser->ArgusGlobalTime.tv_sec;
+   struct timeval starttime_tv;
+   struct timeval endtime_tv;
+   struct in_addr addr = {0, };
+
+   /* Also remember where in the string the separator was. */
+   char *plusminusloc = NULL;
+   int off = 0;
+   char wildcarddate = 0;
+
+   /* If the date string has two parts, remember which character
+    * separates them.
+    */
+   char plusminus;
 
    bzero(retn, sizeof(ArgusHandleResponseArray));
 
+   if (string[0] == '-')
+      /* skip leading minus, if present */
+      off++;
+
+   /* look through the time string for a plus or minus to indicate
+    * a compound time.
+    */
+   while (!plusminusloc && !isspace(string[off]) && string[off] != '\0') {
+      if (string[off] == '-' || string[off] == '+') {
+         plusminusloc = &string[off];
+         plusminus = string[off];
+         string[off] = '\0'; /* split the string in two */
+      }
+      off++;
+   }
+
+   /* Look for the end of the time string.  If not compound, string[off] is
+    * the end.  Otherwise, keep looking.
+    */
+   while (!isspace(string[off]) && string[off] != '\0') {
+      off++;
+   }
+
+   /* Replace the whitespace in between the time and IP address (if any) with
+    * NULL characters.
+    */
+   while (isspace(string[off]) && string[off] != '\0') {
+      string[off] = '\0';
+      off++;
+   }
+
+   if (string[off] != '\0') {
+      if (string[off] == 'i' && string[off+1] == 'p' && string[off+2] == ':') {
+         DEBUGLOG(1, "%s: Checking for IP address in command (str=%s)\n",
+                  __func__, &string[off+3]);
+         /* unsafe - no check for null term */
+         if (inet_aton(&string[off+3], &addr) != 1) {
+            retn[0] = "Invalid IP address\n";
+            retn[1] = "FAIL\n";
+            res = -1;
+            goto out;
+         }
+         addr.s_addr = ntohl(addr.s_addr);
+         DEBUGLOG(1, "%s: Searching for IP address 0x%08x\n", __func__, addr.s_addr);
+      }
+   }
+
+   localtime_r(&tsec, &endtime);
+
+   if (ArgusParseTime(&wildcarddate, &starttime, &endtime,
+                      string, ' ', &frac, 0) <= 0) {
+      retn[0] = "FAIL\n";
+      res = -1;
+      goto out;
+   }
+
+   if (plusminusloc) {
+      if (ArgusParseTime(&wildcarddate, &endtime, &starttime,
+                         plusminusloc+1, plusminus, &frac, 1) <= 0) {
+         retn[0] = "FAIL\n";
+         res = -1;
+         goto out;
+      }
+   } else if (string[0] != '-') {
+      /* Not a time relative to "now" AND not a time range */
+      endtime = starttime;
+   }
+
+   invec = ArgusMalloc(invec_nitems * sizeof(struct ArgusDhcpIntvlNode));
+   if (invec == NULL)
+      goto out;
+
+   starttime_tv.tv_sec = mktime(&starttime);
+   starttime_tv.tv_usec = 0;
+   endtime_tv.tv_sec = mktime(&endtime);
+   endtime_tv.tv_usec = 0;
+
+   if (addr.s_addr == 0) {
+      invec_used = RabootpIntvlTreeOverlapsRange(&starttime_tv, &endtime_tv,
+                                                 invec, invec_nitems);
+   } else {
+      int tmp_invec_used;
+      struct ArgusDhcpIntvlNode *tmp_invec;
+
+      tmp_invec = ArgusMalloc(sizeof(*tmp_invec)*invec_nitems);
+      if (tmp_invec == NULL) {
+         retn[0] = "Not enough memory\n";
+         retn[1] = "FAIL\n";
+         retn[2] = NULL;
+         res = -1;
+         goto out;
+      }
+
+      tmp_invec_used = __search_ipaddr(&addr, &starttime_tv, &endtime_tv,
+                                       tmp_invec, invec_nitems);
+      if (tmp_invec_used < 0) {
+         retn[0] = "FAIL\n";
+         retn[1] = NULL;
+         res = -1;
+         ArgusFree(tmp_invec);
+         goto out;
+      }
+
+      invec_used = RabootpLeasePullup(tmp_invec, tmp_invec_used,
+                                      invec, invec_nitems);
+      while (tmp_invec_used > 0) {
+        tmp_invec_used--;
+        ArgusDhcpStructFree(tmp_invec[tmp_invec_used].data);
+      }
+      ArgusFree(tmp_invec);
+   }
+
+   if (invec_used < 0) {
+         retn[0] = "FAIL\n";
+         res = -1;
+         goto out;
+   }
+
+   /* format string here */
+   /* TEMP: output number of transactions found */
+   snprintf(temporary, sizeof(temporary), "%zd\n", invec_used);
+   retn[0] = &temporary[0];
+
+   invecstr[0] = '\0';
+   memset(invecstr, 0, INVECSTRLEN); /* FIXME: this shouldn't be necessary */
+
+   /* leave a little room at the end of the buffer because
+    * ArgusPrintTime() doesn't take a length parameter so we can't
+    * tell it when to stop!
+    */
+   RabootpPrintDhcp(ArgusParser, invec, invec_used, invecstr, INVECSTRLEN-64, fmtable);
+   retn[1] = invecstr;
+
+   while (invec_used > 0) {
+     invec_used--;
+     ArgusDhcpStructFree(invec[invec_used].data);
+   }
+   ArgusFree(invec);
+
+out:
+
 #ifdef ARGUSDEBUG
-   ArgusDebug (1, "ArgusHandleSearchCommand(%s) search %s", string, retn);
+   {
+      char t1[32], t2[32];
+      int i;
+
+      asctime_r(&starttime, t1);
+      asctime_r(&endtime, t2);
+
+      for (i = 0; i < sizeof(t1) && t1[i] != '\0'; i++) {
+         if (t1[i] == '\n')
+            t1[i] = '\0';
+      }
+      for (i = 0; i < sizeof(t2) && t2[i] != '\0'; i++) {
+         if (t2[i] == '\n')
+            t2[i] = '\0';
+      }
+      ArgusDebug (1, "ArgusHandleSearchCommand(%s) search %s 'til %s %s",
+                  string, t1, t2, res ? "FAIL" : "OK");
+   }
 #endif
    return retn;
 }
@@ -139,17 +403,38 @@ ArgusHandleSearchCommand (char *command)
 char **
 ArgusHandleTreeCommand (char *command)
 {
-   char *string = &command[10], *sptr;
+   static char buf[4096];
+
+   char *string = &command[6], *sptr;
    int slen = strlen(string);
    char **retn = ArgusHandleResponseArray;
+   char *result;
+   int verbose = 0;
  
-   sptr = &string[slen - 1];
-   while (isspace((int)*sptr)) {*sptr-- = '\0';}
+   if (*string == 'v')
+      verbose = 1;
+
+   buf[0] = '\0';
+   result = RabootpDumpTreeStr(verbose);
+   if (result) {
+      strncpy(&buf[0], result, sizeof(buf));
+      free(result);
+   }
  
-   retn[0] = "OK\n";
-   retn[1] = NULL;
+   if (result) {
+      retn[0] = "OK\n";
+      retn[1] = &buf[0];
+      retn[2] = "\n";
+      retn[3] = NULL;
+   } else {
+      retn[0] = "FAIL\n";
+      retn[1] = NULL;
+   }
+
+   RabootpIntvlTreeDump();
+
 #ifdef ARGUSDEBUG
-   ArgusDebug (1, "ArgusHandleTreeCommand(%s) filter %s", string, retn);
+   ArgusDebug (1, "%s(%s) result %s", __func__, string, retn[0]);
 #endif
    return retn;
 }
@@ -237,6 +522,12 @@ ArgusClientInit (struct ArgusParserStruct *parser)
                   if (ptr == str)
                      ArgusLog (LOG_ERR, "ArgusClientInit: prune syntax error");
                }
+            } else
+            if (!strncasecmp(mode->mode, "json-obj-only", 13)) {
+               fmtable = &ArgusJsonObjOnlyFormatterTable;
+            } else
+            if (!strncasecmp(mode->mode, "query:", 6)) {
+               global_query_str = strdup(mode->mode+6);
             }
             mode = mode->nxt;
          }
@@ -269,7 +560,16 @@ ArgusClientInit (struct ArgusParserStruct *parser)
 #if defined(ARGUS_MYSQL)
       RaMySQLInit();
 #endif
+      RabootpCallbacksInit(parser);
+      timer = RabootpTimerInit(NULL, NULL); /* for now */
+      if (pthread_create(&timer_thread, NULL, RabootpTimer, timer) < 0)
+         ArgusLog(LOG_ERR, "%s: unable to create timer thread\n", __func__);
+      RabootpProtoTimersInit(timer);
    }
+
+   invecstr = ArgusMalloc(INVECSTRLEN);
+   if (invecstr == NULL)
+      ArgusLog(LOG_ERR, "could not allocate memory for query results\n");
 }
 
 
@@ -279,81 +579,44 @@ RaParseComplete (int sig)
    if (sig >= 0) {
       if (!(ArgusParser->RaParseCompleting++)) {
          int ArgusExitStatus = 0;
-         ArgusShutDown(sig);
 
-         if (ArgusDebugTree) {
-            if (RaTreePrinted++ == 0) {
-               struct ArgusLabelerStruct *labeler = ArgusParser->ArgusLabeler;
-               if (labeler && labeler->ArgusAddrTree) {
-                  if (ArgusParser->RaPruneMode)
-                     RaPruneAddressTree(labeler, labeler->ArgusAddrTree[AF_INET], ARGUS_TREE_PRUNE_LABEL, RaPruneLevel);
-                  RaPrintLabelTree (ArgusParser->ArgusLabeler, ArgusParser->ArgusLabeler->ArgusAddrTree[AF_INET], 0, 0);
-                  printf("\n");
-               }
+         if (global_query_str) {
+            int i = 0;
+
+            ArgusHandleSearchCommand(global_query_str);
+            while (ArgusHandleResponseArray[i]) {
+               printf("%s", ArgusHandleResponseArray[i]);
+               i++;
             }
+            free(global_query_str);
          }
 
+         if (ArgusDebugTree)
+            RabootpDumpTree();
+         ArgusShutDown(sig);
          ArgusExitStatus = ArgusParser->ArgusExitStatus;
 
 #if defined(ARGUS_MYSQL)
          mysql_close(RaMySQL);
 #endif
+         pthread_join(timer_thread, NULL);
+         RabootpProtoTimersCleanup(timer);
+         RabootpTimerCleanup(timer);
+         RabootpCallbacksCleanup();
+         RabootpCleanup();
+         ArgusFree(invecstr);
+
          ArgusCloseParser(ArgusParser);
          exit (ArgusExitStatus);
       }
    }
 }
 
-
 void
 ArgusClientTimeout ()
 {
-   struct ArgusHashTable *table = NULL;
-
-   if (table && (table->array != NULL)) {
-
-#if defined(ARGUS_THREADS)
-      if (pthread_mutex_lock(&table->lock) == 0) {
-#endif
-/*
-         int i, size = table->size;
-
-         for (i = 0; i < size; i++) {
-            struct ArgusHashTableHdr *hptr;
-            if ((hptr = table->array[i]) != NULL) {
-               struct nnamemem *name = (struct nnamemem *)hptr->object;
-               if ((name->secs + 86400) < ArgusParser->ArgusCurrentTime.tv_sec) {
 #ifdef ARGUSDEBUG
-                  ArgusDebug (2, "ArgusClientTimeout() pruning name hash ... remove %s\n", name->n_name);
-#endif
-                  if ((hptr->nxt = hptr) != NULL) {
-                     hptr->nxt = NULL;
-                     hptr->prv = NULL;
-                     if (hptr == table->array[i])
-                        table->array[i] = NULL;
-                  } else {
-                     hptr->prv->nxt = hptr->nxt;
-                     hptr->nxt->prv = hptr->prv;
-                     if (hptr == table->array[i])
-                        table->array[i] = hptr->nxt;
-                  }
-                  if (name->n_name) free(name->n_name);
-                  if (name->h_name) free(name->h_name);
-                  if (name->c_name) free(name->c_name);
-                  ArgusFree(name);
-                  ArgusFree(hptr);
-               }
-            }
-         }
-*/
-#if defined(ARGUS_THREADS)
-         pthread_mutex_unlock(&table->lock);
-      }
-#endif
-   }
-
-#ifdef ARGUSDEBUG
-   ArgusDebug (6, "ArgusClientTimeout()\n");
+   ArgusDebug (6, "%s()\n", __func__);
 #endif
 }
 
@@ -375,58 +638,6 @@ usage ()
    fprintf (stdout, "            +duser   dump the destination user buffer.\n");
    fflush (stdout);
    exit(1);
-}
-
-int RaProcessARecord (struct ArgusParserStruct *, struct ArgusDomainResourceRecord *, time_t);
-int RaProcessCRecord (struct ArgusParserStruct *, struct ArgusDomainResourceRecord *, time_t);
-extern int RaInsertAddressTree (struct ArgusParserStruct *, struct ArgusLabelerStruct *, char *);
-
-
-// ArgusNameEntry will take a FQDN and insert it into a hash table, as well as insert the
-// name into a namespace tree.
-
-
-struct nnamemem *ArgusNameEntry (struct ArgusHashTable *, char *);
-
-struct nnamemem *
-ArgusNameEntry (struct ArgusHashTable *table, char *name)
-{
-   struct nnamemem *retn = NULL;
-
-   if (name && strlen(name)) {
-      struct ArgusHashTableHdr *htbl = NULL;
-      struct ArgusHashStruct ArgusHash;
-      char *lname = strdup(name);
-      int i;
-
-      bzero(&ArgusHash, sizeof(ArgusHash));
-      ArgusHash.len = strlen(name);
-      ArgusHash.hash = getnamehash((const u_char *)lname);
-      ArgusHash.buf = (unsigned int *)lname;
-
-      for (i = 0; i < ArgusHash.len; i++)
-        lname[i] = tolower((int)lname[i]);
-
-      if ((htbl = ArgusFindHashEntry(table, &ArgusHash)) == NULL) {
-         if ((retn = ArgusCalloc(1, sizeof(struct nnamemem))) == NULL)
-            ArgusLog (LOG_ERR, "ArgusNameEntry: ArgusCalloc error %s\n", strerror(errno));
-
-         retn->hashval = ArgusHash.hash;
-         retn->n_name = lname;
-         retn->d_name = strchr(retn->n_name, '.') + 1;
-         ArgusAddHashEntry(table, (void *)retn, &ArgusHash);
-
-#ifdef ARGUSDEBUG
-         ArgusDebug (2, "ArgusNameEntry() adding name %s[%d] total %d\n", retn->n_name, (retn->hashval % table->size), table->count);
-#endif
-
-      } else {
-         retn = (struct nnamemem *) htbl->object;
-         free(lname);
-      }
-   }
-
-   return retn;
 }
 
 #define ISPORT(p) (dport == (p) || sport == (p))
@@ -471,17 +682,6 @@ RaProcessRecord (struct ArgusParserStruct *parser, struct ArgusRecordStruct *arg
                         process++;
 
                         switch (flow->ip_flow.ip_p) {
-                           case IPPROTO_TCP: {
-                              if (net != NULL) {
-                                 struct ArgusTCPObject *tcp = (struct ArgusTCPObject *)&net->net_union.tcp;
-                                 if (!(argus->hdr.cause & ARGUS_START))
-                                    process = 0;
-                                 else {
-                                    if (!((tcp->status & ARGUS_SAW_SYN) || (tcp->status & ARGUS_SAW_SYN_SENT)))
-                                       process = 0;
-                                 }
-                              }
-                           }
                            case IPPROTO_UDP: {
                               sport = flow->ip_flow.sport;
                               dport = flow->ip_flow.dport;
@@ -494,7 +694,6 @@ RaProcessRecord (struct ArgusParserStruct *parser, struct ArgusRecordStruct *arg
 
                      case ARGUS_TYPE_IPV6: {
                         switch (flow->ipv6_flow.ip_p) {
-                           case IPPROTO_TCP:
                            case IPPROTO_UDP: {
                               proto = flow->ipv6_flow.ip_p;
                               sport = flow->ipv6_flow.sport;
@@ -513,17 +712,17 @@ RaProcessRecord (struct ArgusParserStruct *parser, struct ArgusRecordStruct *arg
          if (process) {
             switch (proto) {
                case IPPROTO_UDP: 
-               case IPPROTO_TCP: {
                   if (ISPORT(IPPORT_BOOTPS) || ISPORT(IPPORT_BOOTPC))
                      dhcpTransaction++;
                   break;
-               }
             }
 
             if (dhcpTransaction) {
                struct ArgusDhcpStruct dhcpbuf, *dhcp = &dhcpbuf;
 
-               if ((dhcp = ArgusParseDhcpRecord(parser, argus, dhcp)) != NULL) {
+               if (ArgusParseDhcpRecord(parser, argus, timer) != NULL) {
+                  DEBUGLOG(2, "%s: %s", __func__, ArgusBuf);
+                  ArgusBuf[0] = '\0';
                }
 
             } else {
@@ -861,93 +1060,6 @@ RaNewProcess(struct ArgusParserStruct *parser)
    ArgusDebug (3, "RaNewProcess(0x%x) returns 0x%x\n", parser, retn);
 #endif
    return (retn);
-}
-
-
-char *RaDhcpUserBuffer (struct ArgusParserStruct *, struct ArgusRecordStruct *, int, int);
-
-char *
-RaDhcpUserBuffer (struct ArgusParserStruct *parser, struct ArgusRecordStruct *argus, int ind, int len) 
-{
-   struct ArgusFlow *flow = (struct ArgusFlow *) argus->dsrs[ARGUS_FLOW_INDEX];
-   unsigned short sport = 0, dport = 0;
-   int type, proto, process = 0;
-   struct ArgusDataStruct *user = NULL;
-   u_char buf[MAXSTRLEN], *bp = NULL;
-   int slen = 0;
-
-   if ((user = (struct ArgusDataStruct *)argus->dsrs[ind]) == NULL)
-      return (ArgusBuf);
-
-/*
-   switch (ind) {
-      case ARGUS_SRCUSERDATA_INDEX:
-         dchr = 's';
-         break;
-      case ARGUS_DSTUSERDATA_INDEX:
-         dchr = 'd';
-         break;
-   }
-*/
-
-   bp = (u_char *) &user->array;
-   slen = (user->hdr.argus_dsrvl16.len - 2 ) * 4;
-   slen = (user->count < slen) ? user->count : slen;
-   slen = (slen > len) ? len : slen;
-   snapend = bp + slen;
-
-   if (flow != NULL) {
-      switch (flow->hdr.subtype & 0x3F) {
-         case ARGUS_FLOW_CLASSIC5TUPLE: {
-            switch ((type = flow->hdr.argus_dsrvl8.qual & 0x1F)) {
-               case ARGUS_TYPE_IPV4:
-                  switch (flow->ip_flow.ip_p) {
-                     case IPPROTO_TCP:
-                     case IPPROTO_UDP: {
-                        proto = flow->ip_flow.ip_p;
-                        sport = flow->ip_flow.sport;
-                        dport = flow->ip_flow.dport;
-                        process++;
-                        break;
-                     }
-                  }
-                  break; 
-               case ARGUS_TYPE_IPV6: {
-                  switch (flow->ipv6_flow.ip_p) {
-                     case IPPROTO_TCP:
-                     case IPPROTO_UDP: {
-                        proto = flow->ipv6_flow.ip_p;
-                        sport = flow->ipv6_flow.sport;
-                        dport = flow->ipv6_flow.dport;
-                        process++;
-                        break;
-                     }
-                  }
-                  break;
-               }
-            }
-            break;
-         }
-      }
-   }
-
-   if (process && bp) {
-      *(int *)&buf = 0;
-
-#define ISPORT(p) (dport == (p) || sport == (p))
-
-      switch (proto) {
-         case IPPROTO_UDP: 
-         case IPPROTO_TCP: {
-            if (ISPORT(IPPORT_BOOTPS) || ISPORT(IPPORT_BOOTPC)) { 
-                bootp_print(bp, slen);
-            }
-            break;
-         }
-      }
-   }
-
-   return (ArgusBuf);
 }
 
 int RaSendArgusRecord(struct ArgusRecordStruct *argus) {return 0;}

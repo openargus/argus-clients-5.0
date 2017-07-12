@@ -75,9 +75,20 @@ YACC = @V_YACC@
 	@rm -f $@
 	$(CC) $(CFLAGS) -c $(srcdir)/$*.c
 
-LIB = $(INSTALLLIB)/argus_parse.a $(INSTALLLIB)/argus_common.a $(INSTALLLIB)/argus_client.a
+LIB = $(INSTALLLIB)/argus_parse.a $(INSTALLLIB)/argus_common.a \
+      $(INSTALLLIB)/argus_client.a $(INSTALLLIB)/argus_timer.a
 
-SRC =	radhcp.c rabootp.c rasql.c
+SRC =	radhcp.c rabootp.c rasql.c rabootp_memory.c rabootp_client_tree.c \
+	rabootp_fsa.c rabootp_update.c \
+	rabootp_callback.c \
+	rabootp_timer.c \
+	rabootp_proto_timers.c \
+	rabootp_interval_tree.c \
+	rabootp_print.c \
+	argus_format_json.c \
+	rabootp_l2addr_list.c \
+	rabootp_patricia_tree.c \
+	rabootp_lease_pullup.c
 
 PROGS = $(INSTALLBIN)/radhcp
 

@@ -91,8 +91,12 @@ COMMONOBJ = argus_code.o argus_filter.o argus_util.o argus_auth.o argus_parser.o
 PARSESRC  = argus_main.c
 PARSEOBJ  = argus_main.o
 
-CLIENTSRC = argus_client.c argus_import.c argus_label.c argus_grep.c argus_output.c
-CLIENTOBJ = argus_client.o argus_import.o argus_label.o argus_grep.o argus_output.o
+CLIENTSRC = argus_client.c argus_import.c argus_label.c argus_grep.c \
+            argus_output.c \
+            argus_split_mode.c
+CLIENTOBJ = argus_client.o argus_import.o argus_label.o argus_grep.o \
+            argus_output.o \
+            argus_split_mode.o
 
 EVENTSRC  = argus_event.c
 EVENTOBJ  = argus_event.o

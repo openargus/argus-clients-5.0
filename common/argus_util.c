@@ -21983,6 +21983,8 @@ ArgusPrintResponse (struct ArgusParserStruct *parser, char *buf, struct ArgusRec
                sprintf (buf, "%*.*s ", len, len, resp);
          } else
             sprintf (buf, "%s ", resp);
+      } else {
+         sprintf (buf, "%*.*s ", len, len, " ");
       }
    }
 

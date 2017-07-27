@@ -52,11 +52,11 @@ static int
 __dhcp_client_compare(struct ArgusDhcpIntvlNode *aa,
                       struct ArgusDhcpIntvlNode *bb)
 {
-   int res;
-   struct timeval diff;
-
-   timersub(&aa->intlo, &bb->intlo, &diff);
-   return diff.tv_sec;
+   if (timercmp(&aa->intlo, &bb->intlo, <))
+      return -1;
+   else if (timercmp(&aa->intlo, &bb->intlo, >))
+      return 1;
+   return 0;
 }
 
 RB_GENERATE_STATIC(dhcp_intvl_tree, ArgusDhcpIntvlNode, inttree, __dhcp_client_compare);
@@ -69,6 +69,7 @@ ArgusDhcpIntvlTreeAlloc(void)
    res = ArgusMalloc(sizeof(*res));
    if (res) {
       RB_INIT(&res->inttree);
+      res->count = 0;
       pthread_mutex_init(&res->lock, NULL);
    }
 
@@ -112,7 +113,13 @@ ArgusDhcpIntvlTreeInsert(struct ArgusDhcpIntvlTree *head,
       node->subtreehi = node->inthi;
 
       MUTEX_LOCK(&head->lock);
-      RB_INSERT(dhcp_intvl_tree, &head->inttree, node);
+      if (RB_INSERT(dhcp_intvl_tree, &head->inttree, node)) {
+         ArgusFree(node);
+         node = NULL;
+      } else {
+         if (head->count < -1U)
+            head->count++;
+      }
       MUTEX_UNLOCK(&head->lock);
    }
 
@@ -130,8 +137,11 @@ ArgusDhcpIntvlTreeRemove(struct ArgusDhcpIntvlTree *head,
    search.data = NULL;
    MUTEX_LOCK(&head->lock);
    node = RB_FIND(dhcp_intvl_tree, &head->inttree, &search);
-   if (node)
+   if (node) {
       RB_REMOVE(dhcp_intvl_tree, &head->inttree, node);
+      if (head->count > 0)
+         head->count--;
+   }
    MUTEX_UNLOCK(&head->lock);
 
    if (node)
@@ -179,7 +189,7 @@ int
 IntvlTreeForEach(struct ArgusDhcpIntvlTree * const head,
                   IntvlTreeCallback cb, void *cp_arg0)
 {
-   int rv;
+   int rv = 0;
    struct ArgusDhcpIntvlNode *node;
 
    MUTEX_LOCK(&head->lock);
@@ -378,4 +388,15 @@ IntvlTreeOverlapsRange(struct ArgusDhcpIntvlTree *in,
       return rv;
 
    return x.used;
+}
+
+size_t
+IntvlTreeCount(struct ArgusDhcpIntvlTree *head)
+{
+   size_t count = 0;
+   if (MUTEX_LOCK(&head->lock) == 0) {
+      count = head->count;
+      MUTEX_UNLOCK(&head->lock);
+   }
+   return count;
 }

@@ -26,6 +26,7 @@
  * transaction ID).
  */
 
+#include <stdlib.h>
 #include "rabootp_interval_tree.h"
 #include "rabootp_memory.h"
 
@@ -62,6 +63,36 @@ __overlap(const struct ArgusDhcpIntvlNode * const a,
    return 0;
 }
 
+static int
+__compare_addr_intvl(const void *a, const void *b)
+{
+   const struct ArgusDhcpIntvlNode *ina = a;
+   const struct ArgusDhcpIntvlNode *inb = b;
+   int res;
+ 
+   res = memcmp(&ina->data->rep.yiaddr, &inb->data->rep.yiaddr,
+                sizeof(ina->data->rep.yiaddr));
+   if (res)
+      return res;
+
+   if (timercmp(&ina->intlo, &inb->intlo, <))
+      return -1;
+   if (timercmp(&ina->intlo, &inb->intlo, >))
+      return 1;
+   return 0;
+}
+
+void
+RabootpLeasePullupSort(struct ArgusDhcpIntvlNode *src_invec,
+                       size_t src_nitems)
+{
+   /* src_invec[] must be sorted by (yiaddr, starttime) such that all records
+    * with the same IP address are contiguous and all records for a given IP
+    * address are in ascending order by time.
+    */
+   qsort(src_invec, src_nitems, sizeof(*src_invec), __compare_addr_intvl);
+}
+
 /* caller must hold references to all of the dhcp structures pointed to by
  * the interval nodes.  RabootpLeasePullup increments the refcount for every
  * ArgusDhcpStruct referenced by the output vector, dst_invec.
@@ -77,6 +108,8 @@ RabootpLeasePullup(const struct ArgusDhcpIntvlNode * const src_invec,
    size_t range_start_idx = 0;
    const unsigned char *chaddr_a;
    const unsigned char *chaddr_b;
+   int chaddr_changed;
+   int ipaddr_changed;
 
    if (src_nitems == 0)
       return 0;
@@ -93,8 +126,23 @@ RabootpLeasePullup(const struct ArgusDhcpIntvlNode * const src_invec,
       chaddr_a = __chaddr(&src_invec[in_idx]);
       chaddr_b = __chaddr(&src_invec[in_idx+1]);
 
+      /* TODO: also check the leased IP addresses and only continue if
+       * they are also the same.
+       */
       if (src_invec[in_idx].data->hlen == src_invec[in_idx+1].data->hlen &&
-          __chaddr_same(chaddr_a, chaddr_b, src_invec[in_idx].data->hlen) &&
+          __chaddr_same(chaddr_a, chaddr_b, src_invec[in_idx].data->hlen))
+         chaddr_changed = 0;
+      else
+         chaddr_changed = 1;
+
+      if (memcmp(&src_invec[in_idx].data->rep.yiaddr,
+                 &src_invec[in_idx+1].data->rep.yiaddr,
+                 sizeof(src_invec[in_idx].data->rep.yiaddr)) == 0)
+         ipaddr_changed = 0;
+      else
+         ipaddr_changed = 1;
+
+      if (chaddr_changed == 0 && ipaddr_changed == 0 &&
           __overlap(&src_invec[in_idx], &src_invec[in_idx+1])) {
          in_idx++;
          continue;
@@ -106,7 +154,17 @@ RabootpLeasePullup(const struct ArgusDhcpIntvlNode * const src_invec,
 
       /* combine the time ranges */
       dst_invec[out_idx].intlo = src_invec[range_start_idx].intlo;
-      dst_invec[out_idx].inthi = src_invec[in_idx].inthi;
+
+      /* If the mac address for this IP address changed, it might have
+       * done so before the original lease was over (relenquished).  If so
+       * use the start time of the next host's lease as the end time.
+       */
+      if (ipaddr_changed == 0 &&
+          timercmp(&src_invec[in_idx].inthi, &src_invec[in_idx+1].intlo, >))
+         dst_invec[out_idx].inthi = src_invec[in_idx+1].intlo;
+      else
+         dst_invec[out_idx].inthi = src_invec[in_idx].inthi;
+
       dst_invec[out_idx].subtreehi.tv_sec = 0;
       dst_invec[out_idx].subtreehi.tv_usec = 0;
       dst_invec[out_idx].data = src_invec[in_idx].data;

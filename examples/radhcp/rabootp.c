@@ -35,6 +35,7 @@
 #include <signal.h>
 #include <ctype.h>
 #include <argus/extract.h>
+#include <arpa/inet.h>
 
 #include "interface.h"
 #include "rabootp.h"
@@ -49,6 +50,12 @@
 #include "rabootp_callback.h"
 #include "rabootp_timer.h"
 #include "rabootp_patricia_tree.h"
+
+#if defined(ARGUS_MYSQL)
+extern char RaSQLSaveTable[];
+char *ArgusCreateSQLSaveTableName(struct ArgusParserStruct *,
+                                  struct ArgusRecordStruct *, char *);
+#endif
 
 static struct {
    struct rabootp_cblist state_change; /* called when dhcp FSA state changes */
@@ -106,7 +113,7 @@ __parse_one_dhcp_record(const struct ether_header * const ehdr,
 {
    int newads = 0;
    uint32_t xid;
-   struct ArgusDhcpStruct *ads;
+   struct ArgusDhcpStruct *ads = NULL;
    struct ArgusDhcpStruct parsed;
    register const struct dhcp_packet *bp;
    enum ArgusDhcpState newstate;
@@ -182,8 +189,13 @@ __parse_one_dhcp_record(const struct ether_header * const ehdr,
       newstate = fsa_advance_state(&parsed, ads);
       if (ads->state != newstate) {
          if (newstate == BOUND) {
+
+            /* DEBUG -- THIS CONDITIONAL "FIXES" THE INDEFINITE REFCOUNT */
+            if (ads->last_bind.tv_sec == 0) {
             ads->last_bind.tv_sec = time->end.tv_sec;
             ads->last_bind.tv_usec = time->end.tv_usec;
+            }
+
          }
          parsed.state = newstate;
          rabootp_cb_exec(&callback.state_change, &parsed, ads);
@@ -209,7 +221,7 @@ __parse_one_dhcp_record(const struct ether_header * const ehdr,
    MUTEX_UNLOCK(ads->lock);
 
    ArgusDhcpStructFreeReplies(&parsed);
-   ArgusDhcpStructFreeClientID(&parsed);
+   ArgusDhcpStructFreeRequest(&parsed);
 
    if (!newads) {
       /* ClientTreeFind() ups the refcount.  We're done making changes,
@@ -220,6 +232,45 @@ __parse_one_dhcp_record(const struct ether_header * const ehdr,
 
 nouser:
    return ads;
+}
+
+static struct ArgusDhcpStruct *
+__parse_one_dhcp_record_direction(const struct ether_header * const ehdr,
+                                  const struct ArgusDataStruct * const user,
+                                  const struct ArgusTimeStruct * const time,
+                                  struct RabootpTimerStruct *timer)
+{
+   struct ArgusDhcpStruct *retn;
+
+   /* THIS HAS TO CHANGE.  Lock timer first to preserve lock
+    * ordering.  The problem is the timer lock may be aquired
+    * for quite some time.  Per-timer-slot locks?
+    */
+   RabootpTimerLock(timer);
+   retn = __parse_one_dhcp_record(ehdr, user, time);
+   RabootpTimerUnlock(timer);
+
+#if defined(ARGUSDEBUG)
+   bootp_print((u_char *)&(user->array[0]), user->count);
+   strncat(ArgusBuf, "\n", MAXSTRLEN);
+#endif
+
+   return retn;
+}
+
+static void
+__set_sql_table_name(struct ArgusParserStruct *parser,
+                     struct ArgusRecordStruct *argus,
+                     struct ArgusDhcpStruct *ads)
+{
+#if defined(ARGUS_MYSQL)
+         MUTEX_LOCK(&parser->lock);
+         if (parser->writeDbstr && ads->sql_table_name == NULL) {
+            ads->sql_table_name =
+             strdup(ArgusCreateSQLSaveTableName(parser, argus, RaSQLSaveTable));
+         }
+         MUTEX_UNLOCK(&parser->lock);
+#endif
 }
 
 struct ArgusDhcpStruct *
@@ -245,23 +296,16 @@ ArgusParseDhcpRecord(struct ArgusParserStruct *parser,
          }
       }
 
-      /* THIS HAS TO CHANGE.  Lock timer first to preserve lock
-       * ordering.  The problem is the timer lock may be aquired
-       * for quite some time.  Per-timer-slot locks?
-       */
       if (suser != NULL) {
-         RabootpTimerLock(timer);
-         retn = __parse_one_dhcp_record(ehdr, suser, &time->src);
-         RabootpTimerUnlock(timer);
-         bootp_print((u_char *)&(suser->array[0]), suser->count);
-         strncat(ArgusBuf, "\n", MAXSTRLEN);
+         retn = __parse_one_dhcp_record_direction(ehdr, suser, &time->src,
+                                                  timer);
+         __set_sql_table_name(parser, argus, retn);
       }
 
       if (duser != NULL) {
-         RabootpTimerLock(timer);
-         retn = __parse_one_dhcp_record(ehdr, duser, &time->dst);
-         RabootpTimerUnlock(timer);
-         bootp_print((u_char *)&(duser->array[0]), duser->count);
+         retn = __parse_one_dhcp_record_direction(ehdr, duser, &time->dst,
+                                                  timer);
+         __set_sql_table_name(parser, argus, retn);
       }
    }
 
@@ -837,8 +881,6 @@ rfc1048_parse(const u_char *bp, const u_char *endp,
 {
    register u_int16_t tag;
    register u_int len, size;
-   register const char *cp;
-   register char c;
    int first;
    u_int32_t ul;
    u_int16_t us;
@@ -861,13 +903,6 @@ rfc1048_parse(const u_char *bp, const u_char *endp,
          continue;
       if (tag == DHO_END)
          return;
-
-      /* we don't need to format the option as text, but this still
-       * tells us how to extract the data -- a particular size integer,
-       * ascii, etc.
-       */
-      cp = tok2str(tag2str, "?T%u", tag);
-      c = *cp++;
 
       /* Get the length; check for truncation */
       if (bp + 1 >= endp)
@@ -944,9 +979,19 @@ rfc1048_parse(const u_char *bp, const u_char *endp,
       }
 
       /* 12 */
-      if (tag == DHO_HOST_NAME && op == BOOTREPLY) {
+      if (tag == DHO_HOST_NAME) {
+         u_char lenchar = (u_char)(len & 0xff);
+
          if (len > 0) {
-            ads->rep.hostname = __extract_string(bp, (u_char)(len & 0xff));
+            if (op == BOOTREPLY) {
+               if (ads->rep.hostname)
+                  free(ads->rep.hostname);
+               ads->rep.hostname = __extract_string(bp, lenchar);
+            } else if (op == BOOTREQUEST) {
+               if (ads->req.requested_hostname)
+                  free(ads->req.requested_hostname);
+               ads->req.requested_hostname = __extract_string(bp, lenchar);
+            }
             bp += len;
          }
          continue;
@@ -1052,17 +1097,7 @@ rfc1048_parse(const u_char *bp, const u_char *endp,
          continue;
       }
 
-      /* Print data */
       size = len;
-      if (c == '?') {
-         /* Base default formats for unknown tags on data size */
-         if (size & 1)
-            c = 'b';
-         else if (size & 2)
-            c = 's';
-         else
-            c = 'l';
-      }
 
       /* If this is an option we care about, keep going and parse.
        * Otherwise, just note that the option was present and go
@@ -1092,7 +1127,6 @@ static int
 __raboot_dump_node_req(void *arg0,
                        const struct ArgusDhcpClientNode * const node)
 {
-   struct ArgusDhcpStruct *data;
    int i;
    size_t optarrlen;
    struct in_addr msb;
@@ -1104,7 +1138,6 @@ __raboot_dump_node_req(void *arg0,
    snprintf_append(s->str, &s->len, &s->remain, "  REQUEST ");
 
    optarrlen = sizeof(node->data->req.options)/sizeof(node->data->req.options[0]);
-   data = node->data;
 
    snprintf_append(s->str, &s->len, &s->remain, "options ");
    for (i = 0; i < optarrlen; i++)
@@ -1293,16 +1326,12 @@ __rabootp_update_interval_tree(const void * const v_parsed,
          struct ArgusDhcpIntvlTree *head = v_arg;
          struct ArgusDhcpIntvlNode *node;
 
-         /* IntvlTreeFind() ups the refcount on cached if found */
-         node = IntvlTreeFind(&interval_tree, &cached->last_bind);
-         if (node == NULL) {
-            ArgusDhcpIntvlTreeInsert(head,
-                               &cached->last_bind,
-                               parsed->rep.leasetime,
-                               cached);
-         } else {
-            /* need ArgusDhcpIntvlTreeUpdate() ?  . . . yes */
-            /* remove from tree and re-insert */
+         ArgusDhcpStructUpRef(cached);
+         if (ArgusDhcpIntvlTreeInsert(head,
+                                      &cached->last_bind,
+                                      parsed->rep.leasetime,
+                                      cached) != 0) {
+            ArgusDhcpStructFree(cached);
             DEBUGLOG(1, "CAN'T UPDATE INTERVAL TREE YET!!!\n");
          }
       }
@@ -1387,6 +1416,11 @@ int RabootpClientRemove(struct ArgusDhcpStruct *ads)
 int RabootpIntvlRemove(const struct timeval * const intlo)
 {
    return ArgusDhcpIntvlTreeRemove(&interval_tree, intlo);
+}
+
+size_t RabootpIntvlTreeCount(void)
+{
+   return IntvlTreeCount(&interval_tree);
 }
 
 void

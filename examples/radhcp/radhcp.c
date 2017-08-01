@@ -62,6 +62,7 @@
 #include "rabootp_l2addr_list.h"
 #include "rabootp_sql.h"
 #include "rasql.h"
+#include "rabootp_querystr.h"
 
 #if defined(ARGUS_MYSQL)
 #include <mysql.h>
@@ -124,11 +125,12 @@ static pthread_t timer_thread;
 int ArgusParseTime (char *, struct tm *, struct tm *, char *, char, int *, int);
 static char temporary[32];
 static char *invecstr;
-static char *global_query_str;
+static char **global_query_strs;
 static const unsigned long INVECSTRLEN = 1024*1024; /* 1 MB */
 static const struct ArgusFormatterTable *fmtable = &ArgusJsonFormatterTable;
 
 static const size_t INTVL_NODE_ARRAY_MAX = 64;
+static const size_t RADHCP_MAX_QUERIES = 8;
 
 struct invecTimeRangeStruct {
    struct invecStruct *x;
@@ -139,7 +141,7 @@ struct invecTimeRangeStruct {
 static int
 __is_oneshot_query(void)
 {
-   if (global_query_str != NULL)
+   if (global_query_strs[0] != NULL)
       return 1;
    return 0;
 }
@@ -222,6 +224,19 @@ ArgusHandleSearchCommand (char *command)
    struct timeval endtime_tv;
    struct in_addr addr = {0, };
 
+   enum QueryOptsEnum {
+      OPT_WHEN = 0,
+      OPT_ADDR = 1,
+      OPT_PULLUP = 2,
+   };
+   static const struct QueryOptsStruct __query_opts[] = {
+      { "when", 1 },
+      { "addr", 1 },
+      { "pullup", 0 },
+   };
+   static const size_t nqopts = sizeof(__query_opts)/sizeof(__query_opts[0]);
+   char *parsed[3] = {NULL, };
+   char *cpy = NULL;
 
    /* Also remember where in the string the separator was. */
    char *plusminusloc = NULL;
@@ -234,6 +249,13 @@ ArgusHandleSearchCommand (char *command)
    char plusminus;
 
    bzero(retn, sizeof(ArgusHandleResponseArray));
+
+   cpy = strdup(&command[8]);
+   RabootpParseQueryString(__query_opts, nqopts, cpy, parsed);
+   string = parsed[OPT_WHEN];
+
+   if (string == NULL)
+      ArgusLog(LOG_ERR, "%s parse error\n", __func__);
 
    if (string[0] == '-')
       /* skip leading minus, if present */
@@ -251,45 +273,19 @@ ArgusHandleSearchCommand (char *command)
       off++;
    }
 
-   /* Look for the end of the time string.  If not compound, string[off] is
-    * the end.  Otherwise, keep looking.
-    */
-   while (!isspace(string[off]) && string[off] != '\0') {
-      off++;
-   }
-
-   /* Replace the whitespace in between the time and IP address (if any) with
-    * NULL characters.
-    */
-   while (isspace(string[off]) && string[off] != '\0') {
-      string[off] = '\0';
-      off++;
-   }
-
-   if (string[off] != '\0') {
-      if (string[off] == 'i' && string[off+1] == 'p' && string[off+2] == '=') {
-         DEBUGLOG(1, "%s: Checking for IP address in command (str=%s)\n",
-                  __func__, &string[off+3]);
-         /* unsafe - no check for null term */
-         if (inet_aton(&string[off+3], &addr) != 1) {
-            retn[0] = "Invalid IP address\n";
-            retn[1] = "FAIL\n";
-            res = -1;
-            goto out;
-         }
-         addr.s_addr = ntohl(addr.s_addr);
-         DEBUGLOG(1, "%s: Searching for IP address 0x%08x\n", __func__, addr.s_addr);
-         /* skip over the ip=... */
-         while (!isspace(string[off]) && string[off] != '\0')
-            off++;
-
-         /* and any spaces after */
-         while (isspace(string[off]) && string[off] != '\0')
-            off++;
+   if (parsed[OPT_ADDR]) {
+      if (inet_aton(parsed[OPT_ADDR], &addr) != 1) {
+         retn[0] = "Invalid IP address\n";
+         retn[1] = "FAIL\n";
+         res = -1;
+         goto out;
       }
+      addr.s_addr = ntohl(addr.s_addr);
+      DEBUGLOG(1, "%s: Searching for IP address 0x%08x\n", __func__,
+               addr.s_addr);
    }
 
-   if (!strcasecmp(&string[off], "pullup"))
+   if (parsed[OPT_PULLUP])
       pullup = 1;
 
    localtime_r(&tsec, &endtime);
@@ -396,7 +392,7 @@ ArgusHandleSearchCommand (char *command)
    /* only dump search results to database if the query was supplied
     * on the commandline.
     */
-   if (global_query_str && ArgusParser->writeDbstr) {
+   if (__is_oneshot_query() && ArgusParser->writeDbstr) {
       ssize_t i;
 
       for (i = 0; i < invec_used; i++) {
@@ -444,6 +440,9 @@ out:
                   string, t1, t2, res ? "FAIL" : "OK");
    }
 #endif
+
+   if (cpy)
+      free(cpy);
    return retn;
 }
 
@@ -531,7 +530,13 @@ ArgusClientInit (struct ArgusParserStruct *parser)
 
       parser->ArgusLabeler->RaPrintLabelTreeMode = ARGUS_TREE_VISITED;
 
+      global_query_strs = ArgusCalloc(RADHCP_MAX_QUERIES,
+                                      sizeof(*global_query_strs));
+      if (global_query_strs == NULL)
+         ArgusLog(LOG_ERR, "%s: unable to allocate query string array\n");
+
       if ((mode = parser->ArgusModeList) != NULL) {
+         int query = 0;
          struct ArgusModeStruct *nxtmode;
          int splitmode = -1;
 
@@ -580,7 +585,10 @@ ArgusClientInit (struct ArgusParserStruct *parser)
                fmtable = &ArgusJsonObjOnlyFormatterTable;
             } else
             if (!strncasecmp(mode->mode, "query:", 6)) {
-               global_query_str = strdup(mode->mode+6);
+               if (query < RADHCP_MAX_QUERIES)
+                  global_query_strs[query++] = strdup(mode->mode+6);
+               else
+                  ArgusLog(LOG_WARNING, "Too many queries.  Ignoring \"%s\"\n");
             }
             mode = mode->nxt;
          }
@@ -634,16 +642,18 @@ RaParseComplete (int sig)
    if (sig >= 0) {
       if (!(ArgusParser->RaParseCompleting++)) {
          int ArgusExitStatus = 0;
+         int query = 0;
 
-         if (global_query_str) {
+         while (query < RADHCP_MAX_QUERIES && global_query_strs[query]) {
             int i = 0;
 
-            ArgusHandleSearchCommand(global_query_str);
+            ArgusHandleSearchCommand(global_query_strs[query]);
             while (ArgusHandleResponseArray[i]) {
                printf("%s", ArgusHandleResponseArray[i]);
                i++;
             }
-            free(global_query_str);
+            free(global_query_strs[query]);
+            query++;
          }
 
          if (ArgusDebugTree)
@@ -662,6 +672,7 @@ RaParseComplete (int sig)
          RabootpCallbacksCleanup();
          RabootpCleanup();
          ArgusFree(invecstr);
+         ArgusFree(global_query_strs);
 
          ArgusCloseParser(ArgusParser);
          exit (ArgusExitStatus);

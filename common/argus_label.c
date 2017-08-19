@@ -1255,7 +1255,8 @@ RaFindAddress (struct ArgusParserStruct *parser, struct RaAddressStruct *tree, s
                      }
 
                   case ARGUS_EXACT_MATCH: 
-                     if (node->addr.masklen == tree->addr.masklen)
+                     if ((node->addr.masklen == tree->addr.masklen) &&
+                         (node->addr.addr[0] == tree->addr.addr[0])) 
                         retn = tree;
                      else
                      if ((tree->l == NULL) && (tree->r == NULL)) {

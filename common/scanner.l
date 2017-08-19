@@ -125,6 +125,9 @@ src      return SRC;
 rmt      return REMOTE;
 lcl      return LOCAL;
 
+local    return INTRANET;
+remote   return INTERNET;
+
 seq      return SEQ;
 
 auth     return AUTH;

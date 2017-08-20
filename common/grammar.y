@@ -111,7 +111,7 @@ static struct qual qerr = { Q_UNDEF, Q_UNDEF, Q_UNDEF};
 
 %token  START STOP STATUS SHUTDOWN ERROR
 %token  MAN FAR EVENT INDEX
-%token  REMOTE LOCAL INTERNET INTRANET
+%token  REMOTE LOCAL INTERNET INTRANET LOC
 %token  DST SRC HOST INODE GATEWAY IPID TTL TOS DSB SRCID SID INF TCPBASE
 %token  NET AMASK MASKLEN PORT EQUAL NOTEQUAL LESS GREATER PROTO BYTE PKT APPBYTE
 %token  TRANS ARP RARP IP IPV4 IPV6 TCP UDP ICMP IGMP 
@@ -345,6 +345,7 @@ fqual:    DUR			{ $$ = Q_DUR; }
 	| ABR	 		{ $$ = Q_PCR; }
 	| PCR	 		{ $$ = Q_PCR; }
 	| ASN	 		{ $$ = Q_ASN; }
+	| LOC	 		{ $$ = Q_LOC; }
 	| LAT	 		{ $$ = Q_LAT; }
 	| LON	 		{ $$ = Q_LON; }
         ;

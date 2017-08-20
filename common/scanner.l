@@ -172,6 +172,7 @@ inf      return INF;
 inode    return INODE;
 net      return NET;
 mask     return AMASK;
+loc      return LOC;
 
 masklen  return MASKLEN;
 mlen     return MASKLEN;

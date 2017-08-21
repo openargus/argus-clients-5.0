@@ -939,7 +939,7 @@ struct ArgusGeoLocationStruct {
 struct ArgusNetspatialStruct {
    struct ArgusDSRHeader hdr;
    unsigned short status;
-   unsigned char sloc, dloc; 
+   signed char sloc, dloc; 
 };
 
 struct ArgusLabelStruct {

@@ -46,6 +46,7 @@ make EXTRA_CFLAGS="-ggdb" %{?_workstation:WORKSTATION_BUILD=1}
 %install
 rm -rf $RPM_BUILD_ROOT
 make DESTDIR="$RPM_BUILD_ROOT" %{?_workstation:WORKSTATION_BUILD=1} install
+
 cp -av support $RPM_BUILD_ROOT/%{argusdocs}/
 
 %if 0%{!?_workstation:1}
@@ -59,6 +60,7 @@ ln -s /etc/pam.d/system-auth /etc/pam.d/radium
 %preun
 %systemd_preun radium.service
 %systemd_preun rastream.service
+%systemd_preun rasqlinsert@ipv4matrix
 
 %postun
 %systemd_postun_with_restart radium.service
@@ -112,6 +114,23 @@ rm -f %{argusbin}/rasplit
 %config /etc/sysconfig/radium
 %config /etc/sysconfig/rastream
 %{argussbin}/rastream-process
+%{_unitdir}/rahosts-nightly.timer
+%{_unitdir}/rahosts-nightly.service
+%{_unitdir}/raports-nightly.timer
+%{_unitdir}/raports-nightly.service
+%{_sbindir}/matrixData-nightly
+%{_unitdir}/matrixData-nightly.timer
+%{_unitdir}/matrixData-nightly.service
+%{_sbindir}/dbaseRollup-nightly
+%{_unitdir}/dbaseRollup-nightly.timer
+%{_unitdir}/dbaseRollup-nightly.service
+%{_datarootdir}/argus-clients/rasqlinsert.ether
+%{_datarootdir}/argus-clients/rasqlinsert.ipmatrix
+%{_datarootdir}/argus-clients/rasqlinsert.l2_l3
+%{_datarootdir}/argus-clients/rasqlinsert.ldap
+%{_datarootdir}/argus-clients/rasqlinsert.man
+%{_datarootdir}/argus-clients/rasqlinsert.ntp
+%{_datarootdir}/perl5/qosient
 %else
 %{_unitdir}/rasplit.service
 %config /etc/sysconfig/rasplit
@@ -157,6 +176,25 @@ distribution.
 %exclude %{argusman}/man1/ragraph.1.gz
 %exclude %{argusman}/man1/rasql.1.gz
 
+
+%package arp
+Summary: Argus ARP-tracking Client Software
+Group: Applications/Internet
+Conflicts: argus-clients-examples <= 5.0-3.0%{dist}.25
+
+%description arp
+Argus ARP-tracking Client Software
+
+%files arp
+%defattr(-,root,root)
+%if 0%{!?_workstation:1}
+%{_sbindir}/rarp-nightly
+%{_unitdir}/rarp-nightly.timer
+%{_unitdir}/rarp-nightly.service
+%{_datarootdir}/argus-clients/rasqlinsert.arp
+%endif
+
+
 %package dhcp
 Summary: Argus DHCP-tracking Client Software
 Group: Applications/Internet
@@ -190,8 +228,6 @@ Argus DHCP-tracking Client Software
 %systemd_postun_with_restart radhcp.service
 
 
-
-
 %package dns
 Summary: Argus DNS-tracking Client Software
 Group: Applications/Internet
@@ -204,8 +240,12 @@ Argus DNS-tracking Client Software
 %defattr(-,root,root)
 %{_bindir}/radns
 %{_bindir}/radnsdb
-
-
+%if 0%{!?_workstation:1}
+%{_sbindir}/radns-nightly
+%{_unitdir}/radns-nightly.timer
+%{_unitdir}/radns-nightly.service
+%{_datarootdir}/argus-clients/rasqlinsert.dns
+%endif
 
 %package devel
 Summary: Argus Client Software Development Libraries

@@ -37,11 +37,17 @@ use strict;
 use POSIX;
 use URI::URL;
 use DBI;
+use File::Which qw/ which /;
+
+
+local $ENV{PATH} = "$ENV{PATH}:/bin:/usr/bin:/usr/local/bin";
 
 # Global variables
 my $debug = 0;
 my $drop  = 0;
-my $Program = `which racluster`;
+my $Program = which 'racluster';
+chomp $Program;
+
 my $Options = " -nc , ";   # Default Options
 my $VERSION = "5.0";
 my $format  = 'addr';
@@ -61,6 +67,7 @@ ARG: while (my $arg = shift(@ARGV)) {
    for ($arg) {
       s/^-q//             && do { $quiet++; next ARG; };
       s/^-debug//         && do { $debug++; next ARG; };
+      s/^-drop//          && do { $drop = 1; next ARG; };
       s/^-w//             && do {
          $uri = shift (@ARGV);
          next ARG;
@@ -117,7 +124,9 @@ if ($uri) {
       ($space, $db, $table)  = split /\//, $path;
    }
  
-   $dbh = DBI->connect("DBI:$scheme:$db", $user, $pass) || die "Could not connect to database: $DBI::errstr";
+   $dbh = DBI->connect("DBI:$scheme:;host=$host", $user, $pass) || die "Could not connect to database: $DBI::errstr";
+   $dbh->do("CREATE DATABASE IF NOT EXISTS $db");
+   $dbh->do("use $db");
  
    # Drop table 'foo'. This may fail, if 'foo' doesn't exist
    # Thus we put an eval around it.

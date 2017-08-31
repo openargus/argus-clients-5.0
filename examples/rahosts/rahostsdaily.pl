@@ -32,14 +32,18 @@ use strict;
 
 # Used modules
 use POSIX;
+use POSIX qw(strftime);
+use DBI;
 
 use File::DosGlob qw/ bsd_glob /;
 use File::Temp qw/ tempfile tempdir /;
 use File::Which qw/ which /;
-use Time::Local;
+use qosient::util;  # parsetime
+
+local $ENV{PATH} = "$ENV{PATH}:/bin:/usr/bin:/usr/local/bin";
 
 # Global variables
-my $VERSION = "5.0,3";
+my $VERSION = "5.0.3";
 my $done    = 0;
 my $debug   = 0;
 my $time;
@@ -64,9 +68,7 @@ ARG: while (my $arg = shift(@ARGV)) {
   $arglist[@arglist + 0] = $arg;
 }
 
-if (not defined ($time)) {
-  $time = "-1d";
-}
+
 print "DEBUG: rahostsdaily: using $time as date adjustment\n" if $debug;
 
 if (not defined ($archive)) {
@@ -86,8 +88,10 @@ foreach my $i (@dirs) {
 }
 print "DEBUG: rahostsdaily: using $archive as source files.\n" if $debug;
 
-my $date    = `date -v $time "+%Y_%m_%d"`;
-my $pattern = `date -v $time "+$archive"`;
+my    @time = parsetime($time);
+my    $date = strftime '%Y/%m/%d', @time;
+my  $dbdate = strftime '%Y_%m_%d', @time;
+my $pattern = strftime $archive, @time;
 
 chomp($date);
 chomp($pattern);
@@ -97,7 +101,7 @@ print "DEBUG: rahostsdaily: '$date' for date and '$pattern' for files\n" if $deb
 my $Program = which 'rahosts';
 chomp $Program;
 
-my $Options = "-w mysql://root\@localhost/hostsInventory/host_$date";
+my $Options = "-w mysql://root\@localhost/hostsInventory/host_$dbdate";
 
 my @files   = glob $pattern; 
 
@@ -105,7 +109,7 @@ foreach my $file (@files) {
    if (index($file, "man") == -1) {
       if (index($file, "evt") == -1) {
          if (index($file, "rad") == -1) {
-            my $cmd = $Program . " " . $Options . " -r $file";
+            my $cmd = $Program . " " . $Options . " -R $file";
             print "DEBUG: rahostsdaily: $cmd\n" if $debug;
             if (system($cmd) != 0) {
                print "rahostsdaily: error: $cmd failed\n";

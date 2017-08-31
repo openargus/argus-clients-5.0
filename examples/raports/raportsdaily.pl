@@ -18,7 +18,7 @@
 #  THIS SOFTWARE.
 #
 #  
-#   ra() based port use report
+#   ra() based host use report
 #  
 #  $Id: //depot/gargoyle/clients/examples/raports/raports.pl#5 $
 #  $DateTime: 2014/10/07 15:00:33 $
@@ -32,16 +32,21 @@ use strict;
 
 # Used modules
 use POSIX;
+use POSIX qw(strftime);
 
 use File::DosGlob qw/ bsd_glob /;
 use File::Temp qw/ tempfile tempdir /;
 use File::Which qw/ which /;
 use Time::Local;
+use qosient::util;
+
+local $ENV{PATH} = "$ENV{PATH}:/bin:/usr/bin:/usr/local/bin";
 
 # Global variables
-my $VERSION = "5.0,3";
+my $VERSION = "5.0.3";
 my $done    = 0;
 my $debug   = 0;
+my $drop    = 1;
 my $time;
 my $archive;
 
@@ -52,6 +57,7 @@ ARG: while (my $arg = shift(@ARGV)) {
   if (!$done) {
      for ($arg) {
          s/^-debug$//  && do { $debug++; next ARG; };
+         s/^-drop$//   && do { $drop++; next ARG; };
          s/^-r$//      && do { $archive = shift(@ARGV); next ARG; };
          s/^-t$//      && do { $time = shift(@ARGV); next ARG; };
      }
@@ -64,9 +70,7 @@ ARG: while (my $arg = shift(@ARGV)) {
   $arglist[@arglist + 0] = $arg;
 }
 
-if (not defined ($time)) {
-  $time = "-1d";
-}
+
 print "DEBUG: raportsdaily: using $time as date adjustment\n" if $debug;
 
 if (not defined ($archive)) {
@@ -86,8 +90,10 @@ foreach my $i (@dirs) {
 }
 print "DEBUG: raportsdaily: using $archive as source files.\n" if $debug;
 
-my $date    = `date -v $time "+%Y_%m_%d"`;
-my $pattern = `date -v $time "+$archive"`;
+my    @time = parsetime($time);
+my    $date = strftime '%Y/%m/%d', @time;
+my  $dbdate = strftime '%Y_%m_%d', @time;
+my $pattern = strftime $archive, @time;
 
 chomp($date);
 chomp($pattern);
@@ -97,8 +103,8 @@ print "DEBUG: raportsdaily: '$date' for date and '$pattern' for files\n" if $deb
 my $Program = which 'raports';
 chomp $Program;
 
-my $srcOptions = "-M src -w mysql://root\@localhost/portsInventory/srcPorts_$date";
-my $dstOptions = "-M dst -w mysql://root\@localhost/portsInventory/dstPorts_$date";
+my $srcOptions = "-M src -w mysql://root\@localhost/portsInventory/srcPorts_$dbdate";
+my $dstOptions = "-M dst -w mysql://root\@localhost/portsInventory/dstPorts_$dbdate";
 my $filter     = "- src pkts gt 0 and dst pkts gt 0";
 
 my @files   = glob $pattern; 

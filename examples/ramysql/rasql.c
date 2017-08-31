@@ -1110,8 +1110,8 @@ void
 ArgusClientInit (struct ArgusParserStruct *parser)
 {
    struct ArgusAdjustStruct *nadp = NULL;
+   int x, retn, found = 0, tableIndex;
    struct ArgusModeStruct *mode;
-   int x, retn, tableIndex;
    char *table = NULL;
 
    if (!(parser->RaInitialized)) {
@@ -1376,8 +1376,10 @@ ArgusClientInit (struct ArgusParserStruct *parser)
                   ArgusDebug (4, "%s: skip missing table %s", __func__, table);
 #endif
                }
-            } else
+            } else {
+               found++;
                break;
+            }
          }
          tableIndex++;
       }
@@ -1392,7 +1394,6 @@ ArgusClientInit (struct ArgusParserStruct *parser)
                mysql_free_result(mysqlRes);
             }
          }
-      }
 
       if (retn > 0) {
          int x, i = 0;
@@ -1424,6 +1425,14 @@ ArgusClientInit (struct ArgusParserStruct *parser)
             RaSQLProcessQueue (ArgusModelerQueue);
          else
             RaParseComplete (SIGINT);
+      }
+      } else {
+         if (!found) {
+#ifdef ARGUSDEBUG
+            ArgusDebug (1, "No SQL tables found\n");
+#endif
+            exit(-1);
+         }
       }
    }
 }

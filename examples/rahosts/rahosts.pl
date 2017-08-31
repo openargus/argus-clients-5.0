@@ -36,8 +36,10 @@ use URI::URL;
 use DBI;
 use Switch;
 use Net::IP;
-
+use File::Which qw/ which /;
 use Socket;
+
+local $ENV{PATH} = "$ENV{PATH}:/bin:/usr/bin:/usr/local/bin";
 
 # Global variables
 my $debug = 0;
@@ -45,7 +47,7 @@ my $drop  = 0;
 my $tmpfile = tmpnam();
 my $tmpconf = $tmpfile . ".conf";
 
-my $Program = `which ra`;
+my $Program = which 'ra';
 my $Options = "-L -1 -n -s sid:42 inf saddr:32 daddr:32 proto -c , ";
 my $VERSION = "5.0";                
 
@@ -111,8 +113,11 @@ if ($uri) {
    if ($path ne "") {
       ($space, $db, $table)  = split /\//, $path;
    }
+
+   $dbh = DBI->connect("DBI:$scheme:;host=$host", $user, $pass) || die "Could not connect to database: $DBI::errstr";
+   $dbh->do("CREATE DATABASE IF NOT EXISTS $db");
+   $dbh->do("use $db");
  
-   $dbh = DBI->connect("DBI:$scheme:$db", $user, $pass) || die "Could not connect to database: $DBI::errstr";
    # Drop table 'foo'. This may fail, if 'foo' doesn't exist
    # Thus we put an eval around it.
  

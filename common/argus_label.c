@@ -1225,9 +1225,7 @@ RaFindAddress (struct ArgusParserStruct *parser, struct RaAddressStruct *tree, s
                mask = 0xFFFFFFFF << (32 - tree->addr.masklen);
             else
                mask = 0;
-/*
-            mask = tree->addr.mask[0];
-*/
+
             taddr = tree->addr.addr[0] & mask;
             naddr = node->addr.addr[0] & mask;
 
@@ -1238,13 +1236,6 @@ RaFindAddress (struct ArgusParserStruct *parser, struct RaAddressStruct *tree, s
                         retn = tree;
                         done++;
                         break;
-/*
-                     } else
-                     if (tree->status & ARGUS_NODE) {
-                        retn = tree;
-                        done++;
-                        break;
-*/
                      }
 
                   case ARGUS_MASK_MATCH: 
@@ -1259,6 +1250,9 @@ RaFindAddress (struct ArgusParserStruct *parser, struct RaAddressStruct *tree, s
                          (node->addr.addr[0] == tree->addr.addr[0])) 
                         retn = tree;
                      else
+                     if ((tree->l == NULL) && (tree->r == NULL)) {
+                        retn = tree;
+                     } else
                      if (tree->l || tree->r) {
                         if ((node->addr.addr[0] >> (32 - (tree->addr.masklen + 1))) & 0x01)
                           retn = RaFindAddress (parser, tree->l, node, mode);
@@ -1415,7 +1409,7 @@ RaInsertAddress (struct ArgusParserStruct *parser, struct ArgusLabelerStruct *la
                            int maskn = node->addr.masklen;
                            int i = tree->addr.masklen + 1;
 
-                           for (; i < node->addr.masklen; i++) {
+                           for (; i <= node->addr.masklen; i++) {
                               tmask = (0xFFFFFFFF << (32 - i));
                               taddr = lt->addr.addr[0] & tmask;
                               naddr = node->addr.addr[0] & tmask;
@@ -1426,7 +1420,8 @@ RaInsertAddress (struct ArgusParserStruct *parser, struct ArgusLabelerStruct *la
                            if (maskn == node->addr.masklen) {
                               tree->l = node;
                               node->p = tree;
-                              return (RaInsertAddress (parser, labeler, tree->l, lt, status));
+                              RaInsertAddress (parser, labeler, tree->l, lt, status);
+                              return (node);
 
                            } else {
                               struct RaAddressStruct *addr = NULL;
@@ -1466,7 +1461,6 @@ RaInsertAddress (struct ArgusParserStruct *parser, struct ArgusLabelerStruct *la
                            nmask = 0;
    
                         node->offset = tree->addr.masklen;
-//                      node->addr.mask[0] = nmask;
                         tree->r = node;
                         node->p = tree;
                         retn = node;
@@ -1478,7 +1472,7 @@ RaInsertAddress (struct ArgusParserStruct *parser, struct ArgusLabelerStruct *la
                            int maskn = node->addr.masklen;
                            int i = tree->addr.masklen + 1;
 
-                           for (; i < node->addr.masklen; i++) {
+                           for (; i <= node->addr.masklen; i++) {
                               tmask = (0xFFFFFFFF << (32 - i));
                               taddr = rt->addr.addr[0] & tmask;
                               naddr = node->addr.addr[0] & tmask;
@@ -1489,7 +1483,8 @@ RaInsertAddress (struct ArgusParserStruct *parser, struct ArgusLabelerStruct *la
                            if (maskn == node->addr.masklen) {
                               tree->r = node;
                               node->p = tree;
-                              return (RaInsertAddress (parser, labeler, tree->r, rt, status));
+                              RaInsertAddress (parser, labeler, tree->r, rt, status);
+                              return (node);
 
                            } else {
                               struct RaAddressStruct *addr = NULL;
@@ -2390,7 +2385,6 @@ RaInsertLocalityTree (struct ArgusParserStruct *parser, struct ArgusLabelerStruc
    double mstep = 0;
 
    if (labeler != NULL) {
-      struct RaAddressStruct **ArgusAddrTree = labeler->ArgusAddrTree;
       int state = ARGUS_PARSING_START_ADDRESS;
 
       snprintf (tstrbuf, MAXSTRLEN, "%s", str);
@@ -2516,11 +2510,19 @@ RaInsertLocalityTree (struct ArgusParserStruct *parser, struct ArgusLabelerStruc
                saddr->addr.addr[0] = i;
             }
 
-            if ((node = RaFindAddress (parser, ArgusAddrTree[saddr->addr.type], saddr, ARGUS_EXACT_MATCH)) == NULL) {
-               if (tptr)
-                  saddr->addr.str = strdup(tptr);
 
-               RaInsertAddress (parser, labeler, NULL, saddr, ARGUS_VISITED);
+            if ((node = RaInsertAddress (parser, labeler, NULL, saddr, ARGUS_VISITED)) != saddr) {
+               ArgusFree(saddr);
+               saddr = node;
+            }
+
+            if (saddr != NULL) {
+               if (tptr) {
+                  if (saddr->addr.str != NULL)
+                     free(saddr->addr.str);
+                  saddr->addr.str = strdup(tptr);
+               }
+
                RaLabelSuperAddresses(saddr);
 
                if (locality >= 0)
@@ -2534,13 +2536,6 @@ RaInsertLocalityTree (struct ArgusParserStruct *parser, struct ArgusLabelerStruc
                   printf("\n");
                }
 
-
-            } else {
-               ArgusFree(saddr);
-               saddr = node;
-            }
-
-            if (saddr != NULL) {
                if (locality >= 0) RaLabelAddressLocality(saddr, locality);
                if (asn >= 0)       RaLabelAddressAsn(saddr, asn);
             }

@@ -125,6 +125,9 @@ src      return SRC;
 rmt      return REMOTE;
 lcl      return LOCAL;
 
+local    return INTRANET;
+remote   return INTERNET;
+
 seq      return SEQ;
 
 auth     return AUTH;
@@ -169,6 +172,7 @@ inf      return INF;
 inode    return INODE;
 net      return NET;
 mask     return AMASK;
+loc      return LOC;
 
 masklen  return MASKLEN;
 mlen     return MASKLEN;

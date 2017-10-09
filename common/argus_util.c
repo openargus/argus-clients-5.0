@@ -8025,7 +8025,7 @@ ArgusPrintBins (struct ArgusParserStruct *parser, char *buf, struct ArgusRecordS
 void
 ArgusPrintHashRef (struct ArgusParserStruct *parser, char *buf, struct ArgusRecordStruct *argus, int len)
 {
-   long long hash = 0;
+   int hash = 0;
    char *format = NULL;
    char hashbuf[32];
 
@@ -8040,12 +8040,14 @@ ArgusPrintHashRef (struct ArgusParserStruct *parser, char *buf, struct ArgusReco
 
       case ARGUS_NETFLOW:
       case ARGUS_FAR: {
+         struct ArgusFlowHashStruct *hstruct = (struct ArgusFlowHashStruct *) argus->dsrs[ARGUS_FLOW_HASH_INDEX];
+         hash = hstruct->hash;
          break;
       }
    }
 
    if ((format == NULL) || (strlen(format) == 0)) {
-      format = "%lld";
+      format = "%u";
    }
 
    if ((hash != 0) || parser->ArgusPrintHashZero)
@@ -8055,6 +8057,55 @@ ArgusPrintHashRef (struct ArgusParserStruct *parser, char *buf, struct ArgusReco
 
    if (parser->ArgusPrintXml) {
       sprintf (buf, " Hash = \"%s\"", hashbuf);
+   } else {
+      if (parser->RaFieldWidth != RA_FIXED_WIDTH) {
+         len = strlen(hashbuf);
+      } else {
+         if (strlen(hashbuf) > len) {
+            hashbuf[len - 1] = '*';
+            hashbuf[len]     = '\0';
+         }
+      }
+      sprintf (buf, "%*.*s ", len, len, hashbuf);
+   }
+}
+
+
+void
+ArgusPrintHashIndex (struct ArgusParserStruct *parser, char *buf, struct ArgusRecordStruct *argus, int len)
+{
+   int index = 0;
+   char *format = NULL;
+   char hashbuf[32];
+
+   if (parser->RaPrintAlgorithmList[parser->RaPrintIndex] != NULL)
+      format = parser->RaPrintAlgorithmList[parser->RaPrintIndex]->format;
+
+   switch (argus->hdr.type & 0xF0) {
+      case ARGUS_EVENT:
+      case ARGUS_MAR: {
+         break;
+      }
+
+      case ARGUS_NETFLOW:
+      case ARGUS_FAR: {
+         struct ArgusFlowHashStruct *hstruct = (struct ArgusFlowHashStruct *) argus->dsrs[ARGUS_FLOW_HASH_INDEX];
+         index = hstruct->ind;
+         break;
+      }
+   }
+
+   if ((format == NULL) || (strlen(format) == 0)) {
+      format = "%u";
+   }
+
+   if ((index != 0) || parser->ArgusPrintHashZero)
+      snprintf (hashbuf, sizeof(hashbuf), format, index);
+   else
+      snprintf (hashbuf, sizeof(hashbuf), "%s", " ");
+
+   if (parser->ArgusPrintXml) {
+      sprintf (buf, " Index = \"%s\"", hashbuf);
    } else {
       if (parser->RaFieldWidth != RA_FIXED_WIDTH) {
          len = strlen(hashbuf);
@@ -18470,6 +18521,12 @@ ArgusPrintHashRefLabel (struct ArgusParserStruct *parser, char *buf, int len)
 }
 
 void
+ArgusPrintHashIndexLabel (struct ArgusParserStruct *parser, char *buf, int len)
+{
+   sprintf (buf, "%*.*s ", len, len, "Index");
+}
+
+void
 ArgusPrintSequenceNumberLabel (struct ArgusParserStruct *parser, char *buf, int len)
 {
    sprintf (buf, "%*.*s ", len, len, "Seq");
@@ -23002,6 +23059,13 @@ ArgusNtoH (struct ArgusRecord *argus)
                      break;
                   }
 
+                  case ARGUS_FLOW_HASH_DSR: {
+                     struct ArgusFlowHashStruct *hash = (struct ArgusFlowHashStruct *) dsr;
+                     hash->hash = ntohl(hash->hash);
+                     hash->ind = ntohl(hash->ind);
+                     break;
+                  }
+
                   case ARGUS_ENCAPS_DSR: {
                      struct ArgusEncapsStruct *encaps = (struct ArgusEncapsStruct *) dsr;
                      encaps->src = ntohl(encaps->src);
@@ -23612,6 +23676,13 @@ ArgusHtoN (struct ArgusRecord *argus)
                            break; 
                         }
                      }
+                     break;
+                  }
+
+                  case ARGUS_FLOW_HASH_DSR: {
+                     struct ArgusFlowHashStruct *hash = (struct ArgusFlowHashStruct *) dsr;
+                     hash->hash = htonl(hash->hash);
+                     hash->ind = htonl(hash->ind);
                      break;
                   }
 

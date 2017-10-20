@@ -25,12 +25,17 @@
  * while after expiration for use by streaming analytics.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "argus_config.h"
+#endif
+
 #include <stdlib.h>
 #include <syslog.h>
 #include "argus_threads.h"
 #include "argus_util.h"    /* needed by argus_client.h */
 #include "argus_client.h"  /* ArgusLog() */
 #include "argus_threads.h"
+#include "argus_main.h"
 #include "rabootp.h"
 #include "rabootp_memory.h"
 #include "rabootp_client_tree.h"
@@ -208,7 +213,7 @@ RabootpProtoTimersLeaseSet(const void * const v_parsed,
             ArgusDhcpStructUpRef(cached);
          }
          intvlnode->data = cached;
-         intvlnode->intlo = cached->last_bind;
+         intvlnode->intlo = cached->first_bind;
          cached->timers.intvl = RabootpTimerStart(rts, &exp_intvl, __intvl_exp_cb,
                                                   intvlnode);
       }
@@ -273,7 +278,6 @@ out:
 static int RabootpProtoTimersNonleaseSet(const void * const v_parsed,
 			      void *v_cached, void *v_arg)
 {
-   const struct ArgusDhcpStruct * const parsed = v_parsed;
    struct ArgusDhcpStruct *cached = v_cached;
    struct RabootpTimerStruct *rts = v_arg;
 

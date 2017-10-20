@@ -9,6 +9,11 @@
 
 typedef int (*sleepfunc)(struct argus_timer_wheel *);
 
+/* from argus_timer.c.  This is a "private" function that does not appear
+ * in the header file.
+ */
+int ArgusTimerWheelCheck(struct argus_timer_wheel *w);
+
 
 static unsigned callback_count = 0;
 static struct timespec callback_lasttime = {0, };
@@ -38,21 +43,6 @@ static void __callback_reset(void)
    memset(&callback_lastexp, 0, sizeof(callback_lastexp));
 }
 
-static int
-__wheel_consistency_check(struct argus_timer_wheel *w)
-{
-   uint64_t total = 0;
-   uint64_t u;
-   struct argus_timer *t;
-
-   for (u = 0; u < w->nslots; u++) {
-      RB_FOREACH(t, argus_timer_tree, w->slots[u]) {
-         total++;
-      }
-   }
-   return (total == w->ntimers);
-}
-
 /* time of final expiration returned in duration.  Use this to calculate the
  * number of times the wheel must be advanced to expire all timers.
  */
@@ -60,7 +50,8 @@ int
 test_add_many_timers(struct argus_timer_wheel *w,
                      unsigned count,
                      const struct timespec * const duration,
-                     struct argus_timer ***tims)
+                     struct argus_timer ***tims,
+                     int duplicates)
 {
    struct timespec d = *duration;
    struct timespec tmp;
@@ -75,8 +66,10 @@ test_add_many_timers(struct argus_timer_wheel *w,
       (*tims)[u] = ArgusTimerStartRelative(w, &d, __callback, NULL, NULL);
       if ((*tims)[u] == NULL)
           fail = 1;
-      __timespec_add(&d, duration, &tmp);
-      d = tmp;
+      if (duplicates == 0) {
+         __timespec_add(&d, duration, &tmp);
+         d = tmp;
+      }
    }
 
    if (fail) {
@@ -140,7 +133,7 @@ int runtests(unsigned slots, struct timespec *period,
    TestResult(timerwheel->ntimers == 1);
 
    TestHeading("Wheel consistency check");
-   TestResult(__wheel_consistency_check(timerwheel));
+   TestResult(ArgusTimerWheelCheck(timerwheel));
 
    TestHeading("Advance timer wheel (with timer)");
    for (i = 0; i < iter; i++) {
@@ -154,7 +147,7 @@ int runtests(unsigned slots, struct timespec *period,
    TestResult(timerwheel->ntimers == 0);
 
    TestHeading("Wheel consistency check");
-   TestResult(__wheel_consistency_check(timerwheel));
+   TestResult(ArgusTimerWheelCheck(timerwheel));
 
    TestHeading("Callback executed 1 time");
    TestResult(callback_count == 1);
@@ -162,18 +155,50 @@ int runtests(unsigned slots, struct timespec *period,
    __callback_reset();
 
 
+   TestSectionHeading("Test operation of timer wheel with duplicate timer expirations");
+   TestHeading("Add 10 timers");
+   TestResult(test_add_many_timers(timerwheel, 10, duration, &tims, 1) == 0);
+   iter = slots+1; /* one revolution + 1 cycle */
+
+   TestHeading("Wheel has 10 timers");
+   TestResult(timerwheel->ntimers == 10);
+
+   TestHeading("Wheel consistency check");
+   TestResult(ArgusTimerWheelCheck(timerwheel));
+
+   TestHeading("Advance timer wheel");
+   for (i = 0; i < iter; i++) {
+      ArgusTimerAdvanceWheel(timerwheel);
+      sleepfunc(timerwheel);
+   }
+   TestResult(1); /* no crash */
+   for (i = 0; i < 10; i++)
+      free(tims[i]);
+   free(tims);
+
+   TestHeading("Wheel has no timers");
+   TestResult(timerwheel->ntimers == 0);
+
+   TestHeading("Wheel consistency check");
+   TestResult(ArgusTimerWheelCheck(timerwheel));
+
+   TestHeading("Callback executed 10 times");
+   TestResult(callback_count == 10);
+
+   __callback_reset();
+
 
    TestSectionHeading("Test operation of timer wheel with more entries than slots");
 
    TestHeading("Add many (10000) timers");
-   TestResult(test_add_many_timers(timerwheel, 10000, duration, &tims) == 0);
+   TestResult(test_add_many_timers(timerwheel, 10000, duration, &tims, 0) == 0);
    iter = ((TS_MSEC(duration) * 10000) / TS_MSEC(period)) + slots + 1;
 
    TestHeading("Wheel has 10000 timers");
    TestResult(timerwheel->ntimers == 10000);
 
    TestHeading("Wheel consistency check");
-   TestResult(__wheel_consistency_check(timerwheel));
+   TestResult(ArgusTimerWheelCheck(timerwheel));
 
    TestHeading("Advance timer wheel (with many timers)");
    for (i = 0; i < iter; i++) {
@@ -189,7 +214,7 @@ int runtests(unsigned slots, struct timespec *period,
    TestResult(timerwheel->ntimers == 0);
 
    TestHeading("Wheel consistency check");
-   TestResult(__wheel_consistency_check(timerwheel));
+   TestResult(ArgusTimerWheelCheck(timerwheel));
 
    TestHeading("Callback executed 10000 times");
    TestResult(callback_count == 10000);
@@ -202,13 +227,13 @@ int runtests(unsigned slots, struct timespec *period,
    TestSectionHeading("Delete timers from wheel with ArgusTimerFreeWheel");
 
    TestHeading("Add many (10000) timers");
-   TestResult(test_add_many_timers(timerwheel, 10000, duration, &tims) == 0);
+   TestResult(test_add_many_timers(timerwheel, 10000, duration, &tims, 0) == 0);
 
    TestHeading("Wheel has 10000 timers");
    TestResult(timerwheel->ntimers == 10000);
 
    TestHeading("Wheel consistency check");
-   TestResult(__wheel_consistency_check(timerwheel));
+   TestResult(ArgusTimerWheelCheck(timerwheel));
 
    TestHeading("Free the timer wheel");
    TestResult(ArgusTimerFreeWheel(timerwheel) == 0);
@@ -228,13 +253,13 @@ int runtests(unsigned slots, struct timespec *period,
       return 1;
 
    TestHeading("Add many (10000) timers");
-   TestResult(test_add_many_timers(timerwheel, 10000, duration, &tims) == 0);
+   TestResult(test_add_many_timers(timerwheel, 10000, duration, &tims, 0) == 0);
 
    TestHeading("Wheel has 10000 timers");
    TestResult(timerwheel->ntimers == 10000);
 
    TestHeading("Wheel consistency check");
-   TestResult(__wheel_consistency_check(timerwheel));
+   TestResult(ArgusTimerWheelCheck(timerwheel));
 
    TestHeading("Advance timer wheel");
    for (i = 0; i < iter; i++) {
@@ -250,7 +275,7 @@ int runtests(unsigned slots, struct timespec *period,
    TestResult(timerwheel->ntimers == 0);
 
    TestHeading("Wheel consistency check");
-   TestResult(__wheel_consistency_check(timerwheel));
+   TestResult(ArgusTimerWheelCheck(timerwheel));
 
    TestHeading("Free the timer wheel");
    TestResult(ArgusTimerFreeWheel(timerwheel) == 0);

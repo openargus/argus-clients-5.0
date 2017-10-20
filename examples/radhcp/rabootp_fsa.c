@@ -1,3 +1,6 @@
+#ifdef HAVE_CONFIG_H
+#include "argus_config.h"
+#endif
 #include <syslog.h>
 #include "argus_config.h"
 #include "argus_util.h"
@@ -10,7 +13,6 @@ int
 fsa_choose_initial_state(const struct ArgusDhcpStruct * const parsed)
 {
    uint8_t msgtype;
-   uint16_t mask;
    enum ArgusDhcpState newstate;
 
    if (parsed->msgtypemask == 0) {
@@ -72,7 +74,6 @@ fsa_state_init(const struct ArgusDhcpStruct * const parsed,
                const struct ArgusDhcpStruct * const cached)
 {
    uint8_t msgtype;
-   uint16_t mask;
    enum ArgusDhcpState newstate;
 
    if (parsed->msgtypemask == 0) {
@@ -98,7 +99,6 @@ fsa_state_selecting(const struct ArgusDhcpStruct * const parsed,
                     const struct ArgusDhcpStruct * const cached)
 {
    uint8_t msgtype;
-   uint16_t mask;
    enum ArgusDhcpState newstate;
 
    if (parsed->msgtypemask == 0) {
@@ -128,7 +128,6 @@ fsa_state_requesting(const struct ArgusDhcpStruct * const parsed,
                      const struct ArgusDhcpStruct * const cached)
 {
    uint8_t msgtype;
-   uint16_t mask;
    enum ArgusDhcpState newstate;
 
    if (parsed->msgtypemask == 0) {
@@ -158,7 +157,6 @@ fsa_state_bound(const struct ArgusDhcpStruct * const parsed,
                 const struct ArgusDhcpStruct * const cached)
 {
    uint8_t msgtype;
-   uint16_t mask;
    enum ArgusDhcpState newstate;
 
    if (parsed->msgtypemask == 0) {
@@ -197,7 +195,6 @@ fsa_state_renewing(const struct ArgusDhcpStruct * const parsed,
                    const struct ArgusDhcpStruct * const cached)
 {
    uint8_t msgtype;
-   uint16_t mask;
    enum ArgusDhcpState newstate;
 
    if (parsed->msgtypemask == 0) {
@@ -230,7 +227,6 @@ fsa_state_rebinding(const struct ArgusDhcpStruct * const parsed,
                     const struct ArgusDhcpStruct * const cached)
 {
    uint8_t msgtype;
-   uint16_t mask;
    enum ArgusDhcpState newstate;
 
    if (parsed->msgtypemask == 0) {

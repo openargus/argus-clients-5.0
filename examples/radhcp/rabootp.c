@@ -20,6 +20,9 @@
  *
  * Format and print bootp packets.
  */
+#ifdef HAVE_CONFIG_H
+#include "argus_config.h"
+#endif
 
 #include <unistd.h>
 #include <stdlib.h>
@@ -66,9 +69,10 @@ static struct {
 
 extern char ArgusBuf[];
 
+#if defined(ARGUSDEBUG)
 static char *bootp_print(register const u_char *, u_int);
+#endif
 static void rfc1048_print(const u_char *, const u_char *);
-static void cmu_print(const u_char *);
 static void rfc1048_parse(const u_char *, const u_char *,
                           struct ArgusDhcpStruct *, u_char);
 
@@ -315,6 +319,7 @@ ArgusParseDhcpRecord(struct ArgusParserStruct *parser,
  * Print bootp requests
  */
 
+#if defined(ARGUSDEBUG)
 static char *
 bootp_print(register const u_char *cp, u_int length)
 {
@@ -424,8 +429,11 @@ bootp_print(register const u_char *cp, u_int length)
       rfc1048_print(bp->options, (const u_char *)cp+length);
    else {
       u_int32_t ul;
+      u_int32_t options;
 
-      ul = EXTRACT_32BITS(&bp->options[0]);
+      memcpy(&options, bp->options, sizeof(options));
+
+      ul = EXTRACT_32BITS(&options);
       if (ul != 0)
          sprintf(&ArgusBuf[strlen(ArgusBuf)]," Vendor-#0x%x", ul);
    }
@@ -436,6 +444,7 @@ trunc:
 
    return ArgusBuf;
 }
+#endif
 
 /*
  * The first character specifies the format to print:
@@ -527,11 +536,6 @@ static struct tok tag2str[] = {
 	{ DHO_VIVSO_SUBOPTIONS, "svivso_suboptions" }, /* RFC 3925 - first 2 bytes are sub-option code */
 	{ DHO_END, "end" },
 	{ 0, NULL },
-};
-
-/* 2-byte extended tags */
-static struct tok xtag2str[] = {
-   { 0, NULL }
 };
 
 /* DHCP "options overload" types */
@@ -874,17 +878,29 @@ __extract_ipv4array(const u_char * const bp, u_char len,
    return count;
 }
 
+/* use with qsort */
+static int
+__uchar_compar(const void *a, const void *b)
+{
+   const unsigned char *uca, *ucb;
+
+   uca = a;
+   ucb = b;
+   if (*uca < *ucb)
+      return -1;
+   if (*uca == *ucb)
+      return 0;
+   return 1;
+}
+
+
 static void
 rfc1048_parse(const u_char *bp, const u_char *endp,
               struct ArgusDhcpStruct *ads, u_char op)
 {
    register u_int16_t tag;
    register u_int len, size;
-   int first;
-   u_int32_t ul;
-   u_int16_t us;
    u_int8_t uc;
-   size_t off;
 
    /* Step over magic cookie */
    bp += sizeof(int32_t);
@@ -1112,7 +1128,6 @@ rfc1048_parse(const u_char *bp, const u_char *endp,
       }
    }
 
-trunc:
    return;
 }
 
@@ -1323,7 +1338,6 @@ __rabootp_update_interval_tree(const void * const v_parsed,
    if (parsed->state == BOUND && cached->state != BOUND) {
       if (parsed->rep.leasetime) {
          struct ArgusDhcpIntvlTree *head = v_arg;
-         struct ArgusDhcpIntvlNode *node;
 
          ArgusDhcpStructUpRef(cached);
          if (ArgusDhcpIntvlTreeInsert(head,
@@ -1381,6 +1395,8 @@ RabootpCallbackRegister(enum rabootp_callback_trigger trigger,
       case CALLBACK_XIDDELETE:
          rv = rabootp_cb_register(&callback.xid_delete, cb, arg);
          break;
+      default:
+         rv = -1;
    }
    return  rv;
 }
@@ -1404,6 +1420,8 @@ RabootpCallbackUnregister(enum rabootp_callback_trigger trigger,
       case CALLBACK_XIDDELETE:
          rv = rabootp_cb_unregister(&callback.xid_delete, cb);
          break;
+      default:
+         rv = -1;
    }
    return  rv;
 }

@@ -507,6 +507,7 @@ ArgusNewOutput (struct ArgusParserStruct *parser, int sasl_min_ssf,
    retn->sasl_min_ssf = sasl_min_ssf;
    retn->sasl_max_ssf = sasl_max_ssf;
    retn->auth_localhost = auth_localhost;
+   retn->ListenNotify[0] = retn->ListenNotify[1] = -1;
 
    ArgusInitOutput(retn);
 
@@ -533,6 +534,10 @@ ArgusDeleteOutput (struct ArgusParserStruct *parser, struct ArgusOutputStruct *o
       ArgusFree(output->ArgusInitMar);
 
    parser->ArgusOutputList = NULL;
+   if (output->ListenNotify[0] >= 0)
+      close(output->ListenNotify[0]);
+   if (output->ListenNotify[1] >= 0)
+      close(output->ListenNotify[1]);
    ArgusFree(output);
 
 
@@ -3357,6 +3362,7 @@ static int
 __build_output_array(struct ArgusParserStruct *parser,
                      struct ArgusOutputStruct *outputs[],
                      int lfd[],
+                     int notifyfd[], /* pipes for completion notification */
                      char lfdver[])
 {
    int i;
@@ -3368,6 +3374,7 @@ __build_output_array(struct ArgusParserStruct *parser,
          outputs[count] = parser->ArgusOutputs[i];
          lfd[count] = parser->ArgusLfd[i];
          lfdver[count] = parser->ArgusLfdVersion[i];
+         notifyfd[count] = parser->ArgusOutputs[i]->ListenNotify[0];
          count++;
       }
    }
@@ -3388,6 +3395,7 @@ void *ArgusListenProcess(void *arg)
    struct ArgusOutputStruct *output;
    struct ArgusOutputStruct *outputs[ARGUS_MAXLISTEN];
    int lfd[ARGUS_MAXLISTEN];
+   int notifyfd[ARGUS_MAXLISTEN];
    char lfdver[ARGUS_MAXLISTEN];
    int nbout;
 
@@ -3402,7 +3410,7 @@ void *ArgusListenProcess(void *arg)
    if (arg == NULL)
       goto out;
 
-   nbout = __build_output_array(parser, outputs, lfd, lfdver);
+   nbout = __build_output_array(parser, outputs, lfd, notifyfd, lfdver);
 
 #if defined(ARGUS_THREADS)
    sigfillset(&blocked_signals);
@@ -3432,6 +3440,10 @@ void *ArgusListenProcess(void *arg)
                FD_SET(lfd[cur], &readmask);
                width = (lfd[cur] > width) ? lfd[cur] : width;
             }
+            if (notifyfd[cur] != -1) {
+               FD_SET(notifyfd[cur], &readmask);
+               width = (notifyfd[cur] > width) ? notifyfd[cur] : width;
+            }
 
             output = outputs[cur];
 
@@ -3457,6 +3469,7 @@ void *ArgusListenProcess(void *arg)
          if ((val = select (width + 1, &readmask, NULL, NULL, &wait)) >= 0) {
             if (val > 0) {
                struct ArgusClientData *client;
+               char pchar;
 
 #ifdef ARGUSDEBUG
                ArgusDebug(3, "%s() select returned with tasks\n", __func__);
@@ -3466,6 +3479,9 @@ void *ArgusListenProcess(void *arg)
 
                   if (FD_ISSET(lfd[cur], &readmask))
                      ArgusCheckClientStatus(outputs[cur], lfd[cur], lfdver[cur]);
+
+                  if (FD_ISSET(notifyfd[cur], &readmask))
+                     read(notifyfd[cur], &pchar, 1);
 
                   output = outputs[cur];
 
@@ -3489,7 +3505,7 @@ void *ArgusListenProcess(void *arg)
          }
 
 #if defined(ARGUS_THREADS)
-      nbout = __build_output_array(parser, outputs, lfd, lfdver);
+      nbout = __build_output_array(parser, outputs, lfd, notifyfd, lfdver);
 #endif
    }
 
@@ -3528,6 +3544,14 @@ __ArgusOutputProcess(struct ArgusOutputStruct *output,
 #if defined(ARGUS_THREADS)
    sigfillset(&blocked_signals);
    pthread_sigmask(SIG_BLOCK, &blocked_signals, NULL);
+   if (pipe(output->ListenNotify) < 0) {
+      /* If the fd is -1, write() will fail with EBADF which we will
+       * ignore.  The result will be slower responses to client commands.
+       */
+      ArgusLog(LOG_WARNING, "%s/%s: unable to open pipe fd pair\n", caller,
+               __func__);
+      output->ListenNotify[0] = output->ListenNotify[1] = -1;
+   }
 
    while (!(output->status & ARGUS_STOP)) {
 #else
@@ -3753,6 +3777,9 @@ __ArgusOutputProcess(struct ArgusOutputStruct *output,
                         if (checkmessage(output, client) < 0)
                            delete = 1;
                         client->readable = 0;
+
+                        /* tell ArgusListenProcess() we're done */
+                        write(output->ListenNotify[1], "0", 1);
                      }
 
                      if (ArgusWriteOutSocket (output, client) < 0) {

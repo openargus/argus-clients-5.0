@@ -62,7 +62,6 @@ struct ArgusRecord *ArgusGenerateRecord (struct ArgusRecordStruct *, unsigned ch
 struct ArgusV3Record *ArgusGenerateV3Record (struct ArgusRecordStruct *, unsigned char, char *);
 struct ArgusRecord *ArgusGenerateV5Record (struct ArgusRecordStruct *, unsigned char, char *);
 static struct ArgusRecord *ArgusGenerateInitialMar (struct ArgusOutputStruct *, char);
-static struct ArgusRecordStruct *ArgusGenerateInitialMarRecord (struct ArgusOutputStruct *, char);
 
 
 extern char *chroot_dir;
@@ -472,7 +471,6 @@ ArgusNewOutput (struct ArgusParserStruct *parser, int sasl_min_ssf,
                 int sasl_max_ssf, int auth_localhost)
 {
    struct ArgusOutputStruct *retn = NULL;
-   int i;
 
    if ((retn = (struct ArgusOutputStruct *) ArgusCalloc (1, sizeof (struct ArgusOutputStruct))) == NULL)
      ArgusLog (LOG_ERR, "ArgusNewOutput() ArgusCalloc error %s\n", strerror(errno));
@@ -561,7 +559,6 @@ struct ArgusOutputStruct *
 ArgusNewControlChannel (struct ArgusParserStruct *parser)
 {
    struct ArgusOutputStruct *retn = NULL;
-   int i;
 
    if ((retn = (struct ArgusOutputStruct *) ArgusCalloc (1, sizeof (struct ArgusOutputStruct))) == NULL)
      ArgusLog (LOG_ERR, "ArgusNewControlChannel() ArgusCalloc error %s\n", strerror(errno));
@@ -3404,7 +3401,7 @@ void *ArgusListenProcess(void *arg)
 #endif /* ARGUS_THREADS */
 
 #ifdef ARGUSDEBUG
-   ArgusDebug (2, "%s(0x%x) starting\n", __func__, output);
+   ArgusDebug (2, "%s(0x%x) starting\n", __func__, arg);
 #endif
 
    if (arg == NULL)
@@ -3427,7 +3424,7 @@ void *ArgusListenProcess(void *arg)
 
          struct timeval wait = LISTEN_WAIT_INITIALIZER;
          fd_set readmask;
-         int i, width = 0;
+         int width = 0;
 
          /* Build new fd_set of listening sockets */
 
@@ -3515,7 +3512,7 @@ void *ArgusListenProcess(void *arg)
 
 out:
 #ifdef ARGUSDEBUG
-   ArgusDebug (2, "%s(0x%x) exiting\n", __func__, output);
+   ArgusDebug (2, "%s(0x%x) exiting\n", __func__, arg);
 #endif
    return NULL;
 }
@@ -3663,10 +3660,18 @@ __ArgusOutputProcess(struct ArgusOutputStruct *output,
 
                      if (have_argus_client)
                         arg = NewArgusWireFmtBuffer(rec, ARGUS_DATA, ARGUS_VERSION);
+                     else
+                        arg = NULL;
+
                      if (have_argusv3_client)
                         argv3 = NewArgusWireFmtBuffer(rec, ARGUS_DATA, ARGUS_VERSION_3);
+                     else
+                        argv3 = NULL;
+
                      if (have_ciscov5_client)
                         v5 = NewArgusWireFmtBuffer(rec, ARGUS_CISCO_V5_DATA, 0);
+                     else
+                        v5 = NULL;
 
                      for (i = 0; i < output->ArgusClients->count; i++) {
                         if ((client->fd != -1) && (client->sock != NULL) && client->ArgusClientStart) {
@@ -4013,8 +4018,6 @@ ArgusCheckClientStatus (struct ArgusOutputStruct *output, int s,
                {
                   char hbuf[NI_MAXHOST];
                   int niflags;
-                  int localaddr_lo = 0;  /* is loopback? */
-                  int remoteaddr_lo = 0;
 
                   salen = sizeof(remoteaddr);
                   bzero(hbuf, sizeof(hbuf));
@@ -4644,130 +4647,6 @@ ArgusGenerateInitialMar (struct ArgusOutputStruct *output, char version)
    return (retn);
 }
 
-static
-struct ArgusRecordStruct *
-ArgusGenerateInitialMarRecord (struct ArgusOutputStruct *output, char version)
-{
-   struct ArgusAddrStruct asbuf, *asptr = &asbuf;
-   struct ArgusRecordStruct *retn;
-   struct ArgusRecord *rec;
-   struct timeval now;
-
-   if ((retn = (struct ArgusRecordStruct *) ArgusCalloc (1, sizeof(*retn))) == NULL)
-     ArgusLog (LOG_ERR, "ArgusGenerateInitialMarRecord(0x%x) ArgusCalloc error %s\n", output, strerror(errno));
-
-   switch (version) {
-      case ARGUS_VERSION_3:
-         retn->hdr.type  = ARGUS_MAR | ARGUS_VERSION_3;
-         retn->hdr.cause = ARGUS_START;
-         break;
-
-      case ARGUS_VERSION_5:
-         retn->hdr.type  = ARGUS_MAR | ARGUS_VERSION_5;
-         retn->hdr.cause = ARGUS_START | ARGUS_SRC_RADIUM;
-         break;
-   }
-
-   retn->hdr.len   = htons((unsigned short) sizeof(struct ArgusRecord)/4);
-
-   if ((rec = (struct ArgusRecord *) ArgusCalloc(1, sizeof(*rec))) == NULL)
-      ArgusLog (LOG_ERR, "ArgusGenerateInitialMarRecord: ArgusCalloc error %s", strerror(errno));
-
-   retn->dsrs[0] = (void *)rec;
-
-   rec->hdr = retn->hdr;
-
-   switch (version) {
-      case ARGUS_VERSION_3: rec->argus_mar.argusid = htonl(ARGUS_V3_COOKIE); break;
-      case ARGUS_VERSION_5: rec->argus_mar.argusid = htonl(ARGUS_COOKIE); break;
-   }
-
-   if (getParserArgusID(ArgusParser, asptr)) {
-      switch (version) {
-         case ARGUS_VERSION_3: 
-            rec->argus_mar.thisid = htonl(asptr->a_un.value);
-            switch (getArgusIDType(ArgusParser) & ~ARGUS_TYPE_INTERFACE) {
-               case ARGUS_TYPE_STRING: rec->argus_mar.status |= ARGUS_IDIS_STRING; break;
-               case ARGUS_TYPE_INT:    rec->argus_mar.status |= ARGUS_IDIS_INT; break;
-               case ARGUS_TYPE_IPV4:   rec->argus_mar.status |= ARGUS_IDIS_IPV4; break;
-            }
-            break;
-
-         case ARGUS_VERSION_5: {
-            switch (getArgusIDType(ArgusParser) & ~ARGUS_TYPE_INTERFACE) {
-               case ARGUS_TYPE_STRING: {
-                  rec->argus_mar.status |= ARGUS_IDIS_STRING;
-                  bcopy (&asptr->a_un.str, &rec->argus_mar.str, 4);
-                  break;
-               }
-               case ARGUS_TYPE_INT: {
-                  rec->argus_mar.status |= ARGUS_IDIS_INT;
-                  bcopy (&asptr->a_un.value, &rec->argus_mar.value, sizeof(rec->argus_mar.value));
-                  break;
-               }
-               case ARGUS_TYPE_IPV4: {
-                  rec->argus_mar.status |= ARGUS_IDIS_IPV4;
-                  bcopy (&asptr->a_un.ipv4, &rec->argus_mar.ipv4, sizeof(rec->argus_mar.ipv4));
-                  break;
-               }
-               case ARGUS_TYPE_IPV6: {
-                  rec->argus_mar.status |= ARGUS_IDIS_IPV6;
-                  bcopy (&asptr->a_un.ipv6, &rec->argus_mar.ipv6, sizeof(rec->argus_mar.ipv6));
-                  break;
-               }
-               case ARGUS_TYPE_UUID: {
-                  rec->argus_mar.status |= ARGUS_IDIS_UUID;
-                  bcopy (&asptr->a_un.uuid, &rec->argus_mar.uuid, sizeof(rec->argus_mar.uuid));
-                  break;
-               }
-            }
-            if (getArgusManInf(ArgusParser) != NULL)
-               rec->argus_mar.status |=  ARGUS_ID_INC_INF;
-
-            rec->argus_mar.status  |= getArgusIDType(ArgusParser);
-         }
-         break;
-      }
-   }
-
-   gettimeofday (&now, 0L);
-
-   rec->argus_mar.now.tv_sec  = now.tv_sec;
-   rec->argus_mar.now.tv_usec = now.tv_usec;
-
-
-   rec->argus_mar.major_version = version;
-   rec->argus_mar.minor_version = VERSION_MINOR;
-   rec->argus_mar.reportInterval = 0;
-
-   rec->argus_mar.localnet = 0;
-   rec->argus_mar.netmask = 0;
-
-   rec->argus_mar.record_len = -1;
-
-   if (output) {
-      rec->argus_mar.argusMrInterval = output->ArgusMarReportInterval.tv_sec;
-
-      rec->argus_mar.startime.tv_sec  = output->ArgusStartTime.tv_sec;
-      rec->argus_mar.startime.tv_usec = output->ArgusStartTime.tv_usec;
-
-      rec->argus_mar.argusMrInterval = output->ArgusMarReportInterval.tv_sec;
-      rec->argus_mar.localnet = output->ArgusLocalNet;
-      rec->argus_mar.netmask = output->ArgusNetMask;
- 
-      rec->argus_mar.nextMrSequenceNum = output->ArgusOutputSequence;
-   }
-
-   output->ArgusLastMarUpdateTime = now;
-
-#ifdef ARGUSDEBUG
-   ArgusDebug (4, "ArgusGenerateInitialMar() returning\n");
-#endif
-
-   return (retn);
-}
-
-
 struct ArgusRecordStruct *
 ArgusGenerateStatusMarRecord(struct ArgusOutputStruct *output,
                              unsigned char status, char version)
@@ -5074,10 +4953,6 @@ ArgusDeleteSocket (struct ArgusOutputStruct *output, struct ArgusClientData *cli
    struct ArgusSocketStruct *asock = client->sock;
 
    if (asock != NULL) {
-      struct ArgusListStruct *list = asock->ArgusOutputList;
-      struct ArgusWireFmtBuffer *awf;
-      struct ArgusQueueNode *node;
-
       DrainArgusSocketQueue(client);
       ArgusDeleteList(asock->ArgusOutputList, ARGUS_OUTPUT_LIST);
 

@@ -5313,6 +5313,12 @@ RaHighlightDisplay (struct ArgusParserStruct *parser, struct ArgusQueueStruct *q
    regmatch_t pmbuf[32], *pm = &pmbuf[0];
    char sbuf[1024];
 
+   /* Do not attempt to search for empty string.  This will loop
+    * forever.
+    */
+   if (*pattern == '\0')
+      return -1;
+
 #if defined(ARGUS_PCRE)
    options = 0;
 #else
@@ -5379,6 +5385,12 @@ RaSearchDisplay (struct ArgusParserStruct *parser, struct ArgusQueueStruct *queu
    struct ArgusRecordStruct *ns = NULL;
    regex_t pregbuf, *preg = &pregbuf;
    char buf[MAXSTRLEN], *ptr;
+
+   /* Do not attempt to search for empty string.  This will loop
+    * forever.
+    */
+   if (*pattern == '\0')
+      return -1;
 
 #if defined(ARGUS_PCRE)
    options = 0;

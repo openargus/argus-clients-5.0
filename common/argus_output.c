@@ -54,6 +54,7 @@
 #include <argus_util.h>
 #include <argus_output.h>
 #include "argus_threads.h"
+#include "ring.h"
 
 void ArgusSendFile (struct ArgusOutputStruct *, struct ArgusClientData *, char *, int);
 static void *ArgusControlChannelProcess(void *);
@@ -509,6 +510,9 @@ ArgusNewOutput (struct ArgusParserStruct *parser, int sasl_min_ssf,
    retn->ListenNotify[0] = retn->ListenNotify[1] = -1;
 #endif
 
+   if (RingAlloc(&retn->ring) < 0)
+      ArgusLog (LOG_ERR, "%s: unable to allocate command buffer\n", __func__);
+
    ArgusInitOutput(retn);
 
 #ifdef ARGUSDEBUG
@@ -540,6 +544,7 @@ ArgusDeleteOutput (struct ArgusParserStruct *parser, struct ArgusOutputStruct *o
    if (output->ListenNotify[1] >= 0)
       close(output->ListenNotify[1]);
 #endif
+   RingFree(&output->ring);
    ArgusFree(output);
 
 
@@ -591,6 +596,13 @@ ArgusNewControlChannel (struct ArgusParserStruct *parser)
       retn->ArgusReportTime.tv_usec -= 1000000;
    }
 
+#if defined(ARGUS_THREADS)
+   retn->ListenNotify[0] = retn->ListenNotify[1] = -1;
+#endif
+
+   if (RingAlloc(&retn->ring) < 0)
+      ArgusLog (LOG_ERR, "%s: unable to allocate command buffer\n", __func__);
+
    ArgusInitControlChannel(retn);
 
 #ifdef ARGUSDEBUG
@@ -615,6 +627,13 @@ ArgusDeleteControlChannel (struct ArgusParserStruct *parser, struct ArgusOutputS
    if (output->ArgusInitMar != NULL)
       ArgusFree(output->ArgusInitMar);
    parser->ArgusOutputList = NULL;
+#if defined(ARGUS_THREADS)
+   if (output->ListenNotify[0] >= 0)
+      close(output->ListenNotify[0]);
+   if (output->ListenNotify[1] >= 0)
+      close(output->ListenNotify[1]);
+#endif
+   RingFree(&output->ring);
    ArgusFree(output);
 
 #ifdef ARGUSDEBUG
@@ -3483,8 +3502,17 @@ void *ArgusListenProcess(void *arg)
                   if (FD_ISSET(lfd[cur], &readmask))
                      ArgusCheckClientStatus(outputs[cur], lfd[cur], lfdver[cur]);
 
-                  if (FD_ISSET(notifyfd[cur], &readmask))
+                  /* If the pipe(2) failed then the notifyfd could be -1. */
+                  if (notifyfd[cur] >= 0 && FD_ISSET(notifyfd[cur], &readmask)) {
                      read(notifyfd[cur], &pchar, 1);
+
+                     /* Make sure we don't try to read from the
+                      * notifyfd a second time since the notifyfd array
+                      * can have duplicate entries when there is more
+                      * than one listening fd per output thread.
+                      */
+                     FD_CLR(notifyfd[cur], &readmask);
+                  }
 
                   output = outputs[cur];
 
@@ -3786,7 +3814,7 @@ __ArgusOutputProcess(struct ArgusOutputStruct *output,
                   } else {
                      int delete = 0;
 
-                     if (client->readable) {
+                     if (client->readable || RingNullTerm(&output->ring)) {
                         if (checkmessage(output, client) < 0)
                            delete = 1;
                         client->readable = 0;
@@ -4372,20 +4400,22 @@ int
 ArgusCheckControlMessage (struct ArgusOutputStruct *output, struct ArgusClientData *client)
 {
    int retn = 0, cnt = 0, i, found, fd = client->fd;
-   char buf[MAXSTRLEN], *ptr = buf;
-   unsigned int value = 0;
-    
-#ifdef ARGUS_SASL
-   const char *outputbuf = NULL;
-   unsigned int outputlen = 0;
-#endif /* ARGUS_SASL */
+   char buf[ARGUS_RINGBUFFER_MAX+1];
+   char **result = NULL;
+   char *ptr;
+   struct RingBuffer *ring = &output->ring;
+   unsigned avail = RingAvail(ring);
+   unsigned used;
 
-   bzero(buf, MAXSTRLEN);
+   if (avail == 0) {
+#ifdef ARGUSDEBUG
+      ArgusDebug(8, "%s: no room left in ring buffer\n", __func__);
+#endif
+      /* If the buffer is full skip ahead and try to execute the next command */
+      goto process;
+   }
 
-   if (value == 0)
-      value = MAXSTRLEN;
-
-   if ((cnt = recv (fd, buf, value, 0)) <= 0) {
+   if ((cnt = recv (fd, buf, avail, 0)) <= 0) {
       switch(errno) {
          default:
          case EBADF:
@@ -4396,6 +4426,7 @@ ArgusCheckControlMessage (struct ArgusOutputStruct *output, struct ArgusClientDa
 #ifdef ARGUSDEBUG
             ArgusDebug (3, "ArgusCheckControlMessage (0x%x, %d) recv() returned error %s\n", client, fd, strerror(errno));
 #endif
+            return -1;
             break;
 
          case EINTR:
@@ -4403,7 +4434,7 @@ ArgusCheckControlMessage (struct ArgusOutputStruct *output, struct ArgusClientDa
          case EWOULDBLOCK:
             break;
       }
-      return (-1);
+      cnt = 0;
 
    } else {
 #ifdef ARGUSDEBUG
@@ -4411,57 +4442,74 @@ ArgusCheckControlMessage (struct ArgusOutputStruct *output, struct ArgusClientDa
 #endif
    }
 
-#ifdef ARGUS_SASL
-   if ((client->sasl_conn)) {
-      const int *ssfp;
-      int result;
+   if (cnt == 0)
+      goto process;
 
-      if ((result = sasl_getprop(client->sasl_conn, SASL_SSF, (const void **) &ssfp)) != SASL_OK)
-         ArgusLog (LOG_ERR, "sasl_getprop: error %s\n", sasl_errdetail(client->sasl_conn));
-
-      if (ssfp && (*ssfp > 0)) {
-         if (sasl_decode (client->sasl_conn, buf, cnt, &outputbuf, &outputlen) != SASL_OK) {
-            ArgusLog (LOG_WARNING, "ArgusCheckControlMessage(0x%x, %d) sasl_decode (0x%x, 0x%x, %d, 0x%x, %d) failed",
-                       client, fd, client->sasl_conn, buf, cnt, &outputbuf, outputlen);
-            return(-1);
-         } else {
 #ifdef ARGUSDEBUG
-            ArgusDebug (3, "ArgusCheckControlMessage (0x%x, %d) sasl_decode() returned %d bytes\n", client, fd, outputlen);
+   buf[cnt] = '\0';
 #endif
-         }
-         if (outputlen > 0) {
-            if (outputlen < MAXSTRLEN) {
-               bzero (buf, MAXSTRLEN);
-               bcopy (outputbuf, buf, outputlen);
-               cnt = outputlen;
-            } else
-               ArgusLog (LOG_ERR, "ArgusCheckControlMessage(0x%x, %d) sasl_decode returned %d bytes\n", client, fd, outputlen);
-        
-         } else {
-            return (0);
-         }
-      }
-   }
-#endif /* ARGUS_SASL */
 
-   ptr[strcspn(ptr, "\r\n")] = '\0';
+   /* Null terminate the string(s) by replacing \r and/or \n with \0.
+    * There may be more than one command in the input buffer.  Keep
+    * in mind that the end of the buffer may not be the end of a
+    * command and that there may be more than one command in the
+    * buffer.
+    */
+   i = cnt - 1;
+   while (i >= 0) {
+      if (buf[i] == '\r' || buf[i] == '\n')
+         buf[i] = '\0';
+      i--;
+   }
+
+   RingEnqueue(ring, buf, (unsigned)cnt);
+
+process:
+   /* Skip over any NULL characters to find the start of the next command */
+   while (RingOccupancy(ring) > 0 && *RingHeadPtr(ring) == '\0')
+      RingAdvance(&ring->CrbHead, 1);
+
+   avail = RingAvail(ring);
+
+   if (!RingNullTerm(ring))
+      goto out;
 
 #ifdef ARGUSDEBUG
-   if (strlen(ptr))
-      ArgusDebug (1, "ArgusCheckControlMessage (0x%x, %d) read %s", client, fd, ptr);
+   ArgusDebug (1, "ArgusCheckControlMessage (0x%x, %d) read %s", client, fd,
+               buf);
+#endif
+
+   used = RingOccupancy(ring);
+   ptr = RingDequeue(ring);
+
+#ifdef ARGUSDEBUG
+   if (ptr)
+      ArgusDebug (1, "ArgusCheckControlMessage: dequeued %s\n", ptr);
 #endif
 
    for (i = 0, found = 0; i < ARGUSMAXCONTROLCOMMANDS; i++) {
-      if (!(strncmp (ptr, ArgusControlCommands[i].command, strlen(ArgusControlCommands[i].command)))) {
+      size_t cmdlen = strlen(ArgusControlCommands[i].command);
+      int cmp;
+
+      if (cmdlen > used)
+	 /* ring buffer holds less than the command string length.
+	  * cannot possibly match.
+          */
+         continue;
+
+      cmp = strncmp(ptr, ArgusControlCommands[i].command, cmdlen);
+
+      if (cmp == 0) {
          if (ArgusControlCommands[i].handler != NULL) {
-            char **result;
-            if ((result = ArgusControlCommands[i].handler(ptr)) != NULL) {
+               result = ArgusControlCommands[i].handler(ptr);
+
+            if (result != NULL) {
                int sindex = 0;
                char *rstr = NULL;
 
                while ((rstr = result[sindex++]) != NULL) {
                   int slen = strlen(rstr);
-                  if ((cnt = send (fd, rstr, slen, 0)) != slen) {
+                  if (send (fd, rstr, slen, 0) != slen) {
                      retn = -3;
 #ifdef ARGUSDEBUG
                      ArgusDebug (3, "ArgusCheckControlMessage: send error %s\n", strerror(errno));
@@ -4469,7 +4517,7 @@ ArgusCheckControlMessage (struct ArgusOutputStruct *output, struct ArgusClientDa
                   }
                }
                if (retn != -3) {
-                  if ((cnt = send (fd, "OK\n", 3, 0)) != 3) {
+                  if (send (fd, "OK\n", 3, 0) != 3) {
                      retn = -3;
 #ifdef ARGUSDEBUG
                      ArgusDebug (3, "ArgusCheckControlMessage: send error %s\n", strerror(errno));
@@ -4501,29 +4549,32 @@ ArgusCheckControlMessage (struct ArgusOutputStruct *output, struct ArgusClientDa
                case CONTROL_FILTER:
                default:
 #ifdef ARGUSDEBUG
-                  if (client->hostname)
-                     ArgusDebug (2, "ArgusCheckControlMessage: client %s sent %s",  client->hostname, ptr);
-                  else
-                     ArgusDebug (2, "ArgusCheckControlMessage: received %s",  ptr);
+                  if (cnt > 0) {
+                     if (client->hostname)
+                        ArgusDebug (2, "ArgusCheckControlMessage: client %s sent %s",  client->hostname, buf);
+                     else
+                        ArgusDebug (2, "ArgusCheckControlMessage: received %s",  buf);
+                  }
 #endif
                   break;
             }
-
-            break;
          }
          break;
       }
    }
+   if (ptr)
+      ArgusFree(ptr);
 
    if (!found) {
 #ifdef ARGUSDEBUG
       if (client->hostname)
-         ArgusDebug (2, "ArgusCheckControlMessage: client %s sent %s",  client->hostname, ptr);
+         ArgusDebug (2, "ArgusCheckControlMessage: client %s sent %s",  client->hostname, buf);
       else
-         ArgusDebug (2, "ArgusCheckControlMessage: received %s",  ptr);
+         ArgusDebug (2, "ArgusCheckControlMessage: received %s",  buf);
 #endif
    }
 
+out:
 #ifdef ARGUSDEBUG
    ArgusDebug (5, "ArgusCheckControlMessage: returning %d\n", retn);
 #endif

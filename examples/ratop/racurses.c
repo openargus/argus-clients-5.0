@@ -3831,15 +3831,19 @@ argus_command_string(void)
                ind = ARGUS_REMOTE_FILTER;
             } else 
             if ((str = strstr (ptr, "none")) != NULL) {
+               ptr = strdup(RaCommandInputStr);
                ind = RaFilterIndex;
+            } else {
+               ptr = strdup(RaCommandInputStr);
             }
 
             if ((retn = ArgusFilterCompile (&lfilter, ptr, 1)) < 0) {
                char sbuf[1024];
                sprintf (sbuf, "%s%s syntax error", RAGETTINGfSTR, RaCommandInputStr);
                ArgusSetDebugString (sbuf, LOG_ERR, ARGUS_LOCK);
-
-           } else {
+               if (ptr)
+                  free(ptr);
+            } else {
                char sbuf[1024];
                sprintf (sbuf, "%s%s filter accepted", RAGETTINGfSTR, RaCommandInputStr);
                ArgusSetDebugString (sbuf, 0, ARGUS_LOCK);

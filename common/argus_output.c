@@ -5177,9 +5177,9 @@ ArgusWriteOutSocket(struct ArgusOutputStruct *output,
                                      * the entire buffer this time.
                                      */
                                     memcpy(&awfsasl->buf[0], outputbuf, outputlen);
-                                    awf->len = outputlen;
                                     FreeArgusWireFmtBuffer(awf);
                                     awf = awfsasl;
+                                    awf->len = outputlen;
 
                                  } else
                                     ArgusLog (LOG_ERR, "sasl_encode: failed returned %d\n", retn);
@@ -5195,6 +5195,7 @@ ArgusWriteOutSocket(struct ArgusOutputStruct *output,
             }
 
             if (asock->rec != NULL) {
+               awf = asock->rec;
                ptr = (unsigned char *)&awf->buf[0];
                if ((client->host == NULL) && (!(asock->writen))) {
                   if (!(output->ArgusWriteStdOut) && (asock->filename)) {
@@ -5234,7 +5235,7 @@ ArgusWriteOutSocket(struct ArgusOutputStruct *output,
 
                if ((len = (asock->length - asock->writen)) > 0) {
                   if (client->host != NULL) {
-                     if ((retn = sendto (asock->fd, outputbuf, outputlen, 0,
+                     if ((retn = sendto (asock->fd, (unsigned char *)&ptr[asock->writen], len, 0,
                                          client->host->ai_addr, client->host->ai_addrlen)) < 0)
                         ArgusLog (LOG_ERR, "ArgusInitOutput: sendto(): retn %d %s", retn, strerror(errno));
 #ifdef ARGUSDEBUG

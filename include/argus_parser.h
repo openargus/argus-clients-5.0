@@ -292,6 +292,8 @@ struct ArgusProgramStruct {
 
 struct ArgusParserStruct {
    int status;
+   uid_t uid;
+   pid_t pid;
 
    char RaParseCompleting, RaParseDone;
    char RaDonePending, RaShutDown, RaSortedInput;

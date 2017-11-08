@@ -466,6 +466,17 @@ ArgusEstablishListen (struct ArgusParserStruct *parser,
 #include <pthread.h>
 #endif
 
+static void
+ArgusDeleteClient(struct ArgusClientData *client)
+{
+#ifdef ARGUSDEBUG
+   ArgusDebug(1, "%s(%p)\n", __func__, client);
+#endif
+   if (client->clientid) {
+      ArgusFree(client->clientid);
+      client->clientid = NULL;
+   }
+}
 
 struct ArgusOutputStruct *
 ArgusNewOutput (struct ArgusParserStruct *parser, int sasl_min_ssf,
@@ -529,6 +540,18 @@ ArgusDeleteOutput (struct ArgusParserStruct *parser, struct ArgusOutputStruct *o
 #if defined(ARGUS_THREADS)
    pthread_mutex_destroy(&output->lock);
 #endif
+
+   if (output->ArgusClients &&
+       MUTEX_LOCK(&output->ArgusClients->lock) == 0) {
+      struct ArgusClientData *oc;
+
+      oc = (struct ArgusClientData *)output->ArgusClients->start;
+      while (oc) {
+         ArgusDeleteClient(oc);
+         oc = (struct ArgusClientData *)oc->qhdr.nxt;
+      }
+      MUTEX_UNLOCK(&output->ArgusClients->lock);
+   }
 
    ArgusDeleteList(output->ArgusInputList, ARGUS_OUTPUT_LIST);
    ArgusDeleteList(output->ArgusOutputList, ARGUS_OUTPUT_LIST);
@@ -3847,9 +3870,11 @@ __ArgusOutputProcess(struct ArgusOutputStruct *output,
                if ((client->fd == -1) && (client->sock == NULL) && client->ArgusClientStart) {
                   ArgusRemoveFromQueue(output->ArgusClients, &client->qhdr, ARGUS_NOLOCK);
 #ifdef ARGUSDEBUG
-                  ArgusDebug(1, "%s/%s: client %s removed", caller, __func__,
-                             client->hostname ? client->hostname : "(unknown)");
+                  ArgusDebug(1, "%s/%s: client %s %s removed", caller, __func__,
+                             client->hostname ? client->hostname : "(unknown)",
+                             client->clientid ? client->clientid : "(unknown)");
 #endif
+                  ArgusDeleteClient(client);
                   ArgusFree(client);
                   i = 0; count = output->ArgusClients->count;
                   client = (void *)output->ArgusClients->start;
@@ -4311,7 +4336,21 @@ ArgusCheckClientMessage (struct ArgusOutputStruct *output, struct ArgusClientDat
       if (!(strncmp (ptr, ArgusClientCommands[i], strlen(ArgusClientCommands[i])))) {
          found++;
          switch (i) {
-            case RADIUM_START: client->ArgusClientStart++; retn = 0; break;
+            case RADIUM_START: {
+               int slen = strlen(ArgusClientCommands[i]);
+               char *sptr;
+
+               if (strlen(ptr) > slen) {
+                  if ((sptr = strstr(ptr, "user=")) != NULL) {
+                     if (client->clientid != NULL)
+                        free(client->clientid);
+                     client->clientid = strdup(sptr);
+
+                  }
+               }
+               client->ArgusClientStart++;
+               retn = 0; break;
+            }
             case RADIUM_DONE:  {
                if (client->hostname != NULL)
                   ArgusLog (LOG_WARNING, "ArgusCheckClientMessage: client %s sent DONE", client->hostname);
@@ -5349,9 +5388,15 @@ ArgusWriteOutSocket(struct ArgusOutputStruct *output,
          }
 
          if ((ArgusGetListCount(list)) > ArgusMaxListLength) {
-            ArgusLog(LOG_WARNING,
-                     "ArgusWriteOutSocket(0x%x) max queue exceeded %d\n",
-                     asock, ArgusMaxListLength);
+            if (client->clientid == NULL) {
+               ArgusLog(LOG_WARNING,
+                        "ArgusWriteOutSocket(0x%x) max queue exceeded %d on client hostname %s\n",
+                        asock, ArgusMaxListLength, client->hostname);
+            } else {
+               ArgusLog(LOG_WARNING,
+                        "ArgusWriteOutSocket(0x%x) max queue exceeded %d on client hostname %s %s\n",
+                        asock, ArgusMaxListLength, client->hostname, client->clientid);
+            }
             retn = -1;
          }
 

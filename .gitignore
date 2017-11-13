@@ -39,3 +39,4 @@ include/argus_config.h
 /lib/argus-clients.spec
 /pkg/win7/argus-clients.wxs
 /pkg/osx/BUILDROOT
+/examples/radhcp/radhcp-query

@@ -41,6 +41,7 @@ $VERSION = "1.00";
   dhcp_getleasebyaddr
   dhcp_getleasebyname_from_table
   dhcp_getleasebyname
+  dhcp_insert_fqdn
   dhcp_opendb
   dhcp_closedb);
 
@@ -56,7 +57,7 @@ my $table_ethers  = q{ethers_%Y_%m_%d};
 my $dsn;
 my $dbuser   = 'root';
 my $password = q{};
-my %attr     = ( PrintError => 1, RaiseError => 0 );
+my %attr     = ( PrintError => $debug, RaiseError => 0 );
 my $errcount = 0;
 
 # regular expressions to ensure user-provided address have only
@@ -127,18 +128,24 @@ sub dhcp_gethostbyaddr_from_table {
     }
 
     for my $tmpaddr (@_) {
-        if ( !( $tmpaddr =~ /$addr_valid_characters{'4'}/ ) ) {
-            my $sub_name = ( caller(0) )[3];
-            carp "$sub_name: address contains invalid characters";
-            return;
+        if ( length($tmpaddr) > 0 ) {
+            if ( !( $tmpaddr =~ /$addr_valid_characters{'4'}/ ) ) {
+                my $sub_name = ( caller(0) )[3];
+                carp "$sub_name: address contains invalid characters";
+                return;
+            }
         }
     }
 
     my $query =
-        'SELECT clientaddr, requested_hostname, domainname '
-      . "FROM $table WHERE clientaddr IN ('$addrs') "
-      . 'AND requested_hostname <> "" '
-      . 'GROUP BY clientaddr, requested_hostname, domainname';
+        "SELECT clientaddr, hostname, requested_hostname, domainname FROM $table WHERE";
+
+    if ( length($addrs) > 0 ) {
+        $query .= " clientaddr IN ('$addrs') AND"
+    }
+
+    $query .= ' ( requested_hostname <> "" OR hostname <> "" )'
+           .  ' GROUP BY clientaddr, hostname, requested_hostname, domainname';
     my $sth = $dbh->prepare($query);
 
     if ( !defined $sth ) {
@@ -178,8 +185,10 @@ sub dhcp_gethostbyaddr {
     return dhcp_gethostbyaddr_from_table( $dbh, "$dbase.$table", @_ );
 }
 
-# args: <database-handle> <table> <name> [<name> [<name> ...] ...]
-# returns reference to array of hash references
+# args: <database-handle> <table> [<name> [<name> [<name> ...] ...]]
+# returns reference to array of hash references.
+# If no name specified, returns all names in table.  Leases without a hostname
+# are ignored.
 sub dhcp_gethostbyname_from_table {
     my $dbh   = shift(@_);
     my $table = shift(@_);
@@ -192,18 +201,27 @@ sub dhcp_gethostbyname_from_table {
     }
 
     for my $tmpname (@_) {
-        if ( !( $tmpname =~ /$addr_valid_characters{'n'}/ ) ) {
-            my $sub_name = ( caller(0) )[3];
-            carp "$sub_name: hostname contains invalid characters";
-            return;
+        if ( length($tmpname) > 0 ) {
+            if ( !( $tmpname =~ /$addr_valid_characters{'n'}/ ) ) {
+                my $sub_name = ( caller(0) )[3];
+                carp "$sub_name: hostname contains invalid characters";
+                return;
+            }
         }
     }
 
     my $query =
         'SELECT clientaddr, hostname, requested_hostname, domainname '
-      . "FROM $table WHERE requested_hostname IN ('$names') "
-      . "OR hostname IN ('$names') "
-      . 'GROUP BY clientaddr, hostname, requested_hostname, domainname';
+      . "FROM $table";
+
+    if ( length($names) > 0 ) {
+        $query .= " WHERE requested_hostname IN ('$names')"
+          . " OR hostname IN ('$names')";
+    }
+    else {
+        $query .= ' WHERE requested_hostname <> "" OR hostname <> ""';
+    }
+    $query .= ' GROUP BY clientaddr, hostname, requested_hostname, domainname';
     my $sth = $dbh->prepare($query);
 
     if ( !defined $sth ) {
@@ -230,12 +248,6 @@ sub dhcp_gethostbyname {
     my $dbh        = shift(@_);
     my $when       = shift(@_);
     my $paramcount = @_;
-
-    if ( $paramcount < 1 ) {
-
-        # no addresses or insufficient args
-        return;
-    }
 
     my @whenary = parsetime($when);
     my $table = strftime $table_summary, @whenary;
@@ -275,10 +287,12 @@ my $_dhcp_getlease_from_table = sub {
     my $pattern = $addr_valid_characters{$addrtype};
 
     for my $tmpaddr (@_) {
-        if ( !( $tmpaddr =~ /$pattern/ ) ) {
-            my $sub_name = ( caller(0) )[3];
-            carp "$sub_name: address contains invalid characters";
-            return;
+        if ( length($tmpaddr) > 0 ) {
+            if ( !( $tmpaddr =~ /$pattern/ ) ) {
+                my $sub_name = ( caller(0) )[3];
+                carp "$sub_name: address contains invalid characters";
+                return;
+            }
         }
     }
 
@@ -286,8 +300,13 @@ my $_dhcp_getlease_from_table = sub {
 
     # SELECT * FROM $table WHERE $addrfield IN (...)
     # ORDER BY clientmac, clientaddr, stime ;
-    my $query = qq{SELECT * FROM $table WHERE $addrfield IN ('$addrs') }
-      . q{ORDER BY clientmac, clientaddr, stime};
+    my $query = qq{SELECT * FROM $table};
+
+    if ( length($addrs) > 0 ) {
+        $query .= qq{ WHERE $addrfield IN ('$addrs')};
+    }
+
+    $query .= q{ ORDER BY clientmac, clientaddr, stime};
     my $sth = $dbh->prepare($query);
 
     if ( !defined $sth ) {
@@ -320,12 +339,6 @@ sub dhcp_getleasebyaddr {
     my $addrtype   = shift(@_);
     my $paramcount = @_;
 
-    if ( $paramcount < 1 ) {
-
-        # no addresses or insufficient args
-        return;
-    }
-
     my @whenary = parsetime($when);
     my $table = strftime $table_summary, @whenary;
 
@@ -349,12 +362,6 @@ sub dhcp_getleasebyname {
     my $when       = shift(@_);
     my $paramcount = @_;
 
-    if ( $paramcount < 1 ) {
-
-        # no addresses or insufficient args
-        return;
-    }
-
     my @whenary = parsetime($when);
     my $table = strftime $table_summary, @whenary;
 
@@ -362,7 +369,7 @@ sub dhcp_getleasebyname {
 }
 
 sub dhcp_lease_expand_one {
-    my ( $dbh, $href ) = @_;
+    my ( $dbh, $href, $now ) = @_;
 
     if ( !defined $href ) {
         return;
@@ -373,11 +380,22 @@ sub dhcp_lease_expand_one {
     # the leases that contributed to the summary.
 
     # summary lease start and last times
+    my $seconds_in_day   = 86400;
     my $date_range_stime = POSIX::floor( $href->{'stime'} );
     my $date_range_ltime = POSIX::ceil( $href->{'ltime'} );
+
+    if ( $date_range_ltime > ( $now + $seconds_in_day ) ) {
+        # DHCP Precognition is not a supported feature
+        $date_range_ltime = $now + $seconds_in_day;
+    }
+
+    if ( $date_range_stime > $date_range_ltime ) {
+        # something went wrong
+        return;
+    }
+
     my $duration         = $date_range_ltime - $date_range_stime;
     my $seconds          = $date_range_stime;
-    my $seconds_in_day   = 86400;
     my $results_aref;
 
     # Step through the range of lease times one 24-hour period at a
@@ -386,7 +404,7 @@ sub dhcp_lease_expand_one {
     while ( $duration > 0 ) {
         my $table = strftime $table_detail, localtime($seconds);
         my $query = qq{SELECT * FROM $table WHERE }
-          . q{(clientmac=? AND clientaddr=? AND stime=? AND ltime=?)};
+          . q{(clientmac=? AND clientaddr=? AND stime>=? AND ltime<?)};
         my $sth = $dbh->prepare($query);
 
         if ( !defined $sth ) {
@@ -402,8 +420,7 @@ sub dhcp_lease_expand_one {
         my $res = $sth->execute;
 
         if ( !defined $res ) {
-            $sth->finish;
-            return;
+            goto ADVANCE;
         }
 
         my $tmp = $_result_list->($sth);
@@ -417,6 +434,7 @@ sub dhcp_lease_expand_one {
             $results_aref = $tmp;
         }
 
+ADVANCE:
         $duration -= $seconds_in_day;
         $seconds += $seconds_in_day;
         $sth->finish;
@@ -440,9 +458,11 @@ sub dhcp_lease_expand_one {
 sub dhcp_lease_expand {
     my ( $dbh, $aref ) = @_;
     my @reslist = ();
+    my @time = localtime();
+    my $now = timegm(@time);
 
     for my $href (@$aref) {
-        my $aref = dhcp_lease_expand_one( $dbh, $href );
+        my $aref = dhcp_lease_expand_one( $dbh, $href, $now );
 
         if ( !defined $aref ) {
             next;
@@ -451,6 +471,54 @@ sub dhcp_lease_expand {
         push @reslist, $aref;
     }
     return \@reslist;
+}
+
+# dhcp_insert_fqdn takes an array reference as returned by dhcp_gethostby* and
+# adds an fqdn entry to each hash if enough information is present.
+sub dhcp_insert_fqdn {
+    my ($aref) = @_;
+
+    for my $href (@$aref) {
+        my $have_domainname = 0;
+        my $domainname      = $href->{'domainname'};
+        my $hostname;
+
+        if ( defined $href->{'hostname'} && length( $href->{'hostname'} ) > 0 )
+        {
+            $hostname = $href->{'hostname'};
+        }
+        else {
+            if ( defined $href->{'requested_hostname'}
+                && length( $href->{'requested_hostname'} ) > 0 )
+            {
+                $hostname = $href->{'requested_hostname'};
+            }
+        }
+
+        # If the hostname (requested or otherwise) has a period in it,
+        # most likely it is something like .local or .home and was put
+        # there by a residential router, cablemodem, etc.  In this case
+        # assume that there is no effect on DNS and that the hostname we
+        # already have is as "fully qualified" as it is going to get.
+        if ( $hostname =~ /\./ ) {
+            $href->{'fqdn'} = $hostname;
+            next;
+        }
+
+        if ( !defined $hostname ) {
+            $href->{'fqdn'} = "";
+            next;
+        }
+
+        if ( defined $href->{'domainname'}
+            && length( $href->{'domainname'} ) > 0 )
+        {
+            $hostname .= ".$domainname";
+        }
+
+        $href->{'fqdn'} = $hostname;
+    }
+    return;
 }
 
 1;

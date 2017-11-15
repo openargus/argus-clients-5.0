@@ -187,23 +187,24 @@ __parse_one_dhcp_record(const struct ether_header * const ehdr,
       rfc1048_parse(bp->options, (const u_char *)(user->array+user->count),
                     &parsed, bp->op);
 
-   if (newads) {
+   if (newads)
       newstate = fsa_choose_initial_state(&parsed);
-   } else {
+   else
       newstate = fsa_advance_state(&parsed, ads);
-      if (ads->state != newstate) {
-         if (newstate == BOUND) {
-            if (ads->first_bind.tv_sec == 0) {
-               ads->first_bind.tv_sec = time->end.tv_sec;
-               ads->first_bind.tv_usec = time->end.tv_usec;
-            }
-            ads->last_bind.tv_sec = time->end.tv_sec;
-            ads->last_bind.tv_usec = time->end.tv_usec;
+
+   if (ads->state != newstate) {
+      if (newstate == BOUND) {
+         if (ads->first_bind.tv_sec == 0) {
+            ads->first_bind.tv_sec = time->end.tv_sec;
+            ads->first_bind.tv_usec = time->end.tv_usec;
          }
-         parsed.state = newstate;
-         rabootp_cb_exec(&callback.state_change, &parsed, ads);
+         ads->last_bind.tv_sec = time->end.tv_sec;
+         ads->last_bind.tv_usec = time->end.tv_usec;
       }
+      parsed.state = newstate;
+      rabootp_cb_exec(&callback.state_change, &parsed, ads);
    }
+
    ads->state = newstate;
 
    /* merge/update */
@@ -1280,16 +1281,13 @@ __rabootp_dump_node_verbose(void *arg0, struct ArgusDhcpClientNode *node)
 }
 
 /* Caller is responsible for freeing returned string */
-char *RabootpDumpTreeStr(int verbose)
+char *RabootpDumpTreeStr(int verbose, char *str, size_t strlen)
 {
    struct string s;
 
-   s.str = ArgusMalloc(4096);
-   if (s.str == NULL)
-      return NULL;
-
+   s.str = str;
    s.len = 0;
-   s.remain = 4096-1;
+   s.remain = strlen - 1;
    *s.str = '\0';
    if (verbose)
       ClientTreeForEach(&client_tree, __rabootp_dump_node_verbose, &s);
@@ -1299,19 +1297,9 @@ char *RabootpDumpTreeStr(int verbose)
    return s.str;
 }
 
-void RabootpDumpTree(void)
+void RabootpIntvlTreeDump(char *str, size_t strlen)
 {
-   char *str = RabootpDumpTreeStr(1);
-
-   if (str) {
-      ArgusLog(LOG_INFO, "%s", str);
-      ArgusFree(str);
-   }
-}
-
-void RabootpIntvlTreeDump(void)
-{
-   IntvlTreeDump(&interval_tree);
+   IntvlTreeDump(&interval_tree, str, strlen);
 }
 
 

@@ -31,13 +31,9 @@
 use strict;
 
 # Used modules
-use POSIX;
 use Socket;
 
 # Global variables
-my $tmpfile = tmpnam();
-my $tmpconf = $tmpfile . ".conf";
-
 my $Program = `which ra`;
 my $Options = "-L -1 -n -s saddr:32 daddr:32 proto -c , ";
 my $VERSION = "5.0.1";                

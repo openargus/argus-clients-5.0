@@ -29,7 +29,7 @@
 
 use strict;
 
-use POSIX;
+use File::Temp qw/ :POSIX /;
 
 #
 #

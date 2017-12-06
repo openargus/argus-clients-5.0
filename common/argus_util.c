@@ -5080,34 +5080,31 @@ ArgusPrintRecord (struct ArgusParserStruct *parser, char *buf, struct ArgusRecor
 
                   if (parser->RaFieldQuoted) {
                      int tlen, tind = 0, i;
-                     if ((tlen = strlen(tmpbuf)) > 0) {
-                        if (strchr(tmpbuf, parser->RaFieldQuoted)) {
-                           char tbuffer[1024];
-                           for (i = 0; i < tlen; i++) {
-                              if (tmpbuf[i] == parser->RaFieldQuoted)
-                                 tbuffer[tind++] = '\\';
-                              tbuffer[tind++] = tmpbuf[i];
-                           }
-                           bcopy(tbuffer, tmpbuf, tind);
+                     tlen = strlen(tmpbuf);
+                     if (strchr(tmpbuf, parser->RaFieldQuoted)) {
+                        char tbuffer[1024];
+                        for (i = 0; i < tlen; i++) {
+                           if (tmpbuf[i] == parser->RaFieldQuoted)
+                              tbuffer[tind++] = '\\';
+                           tbuffer[tind++] = tmpbuf[i];
                         }
+                        bcopy(tbuffer, tmpbuf, tind);
+                     }
                         
-                        if (parser->ArgusPrintJson) {
-                           if (parser->ArgusPrintD3 && ((parser->RaPrintAlgorithm->print == ArgusPrintStartDate ) ||
-                                                        (parser->RaPrintAlgorithm->print == ArgusPrintLastDate ))) {
-                              snprintf(&buf[slen], dlen, "%c%s%c:%s%c", 
-                                 parser->RaFieldQuoted, parser->RaPrintAlgorithm->field, parser->RaFieldQuoted,
-                                 tmpbuf, parser->RaFieldDelimiter);
-                           } else {
-                              snprintf(&buf[slen], dlen, "%c%s%c:%c%s%c%c", 
-                                 parser->RaFieldQuoted, parser->RaPrintAlgorithm->field, parser->RaFieldQuoted,
-                                 parser->RaFieldQuoted, tmpbuf, parser->RaFieldQuoted,
-                                 parser->RaFieldDelimiter);
-                           }
-                        } else
-                           snprintf(&buf[slen], dlen, "%c%s%c%c", parser->RaFieldQuoted, tmpbuf, parser->RaFieldQuoted, parser->RaFieldDelimiter);
-
+                     if (parser->ArgusPrintJson) {
+                        if (parser->ArgusPrintD3 && ((parser->RaPrintAlgorithm->print == ArgusPrintStartDate ) ||
+                                                     (parser->RaPrintAlgorithm->print == ArgusPrintLastDate ))) {
+                           snprintf(&buf[slen], dlen, "%c%s%c:%s%c", 
+                              parser->RaFieldQuoted, parser->RaPrintAlgorithm->field, parser->RaFieldQuoted,
+                              tmpbuf, parser->RaFieldDelimiter);
+                        } else {
+                           snprintf(&buf[slen], dlen, "%c%s%c:%c%s%c%c", 
+                              parser->RaFieldQuoted, parser->RaPrintAlgorithm->field, parser->RaFieldQuoted,
+                              parser->RaFieldQuoted, tmpbuf, parser->RaFieldQuoted,
+                              parser->RaFieldDelimiter);
+                        }
                      } else
-                        snprintf(&buf[slen], dlen, "%c", parser->RaFieldDelimiter);
+                        snprintf(&buf[slen], dlen, "%c%s%c%c", parser->RaFieldQuoted, tmpbuf, parser->RaFieldQuoted, parser->RaFieldDelimiter);
 
                   } else
                      snprintf(&buf[slen], dlen, "%s%c", tmpbuf, parser->RaFieldDelimiter);

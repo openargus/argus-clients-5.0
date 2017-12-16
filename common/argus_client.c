@@ -5761,7 +5761,7 @@ ArgusHistoMetricParse (struct ArgusParserStruct *parser, struct ArgusAggregatorS
    char *ptr, *vptr, tmpbuf[128], *tmp = tmpbuf; 
    char *str = parser->Hstr, *endptr = NULL;
    char *metric = NULL;
-   int retn = 0, keyword;
+   int retn = 0, keyword = -1;
 
    bzero (tmpbuf, 128);
    snprintf (tmpbuf, 128, "%s", str);
@@ -15329,7 +15329,7 @@ ArgusSortSrcId (struct ArgusRecordStruct *n1, struct ArgusRecordStruct *n2)
    struct ArgusTransportStruct *t1 = (struct ArgusTransportStruct *)n1->dsrs[ARGUS_TRANSPORT_INDEX];
    struct ArgusTransportStruct *t2 = (struct ArgusTransportStruct *)n2->dsrs[ARGUS_TRANSPORT_INDEX];
    unsigned int *sid1 = NULL, *sid2 = NULL;
-   int retn = 0, len, i;
+   int retn = 0, len = 0, i;
 
    if (t1 && t2) {
       if ((t1->hdr.subtype & ARGUS_SRCID) && (t2->hdr.subtype & ARGUS_SRCID)) {
@@ -15375,7 +15375,7 @@ ArgusSortSID (struct ArgusRecordStruct *n1, struct ArgusRecordStruct *n2)
    struct ArgusTransportStruct *t1 = (struct ArgusTransportStruct *)n1->dsrs[ARGUS_TRANSPORT_INDEX];
    struct ArgusTransportStruct *t2 = (struct ArgusTransportStruct *)n2->dsrs[ARGUS_TRANSPORT_INDEX];
    unsigned int *sid1 = NULL, *sid2 = NULL;
-   int retn = 0, len, i;
+   int retn = 0, len = 0, i;
 
    if (t1 && t2) {
       if ((t1->hdr.subtype & ARGUS_SRCID) && (t2->hdr.subtype & ARGUS_SRCID)) {

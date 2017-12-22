@@ -171,6 +171,7 @@ struct ArgusDhcpV4Timers {
 
 enum ArgusDhcpStructFlags {
    ARGUS_DHCP_LEASEEXP = 0x1,
+   ARGUS_DHCP_LEASEREL = 0x2,
 };
 
 /* chaddr + xid uniquely identifies host state */
@@ -206,10 +207,13 @@ struct ArgusDhcpStruct {
    /* fourth + fifth cachelines */
    struct ArgusDhcpV4LeaseOptsStruct rep; /* This is a linked list of replies */
 
-   /* sixth+ cacheline */
+   /* sixth cacheline */
    struct timeval first_req;       /* this client transaction was first seen */
    struct timeval first_bind;      /* first time we entered the BOUND state */
+   struct timeval last_mod;        /* last time transaction modified */
    struct timeval last_bind;       /* last time we entered the BOUND state */
+
+   /* seventh cacheline */
    struct ArgusDhcpV4Timers timers;
 
 };
@@ -220,7 +224,8 @@ ArgusParseDhcpRecord(struct ArgusParserStruct *, struct ArgusRecordStruct *,
                      struct RabootpTimerStruct *);
 
 int RabootpClientRemove(struct ArgusDhcpStruct *);
-int RabootpIntvlRemove(const struct timeval * const intlo);
+int RabootpIntvlRemove(const struct timeval * const,
+                       const struct ArgusDhcpStruct * const);
 char *RabootpDumpTreeStr(int, char *, size_t);
 void RabootpIntvlTreeDump(char *, size_t);
 

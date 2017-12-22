@@ -96,6 +96,7 @@ static ArgusTimerResult
 __lease_exp_cb(struct argus_timer *tim, struct timespec *ts)
 {
    int holddown_expired = 0;
+   int remove_err;
    int result = FINISHED;
    struct timespec exp = {
       .tv_sec = RABOOTP_PROTO_TIMER_HOLDDOWN,
@@ -108,20 +109,31 @@ __lease_exp_cb(struct argus_timer *tim, struct timespec *ts)
 
    struct ArgusDhcpStruct *ads = tim->data;
    MUTEX_LOCK(ads->lock);
-   if (ads->flags & ARGUS_DHCP_LEASEEXP) {
-      holddown_expired = 1;
-   } else {
-      ads->flags |= ARGUS_DHCP_LEASEEXP;
-      ads->timers.lease = NULL;
-      tim->expiry = exp;
-      result = RESCHEDULE_REL;
+   if (ads->timers.lease == tim) {
+      if (ads->flags & ARGUS_DHCP_LEASEEXP) {
+         holddown_expired = 1;
+         ads->timers.lease = NULL;
+         __gc_schedule(tim);
+
+         /* remove from client tree here */
+         remove_err = RabootpClientRemove(ads);
+
+      } else {
+         ads->flags |= ARGUS_DHCP_LEASEEXP;
+         tim->expiry = exp;
+         result = RESCHEDULE_REL;
+      }
    }
    MUTEX_UNLOCK(ads->lock);
 
-   if (holddown_expired)
-      ArgusDhcpStructFree(ads);
+   if (holddown_expired) {
+      /* decrement refcount -- client tree is done with this */
+      if (remove_err == 0)
+         ArgusDhcpStructFree(ads);
 
-   __gc_schedule(tim);
+      /* decrement refcount -- lease timer does with this */
+      ArgusDhcpStructFree(ads);
+   }
 
    return result;
 }
@@ -136,6 +148,8 @@ __intvl_exp_cb(struct argus_timer *tim, struct timespec *ts)
     */
    struct ArgusDhcpIntvlNode *intvlnode = tim->data;
    struct ArgusDhcpStruct *ads;
+   int timer_removed = 0;
+   int premove_err = 0;
 
    if (intvlnode == NULL)
       return FINISHED;
@@ -146,18 +160,31 @@ __intvl_exp_cb(struct argus_timer *tim, struct timespec *ts)
 
    MUTEX_LOCK(ads->lock);
    if (ads->timers.intvl) {
-      if (tim == ads->timers.intvl)
+      if (tim == ads->timers.intvl) {
          ads->timers.intvl = NULL;
+         timer_removed = 1;
+      }
    }
+
+   if (!timer_removed)
+      goto cleanup;
+
    MUTEX_LOCK(&ArgusParser->lock);
-   RabootpPatriciaTreeRemoveLease(&ads->rep.yiaddr.s_addr, ads->chaddr,
-                                  ads->hlen, &intvlnode->intlo, NULL);
+   premove_err = RabootpPatriciaTreeRemoveLease(&ads->rep.yiaddr.s_addr,
+                                                ads->chaddr, ads->hlen,
+                                                &intvlnode->intlo, ads, NULL);
    MUTEX_UNLOCK(&ArgusParser->lock);
    MUTEX_UNLOCK(ads->lock);
 
-   RabootpIntvlRemove(&intvlnode->intlo);
+   if (premove_err == 0)
+      /* decrement refcount -- patricia tree is done with this. */
+      ArgusDhcpStructFree(ads);
 
-   /* decrement refcount -- interval and patricia trees are done with this. */
+   if (RabootpIntvlRemove(&intvlnode->intlo, ads) == 0)
+      /* decrement refcount -- interval tree is done with this. */
+      ArgusDhcpStructFree(ads);
+
+   /* decrement refcount -- interval timer done with this */
    ArgusDhcpStructFree(ads);
 
 cleanup:
@@ -196,10 +223,12 @@ RabootpProtoTimersLeaseSet(const void * const v_parsed,
       };
 
       cached->flags &= ~ARGUS_DHCP_LEASEEXP;
-      if (cached->timers.lease)
+      if (cached->timers.lease) {
           RabootpTimerStop(rts, cached->timers.lease);
-      else
-         ArgusDhcpStructUpRef(cached); /* up once for the client tree */
+          free(cached->timers.lease);
+      } else {
+         ArgusDhcpStructUpRef(cached); /* up once for the lease timer */
+      }
       cached->timers.lease = RabootpTimerStart(rts, &exp_lease, __lease_exp_cb,
                                                cached);
 
@@ -209,7 +238,7 @@ RabootpProtoTimersLeaseSet(const void * const v_parsed,
             RabootpTimerStop(rts, cached->timers.intvl);
             free(cached->timers.intvl);
           } else {
-            /* up again for the interval tree */
+            /* up again for the interval timer */
             ArgusDhcpStructUpRef(cached);
          }
          intvlnode->data = cached;
@@ -219,6 +248,68 @@ RabootpProtoTimersLeaseSet(const void * const v_parsed,
       }
    }
 
+   return 0;
+}
+
+
+/* This function changes the contents of the cached transaction and should
+ * only be called from the main/parse thread
+ *
+ * Add this function to the XIDDELETE callback list.
+ *
+ * PREREQ: calling function must hold reference to v_cached
+ *         (must have incremented refcount) so that the reference
+ *         count can safely be incremented here without holding the
+ *         client tree lock!!!  Caller must hold v_cached->lock.
+ *
+ */
+static int
+RabootpProtoTimersHolddownSet(const void * const v_parsed,
+                              void *v_cached,
+                              void *v_arg)
+{
+   const struct ArgusDhcpStruct * const parsed = v_parsed;
+   struct ArgusDhcpStruct *cached = v_cached;
+   struct RabootpTimerStruct *rts = v_arg;
+   struct ArgusDhcpIntvlNode *intvlnode;
+   struct timespec exp_lease = {
+      .tv_sec = RABOOTP_PROTO_TIMER_HOLDDOWN,
+   };
+   struct timespec exp_intvl = {
+      .tv_sec = RABOOTP_PROTO_TIMER_INTVLTREE,
+   };
+
+   if (__mask2type(parsed->msgtypemask) != DHCPRELEASE)
+      return 0;
+
+   if (cached->flags & ARGUS_DHCP_LEASEREL)
+      return 0;
+
+   if (cached->timers.lease) {
+      RabootpTimerStop(rts, cached->timers.lease);
+      free(cached->timers.lease);
+   } else {
+      ArgusDhcpStructUpRef(cached); /* up once for the lease timer */
+   }
+
+   cached->flags |= ARGUS_DHCP_LEASEREL;
+   cached->timers.lease = RabootpTimerStart(rts, &exp_lease, __lease_exp_cb,
+                                            cached);
+
+   intvlnode = ArgusCalloc(1, sizeof(*intvlnode));
+   if (intvlnode) {
+      if (cached->timers.intvl) {
+         RabootpTimerStop(rts, cached->timers.intvl);
+         free(cached->timers.intvl);
+       } else {
+         /* up again for the interval timer */
+         ArgusDhcpStructUpRef(cached);
+      }
+      intvlnode->data = cached;
+      intvlnode->intlo = cached->first_bind;
+      cached->timers.intvl = RabootpTimerStart(rts, &exp_intvl,
+                                               __intvl_exp_cb, intvlnode);
+   }
    return 0;
 }
 
@@ -237,10 +328,11 @@ __discover_exp_cb(struct argus_timer *tim, struct timespec *ts)
    int have_timer = 0; /* avoid race with RabootpProtoTimersNonleaseSet() */
 
    MUTEX_LOCK(ads->lock);
-   if (ads->timers.non_lease) {
+   if (ads->timers.non_lease == tim) {
       have_timer = 1;
       ads->timers.non_lease = NULL;
-      if (ads->state == BOUND)
+      if (ads->state == BOUND || ads->state == REBINDING ||
+          ads->state == RENEWING)
          bound = 1;
    }
    MUTEX_UNLOCK(ads->lock);
@@ -253,9 +345,9 @@ __discover_exp_cb(struct argus_timer *tim, struct timespec *ts)
 
    if (!bound) {
       /* remove from client tree here */
-      RabootpClientRemove(ads);
-      /* decrement refcount -- client tree is done with this. */
-      ArgusDhcpStructFree(ads);
+      if (RabootpClientRemove(ads) == 0)
+         /* decrement refcount -- client tree is done with this. */
+         ArgusDhcpStructFree(ads);
    }
 
 out:
@@ -326,13 +418,18 @@ void RabootpProtoTimersInit(struct RabootpTimerStruct *rts)
                            RabootpProtoTimersNonleaseSet, rts);
    RabootpCallbackRegister(CALLBACK_XIDNEW,
                            RabootpProtoTimersNonleaseSet, rts);
+   RabootpCallbackRegister(CALLBACK_XIDDELETE,
+                           RabootpProtoTimersHolddownSet, rts);
 
    gcarray = ArgusMallocAligned(gclen, 64);
    if (gcarray == NULL)
       ArgusLog(LOG_ERR, "%s: Unable to allocate garbage collection array\n",
                __func__);
 
-   gctimer = RabootpTimerStart(rts, &exp, __gctimer_cb, NULL);
+   if (RabootpTimerLock(rts) == 0) {
+      gctimer = RabootpTimerStart(rts, &exp, __gctimer_cb, NULL);
+      RabootpTimerUnlock(rts);
+   }
 }
 
 void RabootpProtoTimersCleanup(struct RabootpTimerStruct *rts)
@@ -340,6 +437,7 @@ void RabootpProtoTimersCleanup(struct RabootpTimerStruct *rts)
    RabootpCallbackUnregister(CALLBACK_STATECHANGE, RabootpProtoTimersLeaseSet);
    RabootpCallbackUnregister(CALLBACK_XIDUPDATE, RabootpProtoTimersNonleaseSet);
    RabootpCallbackUnregister(CALLBACK_XIDNEW, RabootpProtoTimersNonleaseSet);
+   RabootpCallbackUnregister(CALLBACK_XIDDELETE, RabootpProtoTimersHolddownSet);
    RabootpTimerStop(rts, gctimer);
    ArgusFree(gcarray);
    gcarray = NULL;

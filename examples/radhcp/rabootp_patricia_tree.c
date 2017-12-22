@@ -205,6 +205,7 @@ RabootpPatriciaTreeRemoveLease(const unsigned int * const yiaddr,
                                const unsigned char * const l2addr,
                                size_t l2len,
                                const struct timeval * const intlo,
+                               const struct ArgusDhcpStruct * const ads,
                                struct ArgusParserStruct *parser)
 {
    struct RaAddressStruct *ras;
@@ -233,7 +234,7 @@ RabootpPatriciaTreeRemoveLease(const unsigned int * const yiaddr,
       goto out;
    }
 
-   rv = ArgusDhcpIntvlTreeRemove(l2entry->datum, intlo);
+   rv = ArgusDhcpIntvlTreeRemove(l2entry->datum, intlo, ads);
 
    if (ArgusDhcpIntvlTreeEmpty(l2entry->datum)) {
       ArgusDhcpIntvlTreeFree(l2entry->datum);
@@ -248,11 +249,72 @@ RabootpPatriciaTreeRemoveLease(const unsigned int * const yiaddr,
       }
    }
 
-   DEBUGLOG(1, "%s: ArgusDhcpIntvlTreeRemove() returned %d\n", __func__, rv);
+out:
+   return rv;
+}
+
+struct invecTimeRangeStruct {
+   struct invecStruct *x;
+   const struct timeval * starttime;
+   const struct timeval * endtime;
+};
+
+static int
+__search_ipaddr_cb(struct rabootp_l2addr_entry *e, void *arg)
+{
+   struct invecTimeRangeStruct *itr = arg;
+   struct invecStruct *x = itr->x;
+   ssize_t count;
+
+   count = IntvlTreeOverlapsRange(e->datum,
+                                  itr->starttime,
+                                  itr->endtime,
+                                  &x->invec[x->used],
+                                  x->nitems - x->used);
+
+   if (count > 0)
+      x->used += count;
+
+   return 0;
+}
+
+/* caller must hold ArgusParser lock */
+int
+RabootpPatriciaTreeSearch(const struct in_addr * const addr,
+                          const struct timeval * const starttime,
+                          const struct timeval * const endtime,
+                          struct ArgusDhcpIntvlNode *invec,
+                          size_t invec_nitems)
+{
+   struct RaAddressStruct *ras;
+   struct invecTimeRangeStruct itr;
+   struct invecStruct x;
+   int rv = 0;
+
+   ras = RabootpPatriciaTreeFind(&addr->s_addr, ArgusParser);
+   if (ras == NULL)
+     goto out;
+
+   x.nitems = invec_nitems;
+   x.used = 0;
+   x.invec = invec;
+
+   if (x.invec == NULL)
+      goto out;
+
+   itr.x = &x;
+   itr.starttime = starttime;
+   itr.endtime = endtime;
+
+   if (ras->obj)
+      rabootp_l2addr_list_foreach(ras->obj, __search_ipaddr_cb, &itr);
+
+   rv = (int)x.used;
 
 out:
    return rv;
 }
+
 
 #ifdef notdef
 

@@ -39,6 +39,7 @@
 #include <ctype.h>
 #include <argus/extract.h>
 #include <arpa/inet.h>
+#include <sys/time.h>
 
 #include "interface.h"
 #include "rabootp.h"
@@ -73,8 +74,8 @@ extern char ArgusBuf[];
 static char *bootp_print(register const u_char *, u_int);
 #endif
 static void rfc1048_print(const u_char *, const u_char *);
-static void rfc1048_parse(const u_char *, const u_char *,
-                          struct ArgusDhcpStruct *, u_char);
+static size_t rfc1048_parse(const u_char *, const u_char *,
+                            struct ArgusDhcpStruct *, u_char);
 
 static char tstr[] = " [|bootp]";
 static const u_char vm_rfc1048[4] = VM_RFC1048;
@@ -97,6 +98,42 @@ static struct ArgusDhcpIntvlTree interval_tree = {
    .lock = PTHREAD_MUTEX_INITIALIZER,
 };
 
+static struct ArgusDhcpStruct *
+__find_lease_by_addr(const struct dhcp_packet *bp, struct timeval *when)
+{
+   struct ArgusDhcpStruct *ads = NULL;
+
+   if (MUTEX_LOCK(&ArgusParser->lock) == 0) {
+      size_t nitems;
+      size_t i;
+      struct in_addr ciaddr;
+      struct ArgusDhcpIntvlNode *invec;
+
+      invec = ArgusMalloc(sizeof(*invec)*1024);
+      if (invec == NULL)
+         return NULL;
+
+      ciaddr.s_addr = EXTRACT_32BITS(&bp->ciaddr.s_addr);
+      nitems = RabootpPatriciaTreeSearch(&ciaddr, when, when, invec, 1024);
+      DEBUGLOG(1, "%s: found %u transaction(s) for IP address 0x%08x\n",
+               __func__, nitems, ciaddr.s_addr);
+      for (i = 0; i < nitems; i++) {
+         /* make sure the mac address of the host requesting the
+          * RELEASE matches that of the host holding the lease.
+          */
+         if (ads == NULL && bp->hlen == invec[i].data->hlen &&
+             memcmp(bp->chaddr, invec[i].data->chaddr, bp->hlen) == 0)
+            ads = invec[i].data;
+         else
+            /* The reference count was incremented by the search. */
+            ArgusDhcpStructFree(invec[i].data);
+      }
+      MUTEX_UNLOCK(&ArgusParser->lock);
+      ArgusFree(invec);
+   }
+   return ads;
+}
+
 
 /* The TCHECK* macros are not safe to use since we are checking
  * multiple buffers
@@ -110,10 +147,12 @@ __tcheck(const unsigned char * const target, size_t targetsize,
    return 0;
 }
 
+/* size_t bytes is only updated when return value non-null */
 static struct ArgusDhcpStruct *
 __parse_one_dhcp_record(const struct ether_header * const ehdr,
                         const struct ArgusDataStruct * const user,
-                        const struct ArgusTimeStruct * const time)
+                        const struct ArgusTimeStruct * const time,
+                        size_t *bytes)
 {
    int newads = 0;
    uint32_t xid;
@@ -121,8 +160,9 @@ __parse_one_dhcp_record(const struct ether_header * const ehdr,
    struct ArgusDhcpStruct parsed;
    register const struct dhcp_packet *bp;
    enum ArgusDhcpState newstate;
+   size_t bytes_processed = DHCP_FIXED_NON_UDP;
 
-   bp = (struct dhcp_packet *)&user->array;
+   bp = (struct dhcp_packet *)&(user->array[*bytes]);
 
    /* first make sure we've got the op, htype and hlen */
    if (!__tcheck(&bp->hlen, sizeof(bp->hlen), user))
@@ -143,8 +183,28 @@ __parse_one_dhcp_record(const struct ether_header * const ehdr,
    if (!__tcheck(&bp->options[0], sizeof(bp->options[0]), user))
       goto nouser;
 
+   memset(&parsed, 0, sizeof(parsed));
+   if (memcmp((const char *)&bp->options[0], vm_rfc1048,
+       sizeof(u_int32_t)) == 0)
+      bytes_processed += rfc1048_parse(bp->options,
+                              (const u_char *)(user->array+user->count),
+                              &parsed, bp->op);
+
    xid = EXTRACT_32BITS(&bp->xid);
-   ads = ClientTreeFind(&client_tree, &bp->chaddr[0], bp->hlen, xid);
+
+   if (parsed.msgtypemask != __type2mask(DHCPRELEASE))
+       ads = ClientTreeFind(&client_tree, &bp->chaddr[0], bp->hlen, xid);
+   else {
+      struct timeval when = {
+         .tv_sec = time->start.tv_sec,
+         .tv_usec = time->start.tv_usec,
+      };
+
+       /* search radix tree for ip address - release messages don't use
+        * same xid as lease being removed */
+      ads = __find_lease_by_addr(bp, &when);
+   }
+
    if (!ads) {
       /* don't have a cached entry, so allocate a new one to insert. */
       ads = ArgusDhcpStructAlloc(); /* refcount = 1 already */
@@ -163,8 +223,6 @@ __parse_one_dhcp_record(const struct ether_header * const ehdr,
       DEBUGLOG(2, "%s(): found dhcp structure in tree\n", __func__);
    }
 
-   memset(&parsed, 0, sizeof(parsed));
-
    MUTEX_LOCK(ads->lock);
 
    if (bp->op == BOOTREQUEST) {
@@ -182,15 +240,13 @@ __parse_one_dhcp_record(const struct ether_header * const ehdr,
                 sizeof(ehdr->ether_shost));
    }
 
-   if (memcmp((const char *)&bp->options[0], vm_rfc1048,
-       sizeof(u_int32_t)) == 0)
-      rfc1048_parse(bp->options, (const u_char *)(user->array+user->count),
-                    &parsed, bp->op);
-
    if (newads)
       newstate = fsa_choose_initial_state(&parsed);
    else
       newstate = fsa_advance_state(&parsed, ads);
+
+   ads->last_mod.tv_sec = time->end.tv_sec;
+   ads->last_mod.tv_usec = time->end.tv_usec;
 
    if (ads->state != newstate) {
       if (newstate == BOUND) {
@@ -212,8 +268,12 @@ __parse_one_dhcp_record(const struct ether_header * const ehdr,
 
    if (newads)
       rabootp_cb_exec(&callback.xid_new, &parsed, ads);
-   else
+   else {
       rabootp_cb_exec(&callback.xid_update, &parsed, ads);
+      if (ads->state == INIT)
+         /* check if this transaction was removed */
+         rabootp_cb_exec(&callback.xid_delete, &parsed, ads);
+   }
 
    if (bp->op == BOOTREQUEST)
       ads->total_requests++;
@@ -235,6 +295,8 @@ __parse_one_dhcp_record(const struct ether_header * const ehdr,
    }
 
 nouser:
+   if (ads)
+      *bytes += bytes_processed;
    return ads;
 }
 
@@ -242,22 +304,23 @@ static struct ArgusDhcpStruct *
 __parse_one_dhcp_record_direction(const struct ether_header * const ehdr,
                                   const struct ArgusDataStruct * const user,
                                   const struct ArgusTimeStruct * const time,
-                                  struct RabootpTimerStruct *timer)
+                                  struct RabootpTimerStruct *timer,
+                                  size_t *bytes)
 {
    struct ArgusDhcpStruct *retn;
+
+#if defined(ARGUSDEBUG)
+   bootp_print((u_char *)&(user->array[0])+(*bytes), user->count-(*bytes));
+   strncat(ArgusBuf, "\n", MAXSTRLEN);
+#endif
 
    /* THIS HAS TO CHANGE.  Lock timer first to preserve lock
     * ordering.  The problem is the timer lock may be aquired
     * for quite some time.  Per-timer-slot locks?
     */
    RabootpTimerLock(timer);
-   retn = __parse_one_dhcp_record(ehdr, user, time);
+   retn = __parse_one_dhcp_record(ehdr, user, time, bytes);
    RabootpTimerUnlock(timer);
-
-#if defined(ARGUSDEBUG)
-   bootp_print((u_char *)&(user->array[0]), user->count);
-   strncat(ArgusBuf, "\n", MAXSTRLEN);
-#endif
 
    return retn;
 }
@@ -286,6 +349,13 @@ ArgusParseDhcpRecord(struct ArgusParserStruct *parser,
    struct ArgusDhcpStruct *retn = NULL;
 
    if (argus != NULL && parser != NULL) {
+      int suser_done = 0;
+      int duser_done = 0;
+      int skip_suser = 0;
+      size_t suser_offset = 0;
+      size_t duser_offset = 0;
+      size_t slen;
+      size_t dlen;
       struct ArgusDataStruct *suser = (struct ArgusDataStruct *)argus->dsrs[ARGUS_SRCUSERDATA_INDEX];
       struct ArgusDataStruct *duser = (struct ArgusDataStruct *)argus->dsrs[ARGUS_DSTUSERDATA_INDEX];
       struct ArgusTimeObject *time = (struct ArgusTimeObject *)argus->dsrs[ARGUS_TIME_INDEX];
@@ -301,18 +371,66 @@ ArgusParseDhcpRecord(struct ArgusParserStruct *parser,
          }
       }
 
-      if (suser != NULL) {
-         retn = __parse_one_dhcp_record_direction(ehdr, suser, &time->src,
-                                                  timer);
-         if (retn)
-            __set_sql_table_name(parser, argus, retn);
+      if (suser && duser && timercmp(&time->dst.start, &time->src.start, <))
+         skip_suser = 1;
+
+      if (suser) {
+         slen = (suser->hdr.argus_dsrvl16.len - 2) * 4;
+         if (slen > suser->count)
+            slen = suser->count;
+      }
+      else {
+         suser_done = 1;
       }
 
-      if (duser != NULL) {
-         retn = __parse_one_dhcp_record_direction(ehdr, duser, &time->dst,
-                                                  timer);
-         if (retn)
-            __set_sql_table_name(parser, argus, retn);
+      if (duser) {
+         dlen = (duser->hdr.argus_dsrvl16.len - 2) * 4;
+         if (dlen > duser->count)
+            dlen = duser->count;
+      } else {
+         duser_done = 1;
+      }
+
+      while (!suser_done || !duser_done) {
+         if (suser != NULL && !suser_done && !skip_suser) {
+            retn = __parse_one_dhcp_record_direction(ehdr, suser, &time->src,
+                                                     timer, &suser_offset);
+            if (retn) {
+               __set_sql_table_name(parser, argus, retn);
+
+               /* Skip past any padding at the end of the options */
+               while (suser_offset < slen && suser->array[suser_offset] == 0)
+                  suser_offset++;
+
+               if (suser_offset >= slen)
+                  suser_done = 1;
+               else if ((slen - suser_offset) < DHCP_FIXED_NON_UDP)
+                  suser_done = 1;
+            } else {
+               suser_done = 1;
+            }
+         }
+
+         if (duser != NULL && !duser_done) {
+            retn = __parse_one_dhcp_record_direction(ehdr, duser, &time->dst,
+                                                     timer, &duser_offset);
+            skip_suser = 0;
+
+            if (retn) {
+               __set_sql_table_name(parser, argus, retn);
+
+               /* Skip past any padding at the end of the options */
+               while (duser_offset < dlen && duser->array[duser_offset] == 0)
+                  duser_offset++;
+
+               if (duser_offset >= duser->count)
+                  duser_done = 1;
+               else if ((duser->count - duser_offset) < DHCP_FIXED_NON_UDP)
+                  duser_done = 1;
+            } else {
+               duser_done = 1;
+            }
+         }
       }
    }
 
@@ -897,14 +1015,15 @@ __uchar_compar(const void *a, const void *b)
    return 1;
 }
 
-
-static void
+/* return the number of bytes in the options buffer */
+static size_t
 rfc1048_parse(const u_char *bp, const u_char *endp,
               struct ArgusDhcpStruct *ads, u_char op)
 {
    register u_int16_t tag;
    register u_int len, size;
    u_int8_t uc;
+   const u_char *beginp = bp;
 
    /* Step over magic cookie */
    bp += sizeof(int32_t);
@@ -921,15 +1040,15 @@ rfc1048_parse(const u_char *bp, const u_char *endp,
       if (tag == DHO_PAD)
          continue;
       if (tag == DHO_END)
-         return;
+         goto out;
 
       /* Get the length; check for truncation */
       if (bp + 1 >= endp)
-         return;
+         goto out;
 
       len = *bp++;
       if (bp + len >= endp)
-         return;
+         goto out;
 
       /* 53 */
       if (tag == DHO_DHCP_MESSAGE_TYPE && len == 1) {
@@ -1132,7 +1251,8 @@ rfc1048_parse(const u_char *bp, const u_char *endp,
       }
    }
 
-   return;
+out:
+   return (bp - beginp);
 }
 
 struct string {
@@ -1340,6 +1460,10 @@ __rabootp_update_interval_tree(const void * const v_parsed,
              */
             ArgusDhcpStructFree(cached);
       }
+   } else if (parsed->state == INIT && cached->state == BOUND &&
+              __mask2type(parsed->msgtypemask) == DHCPRELEASE) {
+      ArgusDhcpIntvlTreeReduce(v_arg, &cached->first_bind, &cached->last_mod,
+                               cached);
    }
    return 0;
 }
@@ -1422,9 +1546,10 @@ int RabootpClientRemove(struct ArgusDhcpStruct *ads)
    return ArgusDhcpClientTreeRemove(&client_tree, ads);
 }
 
-int RabootpIntvlRemove(const struct timeval * const intlo)
+int RabootpIntvlRemove(const struct timeval * const intlo,
+                       const struct ArgusDhcpStruct * const ads)
 {
-   return ArgusDhcpIntvlTreeRemove(&interval_tree, intlo);
+   return ArgusDhcpIntvlTreeRemove(&interval_tree, intlo, ads);
 }
 
 size_t RabootpIntvlTreeCount(void)

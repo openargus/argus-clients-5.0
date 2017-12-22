@@ -58,10 +58,16 @@ int ArgusDhcpIntvlTreeInsert(struct ArgusDhcpIntvlTree *,
                              const struct timeval * const,
                              uint32_t,
                              struct ArgusDhcpStruct *);
+int ArgusDhcpIntvlTreeReduce(struct ArgusDhcpIntvlTree *,
+                             const struct timeval * const,
+                             const struct timeval * const,
+                             const struct ArgusDhcpStruct * const);
 int ArgusDhcpIntvlTreeRemove(struct ArgusDhcpIntvlTree *,
-                             const struct timeval * const intlo);
+                             const struct timeval * const intlo,
+                             const struct ArgusDhcpStruct * const);
 struct ArgusDhcpIntvlNode *IntvlTreeFind(struct ArgusDhcpIntvlTree *head,
-                                         const struct timeval * const intlo);
+                                         const struct timeval * const intlo,
+                                         const struct ArgusDhcpStruct * const);
 struct ArgusDhcpIntvlNode *IntvlTreeFindByStruct(struct ArgusDhcpIntvlTree *,
                                                  struct ArgusDhcpStruct *);
 int IntvlTreeForEach(struct ArgusDhcpIntvlTree * const,

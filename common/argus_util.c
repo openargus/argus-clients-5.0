@@ -402,7 +402,7 @@ void relts_print(char *, uint32_t);
 #include <dirent.h>
 
 int RaSortFileList (const void *, const void *);
-void ArgusSortFileList (struct ArgusInput **);
+static void ArgusSortFileList (struct ArgusInput **, struct ArgusInput **);
 
 #if !defined(HAVE_TIMEGM)
 time_t timegm (struct tm *);
@@ -432,7 +432,8 @@ RaProcessRecursiveFiles (char *path)
       }
    }
 
-   ArgusSortFileList (&ArgusParser->ArgusInputFileList);
+   ArgusSortFileList (&ArgusParser->ArgusInputFileList,
+                      &ArgusParser->ArgusInputFileListTail);
    return (retn);
 }
 
@@ -490,14 +491,15 @@ RaSortFileList (const void *item1, const void *item2)
 }
 
 
-void
-ArgusSortFileList (struct ArgusInput **list)
+static void
+ArgusSortFileList (struct ArgusInput **head,
+                   struct ArgusInput **tail)
 {
    struct ArgusInput *input = NULL;
    void **array = NULL;
    int count = 0, i;
 
-   if ((input = *list) != NULL) {
+   if ((input = *head) != NULL) {
       while (input != NULL) {
          count++;
          input = (struct ArgusInput *)input->qhdr.nxt;
@@ -506,7 +508,7 @@ ArgusSortFileList (struct ArgusInput **list)
       if ((array = ArgusCalloc (count, sizeof(input))) == NULL)
          ArgusLog (LOG_ERR, "ArgusSortFileList: ArgusCalloc %s", strerror(errno));
 
-      for (i = 0, input = *list ; i < count; i++) {
+      for (i = 0, input = *head ; i < count; i++) {
           array[i] = input;
           input = (struct ArgusInput *)input->qhdr.nxt;
       }
@@ -519,7 +521,8 @@ ArgusSortFileList (struct ArgusInput **list)
             ((struct ArgusInput *)array[i - 1])->qhdr.nxt = &((struct ArgusInput *)array[i])->qhdr;
       }
 
-      *list = array[0];
+      *head = array[0];
+      *tail = array[i-1];
       ArgusFree (array);
    }
 }
@@ -2858,7 +2861,6 @@ RaClearConfiguration (struct ArgusParserStruct *parser)
 
    if (parser->ArgusInputFileList != NULL) {
       ArgusDeleteFileList(parser);
-      parser->ArgusInputFileList = NULL;
    }
 
    if (parser->ArgusRemoteHostList != NULL) {
@@ -28023,16 +28025,17 @@ int
 ArgusAddFileList (struct ArgusParserStruct *parser, char *ptr, int type, long long ostart, long long ostop)
 {
    int retn = 0;
-   struct ArgusInput *file, *list;
+   struct ArgusInput *file;
 
    if (ptr) {
       if ((file = (struct ArgusInput *) ArgusCalloc (1, sizeof(struct ArgusInput))) != NULL) {
-         if ((list = parser->ArgusInputFileList) != NULL) {
-            while (list->qhdr.nxt)
-               list = (struct ArgusInput *)list->qhdr.nxt;
-            list->qhdr.nxt = &file->qhdr;
-         } else
+         if (parser->ArgusInputFileListTail != NULL) {
+            parser->ArgusInputFileListTail->qhdr.nxt = (struct ArgusQueueHeader *)file;
+            parser->ArgusInputFileListTail = file;
+         } else {
             parser->ArgusInputFileList = file;
+            parser->ArgusInputFileListTail = file;
+         }
 
          file->ArgusOriginal = (struct ArgusRecord *)&file->ArgusOriginalBuffer;
          file->type = type;
@@ -28066,6 +28069,9 @@ ArgusDeleteFileList (struct ArgusParserStruct *parser)
         parser->ArgusInputFileList = addr;
       }
    }
+
+   parser->ArgusInputFileList = NULL;
+   parser->ArgusInputFileListTail = NULL;
 
 #ifdef ARGUSDEBUG
    ArgusDebug (2, "ArgusDeleteFileList () returning\n");

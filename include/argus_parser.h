@@ -311,7 +311,6 @@ struct ArgusParserStruct {
 
    struct timeval ArgusRealTime, ArgusGlobalTime;
    struct timeval ArgusStartRealTime, ArgusEndRealTime;
-   struct timeval ArgusTimeDifferential;
    struct timeval RaClientTimeout, RaClientUpdate;
    struct timeval RaStartTime, RaEndTime;
    struct timeval ArgusStartTimeVal;
@@ -320,7 +319,7 @@ struct ArgusParserStruct {
 
    int ArgusDirectionFunction, ArgusZeroConf;
 
-   double ArgusLastRecordTime, ArgusTimeMultiplier;
+   double ArgusLastRecordTime;
 
    struct tm RaStartFilter, RaLastFilter;
    struct tm RaTmStruct;

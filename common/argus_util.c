@@ -173,8 +173,8 @@ char *ArgusAbbreviateMetric(struct ArgusParserStruct *, char *, int, double);
 void RaClearConfiguration (struct ArgusParserStruct *);
 
 static int ArgusParseTimeArg (char **, char **, int, struct tm *, int *);
-static int ArgusParseResourceFile(struct ArgusParserStruct *, char *, int *);
-static void ArgusParseArgs(struct ArgusParserStruct *, int, char **, int *);
+static int ArgusParseResourceFile(struct ArgusParserStruct *, char *);
+static void ArgusParseArgs(struct ArgusParserStruct *, int, char **);
 
 #define ARGUS_RCITEMS                           78
 
@@ -879,12 +879,12 @@ ArgusMainInit (struct ArgusParserStruct *parser, int argc, char **argv)
       snprintf (path, MAXPATHNAMELEN - 1, "/etc/ra.conf");
 
       if (stat (path, &statbuf) == 0)
-         ArgusParseResourceFile (parser, path, &ArgusTimeRangeStrategy);
+         ArgusParseResourceFile (parser, path);
 
       if ((RaHomePath = getenv("ARGUSHOME")) != NULL) {
          snprintf (path, MAXPATHNAMELEN - 1, "%s/ra.conf", RaHomePath);
          if (stat (path, &statbuf) == 0) {
-            ArgusParseResourceFile (parser, path, &ArgusTimeRangeStrategy);
+            ArgusParseResourceFile (parser, path);
          }
       }
 
@@ -892,7 +892,7 @@ ArgusMainInit (struct ArgusParserStruct *parser, int argc, char **argv)
          while ((RaHomePath = strtok(envstr, ":")) != NULL) {
             snprintf (path, MAXPATHNAMELEN - 1, "%s/.rarc", RaHomePath);
             if (stat (path, &statbuf) == 0) {
-               ArgusParseResourceFile (parser, path, &ArgusTimeRangeStrategy);
+               ArgusParseResourceFile (parser, path);
                break;
             }
             envstr = NULL;
@@ -904,7 +904,7 @@ ArgusMainInit (struct ArgusParserStruct *parser, int argc, char **argv)
             if ((RaHomePath = getenv(envstr)) != NULL) {
                snprintf (path, MAXPATHNAMELEN, "%s/.rarc", RaHomePath);
                if (stat (path, &statbuf) == 0) {
-                  ArgusParseResourceFile (parser, path, &ArgusTimeRangeStrategy);
+                  ArgusParseResourceFile (parser, path);
                   break;
                }
             }
@@ -912,14 +912,13 @@ ArgusMainInit (struct ArgusParserStruct *parser, int argc, char **argv)
       }
    }
 
-   ArgusParseArgs (parser, argc, argv, &ArgusTimeRangeStrategy);
+   ArgusParseArgs (parser, argc, argv);
    if (parser->ArgusWfileList == NULL)
       (void) signal (SIGPIPE, (void (*)(int)) RaParseComplete);
 }
 
 static void
-ArgusParseArgs(struct ArgusParserStruct *parser, int argc, char **argv,
-               int *time_strategy)
+ArgusParseArgs(struct ArgusParserStruct *parser, int argc, char **argv)
 {
    extern char *optarg;
    extern int optind, opterr;
@@ -1054,7 +1053,7 @@ ArgusParseArgs(struct ArgusParserStruct *parser, int argc, char **argv,
             break;
          }
          case 'F': 
-            if (!(ArgusParseResourceFile (parser, optarg, time_strategy)))
+            if (!(ArgusParseResourceFile (parser, optarg)))
                ArgusLog(LOG_ERR, "%s: %s", optarg, strerror(errno));
             break;
 
@@ -1507,7 +1506,7 @@ ArgusParseArgs(struct ArgusParserStruct *parser, int argc, char **argv,
             if (parser->timearg != NULL) {
                if ((retn = ArgusParseTimeArg(&parser->timearg, argv, optind,
                                              &parser->RaTmStruct,
-                                             time_strategy)) < 0) {
+                                             &ArgusTimeRangeStrategy)) < 0) {
                   usage ();
                } else {
                   parser->tflag++; 
@@ -1669,8 +1668,7 @@ ArgusParseArgs(struct ArgusParserStruct *parser, int argc, char **argv,
 }
 
 static int
-ArgusParseResourceFile(struct ArgusParserStruct *parser, char *file,
-                       int *time_strategy)
+ArgusParseResourceFile(struct ArgusParserStruct *parser, char *file)
 {
    int retn = 0, i, len, Soption = 0, roption = 0, found = 0, lines = 0;
    char strbuf[MAXSTRLEN], *str = strbuf, *optarg = NULL, *ptr = NULL;
@@ -1813,7 +1811,7 @@ ArgusParseResourceFile(struct ArgusParserStruct *parser, char *file,
                               parser->timearg = strdup(optarg);
                               if ((ArgusParseTimeArg (&parser->timearg, NULL,
                                                       0, &parser->RaTmStruct,
-                                                      time_strategy)) < 0)
+                                                      &ArgusTimeRangeStrategy)) < 0)
                                  usage ();
                               break;
 

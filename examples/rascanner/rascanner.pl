@@ -33,31 +33,22 @@ $ENV{'PATH'} = '/bin:/usr/bin:/usr/local/bin:/opt/local/lib/mariadb/bin';
 
 # Used modules
 use POSIX;
-use CGI qw(:standard);
 
 use File::Temp qw/ tempfile tempdir /;
 use Time::Local;
-
-my $query = new CGI;
+use qosient::util;  # parsetime
 
 # Global variables
-my $VERSION = "5.0.3";
 my @arglist = ();
 
 my $tdate        = `date`;
-my $remote       = $query->remote_host();
-my $soname       = $query->server_name();
-my $port         = $query->server_port();
-
 chomp $tdate;
 
-my $time         = $query->param('tm');
-my $thresh       = $query->param('te');
-my $database     = $query->param('db');
-my $filter       = $query->param('fi');
+my $time;
+my $thresh;
+my $database;
+my $filter;
 my $cidr         = "24";
-my $elements     = "";
-
 my $debug        = 0;
 my $done         = 0;
 my $mode         = "local";
@@ -98,13 +89,17 @@ my $dburl  = "mysql://root\@localhost/scanners/".$mode."_%Y_%m_%d -M time 1d";
 
   print "DEBUG: dburl is: '$dburl' arglist is: '@arglist'\n" if $debug;
 
-  if ($time eq "") {
+  if (not defined $time) {
      $time = RaTodaysDate();
   }
 
+my       @time = parsetime($time);
+my       $date = strftime '%Y/%m/%d', @time;
+my  $tabletime = strftime '%Y_%m_%d', @time;
+
+  chomp($date);
+
   my $hosttable = "";
-  my $tabletime = $time;
-  $tabletime =~ s/\//_/g;
 
   if (not defined $filter) {
      $mode = "outside";

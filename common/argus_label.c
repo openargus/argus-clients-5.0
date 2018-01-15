@@ -2163,7 +2163,7 @@ RaInsertAddressTree (struct ArgusParserStruct *parser, struct ArgusLabelerStruct
       snprintf (tstrbuf, MAXSTRLEN, "%s", str);
       ptr = tstrbuf;
 
-      while ((sptr = strtok(ptr, " \t\n\"")) != NULL) {
+      while ((sptr = strtok(ptr, " \t\n\"\r")) != NULL) {
          switch (state) {
             case ARGUS_PARSING_START_ADDRESS: {
                if ((eptr = strchr(sptr, '-')) != NULL)

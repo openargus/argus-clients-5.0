@@ -184,7 +184,6 @@ ArgusPrintAddressResponse(char *string, struct RaAddressStruct *raddr, char ***r
       struct ArgusListObjectStruct *tdns;
       struct timeval tvbuf, *tvp = &tvbuf;
       char tbuf[128], *resbuf;
-      float diff;
       int ind = *rind;
 
       if ((resbuf = ArgusMalloc(ARGUS_MAX_RESPONSE)) == NULL)
@@ -195,7 +194,6 @@ ArgusPrintAddressResponse(char *string, struct RaAddressStruct *raddr, char ***r
       ArgusPrintTime(ArgusParser, tbuf, sizeof(tbuf), &raddr->atime);
 
       RaDiffTime (&raddr->rtime, &raddr->atime, tvp);
-      diff = (tvp->tv_sec * 1.0) + (tvp->tv_usec / 1000000.0);
 
       if (raddr->addr.str == NULL) 
          raddr->addr.str = strdup(ArgusGetName (ArgusParser, (unsigned char *)&raddr->addr.addr[0]));
@@ -245,7 +243,6 @@ ArgusPrintAddressResponse(char *string, struct RaAddressStruct *raddr, char ***r
                   struct nnamemem *tname = (struct nnamemem *) tdns->list_obj;
 
                   RaDiffTime (&tname->ltime, &tname->stime, tvp);
-                  diff = (tvp->tv_sec * 1.0) + (tvp->tv_usec / 1000000.0);
 
                   if (tref++ > 0) {
                      snprintf (&resbuf[len], ARGUS_MAX_RESPONSE - len, ",");
@@ -292,7 +289,6 @@ ArgusPrintAddressResponse(char *string, struct RaAddressStruct *raddr, char ***r
                   struct nnamemem *tname = (struct nnamemem *) tdns->list_obj;
 
                   RaDiffTime (&tname->ltime, &tname->stime, tvp);
-                  diff = (tvp->tv_sec * 1.0) + (tvp->tv_usec / 1000000.0);
 
                   if (tref++ > 0)
                      sprintf (&resbuf[len++], ",");
@@ -529,7 +525,8 @@ ArgusHandleSearchCommand (struct ArgusOutputStruct *output, char *command)
                for (i = 0; i < mind; i++) {
                   int x, resultnum = 0, done = 0;
                   char *results[2048];
-                  struct nnamemem *cname, *name = matches[i];
+                  struct nnamemem *cname = NULL;
+                  struct nnamemem *name = matches[i];
                   bzero(results, sizeof(results));
                   results[resultnum++] = strdup(name->n_name);
                            
@@ -1450,7 +1447,8 @@ RaProcessPTRRecord (struct ArgusParserStruct *parser, struct ArgusDomainQueryStr
                   }
 
                   if ((cidr = RaParseCIDRAddr (ArgusParser, addr)) != NULL) {
-                     int ndns, ncidr, cnt;
+                     int ndns, cnt;
+                     int ncidr = 0;
 
                      bzero ((char *)&node, sizeof(node));
                      bcopy(cidr, &node.addr, sizeof(*cidr));

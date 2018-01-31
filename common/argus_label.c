@@ -2071,7 +2071,8 @@ RaInsertRIRTree (struct ArgusParserStruct *parser, struct ArgusLabelerStruct *la
    char tstrbuf[MAXSTRLEN], *sptr = tstrbuf, *tptr;
    char *co = NULL, *type = NULL;
 // char *rir = NULL;
-   char *addr, *endptr = NULL;
+   char *addr = NULL;
+   char *endptr = NULL;
    int tok = 0, elem = -1, ttype = 0;
 
    if (labeler != NULL) {
@@ -2845,7 +2846,7 @@ RaParsePortEntry (struct ArgusParserStruct *parser, struct ArgusLabelerStruct *l
 int
 RaReadPortConfig (struct ArgusParserStruct *parser, struct ArgusLabelerStruct *labeler, char *file)
 {
-   struct RaPortStruct *tp, *port, **array;
+   struct RaPortStruct *tp, *port, **array = NULL;
    int retn = 0, lines = 0;
    char buf[MAXSTRLEN], *str = buf;
    FILE *fd;

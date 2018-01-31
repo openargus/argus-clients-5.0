@@ -168,14 +168,14 @@ struct ArgusOutputStruct {
    struct RingBuffer ring;
 };
 
-typedef char ** (*ArgusControlHandler)(char *str);
+typedef char** (*ArgusControlHandler)
+               (struct ArgusOutputStruct *, char *);
 
 struct ArgusControlHandlerStruct {
   char *command;
   ArgusControlHandler handler;
 };
 
-#define ARGUSMAXCONTROLCOMMANDS         7
 #define CONTROL_START                   0
 #define CONTROL_DONE                    1
 #define CONTROL_DISPLAY                 2

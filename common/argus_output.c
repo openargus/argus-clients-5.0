@@ -91,6 +91,7 @@ static void ArgusWriteSocket(struct ArgusOutputStruct *,
                              struct ArgusWireFmtBuffer *);
 static int ArgusWriteOutSocket(struct ArgusOutputStruct *,
                                struct ArgusClientData *);
+static char ** ArgusHandleMARCommand(struct ArgusOutputStruct *, char *);
 
 static struct ArgusQueueNode *
 NewArgusQueueNode(void *datum)
@@ -606,7 +607,8 @@ ArgusNewControlChannel (struct ArgusParserStruct *parser)
    retn->ArgusInputList   = parser->ArgusOutputList;
    parser->ArgusWfileList = NULL;
 
-   retn->ArgusMarReportInterval   = parser->ArgusMarReportInterval;
+   memset(&retn->ArgusMarReportInterval, 0,
+          sizeof(retn->ArgusMarReportInterval));
 
    gettimeofday (&retn->ArgusStartTime, 0L);
    retn->ArgusLastMarUpdateTime = retn->ArgusStartTime;
@@ -912,12 +914,6 @@ ArgusInitControlChannel (struct ArgusOutputStruct *output)
                if (client == NULL)
                   ArgusLog (LOG_ERR, "ArgusInitControlChannel: ArgusCalloc %s", strerror(errno));
 
-               if (output->ArgusInitMar != NULL)
-                  ArgusFree (output->ArgusInitMar);
-
-               if ((output->ArgusInitMar = ArgusGenerateInitialMar(output, client->version)) == NULL)
-                  ArgusLog (LOG_ERR, "ArgusInitControlChannel: ArgusGenerateInitialMar error %s", strerror(errno));
-
                len = ntohs(output->ArgusInitMar->hdr.len) * 4;
 
                if (strcmp (wfile->filename, "-")) {
@@ -1007,36 +1003,6 @@ ArgusInitControlChannel (struct ArgusOutputStruct *output)
 
                if ((client->sock = ArgusNewSocket(client->fd)) == NULL)
                   ArgusLog (LOG_ERR, "ArgusInitControlChannel: ArgusNewSocket error %s", strerror(errno));
-
-               if (client->host != NULL) {
-                  switch (client->format) {
-                     case ARGUS_DATA:
-                     if ((retn = sendto(client->fd, (char *) output->ArgusInitMar, len, 0, client->host->ai_addr, client->host->ai_addrlen)) < 0)
-                        ArgusLog (LOG_ERR, "ArgusInitControlChannel: sendto(): retn %d %s", retn, strerror(errno));
-                     break;
-                  }
-
-               } else {
-                  struct ArgusClientData *oc = (struct ArgusClientData *)output->ArgusClients->start;
-                  int x, count = output->ArgusClients->count;
-
-                  stat (wfile->filename, &client->sock->statbuf);
-
-                  for (x = 0; x < count; x++) {
-                     if ((oc->sock->statbuf.st_dev == client->sock->statbuf.st_dev) &&
-                         (oc->sock->statbuf.st_ino == client->sock->statbuf.st_ino))
-                        ArgusLog (LOG_ERR, "ArgusInitControlChannel: writing to same file multiple times.");
-                     oc = (struct ArgusClientData *)oc->qhdr.nxt;
-                  }
-
-                  if ((retn = write (client->fd, (char *) output->ArgusInitMar, len)) != len) {
-                     if (!output->ArgusWriteStdOut) {
-                        close (client->fd);
-                        unlink (wfile->filename);
-                     }
-                     ArgusLog (LOG_ERR, "ArgusInitControlChannel: write(): %s", strerror(errno));
-                  }
-               }
 
                if (strcmp(wfile->filename, "/dev/null"))
                   client->sock->filename = strdup(wfile->filename);
@@ -3367,6 +3333,11 @@ ArgusOutputStatusTime(struct ArgusOutputStruct *output)
 {
    int retn = 0;
 
+   /* MAR output disabled if reporting interval set to zero */
+   if (output->ArgusMarReportInterval.tv_sec == 0 &&
+       output->ArgusMarReportInterval.tv_usec == 0)
+      return 0;
+
    gettimeofday (&output->ArgusGlobalTime, 0L);
    if ((output->ArgusReportTime.tv_sec  < output->ArgusGlobalTime.tv_sec) ||
       ((output->ArgusReportTime.tv_sec == output->ArgusGlobalTime.tv_sec) &&
@@ -4165,12 +4136,15 @@ ArgusCheckClientStatus (struct ArgusOutputStruct *output, int s,
                output->ArgusInitMar->argus_mar.status |= htonl(ARGUS_SASL_AUTHENTICATE);
 no_auth:
 #endif
-               len = ntohs(output->ArgusInitMar->hdr.len) * 4;
+               /* send initial MAR if this is NOT a control channel */
+               if (output->ArgusControlPort == 0) {
+                  len = ntohs(output->ArgusInitMar->hdr.len) * 4;
 
-               if (write (client->fd, (char *) output->ArgusInitMar, len) != len) {
-                  close (client->fd);
-                  /* FIXME: this is not a reason for the process to exit */
-                  ArgusLog (LOG_ERR, "ArgusInitOutput: write(): %s", strerror(errno));
+                  if (write (client->fd, (char *) output->ArgusInitMar, len) != len) {
+                     close (client->fd);
+                     /* FIXME: this is not a reason for the process to exit */
+                     ArgusLog (LOG_ERR, "ArgusInitOutput: write(): %s", strerror(errno));
+                  }
                }
 
 #ifdef ARGUS_SASL
@@ -4425,14 +4399,16 @@ ArgusCheckClientMessage (struct ArgusOutputStruct *output, struct ArgusClientDat
    return (retn);
 }
 
-struct ArgusControlHandlerStruct ArgusControlCommands[ARGUSMAXCONTROLCOMMANDS] = {
+struct ArgusControlHandlerStruct ArgusControlCommands[] = {
    { "START: ", NULL},
    { "DONE: ", NULL},
    { "DISPLAY: ", NULL},
    { "HIGHLIGHT: ", NULL},
    { "SEARCH: ", NULL},
    { "FILTER: ", NULL},
-   { "TREE: ", NULL}
+   { "TREE: ", NULL},
+   { "MAR: ", ArgusHandleMARCommand},
+   { NULL, NULL},
 };
 
 int
@@ -4526,7 +4502,7 @@ process:
       ArgusDebug (1, "ArgusCheckControlMessage: dequeued %s\n", ptr);
 #endif
 
-   for (i = 0, found = 0; i < ARGUSMAXCONTROLCOMMANDS; i++) {
+   for (i = 0, found = 0; ArgusControlCommands[i].command; i++) {
       size_t cmdlen = strlen(ArgusControlCommands[i].command);
       int cmp;
 
@@ -4540,7 +4516,7 @@ process:
 
       if (cmp == 0) {
          if (ArgusControlCommands[i].handler != NULL) {
-               result = ArgusControlCommands[i].handler(ptr);
+               result = ArgusControlCommands[i].handler(output, ptr);
 
             if (result != NULL) {
                int sindex = 0;
@@ -5897,3 +5873,35 @@ ArgusGetSaslString(FILE *f, char *buf, int buflen)
 }
 
 #endif 
+
+#define MAR_RESPONSE_BUFLEN 1024
+static char *mar_response_array[3];
+static char *mar_response_buf = NULL;
+static char **
+ArgusHandleMARCommand(struct ArgusOutputStruct *output, char *command)
+{
+   struct ArgusRecordStruct *argus;
+
+   mar_response_array[0] = "FAIL\n";
+   mar_response_array[1] = NULL;
+
+   if (mar_response_buf == NULL)
+      mar_response_buf = ArgusMalloc(MAR_RESPONSE_BUFLEN);
+
+   if (mar_response_buf == NULL)
+      goto out;
+
+   mar_response_buf[0] = 0;
+   argus = ArgusGenerateStatusMarRecord(output, ARGUS_STATUS, ARGUS_VERSION);
+   if (argus == NULL)
+      goto out;
+
+   ArgusPrintRecord(output->ArgusParser, mar_response_buf, argus,
+                    MAR_RESPONSE_BUFLEN);
+   mar_response_array[0] = mar_response_buf;
+   mar_response_array[1] = "\n";
+   mar_response_array[2] = NULL;
+
+out:
+      return mar_response_array;
+}

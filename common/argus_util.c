@@ -25294,7 +25294,7 @@ ArgusParseTimeArg(char **argp, char *args[], int ind, struct tm *tm,
    }
 
    if (ArgusCheckTimeFormat (tm, ptr))
-      ArgusLog (LOG_ERR, "time syntax error %s", buf);
+      ArgusLog (LOG_INFO, "time syntax error %s", buf);
 
 #ifdef ARGUSDEBUG
    ArgusDebug (5, "ArgusParseTimeArg (%s, %d, %p)\n", buf, ind, tm);
@@ -25482,8 +25482,11 @@ ArgusParseTime (char *wildcarddate, struct tm *tm, struct tm *ctm, char *buf,
                
             } else  {
                i = strtod(str, &endptr);
-               if (endptr == str)
-                  ArgusLog (LOG_ERR, "time syntax error %s", buf);
+               if (endptr == str) {
+                  ArgusLog (LOG_INFO, "time syntax error %s", buf);
+                  retn = -1;
+                  goto out;
+               }
             }
 
             if ((i >= 0) && (mode == ' ')) {
@@ -25500,8 +25503,11 @@ ArgusParseTime (char *wildcarddate, struct tm *tm, struct tm *ctm, char *buf,
                if (!continued)
                   i++;
 
-               if (wildcard)
-                  ArgusLog (LOG_ERR, "time syntax error %s", buf);
+               if (wildcard) {
+                  ArgusLog (LOG_INFO, "time syntax error %s", buf);
+                  retn = -1;
+                  goto out;
+               }
 
                switch (mode) {
                   case '-': sign = -1; break;
@@ -25835,6 +25841,7 @@ ArgusParseTime (char *wildcarddate, struct tm *tm, struct tm *ctm, char *buf,
       }
    }
 
+out:
 #ifdef ARGUSDEBUG
    {
       char *rstr = "";

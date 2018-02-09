@@ -176,7 +176,7 @@ static int ArgusParseTimeArg (char **, char **, int, struct tm *, int *);
 static int ArgusParseResourceFile(struct ArgusParserStruct *, char *, int *);
 static void ArgusParseArgs(struct ArgusParserStruct *, int, char **, int *);
 
-#define ARGUS_RCITEMS                           77
+#define ARGUS_RCITEMS                           78
 
 #define RA_ARGUS_SERVER                         0
 #define RA_SOURCE_PORT				1
@@ -255,6 +255,7 @@ static void ArgusParseArgs(struct ArgusParserStruct *, int, char **, int *);
 #define RATOP_CONTROL_PORT  			74
 #define RADIUM_ZEROCONF_REGISTER		75
 #define RA_SRCID_ALIAS				76
+#define RA_RECORD_CORRECTION			77
 
 
 char *ArgusResourceFileStr [] = {
@@ -335,6 +336,7 @@ char *ArgusResourceFileStr [] = {
    "RATOP_CONTROL_PORT=",
    "RADIUM_ZEROCONF_REGISTER=",
    "RA_SRCID_ALIAS=",
+   "RA_RECORD_CORRECTION=",
 };
 
 #include <ctype.h>
@@ -1211,6 +1213,12 @@ ArgusParseArgs(struct ArgusParserStruct *parser, int argc, char **argv,
                if (!(strcmp (optarg, "hzero"))) {
                   parser->ArgusPrintHashZero = 1;
                   ArgusAddMode = 0;
+               } else
+               if (!(strcmp (optarg, "correct"))) {
+                  parser->ArgusPerformCorrection = 1;
+               } else
+               if (!(strcmp (optarg, "nocorrect"))) {
+                  parser->ArgusPerformCorrection = 0;
                } else
                if (!(strcmp (optarg, "disa"))) {
                   parser->ArgusDSCodePoints = ARGUS_DISA_DSCODES;
@@ -2378,6 +2386,14 @@ ArgusParseResourceFile(struct ArgusParserStruct *parser, char *file,
                                  parser->RaSeparateAddrPortWithPeriod = 1;
                               else
                                  parser->RaSeparateAddrPortWithPeriod = 0;
+                              break;
+                           }
+
+                           case RA_RECORD_CORRECTION: {
+                              if (!(strncasecmp(optarg, "yes", 3)))
+                                 parser->ArgusPerformCorrection = 1;
+                              else
+                                 parser->ArgusPerformCorrection = 0;
                               break;
                            }
                         }

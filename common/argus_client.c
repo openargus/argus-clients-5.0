@@ -10693,6 +10693,8 @@ ArgusNewAggregator (struct ArgusParserStruct *parser, char *masklist, int type)
                retn->saddrlen = len;
                retn->daddrlen = len;
             }
+            if (retn->correct) free(retn->correct);
+            retn->correct = NULL;
          } else 
          if (!(strncasecmp (sptr, "mac", 3))) {
             parser->RaMonMode++;
@@ -10700,6 +10702,8 @@ ArgusNewAggregator (struct ArgusParserStruct *parser, char *masklist, int type)
             if (len > 0) {
                retn->saddrlen = len;
             }
+            if (retn->correct) free(retn->correct);
+            retn->correct = NULL;
          } else
          if (!(strncasecmp (sptr, "addr", 4))) {
             parser->RaMonMode++;
@@ -10708,11 +10712,15 @@ ArgusNewAggregator (struct ArgusParserStruct *parser, char *masklist, int type)
                retn->saddrlen = len;
                bcopy((char *)&mask, (char *)&retn->smask, sizeof(mask));
             }
+            if (retn->correct) free(retn->correct);
+            retn->correct = NULL;
          } else
          if (!(strncasecmp (sptr, "port", 4))) {
             parser->RaMonMode++;
             retn->mask |= (0x01LL << ARGUS_MASK_SPORT);
             retn->mask |= (0x01LL << ARGUS_MASK_PROTO);
+            if (retn->correct) free(retn->correct);
+            retn->correct = NULL;
          } else
          if (!(strncasecmp (sptr, "matrix", 6))) {
             retn->ArgusMatrixMode++;
@@ -10724,6 +10732,8 @@ ArgusNewAggregator (struct ArgusParserStruct *parser, char *masklist, int type)
                bcopy((char *)&mask, (char *)&retn->smask, sizeof(mask));
                bcopy((char *)&mask, (char *)&retn->dmask, sizeof(mask));
             }
+            if (retn->correct) free(retn->correct);
+            retn->correct = NULL;
 
          } else {
 

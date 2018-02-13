@@ -480,6 +480,7 @@ ArgusDeleteClient(struct ArgusClientData *client)
       ArgusFree(client->clientid);
       client->clientid = NULL;
    }
+   RingFree(&client->ring);
 }
 
 struct ArgusOutputStruct *
@@ -525,9 +526,6 @@ ArgusNewOutput (struct ArgusParserStruct *parser, int sasl_min_ssf,
    retn->ListenNotify[0] = retn->ListenNotify[1] = -1;
 #endif
 
-   if (RingAlloc(&retn->ring) < 0)
-      ArgusLog (LOG_ERR, "%s: unable to allocate command buffer\n", __func__);
-
    ArgusInitOutput(retn);
 
 #ifdef ARGUSDEBUG
@@ -571,7 +569,6 @@ ArgusDeleteOutput (struct ArgusParserStruct *parser, struct ArgusOutputStruct *o
    if (output->ListenNotify[1] >= 0)
       close(output->ListenNotify[1]);
 #endif
-   RingFree(&output->ring);
    ArgusFree(output);
 
 
@@ -628,9 +625,6 @@ ArgusNewControlChannel (struct ArgusParserStruct *parser)
    retn->ListenNotify[0] = retn->ListenNotify[1] = -1;
 #endif
 
-   if (RingAlloc(&retn->ring) < 0)
-      ArgusLog (LOG_ERR, "%s: unable to allocate command buffer\n", __func__);
-
    ArgusInitControlChannel(retn);
 
 #ifdef ARGUSDEBUG
@@ -661,7 +655,6 @@ ArgusDeleteControlChannel (struct ArgusParserStruct *parser, struct ArgusOutputS
    if (output->ListenNotify[1] >= 0)
       close(output->ListenNotify[1]);
 #endif
-   RingFree(&output->ring);
    ArgusFree(output);
 
 #ifdef ARGUSDEBUG
@@ -3809,7 +3802,7 @@ __ArgusOutputProcess(struct ArgusOutputStruct *output,
                   } else {
                      int delete = 0;
 
-                     if (client->readable || RingNullTerm(&output->ring)) {
+                     if (client->readable || RingNullTerm(&client->ring)) {
                         if (checkmessage(output, client) < 0)
                            delete = 1;
                         client->readable = 0;
@@ -3905,6 +3898,7 @@ __ArgusOutputProcess(struct ArgusOutputStruct *output,
              ArgusDeleteSocket(output, client);
           }
           ArgusRemoveFromQueue(output->ArgusClients, &client->qhdr, ARGUS_LOCK);
+          ArgusDeleteClient(client);
           ArgusFree(client);
        }
     }
@@ -4026,6 +4020,9 @@ ArgusCheckClientStatus (struct ArgusOutputStruct *output, int s,
 
                if (client == NULL)
                   ArgusLog (LOG_ERR, "ArgusCheckClientStatus: ArgusCalloc %s", strerror(errno));
+
+               if (RingAlloc(&client->ring) < 0)
+                  ArgusLog (LOG_ERR, "%s: unable to allocate command buffer\n", __func__);
 
                gettimeofday (&client->startime, 0L);
                client->fd = fd;
@@ -4238,13 +4235,14 @@ ArgusCheckClientMessage (struct ArgusOutputStruct *output, struct ArgusClientDat
    if (value == 0)
       value = MAXSTRLEN;
 
-   if ((cnt = recv (fd, buf, value, 0)) <= 0) {
-      if (cnt == 0) {
+   cnt = recv (fd, buf, value, 0);
+   if (cnt == 0) {
 #ifdef ARGUSDEBUG
-         ArgusDebug (3, "%s (0x%x, %d) recv() found no connection\n", __func__, client, fd);
+      ArgusDebug (3, "%s (0x%x, %d) recv() found no connection\n", __func__,
+                  client, fd);
 #endif
-         return -1;
-      }
+      return -1;
+   } else if (cnt < 0) {
       switch(errno) {
          default:
          case EBADF:
@@ -4419,7 +4417,7 @@ ArgusCheckControlMessage (struct ArgusOutputStruct *output, struct ArgusClientDa
    char buf[ARGUS_RINGBUFFER_MAX+1];
    char **result = NULL;
    char *ptr;
-   struct RingBuffer *ring = &output->ring;
+   struct RingBuffer *ring = &client->ring;
    unsigned avail = RingAvail(ring);
    unsigned used;
 
@@ -4431,7 +4429,14 @@ ArgusCheckControlMessage (struct ArgusOutputStruct *output, struct ArgusClientDa
       goto process;
    }
 
-   if ((cnt = recv (fd, buf, avail, 0)) <= 0) {
+   cnt = recv (fd, buf, avail, 0);
+   if (cnt == 0) {
+#ifdef ARGUSDEBUG
+      ArgusDebug (3, "%s (0x%x, %d) recv() found no connection\n", __func__,
+                  client, fd);
+#endif
+      return -1;
+   } else if (cnt < 0) {
       switch(errno) {
          default:
          case EBADF:

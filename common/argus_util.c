@@ -375,6 +375,7 @@ const struct tok ethertype_values[] = {
 };
 
 struct anamemem  aliastable[HASHNAMESIZE];
+struct dbtblmem    dbtables[HASHNAMESIZE];
 struct nnamemem  nnametable[HASHNAMESIZE];
 
 struct cnamemem  converttable[HASHNAMESIZE];
@@ -20548,6 +20549,52 @@ lookup_srcid(const u_char *srcid, struct anamemem *table)
    }
 
    return (retn);
+}
+
+/* find the database table that corresponds to name */
+
+struct dbtblmem *
+check_dbtbl(struct dbtblmem *table, const u_char *name)
+{
+   if (name != NULL) {
+      struct dbtblmem *dp;
+      u_int hash = getnamehash(name);
+      hash %= (HASHNAMESIZE - 1);
+
+      dp = &table[hash];
+      while (dp->p_nxt) {
+         if (!strcmp((char *)name, dp->name))
+            return dp;
+         else
+            dp = dp->p_nxt;
+      }
+   }
+   return NULL;
+}
+
+struct dbtblmem *
+lookup_dbtbl(struct dbtblmem *table, const u_char *name)
+{
+   u_int hash;
+
+   struct dbtblmem *dp = NULL;
+   if (name != NULL) {
+      hash  = getnamehash(name);
+      hash %= (HASHNAMESIZE - 1);
+
+      dp = &table[hash];
+      while (dp->p_nxt) {
+         if (!strcmp((char *)name, (const char *)dp->name))
+            return dp;
+         else
+            dp = dp->p_nxt;
+      }
+
+      dp->name = strdup((char *)name);
+      dp->hashval = hash;
+      dp->p_nxt = (struct dbtblmem *)calloc(1, sizeof(*dp));
+   }
+   return (dp);
 }
 
 

@@ -98,6 +98,12 @@ struct anamemem {
    char *name, *alias;
 };
 
+struct dbtblmem {
+   struct dbtblmem *p_nxt;
+   unsigned int status, hashval, secs, ref;
+   char *name;
+};
+
 struct cnamemem {
    struct cnamemem *n_nxt;
    unsigned int status, hashval, secs, ref;
@@ -1526,6 +1532,8 @@ extern struct cnamemem *check_cmem(struct cnamemem *, const u_char *);
 extern struct cnamemem *lookup_cmem(struct cnamemem *, const u_char *);
 extern struct nnamemem *lookup_nmem(struct nnamemem *, const u_char *);
 extern struct nnamemem *check_nmem(struct nnamemem *, const u_char *);
+extern struct dbtblmem *lookup_dbtbl(struct dbtblmem *, const u_char *);
+extern struct dbtblmem *check_dbtbl(struct dbtblmem *, const u_char *);
 
 extern char *lookup_srcid(const u_char *, struct anamemem *);
 
@@ -1760,11 +1768,12 @@ extern struct cnamemem *lookup_cmem(struct cnamemem *, const u_char *);
 extern struct cnamemem *check_cmem(struct cnamemem *, const u_char *);
 extern struct nnamemem *lookup_nmem(struct nnamemem *, const u_char *);
 extern struct nnamemem *check_nmem(struct nnamemem *, const u_char *);
-
-extern char *lookup_srcid(const u_char *, struct anamemem *);
-
+extern struct dbtblmem *lookup_dbtbl(struct dbtblmem *, const u_char *);
+extern struct dbtblmem *check_dbtbl(struct dbtblmem *, const u_char *);
 extern struct enamemem *lookup_emem(struct enamemem *, const u_char *);
 extern struct enamemem *check_emem(struct enamemem *, const u_char *);
+
+extern char *lookup_srcid(const u_char *, struct anamemem *);
 
 extern unsigned int ArgusIndexRecord (struct ArgusRecordStruct *);
 

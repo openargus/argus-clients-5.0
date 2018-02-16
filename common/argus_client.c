@@ -9516,7 +9516,7 @@ ArgusAlignRecord(struct ArgusParserStruct *parser, struct ArgusRecordStruct *ns,
                                     }
 
                                     if (rtime->src.start.tv_sec && rmetric->src.pkts) {
-                                       int thisBytes = 0, thisAppBytes = 0, thisCount = 0;
+                                       long long thisBytes = 0, thisAppBytes = 0, thisCount = 0;
                                        long long tduration, rduration;
                                        long long tsstime, tsetime;
                                        double pkts, ratio;
@@ -9565,7 +9565,7 @@ ArgusAlignRecord(struct ArgusParserStruct *parser, struct ArgusRecordStruct *ns,
                                     }
 
                                     if (rtime->dst.start.tv_sec && rmetric->dst.pkts) {
-                                       int thisBytes = 0, thisAppBytes = 0, thisCount = 0;
+                                       long long thisBytes = 0, thisAppBytes = 0, thisCount = 0;
                                        long long tduration, rduration;
                                        long long tdstime, tdetime;
                                        double ratio, pkts;

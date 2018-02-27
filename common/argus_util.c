@@ -412,6 +412,58 @@ static int RaDescend(char *, size_t, size_t);
 time_t timegm (struct tm *);
 #endif
 
+int ArgusMkdirPath(const char * const path)
+{
+   struct stat statbuf;
+   char *cpy = strdup(path);
+   char *tptr;
+   char *pptr;
+   int rv = 0;
+
+   if (cpy == NULL)
+      ArgusLog(LOG_ERR, "%s unable to allocate path name\n", __func__);
+
+   if ((tptr = strrchr(cpy, (int) '/')) != NULL) {   /* if there is a path */
+      *tptr = '\0';
+      pptr = tptr;
+
+      while ((pptr != NULL) && ((stat(cpy, &statbuf)) < 0)) {
+         switch (errno) {
+            case ENOENT:
+               if ((pptr = strrchr(cpy, (int) '/')) != NULL) {
+                  if (pptr != cpy) {
+                     *pptr = '\0';
+                  } else {
+                     pptr = NULL;
+                  }
+               }
+               break;
+
+            default:
+               ArgusLog (LOG_ERR, "stat: %s %s\n", cpy, strerror(errno));
+               rv = -1;
+               goto out;
+         }
+      }
+
+      while (&cpy[strlen(cpy)] <= tptr) {
+         if ((mkdir(cpy, 0777)) < 0) {
+            if (errno != EEXIST) {
+               ArgusLog (LOG_ERR, "mkdir: %s %s\n", cpy, strerror(errno));
+               rv = -1;
+               goto out;
+            }
+         }
+         cpy[strlen(cpy)] = '/';
+      }
+      *tptr = '/';
+   }
+
+out:
+   free(cpy);
+   return rv;
+}
+
 int
 RaProcessRecursiveFiles (char *path)
 {
@@ -28510,41 +28562,7 @@ ArgusWriteNewLogfile (struct ArgusParserStruct *parser, struct ArgusInput *input
       }
 
       if (wfile->fd == NULL) {
-         char realpathname[MAXSTRLEN], *tptr, *pptr;
-         struct stat statbuf;
-
-         sprintf (realpathname, "%s", file);
-
-         if ((tptr = strrchr(realpathname, (int) '/')) != NULL) {
-            *tptr = '\0';
-            pptr = tptr;
-
-            while ((pptr != NULL) && ((stat(realpathname, &statbuf)) < 0)) {
-               switch (errno) {
-                  case ENOENT:
-                     if ((pptr = strrchr(realpathname, (int) '/')) != NULL) {
-                        if (pptr != realpathname) {
-                           *pptr = '\0';
-                        } else {
-                           pptr = NULL;
-                        }
-                     }
-                     break;
-
-                  default:
-                     ArgusLog (LOG_ERR, "stat: %s %s\n", realpathname, strerror(errno));
-               }
-            }
-
-            while (&realpathname[strlen(realpathname)] <= tptr) {
-               if ((mkdir(realpathname, 0777)) < 0) {
-                  if (errno != EEXIST)
-                     ArgusLog (LOG_ERR, "mkdir: %s %s\n", realpathname, strerror(errno));
-               }
-               realpathname[strlen(realpathname)] = '/';
-            }
-            *tptr = '/';
-         }
+         ArgusMkdirPath(file);
 
          if ((wfile->fd = fopen (file, "a+")) == NULL)
             ArgusLog (LOG_ERR, "ArgusWriteNewLogfile(%s, 0x%x) fopen %s", file, argus, strerror(errno));
@@ -28791,8 +28809,7 @@ void
 setArgusWfile(struct ArgusParserStruct *parser, char *file, char *filter)
 {
    struct ArgusWfileStruct *wfile = NULL;
-   char realpathname[PATH_MAX], *ptr = NULL;
-   char *tptr, *pptr;
+   char *ptr = NULL;
    FILE *fd = NULL;
 
    if (parser->ArgusWfileList == NULL)
@@ -28815,45 +28832,14 @@ setArgusWfile(struct ArgusParserStruct *parser, char *file, char *filter)
          if ((strncmp(parser->ArgusProgramName,  "rasplit", 7)) &&
              (strncmp(parser->ArgusProgramName, "rastream", 8))) {
             struct stat statbuf;
-            sprintf (realpathname, "%s", file);
 
-            if ((stat(realpathname, &statbuf)) < 0) {
+            if ((stat(file, &statbuf)) < 0) {
                switch (errno) {
                   case ENOENT: {
                      if ((fd = fopen (file, "a+")) == NULL) {
                         if ((errno == ENOENT) || (errno == ENOTDIR)) {
-                           if (strncmp(parser->ArgusProgramName, "radium", 6)) {
-                              if ((tptr = strrchr(realpathname, (int) '/')) != NULL) {   /* if there is a path */
-                                 *tptr = '\0';
-                                 pptr = tptr;
-    
-                                 while ((pptr != NULL) && ((stat(realpathname, &statbuf)) < 0)) {
-                                    switch (errno) {
-                                       case ENOENT: 
-                                          if ((pptr = strrchr(realpathname, (int) '/')) != NULL) {
-                                             if (pptr != realpathname) {
-                                                *pptr = '\0';
-                                             } else {
-                                                pptr = NULL; 
-                                             }
-                                          }
-                                          break;
-
-                                       default:
-                                          ArgusLog (LOG_ERR, "stat: %s %s\n", realpathname, strerror(errno));
-                                    }
-                                 }
-
-                                 while (&realpathname[strlen(realpathname)] <= tptr) {
-                                    if ((mkdir(realpathname, 0777)) < 0) {
-                                       if (errno != EEXIST)
-                                          ArgusLog (LOG_ERR, "mkdir: %s %s\n", realpathname, strerror(errno));
-                                    }
-                                    realpathname[strlen(realpathname)] = '/';
-                                 }
-                                 *tptr = '/';
-                              }
-                           }
+                           if (strncmp(parser->ArgusProgramName, "radium", 6))
+                              ArgusMkdirPath(file);
 
                            if ((fd = fopen (file, "a+")) == NULL)
                               ArgusLog (LOG_ERR, "setArgusWfile open %s %s", file, strerror(errno));
@@ -28863,8 +28849,7 @@ setArgusWfile(struct ArgusParserStruct *parser, char *file, char *filter)
 
                      if (fd != NULL) {
                         fclose (fd);
-                        bzero (realpathname, PATH_MAX);
-                        if ((ptr = realpath (file, realpathname)) == NULL)
+                        if ((ptr = realpath (file, NULL)) == NULL)
                            ArgusLog (LOG_ERR, "setArgusWfile, realpath %s %s", file, strerror(errno));
                         else
                            ptr = strdup(ptr);
@@ -28879,8 +28864,7 @@ setArgusWfile(struct ArgusParserStruct *parser, char *file, char *filter)
                }
 
             } else {
-               bzero (realpathname, PATH_MAX);
-               if ((ptr = realpath (file, realpathname)) == NULL)
+               if ((ptr = realpath (file, NULL)) == NULL)
                   ArgusLog (LOG_ERR, "setArgusWfile, realpath %s %s", file, strerror(errno));
                else
                   ptr = strdup(ptr);

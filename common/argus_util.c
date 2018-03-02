@@ -405,7 +405,8 @@ void relts_print(char *, uint32_t);
 #include <dirent.h>
 
 static int CompareArgusInput (const void *, const void *);
-static void ArgusSortFileList (struct ArgusInput **, struct ArgusInput **);
+static void ArgusSortFileList (struct ArgusInput **, struct ArgusInput **,
+                               size_t);
 static int RaDescend(char *, size_t, size_t);
 
 #if !defined(HAVE_TIMEGM)
@@ -507,7 +508,8 @@ RaProcessRecursiveFiles (char *path)
 
    ArgusFree(name);
    ArgusSortFileList (&ArgusParser->ArgusInputFileList,
-                      &ArgusParser->ArgusInputFileListTail);
+                      &ArgusParser->ArgusInputFileListTail,
+                      ArgusParser->ArgusInputFileCount);
    return (retn);
 }
 
@@ -577,18 +579,14 @@ CompareArgusInput (const void *item1, const void *item2)
 
 static void
 ArgusSortFileList (struct ArgusInput **head,
-                   struct ArgusInput **tail)
+                   struct ArgusInput **tail,
+                   size_t count)
 {
    struct ArgusInput *input = NULL;
    void **array = NULL;
-   int count = 0, i;
+   size_t i;
 
    if ((input = *head) != NULL) {
-      while (input != NULL) {
-         count++;
-         input = (struct ArgusInput *)input->qhdr.nxt;
-      }
-
       if ((array = ArgusCalloc (count, sizeof(input))) == NULL)
          ArgusLog (LOG_ERR, "ArgusSortFileList: ArgusCalloc %s", strerror(errno));
 
@@ -28169,6 +28167,7 @@ ArgusAddFileList (struct ArgusParserStruct *parser, char *ptr, int type, long lo
          file->ostop = ostop;
          file->filename = strdup(ptr);
          file->fd = -1;
+         parser->ArgusInputFileCount++;
          retn = 1;
       }
    }
@@ -28196,6 +28195,7 @@ ArgusDeleteFileList (struct ArgusParserStruct *parser)
       }
    }
 
+   parser->ArgusInputFileCount = 0;
    parser->ArgusInputFileList = NULL;
    parser->ArgusInputFileListTail = NULL;
 

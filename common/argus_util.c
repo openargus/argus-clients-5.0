@@ -7954,7 +7954,10 @@ ArgusPrintScore (struct ArgusParserStruct *parser, char *buf, struct ArgusRecord
          struct ArgusBehaviorStruct *actor = (void *)argus->dsrs[ARGUS_BEHAVIOR_INDEX];
          if (actor != NULL) {
             if (actor->hdr.subtype == ARGUS_BEHAVIOR_SCORE) {
-               argus->score = actor->behvScore.values[0];
+               int score = actor->behvScore.values[0];
+               if (score > argus->score) {
+                  argus->score = score;
+               }
             }
          }
          snprintf (score, sizeof(score), format, argus->score);
@@ -23530,8 +23533,13 @@ ArgusNtoH (struct ArgusRecord *argus)
 
                   case ARGUS_BEHAVIOR_DSR: {
                      struct ArgusBehaviorStruct *actor = (struct ArgusBehaviorStruct *) dsr;
-                     actor->keyStroke.src.n_strokes  = ntohl(actor->keyStroke.src.n_strokes);
-                     actor->keyStroke.dst.n_strokes  = ntohl(actor->keyStroke.dst.n_strokes);
+                     switch (dsr->subtype) {
+                        case ARGUS_BEHAVIOR_KEYSTROKE: {
+                           actor->keyStroke.src.n_strokes  = ntohl(actor->keyStroke.src.n_strokes);
+                           actor->keyStroke.dst.n_strokes  = ntohl(actor->keyStroke.dst.n_strokes);
+                           break;
+                        }
+                     }
                      break;
                   }
 
@@ -24148,8 +24156,13 @@ ArgusHtoN (struct ArgusRecord *argus)
 
                   case ARGUS_BEHAVIOR_DSR: {
                      struct ArgusBehaviorStruct *actor = (struct ArgusBehaviorStruct *) dsr;
-                     actor->keyStroke.src.n_strokes  = htonl(actor->keyStroke.src.n_strokes);
-                     actor->keyStroke.dst.n_strokes  = htonl(actor->keyStroke.dst.n_strokes);
+                     switch (dsr->subtype) {
+                        case ARGUS_BEHAVIOR_KEYSTROKE: {
+                           actor->keyStroke.src.n_strokes  = htonl(actor->keyStroke.src.n_strokes);
+                           actor->keyStroke.dst.n_strokes  = htonl(actor->keyStroke.dst.n_strokes);
+                           break;
+                        }
+                     }
                      break;
                   }
 

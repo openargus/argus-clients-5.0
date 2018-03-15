@@ -22881,13 +22881,10 @@ ArgusDebug (int d, char *fmt, ...)
 #if defined(ARGUS_THREADS)
       {
          pthread_t ptid;
-         char *pbuf = malloc(128);
+         char pbuf[128];
          int i;
 
-         if (pbuf == NULL)
-            abort();
-
-         *pbuf = '\0';
+         pbuf[0] = '\0';
          ptid = pthread_self();
          for (i = 0; i < sizeof(ptid); i++)
             snprintf (&pbuf[i*2], 3, "%02hhx", ((char *)&ptid)[i]);
@@ -22895,7 +22892,6 @@ ArgusDebug (int d, char *fmt, ...)
          (void) snprintf_append(buf, &len, &remain, "%s[%d.%s]: ",
                                 ArgusParser->ArgusProgramName, (int)getpid(),
                                 pbuf);
-         free(pbuf);
       }
 #else
       (void) snprintf_append(buf, &len, &remain, "%s[%d]: ",

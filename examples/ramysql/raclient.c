@@ -238,7 +238,7 @@ ArgusProcessData (void *arg)
                      parser->ArgusTotalRecords++;
 
                      if (parser->RaPollMode) {
-                         ArgusHandleRecord (parser, file, &file->ArgusInitCon, &parser->ArgusFilterCode);
+                         ArgusHandleRecord (parser, file, &file->ArgusInitCon, 0, &parser->ArgusFilterCode);
                      } else {
                         if (file->ostart != -1) {
                            file->offset = file->ostart;
@@ -312,7 +312,7 @@ ArgusProcessData (void *arg)
                               ArgusLog (LOG_ERR, "ArgusConnectRemote: fcntl error %s", strerror(errno));
 
                            if (parser->RaPollMode)
-                              ArgusHandleRecord (parser, input, &input->ArgusInitCon, &parser->ArgusFilterCode);
+                              ArgusHandleRecord (parser, input, &input->ArgusInitCon, 0, &parser->ArgusFilterCode);
 
                            ArgusAddToQueue(parser->ArgusActiveHosts, &input->qhdr, ARGUS_LOCK);
                            parser->RaTasksToDo++;
@@ -1367,10 +1367,10 @@ void
 RaProcessThisRecord (struct ArgusParserStruct *parser, struct ArgusRecordStruct *argus)
 {
    struct ArgusAggregatorStruct *agg = parser->ArgusAggregator;
+   struct ArgusDataStruct *data = NULL;
    int found = 0, offset;
 
    extern int ArgusTimeRangeStrategy;
-
 
    if (ArgusParser->RaClientUpdate.tv_sec == 0) {
       ArgusParser->RaClientUpdate.tv_sec = parser->ArgusGlobalTime.tv_sec;
@@ -1382,6 +1382,25 @@ RaProcessThisRecord (struct ArgusParserStruct *parser, struct ArgusRecordStruct 
 
    gettimeofday (&RaCursesStopTime, 0L);
    argus->status |= ARGUS_RECORD_MODIFIED;
+
+   if (argus->dsrs[ARGUS_SRCUSERDATA_INDEX] || argus->dsrs[ARGUS_DSTUSERDATA_INDEX]) {
+      if ((data = (void *)argus->dsrs[ARGUS_SRCUSERDATA_INDEX]) != NULL) {
+         if (data->size > 2048) {
+            data->size  = (data->size > 2048) ? 2048 : data->size;
+            data->count = (data->count > 2048) ? 2048 : data->count;
+            data->hdr.argus_dsrvl16.len = ((data->size + 3)/4) + 2;
+            argus->status |= ARGUS_RECORD_MODIFIED;
+         }
+      }
+      if ((data = (void *)argus->dsrs[ARGUS_DSTUSERDATA_INDEX]) != NULL) {
+         if (data->size > 2048) {
+            data->size  = (data->size > 2048) ? 2048 : data->size;
+            data->count = (data->count > 2048) ? 2048 : data->count;
+            data->hdr.argus_dsrvl16.len = ((data->size + 3)/4) + 2;
+            argus->status |= ARGUS_RECORD_MODIFIED;
+         }
+      }
+   }
 
    if ((agg != NULL) && (parser->RaCumulativeMerge)) {
       while (agg && !found) {
@@ -2115,8 +2134,8 @@ ArgusProcessQueue (struct RaBinStruct *bin, struct ArgusQueueStruct *queue, int 
                }
 
                if (ns && (ns->status & ARGUS_RECORD_MODIFIED)) {
-                  ns->status &= ~ARGUS_RECORD_MODIFIED;
                   ArgusScheduleSQLQuery (ArgusParser, bin->agg, ns, bin->table, ARGUS_STATUS);
+                  ns->status &= ~ARGUS_RECORD_MODIFIED;
                }
 
                ArgusAddToQueue(queue, &ns->qhdr, ARGUS_NOLOCK);

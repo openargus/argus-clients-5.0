@@ -3017,6 +3017,14 @@ ArgusGenerateRecordStruct (struct ArgusParserStruct *parser, struct ArgusInput *
                         break;
                      }
 
+                     case ARGUS_SCORE_DSR: {
+                        struct ArgusScoreStruct *score = (struct ArgusScoreStruct *) dsr;
+                        bcopy((char *)score, (char *)&canon->score, sizeof(*score));
+                        retn->dsrs[ARGUS_SCORE_INDEX] = (struct ArgusDSRHeader*) &canon->score;
+                        retn->dsrindex |= (0x01 << ARGUS_SCORE_INDEX);
+                        break;
+                     }
+
                      case ARGUS_COCODE_DSR: {
                         struct ArgusCountryCodeStruct *cocode = (struct ArgusCountryCodeStruct *) dsr;
                         bcopy((char *)cocode, (char *)&canon->cocode, sizeof(*cocode));
@@ -3715,11 +3723,10 @@ ArgusGenerateRecordStruct (struct ArgusParserStruct *parser, struct ArgusInput *
                   }
                }
 
-               if (retn->dsrs[ARGUS_BEHAVIOR_INDEX]) {
-                  struct ArgusBehaviorStruct *actor = (struct ArgusBehaviorStruct *) retn->dsrs[ARGUS_BEHAVIOR_INDEX];
-
-                  if (actor->hdr.subtype == ARGUS_BEHAVIOR_SCORE) {
-                     retn->score = actor->behvScore.values[0];
+               if (retn->dsrs[ARGUS_SCORE_INDEX]) {
+                  struct ArgusScoreStruct *score = (struct ArgusScoreStruct *) retn->dsrs[ARGUS_SCORE_INDEX];
+                  if (score && (score->hdr.subtype == ARGUS_BEHAVIOR_SCORE)) {
+                     retn->score = score->behvScore.values[0];
                   }
                }
             }
@@ -3793,6 +3800,7 @@ ArgusCopyRecordStruct (struct ArgusRecordStruct *rec)
                            case ARGUS_ASN_INDEX:
                            case ARGUS_AGR_INDEX:
                            case ARGUS_BEHAVIOR_INDEX:
+                           case ARGUS_SCORE_INDEX:
                            case ARGUS_COCODE_INDEX:
                            case ARGUS_COR_INDEX: 
                            case ARGUS_GEO_INDEX: 
@@ -4961,8 +4969,11 @@ ArgusGenerateHintStruct (struct ArgusAggregatorStruct *na,  struct ArgusRecordSt
                                     if (tcp->src.seqbase != 0) {
                                        bcopy((char *)&tcp->src.seqbase, ptr, sizeof(tcp->src.seqbase));
                                        ptr += sizeof(tcp->src.seqbase);
-                                       bcopy((char *)&flow->ip_flow.ip_dst, ptr, 4);
-                                       len = 8;
+                                       len += sizeof(tcp->src.seqbase);
+
+                                       bcopy((char *)&flow->ip_flow.ip_p, ptr, 1);
+                                       ptr += sizeof(flow->ip_flow.ip_p);
+                                       len += sizeof(flow->ip_flow.ip_p);
                                     }
                                     break;
                                  }
@@ -4973,25 +4984,31 @@ ArgusGenerateHintStruct (struct ArgusAggregatorStruct *na,  struct ArgusRecordSt
 
                         case IPPROTO_UDP: {
                            struct ArgusIPAttrStruct *attr = (void *) ns->dsrs[ARGUS_IPATTR_INDEX];
-                           if (attr != NULL) {
+
+                           if ((attr != NULL) && (attr->src.ip_id != 0)) {
                               bcopy((char *)&attr->src.ip_id, ptr, sizeof(attr->src.ip_id));
                               ptr += sizeof(attr->src.ip_id);
                               len += sizeof(attr->src.ip_id);
+
+                              bcopy((char *)&flow->ip_flow.dport, ptr, sizeof(flow->ip_flow.dport));
+                              len += sizeof(flow->ip_flow.dport);
+                              ptr += sizeof(flow->ip_flow.dport);
                            }
-                           bcopy((char *)&flow->ip_flow.ip_dst, ptr, 4);
-                           len += 4;
-                           ptr += 4;
-                           bcopy((char *)&flow->ip_flow.dport, ptr, sizeof(flow->ip_flow.dport));
-                           len += sizeof(flow->ip_flow.dport);
-                           ptr += sizeof(flow->ip_flow.dport);
                            break;
                         }
 
                         case IPPROTO_ICMP: {
-                           int ilen = (sizeof(struct ArgusICMPFlow) - sizeof(flow->icmp_flow.ip_src));
-                           bcopy((char *)&flow->icmp_flow.ip_dst, ptr, ilen);
-                           len += ilen;
-                           ptr += ilen;
+                           bcopy((char *)&flow->icmp_flow.ip_p, ptr++, 1); len++;
+                           bcopy((char *)&flow->icmp_flow.tp_p, ptr++, 1); len++;
+                           bcopy((char *)&flow->icmp_flow.type, ptr++, 1); len++;
+                           bcopy((char *)&flow->icmp_flow.code, ptr++, 1); len++;
+
+                           bcopy((char *)&flow->icmp_flow.id, ptr, sizeof(flow->icmp_flow.id));
+                           ptr += sizeof(flow->icmp_flow.id);
+                           len += sizeof(flow->icmp_flow.id);
+                           bcopy((char *)&flow->icmp_flow.ip_id, ptr, sizeof(flow->icmp_flow.ip_id));
+                           ptr += sizeof(flow->icmp_flow.ip_id);
+                           len += sizeof(flow->icmp_flow.id);
                            break;
                         }
                      }
@@ -6728,23 +6745,26 @@ ArgusMergeRecords (struct ArgusAggregatorStruct *na, struct ArgusRecordStruct *n
                double deltaDstTime = 0.0;
 
                if ((ns1time && ns2time) && (ns1metric && ns2metric)) {
-                  long long nst1, nst2;
-                  nst1 = (ns1time->src.end.tv_sec * 1000000LL) + ns1time->src.end.tv_usec;
-                  nst2 = (ns2time->src.start.tv_sec * 1000000LL) + ns2time->src.start.tv_usec;
+                  double stime1 = ArgusFetchStartuSecTime(ns1);
+                  double stime2 = ArgusFetchStartuSecTime(ns2);
+                  double ltime1 = ArgusFetchLastuSecTime(ns1);
+                  double ltime2 = ArgusFetchLastuSecTime(ns2);
 
-                  if ((deltaTime = (nst2 - nst1) * 1.00) < 0.0)
-                     deltaTime = -deltaTime;
+                  double dt1 = fabs(stime2 - ltime1);
+                  double dt2 = fabs(stime1 - ltime2);
+
+                  double snst1 = (ns1time->src.end.tv_sec * 1000000LL) + ns1time->src.end.tv_usec;
+                  double dnst1 = (ns1time->dst.end.tv_sec * 1000000LL) + ns1time->dst.end.tv_usec;
+                  double snst2 = (ns2time->src.start.tv_sec * 1000000LL) + ns2time->src.start.tv_usec;
+                  double dnst2 = (ns2time->dst.start.tv_sec * 1000000LL) + ns2time->dst.start.tv_usec;
+
+                  deltaTime = ((dt1 < dt2) ? dt1 : dt2)/1000000.0;
 
                   if (ns1metric->src.pkts && ns2metric->src.pkts)
-                     if ((deltaSrcTime = (nst2 - nst1) * 1.00) < 0.0)
-                        deltaSrcTime = -deltaSrcTime;
-
-                  nst1 = (ns1time->dst.end.tv_sec * 1000000LL) + ns1time->dst.end.tv_usec;
-                  nst2 = (ns2time->dst.start.tv_sec * 1000000LL) + ns2time->dst.start.tv_usec;
+                     deltaSrcTime = fabs(snst1 - snst2)/1000000.0;
 
                   if (ns1metric->dst.pkts && ns2metric->dst.pkts)
-                     if ((deltaDstTime = (nst2 - nst1) * 1.00) < 0.0)
-                        deltaDstTime = -deltaDstTime;
+                     deltaDstTime = fabs(dnst1 - dnst2)/1000000.0;
                }
 
                ns1->status &= ~ARGUS_RECORD_WRITTEN; 
@@ -8225,17 +8245,10 @@ ArgusMergeRecords (struct ArgusAggregatorStruct *na, struct ArgusRecordStruct *n
                         if (a1 && a2) {
                            if (a1->hdr.subtype == a2->hdr.subtype) {
                               switch (a1->hdr.subtype) {
-                                 case ARGUS_BEHAVIOR_KEYSTROKE:
+                                 case ARGUS_BEHAVIOR_KEYSTROKE: {
                                     a1->keyStroke.src.n_strokes += a2->keyStroke.src.n_strokes;
                                     a1->keyStroke.dst.n_strokes += a2->keyStroke.dst.n_strokes;
                                     break;
-
-                                 case ARGUS_BEHAVIOR_SCORE: {
-                                    int i;
-                                    for (i = 0; i < 8; i++) {
-                                       if (a2->behvScore.values[i] > a1->behvScore.values[i])
-                                          a1->behvScore.values[i] = a2->behvScore.values[i];
-                                    }
                                  }
                               }
                            }
@@ -8243,9 +8256,39 @@ ArgusMergeRecords (struct ArgusAggregatorStruct *na, struct ArgusRecordStruct *n
                         } else {
                            if (a2 && (a1 == NULL)) {
                               ns1->dsrs[ARGUS_BEHAVIOR_INDEX] = calloc(1, sizeof(struct ArgusBehaviorStruct));
-                              a1 = (void *) ns1->dsrs[ARGUS_BEHAVIOR_INDEX];
+                              ns1->dsrindex |= (0x01 << ARGUS_BEHAVIOR_INDEX);
 
+                              a1 = (void *) ns1->dsrs[ARGUS_BEHAVIOR_INDEX];
                               bcopy(a2, a1, sizeof(*a2));
+                           }
+                        }
+                        break;
+                     }
+
+                     case ARGUS_SCORE_INDEX: {
+                        struct ArgusScoreStruct *s1 = (void *) ns1->dsrs[ARGUS_SCORE_INDEX];
+                        struct ArgusScoreStruct *s2 = (void *) ns2->dsrs[ARGUS_SCORE_INDEX];
+                        
+                        if (s1 || s2) {
+                           if (s1 && s2) {
+                              if (s1->hdr.subtype == s2->hdr.subtype) {
+                                 switch (s1->hdr.subtype) {
+                                    case ARGUS_BEHAVIOR_SCORE: {
+                                       int i;
+                                       for (i = 0; i < 8; i++) {
+                                          if (s2->behvScore.values[i] > s1->behvScore.values[i])
+                                             s1->behvScore.values[i] = s2->behvScore.values[i];
+                                       }
+                                    }
+                                 }
+                              }
+                           } else 
+                           if (!s1 && s2) {
+                              ns1->dsrs[ARGUS_SCORE_INDEX] = calloc(1, sizeof(struct ArgusScoreStruct));
+                              ns1->dsrindex |= (0x01 << ARGUS_SCORE_INDEX);
+
+                              s1 = (void *) ns1->dsrs[ARGUS_SCORE_INDEX];
+                              bcopy(s2, s1, sizeof(*s2));
                            }
                         }
                         break;
@@ -8300,7 +8343,7 @@ ArgusMergeRecords (struct ArgusAggregatorStruct *na, struct ArgusRecordStruct *n
                   }
                }
 
-               if (ns1->score > ns2->score)
+               if (ns2->score > ns1->score)
                   ns1->score = ns2->score;
 
                ns1->status |= ARGUS_RECORD_MODIFIED;

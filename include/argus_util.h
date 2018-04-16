@@ -1544,6 +1544,7 @@ extern struct dbtblmem *lookup_dbtbl(struct dbtblmem *, const u_char *);
 extern struct dbtblmem *check_dbtbl(struct dbtblmem *, const u_char *);
 
 extern char *lookup_srcid(const u_char *, struct anamemem *);
+extern char *lookup_alias(const u_char *, struct anamemem *);
 
 #else
 #define ARGUSPRINTSTARTDATE		0
@@ -1782,6 +1783,7 @@ extern struct enamemem *lookup_emem(struct enamemem *, const u_char *);
 extern struct enamemem *check_emem(struct enamemem *, const u_char *);
 
 extern char *lookup_srcid(const u_char *, struct anamemem *);
+extern char *lookup_alias(const u_char *, struct anamemem *);
 
 extern unsigned int ArgusIndexRecord (struct ArgusRecordStruct *);
 

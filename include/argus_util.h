@@ -910,9 +910,9 @@ void ArgusPrintCorLabel (struct ArgusParserStruct *, char *, int);
 struct ArgusPrintFieldStruct 
 RaPrintAlgorithmTable[MAX_PRINT_ALG_TYPES] = {
 #define ARGUSPRINTSTARTDATE		0
-   { "stime", "%T.%f", 12 , 1, 0, ARGUSPRINTSTARTDATE, ArgusPrintStartDate, ArgusPrintStartDateLabel, "double(18,6) unsigned not null", 0},
+   { "stime", "%T.%f", 15 , 1, 0, ARGUSPRINTSTARTDATE, ArgusPrintStartDate, ArgusPrintStartDateLabel, "double(18,6) unsigned not null", 0},
 #define ARGUSPRINTLASTDATE		1
-   { "ltime", "%T.%f", 12 , 1, 0, ARGUSPRINTLASTDATE, ArgusPrintLastDate, ArgusPrintLastDateLabel, "double(18,6) unsigned not null", 0},
+   { "ltime", "%T.%f", 15 , 1, 0, ARGUSPRINTLASTDATE, ArgusPrintLastDate, ArgusPrintLastDateLabel, "double(18,6) unsigned not null", 0},
 #define ARGUSPRINTTRANSACTIONS		2
    { "trans", "", 6 , 1, 0, ARGUSPRINTTRANSACTIONS, ArgusPrintTransactions, ArgusPrintTransactionsLabel, "int unsigned", 0},
 #define ARGUSPRINTDURATION		3
@@ -1150,13 +1150,13 @@ RaPrintAlgorithmTable[MAX_PRINT_ALG_TYPES] = {
 #define ARGUSPRINTTCPACKDAT		119
    { "ackdat", "", 12 , 1, 0, ARGUSPRINTTCPACKDAT, ArgusPrintTCPAckDat, ArgusPrintTCPAckDatLabel, "double", 0},
 #define ARGUSPRINTSRCSTARTDATE		120
-   { "sstime", "%T.%f", 12 , 1, 0, ARGUSPRINTSRCSTARTDATE, ArgusPrintSrcStartDate, ArgusPrintSrcStartDateLabel, "double(18,6) unsigned not null", 0},
+   { "sstime", "%T.%f", 15 , 1, 0, ARGUSPRINTSRCSTARTDATE, ArgusPrintSrcStartDate, ArgusPrintSrcStartDateLabel, "double(18,6) unsigned not null", 0},
 #define ARGUSPRINTSRCLASTDATE		121
-   { "sltime", "%T.%f", 12 , 1, 0, ARGUSPRINTSRCLASTDATE, ArgusPrintSrcLastDate, ArgusPrintSrcLastDateLabel, "double(18,6) unsigned not null", 0},
+   { "sltime", "%T.%f", 15 , 1, 0, ARGUSPRINTSRCLASTDATE, ArgusPrintSrcLastDate, ArgusPrintSrcLastDateLabel, "double(18,6) unsigned not null", 0},
 #define ARGUSPRINTDSTSTARTDATE		122
-   { "dstime", "%T.%f", 12 , 1, 0, ARGUSPRINTDSTSTARTDATE, ArgusPrintDstStartDate, ArgusPrintDstStartDateLabel, "double(18,6) unsigned not null", 0},
+   { "dstime", "%T.%f", 15 , 1, 0, ARGUSPRINTDSTSTARTDATE, ArgusPrintDstStartDate, ArgusPrintDstStartDateLabel, "double(18,6) unsigned not null", 0},
 #define ARGUSPRINTDSTLASTDATE		123
-   { "dltime", "%T.%f", 12 , 1, 0, ARGUSPRINTDSTLASTDATE, ArgusPrintDstLastDate, ArgusPrintDstLastDateLabel, "double(18,6) unsigned not null", 0},
+   { "dltime", "%T.%f", 15 , 1, 0, ARGUSPRINTDSTLASTDATE, ArgusPrintDstLastDate, ArgusPrintDstLastDateLabel, "double(18,6) unsigned not null", 0},
 #define ARGUSPRINTSRCENCAPS		124
    { "senc", "", 12 , 1, 0, ARGUSPRINTSRCENCAPS, ArgusPrintSrcEncaps, ArgusPrintSrcEncapsLabel, "varchar(32)", 0},
 #define ARGUSPRINTDSTENCAPS		125

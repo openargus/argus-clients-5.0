@@ -2149,8 +2149,9 @@ int
 RaInsertAddressTree (struct ArgusParserStruct *parser, struct ArgusLabelerStruct *labeler, char *str)
 {
    struct RaAddressStruct *saddr = NULL, *node;
+   struct ArgusQueueStruct *ArgusAddressQueue = NULL;
    struct ArgusCIDRAddr *cidr, scidr, dcidr;
-   char *sptr = NULL, *eptr = NULL, *ptr = NULL;
+   char *sptr = NULL, *eptr = NULL, *cptr = NULL, *ptr = NULL;
    char tstrbuf[MAXSTRLEN], *tptr = NULL, *label = NULL;
    long long i, step = 0, arange;
    unsigned int masklen = 32;
@@ -2167,17 +2168,32 @@ RaInsertAddressTree (struct ArgusParserStruct *parser, struct ArgusLabelerStruct
       while ((sptr = strtok(ptr, " \t\n\"\r")) != NULL) {
          switch (state) {
             case ARGUS_PARSING_START_ADDRESS: {
-               if ((eptr = strchr(sptr, '-')) != NULL)
-                  *eptr++ = '\0';
+               if (strchr(sptr, ',') != NULL) {
+                  if (ArgusAddressQueue == NULL)
+                     if ((ArgusAddressQueue = ArgusNewQueue()) == NULL)
+                        ArgusLog (LOG_ERR, "ArgusReadCiscoDatagramSocket: ArgusNewQueue error %s", strerror(errno));
 
-               if (sptr && ((cidr = RaParseCIDRAddr (parser, sptr)) != NULL))
-                  bcopy ((char *)cidr, (char *)&scidr, sizeof (*cidr));
+                  while ((cptr = strsep(&sptr, ",")) != NULL) {
+                     if (cptr && ((cidr = RaParseCIDRAddr (parser, cptr)) != NULL)) {
+                        if ((saddr = (struct RaAddressStruct *) ArgusCalloc (1, sizeof(*saddr))) != NULL) {
+                           bcopy ((char *)cidr, (char *)&saddr->addr, sizeof (*cidr));
+                           ArgusAddToQueue(ArgusAddressQueue, &saddr->qhdr, ARGUS_LOCK);
+                        }
+                     }
+                  }
 
-               if (eptr && ((cidr = RaParseCIDRAddr (parser, eptr)) != NULL))
-                  bcopy ((char *)cidr, (char *)&dcidr, sizeof (*cidr));
-               else
-                  bcopy ((char *)&scidr, (char *)&dcidr, sizeof (scidr));
+               } else {
+                  if ((eptr = strchr(sptr, '-')) != NULL)
+                     *eptr++ = '\0';
 
+                  if (sptr && ((cidr = RaParseCIDRAddr (parser, sptr)) != NULL))
+                     bcopy ((char *)cidr, (char *)&scidr, sizeof (*cidr));
+
+                  if (eptr && ((cidr = RaParseCIDRAddr (parser, eptr)) != NULL))
+                     bcopy ((char *)cidr, (char *)&dcidr, sizeof (*cidr));
+                  else
+                     bcopy ((char *)&scidr, (char *)&dcidr, sizeof (scidr));
+               }
                state = ARGUS_PARSING_LABEL;
                break;
             }
@@ -2208,90 +2224,27 @@ RaInsertAddressTree (struct ArgusParserStruct *parser, struct ArgusLabelerStruct
 //  OK, so we've got the range of addresses to load up into the tree.      
 //  Lets figure out a good starting point for the netmask.
 
-      {
-         long long slen = 0, len = dcidr.addr[0] - scidr.addr[0];
-
-         if (len > 0) {
-            while ((len / 2) >= 2) {
-               slen++;
-               len = len >> 1;
-            }
-
-            while (slen && ((scidr.addr[0] & (0xFFFFFFFF << slen)) != scidr.addr[0]))
-               slen--;
-
-            masklen = 32 - slen;
-         }
-      }
-
-      if (masklen < scidr.masklen) {
-         scidr.masklen = masklen;
-         scidr.mask[0] = 0xFFFFFFFF << (32 - masklen);
-         
-      }
-
-      for (i = scidr.addr[0]; i <= dcidr.addr[0]; i += step) {
-         struct RaAddressStruct *paddr = saddr;
-
-         if ((saddr = (struct RaAddressStruct *) ArgusCalloc (1, sizeof(*saddr))) != NULL) {
-            unsigned int taddr;
-
-            if (paddr != NULL) {
-               bcopy ((char *)&paddr->addr, (char *)&saddr->addr, sizeof (*cidr));
-               saddr->addr.addr[0] = i;
-
-               do {
-                  arange  = dcidr.addr[0] - saddr->addr.addr[0];
-                  arange -= (0xFFFFFFFF >> saddr->addr.masklen);
-
-                  if (arange < 0) {
-                     if (saddr->addr.masklen < dcidr.masklen)
-                        saddr->addr.masklen++;
-                     else {
-                        arange = (dcidr.addr[0] - saddr->addr.addr[0]);
-                        break;
-                     }
-                  }
-               } while (arange < 0);
-
-               taddr = saddr->addr.addr[0] + ((0xFFFFFFFF >> saddr->addr.masklen) + 1);
- 
-               if (taddr != (taddr & (0xFFFFFFFF << (32 - (saddr->addr.masklen - 1))))) {
-                  int carry = dcidr.addr[0] - (saddr->addr.addr[0] + (0xFFFFFFFF >> (saddr->addr.masklen - 1)));
-                  if ((carry > 0) && (arange >= carry)) {
-                     saddr->addr.masklen--;
-                     saddr->addr.mask[0] = 0xFFFFFFFF << (32 - saddr->addr.masklen);
-                     saddr->addr.addr[0] &= saddr->addr.mask[0];
-                  } else {
-                     if (arange == 1) {
-                     }
-                  }
-               }
-
-            } else {
-               bcopy ((char *)&scidr, (char *)&saddr->addr, sizeof (*cidr));
-               saddr->addr.addr[0] = i;
-            }
-
+      if (ArgusAddressQueue != NULL) {
+         while ((saddr = (struct RaAddressStruct *) ArgusPopQueue(ArgusAddressQueue, ARGUS_LOCK)) != NULL) {
             if ((node = RaFindAddress (parser, ArgusAddrTree[saddr->addr.type], saddr, ARGUS_EXACT_MATCH)) == NULL) {
                if (tptr)
                   saddr->addr.str = strdup(tptr);
 
                RaInsertAddress (parser, labeler, NULL, saddr, ARGUS_VISITED);
-               
+                  
                if (label) {
-                  if (saddr->label != NULL) {
-                     char sbuf[1024];
-                     snprintf(sbuf, 1024, "%s,", saddr->label);
+                     if (saddr->label != NULL) {
+                        char sbuf[1024];
+                        snprintf(sbuf, 1024, "%s,", saddr->label);
 #if HAVE_STRLCAT
-                     strlcat(sbuf, label, 1024 - strlen(sbuf));
+                        strlcat(sbuf, label, 1024 - strlen(sbuf));
 #else
-                     strncat(sbuf, label, 1024 - strlen(sbuf));
+                        strncat(sbuf, label, 1024 - strlen(sbuf));
 #endif
-                     free(saddr->label);
-                     saddr->label = strdup(sbuf);
-                  } else
-                     saddr->label = strdup (label);
+                        free(saddr->label);
+                        saddr->label = strdup(sbuf);
+                     } else
+                        saddr->label = strdup (label);
                }
 
                if (labeler->status & ARGUS_LABELER_DEBUG_NODE) {
@@ -2299,30 +2252,144 @@ RaInsertAddressTree (struct ArgusParserStruct *parser, struct ArgusLabelerStruct
                   printf("\n");
                }
 
-
             } else {
                ArgusFree(saddr);
                saddr = node;
 
                if (label) {
-                  if (node->label != NULL) {
-                     char sbuf[1024];
-                     snprintf(sbuf, 1024, "%s,", node->label);
+                     if (node->label != NULL) {
+                        char sbuf[1024];
+                        snprintf(sbuf, 1024, "%s,", node->label);
 #if HAVE_STRLCAT
-                     strlcat(sbuf, label, 1024 - strlen(sbuf));
+                        strlcat(sbuf, label, 1024 - strlen(sbuf));
 #else
-                     strncat(sbuf, label, 1024 - strlen(sbuf));
+                        strncat(sbuf, label, 1024 - strlen(sbuf));
 #endif
-                     free(node->label);
-                     node->label = strdup(sbuf);
-                  } else
-                     node->label = strdup (label);
+                        free(node->label);
+                        node->label = strdup(sbuf);
+                     } else
+                        node->label = strdup (label);
                }
             }
          }
 
-         mstep = pow (2.0, (32 - saddr->addr.masklen));
-         step = mstep;
+
+      } else {
+         {
+            long long slen = 0, len = dcidr.addr[0] - scidr.addr[0];
+
+            if (len > 0) {
+               while ((len / 2) >= 2) {
+                  slen++;
+                  len = len >> 1;
+               }
+
+               while (slen && ((scidr.addr[0] & (0xFFFFFFFF << slen)) != scidr.addr[0]))
+                  slen--;
+
+               masklen = 32 - slen;
+            }
+         }
+
+         if (masklen < scidr.masklen) {
+            scidr.masklen = masklen;
+            scidr.mask[0] = 0xFFFFFFFF << (32 - masklen);
+         }
+
+         for (i = scidr.addr[0]; i <= dcidr.addr[0]; i += step) {
+            struct RaAddressStruct *paddr = saddr;
+
+            if ((saddr = (struct RaAddressStruct *) ArgusCalloc (1, sizeof(*saddr))) != NULL) {
+               unsigned int taddr;
+
+               if (paddr != NULL) {
+                  bcopy ((char *)&paddr->addr, (char *)&saddr->addr, sizeof (*cidr));
+                  saddr->addr.addr[0] = i;
+
+                  do {
+                     arange  = dcidr.addr[0] - saddr->addr.addr[0];
+                     arange -= (0xFFFFFFFF >> saddr->addr.masklen);
+
+                     if (arange < 0) {
+                        if (saddr->addr.masklen < dcidr.masklen)
+                           saddr->addr.masklen++;
+                        else {
+                           arange = (dcidr.addr[0] - saddr->addr.addr[0]);
+                           break;
+                        }
+                     }
+                  } while (arange < 0);
+
+                  taddr = saddr->addr.addr[0] + ((0xFFFFFFFF >> saddr->addr.masklen) + 1);
+    
+                  if (taddr != (taddr & (0xFFFFFFFF << (32 - (saddr->addr.masklen - 1))))) {
+                     int carry = dcidr.addr[0] - (saddr->addr.addr[0] + (0xFFFFFFFF >> (saddr->addr.masklen - 1)));
+                     if ((carry > 0) && (arange >= carry)) {
+                        saddr->addr.masklen--;
+                        saddr->addr.mask[0] = 0xFFFFFFFF << (32 - saddr->addr.masklen);
+                        saddr->addr.addr[0] &= saddr->addr.mask[0];
+                     } else {
+                        if (arange == 1) {
+                        }
+                     }
+                  }
+
+               } else {
+                  bcopy ((char *)&scidr, (char *)&saddr->addr, sizeof (*cidr));
+                  saddr->addr.addr[0] = i;
+               }
+
+               if ((node = RaFindAddress (parser, ArgusAddrTree[saddr->addr.type], saddr, ARGUS_EXACT_MATCH)) == NULL) {
+                  if (tptr)
+                     saddr->addr.str = strdup(tptr);
+
+                  RaInsertAddress (parser, labeler, NULL, saddr, ARGUS_VISITED);
+                  
+                  if (label) {
+                     if (saddr->label != NULL) {
+                        char sbuf[1024];
+                        snprintf(sbuf, 1024, "%s,", saddr->label);
+#if HAVE_STRLCAT
+                        strlcat(sbuf, label, 1024 - strlen(sbuf));
+#else
+                        strncat(sbuf, label, 1024 - strlen(sbuf));
+#endif
+                        free(saddr->label);
+                        saddr->label = strdup(sbuf);
+                     } else
+                        saddr->label = strdup (label);
+                  }
+
+                  if (labeler->status & ARGUS_LABELER_DEBUG_NODE) {
+                     RaPrintLabelTree (labeler, labeler->ArgusAddrTree[AF_INET], 0, 0);
+                     printf("\n");
+                  }
+
+
+               } else {
+                  ArgusFree(saddr);
+                  saddr = node;
+
+                  if (label) {
+                     if (node->label != NULL) {
+                        char sbuf[1024];
+                        snprintf(sbuf, 1024, "%s,", node->label);
+#if HAVE_STRLCAT
+                        strlcat(sbuf, label, 1024 - strlen(sbuf));
+#else
+                        strncat(sbuf, label, 1024 - strlen(sbuf));
+#endif
+                        free(node->label);
+                        node->label = strdup(sbuf);
+                     } else
+                        node->label = strdup (label);
+                  }
+               }
+            }
+
+            mstep = pow (2.0, (32 - saddr->addr.masklen));
+            step = mstep;
+         }
       }
    }
 

@@ -2620,7 +2620,7 @@ ArgusProcessCharacter(WINDOW *win, int status, int ch)
                   case 'R': {
                      size_t len = strlen(RaCommandInputStr);
                      size_t remain = sizeof(RaCommandInputStr) - len;
-                     struct ArgusInput *input = ArgusParser->ArgusInputFileList;
+                     struct ArgusFileInput *input = ArgusParser->ArgusInputFileList;
 
                      retn = RAGETTINGR;
                      RaInputString = RAGETTINGRSTR;
@@ -2636,7 +2636,7 @@ ArgusProcessCharacter(WINDOW *win, int status, int ch)
                   case 'r': {
                      size_t len = strlen(RaCommandInputStr);
                      size_t remain = sizeof(RaCommandInputStr) - len;
-                     struct ArgusInput *input = ArgusParser->ArgusInputFileList;
+                     struct ArgusFileInput *input = ArgusParser->ArgusInputFileList;
 
                      retn = RAGETTINGr;
                      RaInputString = RAGETTINGrSTR;
@@ -4884,14 +4884,15 @@ argus_process_command (struct ArgusParserStruct *parser, int status)
           case 'R': {
             size_t len = strlen(RaCommandInputStr);
             size_t remain = sizeof(RaCommandInputStr) - len;
-            struct ArgusInput *input = ArgusParser->ArgusInputFileList;
+            struct ArgusFileInput *input = ArgusParser->ArgusInputFileList;
 
             retn = RAGETTINGR;
             RaInputString = RAGETTINGRSTR;
             while (input) {
-               RaCommandIndex = snprintf_append(RaCommandInputStr, &len,
-                                                &remain, " %s", input->filename);
-               input = (void *) input->qhdr.nxt;
+               RaCommandIndex = snprintf_append(RaCommandInputStr,
+                                                &len, &remain, " %s",
+                                                input->filename);
+                input = (void *) input->qhdr.nxt;
             }
             break;
           }
@@ -4899,7 +4900,7 @@ argus_process_command (struct ArgusParserStruct *parser, int status)
           case 'r': {
             size_t len = strlen(RaCommandInputStr);
             size_t remain = sizeof(RaCommandInputStr) - len;
-            struct ArgusInput *input = ArgusParser->ArgusInputFileList;
+            struct ArgusFileInput *input = ArgusParser->ArgusInputFileList;
 
             retn = RAGETTINGr;
             RaInputString = RAGETTINGrSTR;
@@ -5792,6 +5793,7 @@ ArgusGenerateProgramArgs(struct ArgusParserStruct *parser)
    char *retn = RaProgramArgs;
    struct ArgusModeStruct *mode = NULL;
    struct ArgusInput *input = NULL;
+   struct ArgusFileInput *file = NULL;
    
    snprintf_append(retn, &len, &remain, "%s ", parser->ArgusProgramName);
 
@@ -5810,10 +5812,10 @@ ArgusGenerateProgramArgs(struct ArgusParserStruct *parser)
          }
       } else {
          snprintf_append(retn, &len, &remain, "-r ");
-         if ((input = (void *)parser->ArgusInputFileList) != NULL) {
-            while (input != NULL) {
-               snprintf_append(retn, &len, &remain, "%s ", input->filename);
-               input = (void *)input->qhdr.nxt;
+         if ((file = (void *)parser->ArgusInputFileList) != NULL) {
+            while (file != NULL) {
+               snprintf_append(retn, &len, &remain, "%s ", file->filename);
+               file = (void *)file->qhdr.nxt;
             }
          }
       }

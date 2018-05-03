@@ -1010,11 +1010,12 @@ ArgusParseArgs(struct ArgusParserStruct *parser, int argc, char **argv)
    if (!(strncmp(parser->ArgusProgramName, "rahisto", 6)))
       getoptStr = "a:AbB:c:C:dD:E:e:f:F:g:GhH:iJlLm:M:nN:OpP:qr:R:S:s:t:T:u:U:Vvw:XzZ:";
    else
-      getoptStr = "a:AbB:c:C:dD:E:e:f:F:GhHiJlL:m:M:nN:Op:P:qQ:r:R:S:s:t:T:uU:Vvw:XzZ:%";
+      getoptStr = "a:AbB:c:C:dD:E:e:f:F:GhHiJlL:m:M:nN:Op:P:qQ:r:R:S:s:t:T:uU:Vvw:XzZ:%3";
 
    while ((op = getopt (argc, argv, getoptStr)) != EOF) {
       switch (op) {
          case '%': ++parser->Pctflag; break;
+         case '3': parser->ver3flag = 1; break;
          case 'a': parser->aflag = atoi (optarg); break;
          case 'A': 
             if (!(strncmp(parser->ArgusProgramName, "radium", 6))) {
@@ -28654,17 +28655,20 @@ ArgusWriteNewLogfile (struct ArgusParserStruct *parser, struct ArgusInput *input
    }
 
    if (wfile->firstWrite) {
-      struct ArgusRecord *ns = (struct ArgusRecord *)&parser->ArgusInitCon;
+      unsigned char version = argus->hdr.type & ARGUS_VERSION_MASK;
+      unsigned char initversion = parser->ArgusInitCon.hdr.type & ARGUS_VERSION_MASK;
+      struct ArgusRecord *ns = &parser->ArgusInitCon;
       int len = ntohs(parser->ArgusInitCon.hdr.len) * 4;
-      if (len == 0) {
-         ns->hdr.type   = (ARGUS_MAR | ARGUS_VERSION);
+
+      if (len == 0 || (version != initversion)) {
+         ns->hdr.type   = (ARGUS_MAR | version);
          ns->hdr.cause  = ARGUS_START;
          ns->hdr.len    = (unsigned short) sizeof(struct ArgusRecord)/4;
 
          len = ns->hdr.len * 4;
 
          ns->argus_mar.thisid           = 0;
-         ns->argus_mar.argusid          = ARGUS_COOKIE;
+         ns->argus_mar.argusid          = version == 3 ? ARGUS_V3_COOKIE : ARGUS_COOKIE;
          ns->argus_mar.startime.tv_sec  = parser->ArgusGlobalTime.tv_sec;
          ns->argus_mar.startime.tv_usec = parser->ArgusGlobalTime.tv_usec;
          ns->argus_mar.now              = ns->argus_mar.startime;
@@ -28890,6 +28894,15 @@ setArgusWfile(struct ArgusParserStruct *parser, char *file, char *filter)
 
    if (file) {
       if (strcmp (file, "-")) {
+         if (!strncmp(file, "argus-v3:", 9)) {
+#ifdef ARGUSDEBUG
+            ArgusDebug(2, "%s version 3 output flag implicitly set\n",
+                       __func__);
+#endif
+            parser->ver3flag = 1;
+            file += 9; /* skip over the format specifier */
+         }
+
          if (!(strncmp(parser->ArgusProgramName, "radium", 6))  &&
              ((!(strncmp (file, "argus-udp://", 12))) || 
               (!(strncmp (file, "argus-tcp://", 12))) || 

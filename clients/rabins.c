@@ -97,6 +97,8 @@ int ArgusRmonMode = 0;
 int RaCloseBinProcess(struct ArgusParserStruct *, struct RaBinProcessStruct *);
 int ArgusPrintFormat(struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int, int);
 
+static int argus_version = ARGUS_VERSION;
+
 void
 ArgusClientInit (struct ArgusParserStruct *parser)
 {
@@ -116,6 +118,9 @@ ArgusClientInit (struct ArgusParserStruct *parser)
       (void) signal (SIGTERM, (void (*)(int)) RaParseComplete);
       (void) signal (SIGQUIT, (void (*)(int)) RaParseComplete);
       (void) signal (SIGINT,  (void (*)(int)) RaParseComplete);
+
+      if (parser->ver3flag)
+         argus_version = ARGUS_VERSION_3;
 
       if ((RaBinProcess = (struct RaBinProcessStruct *)ArgusCalloc(1, sizeof(*RaBinProcess))) == NULL)
          ArgusLog (LOG_ERR, "ArgusClientInit: ArgusCalloc error %s", strerror(errno));
@@ -660,7 +665,7 @@ ArgusClientTimeout ()
 
                if (ArgusParser->ArgusGenerateManRecords) {
                   struct ArgusRecordStruct *man =
-                     ArgusGenerateStatusMarRecord (NULL, ARGUS_START, ARGUS_VERSION);
+                     ArgusGenerateStatusMarRecord (NULL, ARGUS_START, argus_version);
                   struct ArgusRecord *rec = (struct ArgusRecord *)man->dsrs[0];
                   rec->argus_mar.startime.tv_sec  = bin->stime.tv_sec;
                   rec->argus_mar.startime.tv_usec = bin->stime.tv_usec;
@@ -705,7 +710,7 @@ ArgusClientTimeout ()
 
                if (ArgusParser->ArgusGenerateManRecords) {
                   struct ArgusRecordStruct *man =
-                     ArgusGenerateStatusMarRecord (NULL, ARGUS_STOP, ARGUS_VERSION);
+                     ArgusGenerateStatusMarRecord (NULL, ARGUS_STOP, argus_version);
                   struct ArgusRecord *rec = (struct ArgusRecord *)man->dsrs[0];
                   rec->argus_mar.startime.tv_sec  = bin->etime.tv_sec;
                   rec->argus_mar.startime.tv_usec = bin->etime.tv_usec;
@@ -1146,7 +1151,7 @@ RaSendArgusRecord(struct ArgusRecordStruct *argus)
                   if ((ArgusParser->exceptfile == NULL) || strcmp(wfile->filename, ArgusParser->exceptfile)) {
                      struct ArgusRecord *argusrec = NULL;
 
-                     if ((argusrec = ArgusGenerateRecord (argus, 0L, ArgusRecordBuffer, ARGUS_VERSION)) != NULL) {
+                     if ((argusrec = ArgusGenerateRecord (argus, 0L, ArgusRecordBuffer, argus_version)) != NULL) {
 #ifdef _LITTLE_ENDIAN
                         ArgusHtoN(argusrec);
 #endif
@@ -1416,7 +1421,7 @@ RaCloseBinProcess(struct ArgusParserStruct *parser, struct RaBinProcessStruct *r
 
             if (ArgusParser->ArgusGenerateManRecords) {
                struct ArgusRecordStruct *man =
-                  ArgusGenerateStatusMarRecord (NULL, ARGUS_START, ARGUS_VERSION);
+                  ArgusGenerateStatusMarRecord (NULL, ARGUS_START, argus_version);
                struct ArgusRecord *rec = (struct ArgusRecord *)man->dsrs[0];
                rec->argus_mar.startime.tv_sec  = bin->stime.tv_sec;
                rec->argus_mar.startime.tv_usec = bin->stime.tv_usec;
@@ -1441,7 +1446,7 @@ RaCloseBinProcess(struct ArgusParserStruct *parser, struct RaBinProcessStruct *r
 
             if (ArgusParser->ArgusGenerateManRecords) {
                struct ArgusRecordStruct *man =
-                  ArgusGenerateStatusMarRecord (NULL, ARGUS_STOP, ARGUS_VERSION);
+                  ArgusGenerateStatusMarRecord (NULL, ARGUS_STOP, argus_version);
                struct ArgusRecord *rec = (struct ArgusRecord *)man->dsrs[0];
                rec->argus_mar.startime.tv_sec  = bin->etime.tv_sec;
                rec->argus_mar.startime.tv_usec = bin->etime.tv_usec;

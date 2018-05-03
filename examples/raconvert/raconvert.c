@@ -272,6 +272,8 @@ char *ArgusDebugModes[RASCII_MAXDEBUG] = {
    "tasks",
 };
 
+static int argus_version = ARGUS_VERSION;
+
 void
 ArgusClientInit(struct ArgusParserStruct *parser)
 {
@@ -281,6 +283,9 @@ ArgusClientInit(struct ArgusParserStruct *parser)
 #ifdef ARGUSDEBUG
    ArgusDebug (1, "RaConvertInit()");
 #endif
+
+   if (parser->ver3flag)
+      argus_version = ARGUS_VERSION_3;
 
    if ((mode = ArgusParser->ArgusModeList) != NULL) {
       while (mode) {
@@ -348,11 +353,12 @@ struct ArgusMarStruct {
 };
 */
 
-   ArgusParser->ArgusInitCon.hdr.type                    = (ARGUS_MAR | ARGUS_VERSION);
+   ArgusParser->ArgusInitCon.hdr.type                    = (ARGUS_MAR | argus_version);
    ArgusParser->ArgusInitCon.hdr.cause                   = ARGUS_START;
    ArgusParser->ArgusInitCon.hdr.len                     = (unsigned short) (sizeof(struct ArgusRecord) + 3)/4;
    ArgusParser->ArgusInitCon.argus_mar.thisid            = ArgusSourceId;
-   ArgusParser->ArgusInitCon.argus_mar.argusid           = ARGUS_COOKIE;
+   ArgusParser->ArgusInitCon.argus_mar.argusid           = (argus_version == ARGUS_VERSION_3)
+                                                           ? ARGUS_V3_COOKIE : ARGUS_COOKIE;
  
    ArgusParser->ArgusInitCon.argus_mar.startime.tv_sec   = ArgusParser->ArgusRealTime.tv_sec;
    ArgusParser->ArgusInitCon.argus_mar.startime.tv_usec  = ArgusParser->ArgusRealTime.tv_usec;
@@ -717,7 +723,7 @@ RaConvertReadFile (struct ArgusParserStruct *parser, struct ArgusInput *input)
                               if (retn != 0) {
                                  if ((parser->exceptfile == NULL) || strcmp(wfile->filename, parser->exceptfile)) {
                                     struct ArgusRecord *argusrec = NULL;
-                                    if ((argusrec = ArgusGenerateRecord (argus, 0L, ArgusRecordBuffer, ARGUS_VERSION)) != NULL) {
+                                    if ((argusrec = ArgusGenerateRecord (argus, 0L, ArgusRecordBuffer, argus_version)) != NULL) {
 #ifdef _LITTLE_ENDIAN
                                        ArgusHtoN(argusrec);
 #endif

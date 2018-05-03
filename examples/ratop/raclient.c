@@ -70,7 +70,7 @@ char **ArgusHandleSearchCommand (struct ArgusOutputStruct *, char *);
 
 
 struct ArgusWirelessStruct ArgusWirelessBuf, *ArgusWireless = &ArgusWirelessBuf;
- 
+
 #define MAX_AIRPORT_PARSE_TOKENS	15
  
 char *ArgusParseAirportTokens[MAX_AIRPORT_PARSE_TOKENS] = {
@@ -106,6 +106,7 @@ char *ArgusParseAirportTokens[MAX_AIRPORT_PARSE_TOKENS] = {
    "channel"
 };
  
+int argus_version = ARGUS_VERSION;
 
 void
 ArgusThreadsInit(pthread_attr_t *attr)
@@ -466,6 +467,8 @@ ArgusClientInit (struct ArgusParserStruct *parser)
          (void) signal (SIGPIPE, SIG_IGN);
          (void) signal (SIGALRM, SIG_IGN);
 
+         if (parser->ver3flag)
+            argus_version = ARGUS_VERSION_3;
 
          if ((parser->ArgusMaskList) == NULL)
             parser->ArgusReverse = 1;

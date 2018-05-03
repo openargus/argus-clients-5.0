@@ -55,6 +55,7 @@ short ArgusColorHighlight = ARGUS_WHITE;
 
 char ArgusRecordBuffer[ARGUS_MAXRECORDSIZE];
 
+extern int argus_version;
 
 int
 main(int argc, char **argv)
@@ -1345,7 +1346,7 @@ ArgusProcessTerminator(WINDOW *win, int status, int ch)
                      }
 
                      if (pass != 0) {
-                        if ((argusrec = ArgusGenerateRecord (ns, 0L, ArgusRecordBuffer, ARGUS_VERSION)) != NULL) {
+                        if ((argusrec = ArgusGenerateRecord (ns, 0L, ArgusRecordBuffer, argus_version)) != NULL) {
 #ifdef _LITTLE_ENDIAN
                            ArgusHtoN(argusrec);
 #endif
@@ -4587,7 +4588,7 @@ argus_command_string(void)
                      }
 
                      if (pass != 0) {
-                        if ((argusrec = ArgusGenerateRecord (ns, 0L, ArgusRecordBuffer, ARGUS_VERSION)) != NULL) {
+                        if ((argusrec = ArgusGenerateRecord (ns, 0L, ArgusRecordBuffer, argus_version)) != NULL) {
 #ifdef _LITTLE_ENDIAN
                            ArgusHtoN(argusrec);
 #endif

@@ -17275,7 +17275,7 @@ void
 ArgusPrintSrcStartDateLabel (struct ArgusParserStruct *parser, char *buf, int len)
 {
    if (parser->ArgusFractionalDate)
-      len += (parser->pflag + 1);
+      len += parser->pflag;
    sprintf (buf, "%*.*s ", len, len, "SrcStartTime");
 }
  
@@ -17283,14 +17283,14 @@ void
 ArgusPrintSrcLastDateLabel (struct ArgusParserStruct *parser, char *buf, int len)
 {
    if (parser->ArgusFractionalDate)
-      len += (parser->pflag + 1);
+      len += parser->pflag;
    sprintf (buf, "%*.*s ", len, len, "SrcLastTime");
 }
 void
 ArgusPrintDstStartDateLabel (struct ArgusParserStruct *parser, char *buf, int len)
 {
    if (parser->ArgusFractionalDate)
-      len += (parser->pflag + 1);
+      len += parser->pflag;
    sprintf (buf, "%*.*s ", len, len, "DstStartTime");
 }
  
@@ -17298,7 +17298,7 @@ void
 ArgusPrintDstLastDateLabel (struct ArgusParserStruct *parser, char *buf, int len)
 {
    if (parser->ArgusFractionalDate)
-      len += (parser->pflag + 1);
+      len += parser->pflag;
    sprintf (buf, "%*.*s ", len, len, "DstLastTime");
 }
 

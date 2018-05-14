@@ -28618,6 +28618,7 @@ ArgusWriteNewLogfile (struct ArgusParserStruct *parser, struct ArgusInput *input
 
    if ((file != NULL) && (*file != '-')) {
       if (strncmp(file, "/dev/null", 9)) {
+
          if (parser->ArgusRealTime.tv_sec > wfile->laststat.tv_sec) {
             if ((stat (file, &wfile->statbuf) < 0)) {
                if (wfile->fd != NULL) {
@@ -28632,6 +28633,8 @@ ArgusWriteNewLogfile (struct ArgusParserStruct *parser, struct ArgusInput *input
                   wfile->firstWrite++;
             }
             wfile->laststat = parser->ArgusRealTime;
+            if (fflush (wfile->fd) != 0)
+               ArgusLog (LOG_ERR, "ArgusWriteNewLogfile(%s, 0x%x) fflush error %s", file, argus, strerror(errno));
          }
       }
 

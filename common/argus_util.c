@@ -17275,7 +17275,7 @@ void
 ArgusPrintSrcStartDateLabel (struct ArgusParserStruct *parser, char *buf, int len)
 {
    if (parser->ArgusFractionalDate)
-      len += (parser->pflag + 1);
+      len += parser->pflag;
    sprintf (buf, "%*.*s ", len, len, "SrcStartTime");
 }
  
@@ -17283,14 +17283,14 @@ void
 ArgusPrintSrcLastDateLabel (struct ArgusParserStruct *parser, char *buf, int len)
 {
    if (parser->ArgusFractionalDate)
-      len += (parser->pflag + 1);
+      len += parser->pflag;
    sprintf (buf, "%*.*s ", len, len, "SrcLastTime");
 }
 void
 ArgusPrintDstStartDateLabel (struct ArgusParserStruct *parser, char *buf, int len)
 {
    if (parser->ArgusFractionalDate)
-      len += (parser->pflag + 1);
+      len += parser->pflag;
    sprintf (buf, "%*.*s ", len, len, "DstStartTime");
 }
  
@@ -17298,7 +17298,7 @@ void
 ArgusPrintDstLastDateLabel (struct ArgusParserStruct *parser, char *buf, int len)
 {
    if (parser->ArgusFractionalDate)
-      len += (parser->pflag + 1);
+      len += parser->pflag;
    sprintf (buf, "%*.*s ", len, len, "DstLastTime");
 }
 
@@ -28618,6 +28618,7 @@ ArgusWriteNewLogfile (struct ArgusParserStruct *parser, struct ArgusInput *input
 
    if ((file != NULL) && (*file != '-')) {
       if (strncmp(file, "/dev/null", 9)) {
+
          if (parser->ArgusRealTime.tv_sec > wfile->laststat.tv_sec) {
             if ((stat (file, &wfile->statbuf) < 0)) {
                if (wfile->fd != NULL) {
@@ -28632,6 +28633,8 @@ ArgusWriteNewLogfile (struct ArgusParserStruct *parser, struct ArgusInput *input
                   wfile->firstWrite++;
             }
             wfile->laststat = parser->ArgusRealTime;
+            if (fflush (wfile->fd) != 0)
+               ArgusLog (LOG_ERR, "ArgusWriteNewLogfile(%s, 0x%x) fflush error %s", file, argus, strerror(errno));
          }
       }
 

@@ -100,7 +100,7 @@ struct anamemem {
 
 struct dbtblmem {
    struct dbtblmem *p_nxt;
-   unsigned int status, hashval, secs, ref;
+   unsigned int hashval;
    char *name;
 };
 

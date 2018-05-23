@@ -1256,7 +1256,8 @@ ArgusClientInit (struct ArgusParserStruct *parser)
                found++;
                break;
             }
-         }
+         } else
+            retn = 0;
          tableIndex++;
       }
 

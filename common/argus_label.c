@@ -1079,8 +1079,9 @@ int
 RaReadFlowLabels (struct ArgusParserStruct *parser, struct ArgusLabelerStruct *labeler, char *file)
 {
    char strbuf[MAXSTRLEN], *str = strbuf;
-   char *ptr, *end, *value, *filter;
-   char *label = NULL, *color = NULL;
+   char *filter = NULL, *label = NULL, *color = NULL;
+   char *ptr, *end, *value;
+
    int retn = 1, linenum = 0;
    FILE *fd =  NULL;
 
@@ -1165,16 +1166,16 @@ RaReadFlowLabels (struct ArgusParserStruct *parser, struct ArgusLabelerStruct *l
                         struct RaFlowLabelStruct *raflow = NULL;
                         if ((raflow = (void *)ArgusCalloc(1, sizeof(*raflow))) != NULL) {
                            if (filter != NULL) {
-                              raflow->filterstr = strdup(filter);
+                              raflow->filterstr = filter; filter = NULL;
                               if (ArgusFilterCompile (&raflow->filter, raflow->filterstr, ArgusParser->Oflag) < 0)
                                  ArgusLog (LOG_ERR, "RaReadFlowLabels ArgusFilterCompile returned error");
                            }
 
                            if (label != NULL)
-                              raflow->labelstr = strdup(label);
+                              raflow->labelstr = label; label = NULL;
 
                            if (color != NULL)
-                              raflow->colorstr = strdup(color);
+                              raflow->colorstr = color; color = NULL;
 
                            if (cont != 0)
                               raflow->cont = 1;
@@ -1193,6 +1194,10 @@ RaReadFlowLabels (struct ArgusParserStruct *parser, struct ArgusLabelerStruct *l
  
       } else
          ArgusLog (LOG_ERR, "%s: %s", file, strerror(errno));
+
+      if (filter != NULL) free(filter);
+      if (label != NULL) free(label);
+      if (color != NULL) free(color);
    }
  
 #ifdef ARGUSDEBUG
@@ -1530,7 +1535,6 @@ RaInsertAddress (struct ArgusParserStruct *parser, struct ArgusLabelerStruct *la
                               RaInsertAddress (parser, labeler, tree->r, rt, status);
                               return (RaInsertAddress (parser, labeler, tree->r, node, status));
                            }
-
                         } else
                            return (RaInsertAddress (parser, labeler, tree->r, node, status));
                      }
@@ -1596,7 +1600,9 @@ RaInsertAddress (struct ArgusParserStruct *parser, struct ArgusLabelerStruct *la
                else
                   tmask = 0;
     
-               value = ~(taddr ^ naddr) & tmask;
+               value = taddr ^ naddr;
+               value = ~value;
+               value &= tmask;
                value = value << tree->offset;
 
                for (i = 0; i < len; i++) {
@@ -1606,6 +1612,8 @@ RaInsertAddress (struct ArgusParserStruct *parser, struct ArgusLabelerStruct *la
                   } else
                      break;
                }
+
+// Need to add a node, create it here.
 
                if ((addr = (struct RaAddressStruct *) ArgusCalloc (1, sizeof(*addr))) == NULL)
                   ArgusLog (LOG_ERR, "RaInsertAddress: ArgusCalloc error %s\n", strerror(errno));
@@ -1618,7 +1626,10 @@ RaInsertAddress (struct ArgusParserStruct *parser, struct ArgusLabelerStruct *la
                addr->status = status;
 
                if (ptree != NULL) {
-                  addr->addr.masklen = ptree->addr.masklen + masklen;
+                  if ((ptree->addr.masklen + masklen) <= node->addr.masklen)
+                     addr->addr.masklen = ptree->addr.masklen + masklen;
+                  else 
+                     addr->addr.masklen = masklen;
                } else {
                   addr->addr.masklen = masklen;
                }
@@ -1885,6 +1896,7 @@ RaPruneAddressTree (struct ArgusLabelerStruct *labeler, struct RaAddressStruct *
 
                         } else
                         if (!(strcmp(lstr, rstr))) {
+                           node->locality = min(node->l->locality, node->r->locality);
                            retn = lstr;  // children are equal, so propagate up for comparison
                         } 
                      }
@@ -2255,24 +2267,26 @@ RaInsertAddressTree (struct ArgusParserStruct *parser, struct ArgusLabelerStruct
       if (ArgusAddressQueue != NULL) {
          while ((saddr = (struct RaAddressStruct *) ArgusPopQueue(ArgusAddressQueue, ARGUS_LOCK)) != NULL) {
             if ((node = RaFindAddress (parser, ArgusAddrTree[saddr->addr.type], saddr, ARGUS_EXACT_MATCH)) == NULL) {
-               if (tptr)
+               if (tptr) {
+                  if (saddr->addr.str) free(saddr->addr.str);
                   saddr->addr.str = strdup(tptr);
+               }
 
                RaInsertAddress (parser, labeler, NULL, saddr, ARGUS_VISITED);
                   
                if (label) {
-                     if (saddr->label != NULL) {
-                        char sbuf[1024];
-                        snprintf(sbuf, 1024, "%s,", saddr->label);
+                  if (saddr->label != NULL) {
+                     char sbuf[1024];
+                     snprintf(sbuf, 1024, "%s,", saddr->label);
 #if HAVE_STRLCAT
-                        strlcat(sbuf, label, 1024 - strlen(sbuf));
+                     strlcat(sbuf, label, 1024 - strlen(sbuf));
 #else
-                        strncat(sbuf, label, 1024 - strlen(sbuf));
+                     strncat(sbuf, label, 1024 - strlen(sbuf));
 #endif
-                        free(saddr->label);
-                        saddr->label = strdup(sbuf);
-                     } else
-                        saddr->label = strdup (label);
+                     free(saddr->label);
+                     saddr->label = strdup(sbuf);
+                  } else
+                     saddr->label = strdup (label);
                }
 
                if (labeler->status & ARGUS_LABELER_DEBUG_NODE) {
@@ -2368,8 +2382,10 @@ RaInsertAddressTree (struct ArgusParserStruct *parser, struct ArgusLabelerStruct
                }
 
                if ((node = RaFindAddress (parser, ArgusAddrTree[saddr->addr.type], saddr, ARGUS_EXACT_MATCH)) == NULL) {
-                  if (tptr)
+                  if (tptr) {
+                     if (saddr->addr.str) free(saddr->addr.str);
                      saddr->addr.str = strdup(tptr);
+                  }
 
                   RaInsertAddress (parser, labeler, NULL, saddr, ARGUS_VISITED);
                   
@@ -2625,17 +2641,18 @@ RaInsertLocalityTree (struct ArgusParserStruct *parser, struct ArgusLabelerStruc
 
             if (saddr != NULL) {
                if (tptr) {
-                  if (saddr->addr.str != NULL)
-                     free(saddr->addr.str);
+                  if (saddr->addr.str != NULL) free(saddr->addr.str);
                   saddr->addr.str = strdup(tptr);
                }
 
                RaLabelSuperAddresses(saddr);
 
-               if (label != NULL)
-                  saddr->label = strdup(label);;
+               if (label != NULL) {
+                  if (saddr->label) free(saddr->label);
+                  saddr->label = strdup(label);
+               }
 
-               if (locality >= 0)
+               if (locality > 0)
                   saddr->locality = locality;
 
                if (asn >= 0)
@@ -2831,7 +2848,7 @@ RaReadLocalityConfig (struct ArgusParserStruct *parser, struct ArgusLabelerStruc
          ArgusLog (LOG_ERR, "%s: %s", file, strerror(errno));
 
       if (labeler->prune) 
-         RaPruneAddressTree(labeler, labeler->ArgusAddrTree[AF_INET], ARGUS_TREE_PRUNE_LOCALITY | ARGUS_TREE_PRUNE_ADJ, 0);
+         RaPruneAddressTree(labeler, labeler->ArgusAddrTree[AF_INET], ARGUS_TREE_PRUNE_LABEL | ARGUS_TREE_PRUNE_ADJ, 0);
    }
 
 #ifdef ARGUSDEBUG

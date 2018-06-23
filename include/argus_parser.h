@@ -376,8 +376,8 @@ struct ArgusParserStruct {
    struct ArgusQueueStruct *ArgusRemoteList;
 
    regex_t upreg[ARGUS_MAX_REGEX];
-   regex_t lpreg;
-   regex_t dpreg;
+   regex_t lpreg, dpreg;
+   regex_t sgpreg, dgpreg;
 
    int ArgusRegExItems;
    int ArgusListens;
@@ -409,6 +409,7 @@ struct ArgusParserStruct {
 
    char *RadiumArchive;
    char *ArgusMatchLabel;
+   char *ArgusMatchGroup;
 
    unsigned int ArgusIDType;
    struct ArgusTransportStruct trans;

@@ -151,9 +151,6 @@ extern void ArgusSetDebugString (char *, int, int);
 extern void ArgusCopyDebugString (char *, int);
 extern void ArgusZeroDebugString (void);
 
-void RaInsertAddressTree (struct ArgusParserStruct *, struct ArgusLabelerStruct *labeler, char *);
-void ArgusProcessDirection (struct ArgusParserStruct *, struct ArgusRecordStruct *);
-
 int ArgusCloseDown = 0;
 
 void ArgusResetSearch (void);

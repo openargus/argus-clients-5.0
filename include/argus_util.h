@@ -105,6 +105,13 @@ struct gnamemem {
    void *group;
 };
 
+struct snamemem {
+   struct snamemem *s_nxt;
+   unsigned int status, hashval, secs, ref;
+   char *name;
+   void *service;
+};
+
 struct dbtblmem {
    struct dbtblmem *p_nxt;
    unsigned int hashval;
@@ -1560,6 +1567,8 @@ extern struct dbtblmem *lookup_dbtbl(struct dbtblmem *, const u_char *);
 extern struct dbtblmem *check_dbtbl(struct dbtblmem *, const u_char *);
 extern struct gnamemem *check_group(struct gnamemem *, const u_char *);
 extern struct gnamemem *lookup_group(struct gnamemem *, const u_char *);
+extern struct snamemem *check_service(struct snamemem *, const u_char *);
+extern struct snamemem *lookup_service(struct snamemem *, const u_char *);
 
 extern char *lookup_srcid(const u_char *, struct anamemem *);
 extern char *lookup_alias(const u_char *, struct anamemem *);
@@ -1806,6 +1815,9 @@ extern struct enamemem *check_emem(struct enamemem *, const u_char *);
 
 extern struct gnamemem *lookup_group(struct gnamemem *, const u_char *);
 extern struct gnamemem *check_group(struct gnamemem *, const u_char *);
+
+extern struct snamemem *lookup_service(struct snamemem *, const u_char *);
+extern struct snamemem *check_service(struct snamemem *, const u_char *);
 
 extern char *lookup_srcid(const u_char *, struct anamemem *);
 extern char *lookup_alias(const u_char *, struct anamemem *);

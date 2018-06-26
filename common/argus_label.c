@@ -96,7 +96,7 @@ int ArgusSortSrvSignatures (struct ArgusRecordStruct *, struct ArgusRecordStruct
 void RaAddToSrvTree (struct RaSrvSignature *, int);
 int RaGenerateBinaryTrees(struct ArgusParserStruct *, struct ArgusLabelerStruct *);
 int RaReadSrvSignature(struct ArgusParserStruct *, struct ArgusLabelerStruct *, char *);
-struct RaSrvSignature *RaFindSrv (struct RaSrvTreeNode *, u_char *ptr, int, int);
+struct RaSrvSignature *RaFindSrv (struct RaSrvTreeNode *, u_char *ptr, int, int, int);
 
 int ArgusAddToRecordLabel (struct ArgusParserStruct *, struct ArgusRecordStruct *, char *);
 
@@ -3708,17 +3708,14 @@ RaAddToSrvTree (struct RaSrvSignature *srv, int mode)
 
 
 struct RaSrvSignature *
-RaFindSrv (struct RaSrvTreeNode *node, u_char *ptr, int len, int mode)
+RaFindSrv (struct RaSrvTreeNode *node, u_char *ptr, int len, int mode, int wildcard)
 {
-   int i, nomatch = 0, guess = 0, wildcard = 0;
+   int i, nomatch = 0, guess = 0;
    struct RaSrvSignature *retn = NULL;
    unsigned int mask;
    u_char *buf = NULL;
 
    if ((node != NULL)  && (ptr != NULL)) {
-      if (node->srv->status & RA_SVC_WILDCARD)
-         wildcard++;
-
       switch (mode) {
          case RA_SRC_SERVICES:
             mask = node->srv->srcmask;
@@ -3744,9 +3741,9 @@ RaFindSrv (struct RaSrvTreeNode *node, u_char *ptr, int len, int mode)
                                           (toupper(buf[i]) == ptr[i]))))) {
                      nomatch++;
                      if (buf[i] > ptr[i]) 
-                        retn = RaFindSrv (node->l, ptr, len, mode);
+                        retn = RaFindSrv (node->l, ptr, len, mode, wildcard);
                      else
-                        retn = RaFindSrv (node->r, ptr, len, mode);
+                        retn = RaFindSrv (node->r, ptr, len, mode, wildcard);
                      break;
 
                   } else {
@@ -3823,7 +3820,8 @@ RaValidateService(struct ArgusParserStruct *parser, struct ArgusRecordStruct *ar
    int srcScore = 0, dstScore = 0;
    char buf[MAXSTRLEN];
 #endif
-   int found = 0;
+   struct RaSrvTreeNode *tree = NULL;
+   int status = 0 ,found = 0;
 
    if ((flow = (struct ArgusFlow *)argus->dsrs[ARGUS_FLOW_INDEX]) == NULL)
       return(retn);
@@ -3869,8 +3867,13 @@ RaValidateService(struct ArgusParserStruct *parser, struct ArgusRecordStruct *ar
       return (RaBestGuess);
    }
 
+   if ((tree = RaTCPSrcArray[flow->ip_flow.dport]) != NULL) 
+      status |= tree->srv->status;
+   
+   if ((tree = RaTCPDstArray[flow->ip_flow.dport]) != NULL) 
+      status |= tree->srv->status;
+
    if (suser != NULL) {
-      struct RaSrvTreeNode *tree = NULL;
       u_char *ptr = (u_char *) &suser->array;
       struct RaSrvTreeNode **array = NULL;
       int i, len = suser->count;
@@ -3886,7 +3889,7 @@ RaValidateService(struct ArgusParserStruct *parser, struct ArgusRecordStruct *ar
       }
 
       if ((tree = array[flow->ip_flow.dport]) != NULL) {
-         if ((srvSrc = RaFindSrv (tree, ptr, len, RA_SRC_SERVICES)) == NULL) {
+         if ((srvSrc = RaFindSrv (tree, ptr, len, RA_SRC_SERVICES, (status & RA_SVC_WILDCARD))) == NULL) {
             if (RaBestGuess && (RaBestGuessScore > 5)) {
                srvSrc = RaBestGuess;
                srcPort++;
@@ -3895,16 +3898,20 @@ RaValidateService(struct ArgusParserStruct *parser, struct ArgusRecordStruct *ar
       }
 
       if ((tree = array[flow->ip_flow.sport]) == NULL) {
-         if (srvSrc == NULL)
-            for (i = 0; i < RASIGLENGTH && !found; i++) {
-               switch (flow->ip_flow.ip_p) {
-                  case IPPROTO_TCP: tree = RaSrcTCPServicesTree[i]; break;
-                  case IPPROTO_UDP: tree = RaSrcUDPServicesTree[i]; break;
+         if (srvSrc == NULL) {
+            if (status & RA_SVC_WILDCARD) {
+            } else {
+               for (i = 0; i < RASIGLENGTH && !found; i++) {
+                  switch (flow->ip_flow.ip_p) {
+                     case IPPROTO_TCP: tree = RaSrcTCPServicesTree[i]; break;
+                     case IPPROTO_UDP: tree = RaSrcUDPServicesTree[i]; break;
+                  }
+                  if (tree != NULL)
+                     if ((srvSrc = RaFindSrv(tree, ptr, len, RA_SRC_SERVICES, (status & RA_SVC_WILDCARD))) != NULL)
+                            break;
                }
-               if (tree != NULL)
-                  if ((srvSrc = RaFindSrv(tree, ptr, len, RA_SRC_SERVICES)) != NULL)
-                         break;
             }
+         }
       }
       srcGuess = RaBestGuess;
 #ifdef ARGUSDEBUG
@@ -3920,7 +3927,7 @@ RaValidateService(struct ArgusParserStruct *parser, struct ArgusRecordStruct *ar
 
       RaBestGuess = NULL;
       RaBestGuessScore = 0;
-    
+
       switch (flow->ip_flow.ip_p) {
          case IPPROTO_TCP: array = RaTCPDstArray; break;
          case IPPROTO_UDP: array = RaUDPDstArray; break;
@@ -3929,7 +3936,7 @@ RaValidateService(struct ArgusParserStruct *parser, struct ArgusRecordStruct *ar
       }
 
       if ((tree = array[flow->ip_flow.dport]) != NULL) {
-         if ((srvDst = RaFindSrv (tree, ptr, len, RA_DST_SERVICES)) == NULL) {
+         if ((srvDst = RaFindSrv (tree, ptr, len, RA_DST_SERVICES, (status & RA_SVC_WILDCARD))) == NULL) {
             if (RaBestGuess && (RaBestGuessScore > 4)) {
                srvDst = RaBestGuess;
                dstPort++;
@@ -3938,15 +3945,17 @@ RaValidateService(struct ArgusParserStruct *parser, struct ArgusRecordStruct *ar
       }
 
       if ((srvSrc == NULL) && (srvDst == NULL)) {
-         for (i = 0; i < RASIGLENGTH && !found; i++) {
-            switch (flow->ip_flow.ip_p) {
-               case IPPROTO_TCP: tree = RaDstTCPServicesTree[i]; break;
-               case IPPROTO_UDP: tree = RaDstUDPServicesTree[i]; break;
+         if (status & RA_SVC_WILDCARD) {
+         } else {
+            for (i = 0; i < RASIGLENGTH && !found; i++) {
+               switch (flow->ip_flow.ip_p) {
+                  case IPPROTO_TCP: tree = RaDstTCPServicesTree[i]; break;
+                  case IPPROTO_UDP: tree = RaDstUDPServicesTree[i]; break;
+               }
+               if (tree != NULL)
+                  if ((srvDst = RaFindSrv(tree, ptr, len, RA_DST_SERVICES, (status & RA_SVC_WILDCARD))) != NULL)
+                      break;
             }
-
-            if (tree != NULL)
-               if ((srvDst = RaFindSrv(tree, ptr, len, RA_DST_SERVICES)) != NULL)
-                   break;
          }
       }
 

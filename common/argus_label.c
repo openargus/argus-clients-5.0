@@ -3806,6 +3806,43 @@ RaFindService(struct ArgusRecordStruct *argus)
    return(retn);
 }
 
+static struct RaSrvSignature *
+RaTestEncryption(struct RaSrvTreeNode *tree, u_char *ptr, int len)
+{
+   struct RaSrvSignature *retn = NULL;
+   int val[16];
+   int i, cmax = -1, N = len * 2;
+   double cbnd = 0, pmax, H, entropy;
+
+   bzero(val, sizeof(val));
+
+   for (i = 0; i < len; i++) {
+      int v1 = ptr[i] & 0x0F;
+      int v2 = (ptr[i] & 0xF0) >> 4;
+
+      val[v1]++;
+      val[v2]++;
+   }
+
+   for (i = 0; i < 16; i++) {
+      if (val[i] > cmax) cmax = val[i];
+   }
+
+   pmax = cmax * (1.0) / (N * 1.0);
+   cbnd = cmax * (1.0) + 2.3 * sqrt(N * pmax * (1 - pmax));
+   H    =  (-1.0) * log2(cbnd / (N * 1.0));
+   entropy = (H * 100.0/ 4.0);
+
+   if (entropy > 80.0)
+      retn = (struct RaSrvSignature *) tree;
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (2, "RaTestEncryption: entropy is %.3f\n", entropy);
+#endif
+
+   return (retn);
+}
+
 
 struct RaSrvSignature *
 RaValidateService(struct ArgusParserStruct *parser, struct ArgusRecordStruct *argus)
@@ -3946,16 +3983,26 @@ RaValidateService(struct ArgusParserStruct *parser, struct ArgusRecordStruct *ar
 
       if ((srvSrc == NULL) && (srvDst == NULL)) {
          if (status & RA_SVC_WILDCARD) {
-         } else {
-            for (i = 0; i < RASIGLENGTH && !found; i++) {
-               switch (flow->ip_flow.ip_p) {
-                  case IPPROTO_TCP: tree = RaDstTCPServicesTree[i]; break;
-                  case IPPROTO_UDP: tree = RaDstUDPServicesTree[i]; break;
-               }
-               if (tree != NULL)
-                  if ((srvDst = RaFindSrv(tree, ptr, len, RA_DST_SERVICES, (status & RA_SVC_WILDCARD))) != NULL)
-                      break;
+            if (suser != NULL) {
+               u_char *ptr = (u_char *) &suser->array;
+               srvSrc = RaTestEncryption(tree, ptr, len);
             }
+            if (duser != NULL) {
+               u_char *ptr = (u_char *) &duser->array;
+               srvDst = RaTestEncryption(tree, ptr, len);
+            }
+         }
+      }
+
+      if ((srvSrc == NULL) && (srvDst == NULL)) {
+         for (i = 0; i < RASIGLENGTH && !found; i++) {
+            switch (flow->ip_flow.ip_p) {
+               case IPPROTO_TCP: tree = RaDstTCPServicesTree[i]; break;
+               case IPPROTO_UDP: tree = RaDstUDPServicesTree[i]; break;
+            }
+            if (tree != NULL)
+               if ((srvDst = RaFindSrv(tree, ptr, len, RA_DST_SERVICES, (status & RA_SVC_WILDCARD))) != NULL)
+                  break;
          }
       }
 

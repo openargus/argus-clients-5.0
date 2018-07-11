@@ -2457,7 +2457,7 @@ RaInsertLocalityTree (struct ArgusParserStruct *parser, struct ArgusLabelerStruc
    struct RaAddressStruct *saddr = NULL, *node;
    struct ArgusCIDRAddr *cidr, scidr, dcidr;
    char *sptr = NULL, *eptr = NULL, *ptr = NULL;
-   char tstrbuf[MAXSTRLEN], *tptr = NULL;
+   char tstrbuf[MAXSTRLEN], *tptr = NULL, *label = NULL;
    int retn = 0, locality = -1, asn = -1;
    long long i, step = 0, arange;
    unsigned int masklen = 32;
@@ -2483,14 +2483,24 @@ RaInsertLocalityTree (struct ArgusParserStruct *parser, struct ArgusLabelerStruc
                else
                   bcopy ((char *)&scidr, (char *)&dcidr, sizeof (scidr));
 
-               state = ARGUS_PARSING_LOCALITY;
+               state = ARGUS_PARSING_LABEL;
                break;
             }
 
             case ARGUS_PARSING_END_ADDRESS: {
                if (sptr && ((cidr = RaParseCIDRAddr (parser, sptr)) != NULL))
                   bcopy ((char *)cidr, (char *)&dcidr, sizeof (*cidr));
-               state = ARGUS_PARSING_LOCALITY;
+               state = ARGUS_PARSING_LABEL;
+               break;
+            }
+
+            case ARGUS_PARSING_LABEL: {
+               if (*sptr == '-')
+                  state = ARGUS_PARSING_END_ADDRESS;
+               else {
+                  label = sptr;
+                  state = ARGUS_PARSING_LOCALITY;
+               }
                break;
             }
 
@@ -2498,11 +2508,12 @@ RaInsertLocalityTree (struct ArgusParserStruct *parser, struct ArgusLabelerStruc
                if (sptr != NULL) {
                   char *endptr = NULL;
                   locality = strtod(sptr, &endptr);
-                  if (endptr == sptr)
-                     return (1);
-                  state = ARGUS_PARSING_ASN;
+                  if (endptr == sptr) {
+                     state = ARGUS_PARSING_DONE;
+                  } else 
+                     state = ARGUS_PARSING_ASN;
                } else
-                  return (1);
+                  state = ARGUS_PARSING_DONE;
                break;
             }
 
@@ -2510,8 +2521,8 @@ RaInsertLocalityTree (struct ArgusParserStruct *parser, struct ArgusLabelerStruc
                if (sptr != NULL) {
                   char *endptr = NULL;
                   asn = strtod(sptr, &endptr);
-                  state = ARGUS_PARSING_DONE;
                }
+               state = ARGUS_PARSING_DONE;
                break;
             }
 
@@ -2603,6 +2614,9 @@ RaInsertLocalityTree (struct ArgusParserStruct *parser, struct ArgusLabelerStruc
                }
 
                RaLabelSuperAddresses(saddr);
+
+               if (label != NULL)
+                  saddr->label = strdup(label);;
 
                if (locality >= 0)
                   saddr->locality = locality;
@@ -2787,7 +2801,7 @@ RaReadLocalityConfig (struct ArgusParserStruct *parser, struct ArgusLabelerStruc
                   default:
                      if (isdigit((int)*ptr)) {
                         if (RaInsertLocalityTree (parser, labeler, ptr))
-                           ArgusLog (LOG_ERR, "RaReadLocalityConfig: Syntax error: line number %d\n", linenum);
+                           ArgusLog (LOG_ERR, "RaReadLocalityConfig: Syntax error: file %s line number %d\n", file, linenum);
                      }
                      break;
                }

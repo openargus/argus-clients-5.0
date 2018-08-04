@@ -12298,6 +12298,19 @@ ArgusFetchDstAddr (struct ArgusRecordStruct *argus)
    return(retn);
 }
 
+
+double
+ArgusFetchEtherType (struct ArgusRecordStruct *ns)
+{
+   struct ArgusMacStruct *m1 = (struct ArgusMacStruct *) ns->dsrs[ARGUS_MAC_INDEX];
+   double retn = 0;
+
+   if (m1)
+      retn = m1->mac.mac_union.ether.ehdr.ether_type;
+
+   return(retn);
+}
+
 double
 ArgusFetchProtocol (struct ArgusRecordStruct *ns)
 {

@@ -4763,10 +4763,18 @@ ArgusGenerateHashStruct (struct ArgusAggregatorStruct *na,  struct ArgusRecordSt
 
                                  } else {
                                     bcopy (&((char *) p)[offset], ptr, slen);
+
+                                    if (ARGUS_MASK_ETYPE == i) {
+                                       u_short etype = *(u_short *)ptr;
+                                       if (etype < 1500) {
+                                          *(u_short *)ptr = 0;
+                                       }
+                                    }
                                  }
                               }
                               break;
                            }
+
 
                            case ARGUS_MASK_INODE: {
                               if (na->ArgusMaskDefs[i].len > 0) {
@@ -8127,6 +8135,9 @@ ArgusMergeRecords (struct ArgusAggregatorStruct *na, struct ArgusRecordStruct *n
                           
                                     if (bcmp(&e1->ether_dhost, &e2->ether_dhost, sizeof(e1->ether_dhost)))
                                        bzero ((char *)&e1->ether_dhost, sizeof(e1->ether_dhost));
+
+                                    if (e1->ether_type != e2->ether_type) 
+                                       e1->ether_type = 0;
                                     break;
                                  }
                               }

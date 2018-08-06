@@ -23735,6 +23735,8 @@ ArgusNtoH (struct ArgusRecord *argus)
                   case ARGUS_BEHAVIOR_DSR: {
                      struct ArgusBehaviorStruct *actor = (struct ArgusBehaviorStruct *) dsr;
                      switch (dsr->subtype) {
+                        case ARGUS_TCP_KEYSTROKE:
+                        case ARGUS_SSH_KEYSTROKE:
                         case ARGUS_BEHAVIOR_KEYSTROKE: {
                            actor->keyStroke.src.n_strokes  = ntohl(actor->keyStroke.src.n_strokes);
                            actor->keyStroke.dst.n_strokes  = ntohl(actor->keyStroke.dst.n_strokes);
@@ -24361,6 +24363,8 @@ ArgusHtoN (struct ArgusRecord *argus)
                   case ARGUS_BEHAVIOR_DSR: {
                      struct ArgusBehaviorStruct *actor = (struct ArgusBehaviorStruct *) dsr;
                      switch (dsr->subtype) {
+                        case ARGUS_TCP_KEYSTROKE:
+                        case ARGUS_SSH_KEYSTROKE:
                         case ARGUS_BEHAVIOR_KEYSTROKE: {
                            actor->keyStroke.src.n_strokes  = htonl(actor->keyStroke.src.n_strokes);
                            actor->keyStroke.dst.n_strokes  = htonl(actor->keyStroke.dst.n_strokes);

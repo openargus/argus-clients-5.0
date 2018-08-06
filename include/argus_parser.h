@@ -45,6 +45,7 @@ extern "C" {
 #include <argus_def.h>
 #include <argus_out.h>
 #include <argus_util.h>
+#include <argus_events.h>
 
 #include <net/nff.h>
 
@@ -336,6 +337,7 @@ struct ArgusParserStruct {
    struct ArgusLabelerStruct *ArgusColorLabeler;
    struct ArgusLabelerStruct *ArgusLabeler;
    struct RaBinProcessStruct *RaBinProcess;
+   struct ArgusEventsStruct *ArgusEventsTask;
 
 #if defined(ARGUS_THREADS)
    pthread_t thread, remote, output, timer, dns;

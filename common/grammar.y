@@ -101,7 +101,7 @@ static struct qual qerr = { Q_UNDEF, Q_UNDEF, Q_UNDEF};
 
 %type	<blk>	expr id nid pid term rterm qid tid oid
 %type	<blk>	head thead
-%type	<i>	pqual dqual lqual aqual iqual ndaqual 
+%type	<i>	ptype pqual dqual lqual aqual iqual ndaqual 
 %type	<f>	fqual
 %type	<a>	arth narth
 %type	<i>	oname pname sname tname pnum relop irelop
@@ -253,7 +253,7 @@ head:	  pqual dqual aqual	{ QSET($$.q, $1, $2, $3); }
 	| pqual fqual 		{ QSET($$.q, $1, Q_DEFAULT, $2); $$.q.type = Q_FLOAT; }
 	| pqual dqual iqual 	{ QSET($$.q, $1, $2, $3); $$.q.type = Q_INTEGER; }
 	| pqual dqual fqual 	{ QSET($$.q, $1, $2, $3); $$.q.type = Q_FLOAT; }
-	| pqual PROTO		{ QSET($$.q, $1, Q_DEFAULT, Q_PROTO); }
+	| ptype PROTO		{ QSET($$.q, $1, Q_DEFAULT, Q_PROTO); }
 	| pqual ndaqual		{ QSET($$.q, $1, Q_DEFAULT, $2); }
 	;
 
@@ -262,6 +262,7 @@ thead:	  pqual dqual		{ QSET($$.q, $1, $2, Q_DEFAULT); }
 	;
 
 rterm:	  head id		{ $$ = $2; }
+	| head pname		{ $$.b = Argusgen_scode(argus_yytext, $$.q); }
 	| thead tid		{ $$ = $2; }
 	| paren expr ')'	{ $$.b = $2.b; $$.q = $1.q; }
 	| pname			{ $$.b = Argusgen_proto_abbrev($1); $$.q = qerr; }
@@ -274,6 +275,10 @@ rterm:	  head id		{ $$ = $2; }
 	;
 
 /* protocol level qualifiers */
+ptype:	  LINK			{ $$ = Q_LINK; }
+	| ETHER			{ $$ = Q_ETHER; }
+	| IP			{ $$ = Q_IP; }
+	;
 pqual:	  pname
 	|			{ $$ = Q_DEFAULT; }
 	;
@@ -400,9 +405,7 @@ sname:	  START			{ $$ = Q_START; }
 	| COCODE		{ $$ = Q_COCODE; }
 	;
 
-pname:	  LINK			{ $$ = Q_LINK; }
-	| ETHER			{ $$ = Q_ETHER; }
-	| IP			{ $$ = Q_IP; }
+pname:	  IP			{ $$ = Q_IP; }
 	| IPV4			{ $$ = Q_IPV4; }
 	| IPV6			{ $$ = Q_IPV6; }
 	| ARP			{ $$ = Q_ARP; }

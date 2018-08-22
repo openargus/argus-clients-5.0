@@ -416,6 +416,19 @@ static int RaDescend(char *, size_t, size_t);
 time_t timegm (struct tm *);
 #endif
 
+#ifdef __sun
+# pragma weak RaParseOptHStr
+#endif
+int RaParseOptHStr(const char *const str)
+#ifdef __GNUC__
+ __attribute__((weak));
+#endif
+
+int RaParseOptHStr(const char *const str)
+{
+   return 0;
+}
+
 int ArgusMkdirPath(const char * const path)
 {
    struct stat statbuf;
@@ -1182,7 +1195,7 @@ ArgusParseArgs(struct ArgusParserStruct *parser, int argc, char **argv)
                         optind++;
                } while (optarg && (*optarg != '-'));
 
-               parser->Hstr = strdup(str);
+               RaParseOptHStr(str);
             }
             break;
          }

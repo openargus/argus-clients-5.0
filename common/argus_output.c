@@ -1508,22 +1508,19 @@ ArgusGenerateV3Record (struct ArgusRecordStruct *rec, unsigned char state, char 
                                  ((unsigned int *)(dsr + 1))[4] = ((unsigned int) metric->dst.bytes);
                                  ((unsigned int *)(dsr + 1))[5] = ((unsigned int) metric->dst.appbytes);
                                  break;
-                              case ARGUS_SRCDST_LONGLONG:
+                              case ARGUS_SRCDST_LONGLONG: {
                                  dsr->argus_dsrvl8.qual = type;
                                  dsr->argus_dsrvl8.len = 13;
-                                 ((unsigned int *)(dsr + 1))[0]  = (((unsigned int *)&metric->src.pkts)[0]);
-                                 ((unsigned int *)(dsr + 1))[1]  = (((unsigned int *)&metric->src.pkts)[1]);
-                                 ((unsigned int *)(dsr + 1))[2]  = (((unsigned int *)&metric->src.bytes)[0]);
-                                 ((unsigned int *)(dsr + 1))[3]  = (((unsigned int *)&metric->src.bytes)[1]);
-                                 ((unsigned int *)(dsr + 1))[4]  = (((unsigned int *)&metric->src.appbytes)[0]);
-                                 ((unsigned int *)(dsr + 1))[5]  = (((unsigned int *)&metric->src.appbytes)[1]);
-                                 ((unsigned int *)(dsr + 1))[6]  = (((unsigned int *)&metric->dst.pkts)[0]);
-                                 ((unsigned int *)(dsr + 1))[7]  = (((unsigned int *)&metric->dst.pkts)[1]);
-                                 ((unsigned int *)(dsr + 1))[8]  = (((unsigned int *)&metric->dst.bytes)[0]);
-                                 ((unsigned int *)(dsr + 1))[9]  = (((unsigned int *)&metric->dst.bytes)[1]);
-                                 ((unsigned int *)(dsr + 1))[10] = (((unsigned int *)&metric->dst.appbytes)[0]);
-                                 ((unsigned int *)(dsr + 1))[11] = (((unsigned int *)&metric->dst.appbytes)[1]);
+                                 long long *ptr = (long long *)(dsr + 1);
+
+                                 bcopy(&metric->src.pkts,     ptr++, sizeof(long long));
+                                 bcopy(&metric->src.bytes,    ptr++, sizeof(long long));
+                                 bcopy(&metric->src.appbytes, ptr++, sizeof(long long));
+                                 bcopy(&metric->dst.pkts,     ptr++, sizeof(long long));
+                                 bcopy(&metric->dst.bytes,    ptr++, sizeof(long long));
+                                 bcopy(&metric->dst.appbytes, ptr++, sizeof(long long));
                                  break;
+                              }
 
                               case ARGUS_SRC_BYTE:
                                  dsr->argus_dsrvl8.qual = type;
@@ -1548,16 +1545,16 @@ ArgusGenerateV3Record (struct ArgusRecordStruct *rec, unsigned char state, char 
                                  ((unsigned int *)(dsr + 1))[1] = ((unsigned int) metric->src.bytes);
                                  ((unsigned int *)(dsr + 1))[2] = ((unsigned int) metric->src.appbytes);
                                  break;
-                              case ARGUS_SRC_LONGLONG:
+                              case ARGUS_SRC_LONGLONG: {
                                  dsr->argus_dsrvl8.qual = type;
                                  dsr->argus_dsrvl8.len = 7;
-                                 ((unsigned int *)(dsr + 1))[0] = (((unsigned int *)&metric->src.pkts)[0]);
-                                 ((unsigned int *)(dsr + 1))[1] = (((unsigned int *)&metric->src.pkts)[1]);
-                                 ((unsigned int *)(dsr + 1))[2] = (((unsigned int *)&metric->src.bytes)[0]);
-                                 ((unsigned int *)(dsr + 1))[3] = (((unsigned int *)&metric->src.bytes)[1]);
-                                 ((unsigned int *)(dsr + 1))[4] = (((unsigned int *)&metric->src.appbytes)[0]);
-                                 ((unsigned int *)(dsr + 1))[5] = (((unsigned int *)&metric->src.appbytes)[1]);
+                                 long long *ptr = (long long *)(dsr + 1);
+
+                                 bcopy(&metric->src.pkts,     ptr++, sizeof(long long));
+                                 bcopy(&metric->src.bytes,    ptr++, sizeof(long long));
+                                 bcopy(&metric->src.appbytes, ptr++, sizeof(long long));
                                  break;
+                              }
 
                               case ARGUS_DST_BYTE:
                                  dsr->argus_dsrvl8.qual = type;
@@ -1582,16 +1579,16 @@ ArgusGenerateV3Record (struct ArgusRecordStruct *rec, unsigned char state, char 
                                  ((unsigned int *)(dsr + 1))[1] = ((unsigned int) metric->dst.bytes);
                                  ((unsigned int *)(dsr + 1))[2] = ((unsigned int) metric->dst.appbytes);
                                  break;
-                              case ARGUS_DST_LONGLONG:
+                              case ARGUS_DST_LONGLONG: {
                                  dsr->argus_dsrvl8.qual = type;
                                  dsr->argus_dsrvl8.len = 7;
-                                 ((unsigned int *)(dsr + 1))[0] = (((unsigned int *)&metric->dst.pkts)[0]);
-                                 ((unsigned int *)(dsr + 1))[1] = (((unsigned int *)&metric->dst.pkts)[1]);
-                                 ((unsigned int *)(dsr + 1))[2] = (((unsigned int *)&metric->dst.bytes)[0]);
-                                 ((unsigned int *)(dsr + 1))[3] = (((unsigned int *)&metric->dst.bytes)[1]);
-                                 ((unsigned int *)(dsr + 1))[4] = (((unsigned int *)&metric->dst.appbytes)[0]);
-                                 ((unsigned int *)(dsr + 1))[5] = (((unsigned int *)&metric->dst.appbytes)[1]);
+                                 long long *ptr = (long long *)(dsr + 1);
+
+                                 bcopy(&metric->dst.pkts,     ptr++, sizeof(long long));
+                                 bcopy(&metric->dst.bytes,    ptr++, sizeof(long long));
+                                 bcopy(&metric->dst.appbytes, ptr++, sizeof(long long));
                                  break;
+                              }
                            }
                         } else {
                            dsr->subtype = ARGUS_METER_PKTS_BYTES;
@@ -1620,18 +1617,17 @@ ArgusGenerateV3Record (struct ArgusRecordStruct *rec, unsigned char state, char 
                                  ((unsigned int *)(dsr + 1))[2] = ((unsigned int) metric->dst.pkts);
                                  ((unsigned int *)(dsr + 1))[3] = ((unsigned int) metric->dst.bytes);
                                  break;
-                              case ARGUS_SRCDST_LONGLONG:
+                              case ARGUS_SRCDST_LONGLONG: {
                                  dsr->argus_dsrvl8.qual = type;
                                  dsr->argus_dsrvl8.len = 9;
-                                 ((unsigned int *)(dsr + 1))[0] = (((unsigned int *)&metric->src.pkts)[0]);
-                                 ((unsigned int *)(dsr + 1))[1] = (((unsigned int *)&metric->src.pkts)[1]);
-                                 ((unsigned int *)(dsr + 1))[2] = (((unsigned int *)&metric->src.bytes)[0]);
-                                 ((unsigned int *)(dsr + 1))[3] = (((unsigned int *)&metric->src.bytes)[1]);
-                                 ((unsigned int *)(dsr + 1))[4] = (((unsigned int *)&metric->dst.pkts)[0]);
-                                 ((unsigned int *)(dsr + 1))[5] = (((unsigned int *)&metric->dst.pkts)[1]);
-                                 ((unsigned int *)(dsr + 1))[6] = (((unsigned int *)&metric->dst.bytes)[0]);
-                                 ((unsigned int *)(dsr + 1))[7] = (((unsigned int *)&metric->dst.bytes)[1]);
+                                 long long *ptr = (long long *)(dsr + 1);
+
+                                 bcopy(&metric->src.pkts,     ptr++, sizeof(long long));
+                                 bcopy(&metric->src.bytes,    ptr++, sizeof(long long));
+                                 bcopy(&metric->dst.pkts,     ptr++, sizeof(long long));
+                                 bcopy(&metric->dst.bytes,    ptr++, sizeof(long long));
                                  break;
+                              }
 
                               case ARGUS_SRC_SHORT:
                                  dsr->argus_dsrvl8.qual = type;
@@ -1645,14 +1641,15 @@ ArgusGenerateV3Record (struct ArgusRecordStruct *rec, unsigned char state, char 
                                  ((unsigned int *)(dsr + 1))[0] = ((unsigned int) metric->src.pkts);
                                  ((unsigned int *)(dsr + 1))[1] = ((unsigned int) metric->src.bytes);
                                  break;
-                              case ARGUS_SRC_LONGLONG:
+                              case ARGUS_SRC_LONGLONG: {
                                  dsr->argus_dsrvl8.qual = type;
                                  dsr->argus_dsrvl8.len = 5;
-                                 ((unsigned int *)(dsr + 1))[0] = (((unsigned int *)&metric->src.pkts)[0]);
-                                 ((unsigned int *)(dsr + 1))[1] = (((unsigned int *)&metric->src.pkts)[1]);
-                                 ((unsigned int *)(dsr + 1))[2] = (((unsigned int *)&metric->src.bytes)[0]);
-                                 ((unsigned int *)(dsr + 1))[3] = (((unsigned int *)&metric->src.bytes)[1]);
+                                 long long *ptr = (long long *)(dsr + 1);
+
+                                 bcopy(&metric->src.pkts,     ptr++, sizeof(long long));
+                                 bcopy(&metric->src.bytes,    ptr++, sizeof(long long));
                                  break;
+                              }
 
                               case ARGUS_DST_SHORT:
                                  dsr->argus_dsrvl8.qual = type;
@@ -1666,14 +1663,15 @@ ArgusGenerateV3Record (struct ArgusRecordStruct *rec, unsigned char state, char 
                                  ((unsigned int *)(dsr + 1))[0] = ((unsigned int) metric->dst.pkts);
                                  ((unsigned int *)(dsr + 1))[1] = ((unsigned int) metric->dst.bytes);
                                  break;
-                              case ARGUS_DST_LONGLONG:
+                              case ARGUS_DST_LONGLONG: {
                                  dsr->argus_dsrvl8.qual = type;
                                  dsr->argus_dsrvl8.len = 5;
-                                 ((unsigned int *)(dsr + 1))[0] = (((unsigned int *)&metric->dst.pkts)[0]);
-                                 ((unsigned int *)(dsr + 1))[1] = (((unsigned int *)&metric->dst.pkts)[1]);
-                                 ((unsigned int *)(dsr + 1))[2] = (((unsigned int *)&metric->dst.bytes)[0]);
-                                 ((unsigned int *)(dsr + 1))[3] = (((unsigned int *)&metric->dst.bytes)[1]);
+                                 long long *ptr = (long long *)(dsr + 1);
+
+                                 bcopy(&metric->dst.pkts,     ptr++, sizeof(long long));
+                                 bcopy(&metric->dst.bytes,    ptr++, sizeof(long long));
                                  break;
+                              }
                            }
                         }
                         len     = dsr->argus_dsrvl8.len;
@@ -2216,7 +2214,7 @@ ArgusGenerateV5SrcId(struct ArgusTransportStruct *trans, unsigned int *buf)
          }
       }
       if (trans->hdr.argus_dsrvl8.qual & ARGUS_TYPE_INTERFACE) {
-         *dsrptr++ = *(unsigned int *)&trans->srcid.inf;
+         bcopy(&trans->srcid.inf,  dsrptr++, sizeof(trans->srcid.inf));
          x++;
       }
    }
@@ -2569,22 +2567,19 @@ ArgusGenerateV5Record (struct ArgusRecordStruct *rec, unsigned char state, char 
                                  ((unsigned int *)(dsr + 1))[4] = ((unsigned int) metric->dst.bytes);
                                  ((unsigned int *)(dsr + 1))[5] = ((unsigned int) metric->dst.appbytes);
                                  break;
-                              case ARGUS_SRCDST_LONGLONG:
+                              case ARGUS_SRCDST_LONGLONG: {
                                  dsr->argus_dsrvl8.qual = type;
                                  dsr->argus_dsrvl8.len = 13;
-                                 ((unsigned int *)(dsr + 1))[0]  = (((unsigned int *)&metric->src.pkts)[0]);
-                                 ((unsigned int *)(dsr + 1))[1]  = (((unsigned int *)&metric->src.pkts)[1]);
-                                 ((unsigned int *)(dsr + 1))[2]  = (((unsigned int *)&metric->src.bytes)[0]);
-                                 ((unsigned int *)(dsr + 1))[3]  = (((unsigned int *)&metric->src.bytes)[1]);
-                                 ((unsigned int *)(dsr + 1))[4]  = (((unsigned int *)&metric->src.appbytes)[0]);
-                                 ((unsigned int *)(dsr + 1))[5]  = (((unsigned int *)&metric->src.appbytes)[1]);
-                                 ((unsigned int *)(dsr + 1))[6]  = (((unsigned int *)&metric->dst.pkts)[0]);
-                                 ((unsigned int *)(dsr + 1))[7]  = (((unsigned int *)&metric->dst.pkts)[1]);
-                                 ((unsigned int *)(dsr + 1))[8]  = (((unsigned int *)&metric->dst.bytes)[0]);
-                                 ((unsigned int *)(dsr + 1))[9]  = (((unsigned int *)&metric->dst.bytes)[1]);
-                                 ((unsigned int *)(dsr + 1))[10] = (((unsigned int *)&metric->dst.appbytes)[0]);
-                                 ((unsigned int *)(dsr + 1))[11] = (((unsigned int *)&metric->dst.appbytes)[1]);
+                                 long long *ptr = (long long *)(dsr + 1);
+
+                                 bcopy(&metric->src.pkts,     ptr++, sizeof(long long));
+                                 bcopy(&metric->src.bytes,    ptr++, sizeof(long long));
+                                 bcopy(&metric->src.appbytes, ptr++, sizeof(long long));
+                                 bcopy(&metric->dst.pkts,     ptr++, sizeof(long long));
+                                 bcopy(&metric->dst.bytes,    ptr++, sizeof(long long));
+                                 bcopy(&metric->dst.appbytes, ptr++, sizeof(long long));
                                  break;
+                              }
 
                               case ARGUS_SRC_BYTE:
                                  dsr->argus_dsrvl8.qual = type;
@@ -2609,16 +2604,17 @@ ArgusGenerateV5Record (struct ArgusRecordStruct *rec, unsigned char state, char 
                                  ((unsigned int *)(dsr + 1))[1] = ((unsigned int) metric->src.bytes);
                                  ((unsigned int *)(dsr + 1))[2] = ((unsigned int) metric->src.appbytes);
                                  break;
-                              case ARGUS_SRC_LONGLONG:
+                              case ARGUS_SRC_LONGLONG: {
                                  dsr->argus_dsrvl8.qual = type;
                                  dsr->argus_dsrvl8.len = 7;
-                                 ((unsigned int *)(dsr + 1))[0] = (((unsigned int *)&metric->src.pkts)[0]);
-                                 ((unsigned int *)(dsr + 1))[1] = (((unsigned int *)&metric->src.pkts)[1]);
-                                 ((unsigned int *)(dsr + 1))[2] = (((unsigned int *)&metric->src.bytes)[0]);
-                                 ((unsigned int *)(dsr + 1))[3] = (((unsigned int *)&metric->src.bytes)[1]);
-                                 ((unsigned int *)(dsr + 1))[4] = (((unsigned int *)&metric->src.appbytes)[0]);
-                                 ((unsigned int *)(dsr + 1))[5] = (((unsigned int *)&metric->src.appbytes)[1]);
+                                 long long *ptr = (long long *)(dsr + 1);
+
+                                 bcopy(&metric->src.pkts,     ptr++, sizeof(long long));
+                                 bcopy(&metric->src.bytes,    ptr++, sizeof(long long));
+                                 bcopy(&metric->src.appbytes, ptr++, sizeof(long long));
+
                                  break;
+                              }
 
                               case ARGUS_DST_BYTE:
                                  dsr->argus_dsrvl8.qual = type;
@@ -2643,16 +2639,16 @@ ArgusGenerateV5Record (struct ArgusRecordStruct *rec, unsigned char state, char 
                                  ((unsigned int *)(dsr + 1))[1] = ((unsigned int) metric->dst.bytes);
                                  ((unsigned int *)(dsr + 1))[2] = ((unsigned int) metric->dst.appbytes);
                                  break;
-                              case ARGUS_DST_LONGLONG:
+                              case ARGUS_DST_LONGLONG: {
                                  dsr->argus_dsrvl8.qual = type;
                                  dsr->argus_dsrvl8.len = 7;
-                                 ((unsigned int *)(dsr + 1))[0] = (((unsigned int *)&metric->dst.pkts)[0]);
-                                 ((unsigned int *)(dsr + 1))[1] = (((unsigned int *)&metric->dst.pkts)[1]);
-                                 ((unsigned int *)(dsr + 1))[2] = (((unsigned int *)&metric->dst.bytes)[0]);
-                                 ((unsigned int *)(dsr + 1))[3] = (((unsigned int *)&metric->dst.bytes)[1]);
-                                 ((unsigned int *)(dsr + 1))[4] = (((unsigned int *)&metric->dst.appbytes)[0]);
-                                 ((unsigned int *)(dsr + 1))[5] = (((unsigned int *)&metric->dst.appbytes)[1]);
+                                 long long *ptr = (long long *)(dsr + 1);
+
+                                 bcopy(&metric->dst.pkts,     ptr++, sizeof(long long));
+                                 bcopy(&metric->dst.bytes,    ptr++, sizeof(long long));
+                                 bcopy(&metric->dst.appbytes, ptr++, sizeof(long long));
                                  break;
+                              }
                            }
                         } else {
                            dsr->subtype = ARGUS_METER_PKTS_BYTES;
@@ -2681,18 +2677,18 @@ ArgusGenerateV5Record (struct ArgusRecordStruct *rec, unsigned char state, char 
                                  ((unsigned int *)(dsr + 1))[2] = ((unsigned int) metric->dst.pkts);
                                  ((unsigned int *)(dsr + 1))[3] = ((unsigned int) metric->dst.bytes);
                                  break;
-                              case ARGUS_SRCDST_LONGLONG:
+                              case ARGUS_SRCDST_LONGLONG: {
                                  dsr->argus_dsrvl8.qual = type;
                                  dsr->argus_dsrvl8.len = 9;
-                                 ((unsigned int *)(dsr + 1))[0] = (((unsigned int *)&metric->src.pkts)[0]);
-                                 ((unsigned int *)(dsr + 1))[1] = (((unsigned int *)&metric->src.pkts)[1]);
-                                 ((unsigned int *)(dsr + 1))[2] = (((unsigned int *)&metric->src.bytes)[0]);
-                                 ((unsigned int *)(dsr + 1))[3] = (((unsigned int *)&metric->src.bytes)[1]);
-                                 ((unsigned int *)(dsr + 1))[4] = (((unsigned int *)&metric->dst.pkts)[0]);
-                                 ((unsigned int *)(dsr + 1))[5] = (((unsigned int *)&metric->dst.pkts)[1]);
-                                 ((unsigned int *)(dsr + 1))[6] = (((unsigned int *)&metric->dst.bytes)[0]);
-                                 ((unsigned int *)(dsr + 1))[7] = (((unsigned int *)&metric->dst.bytes)[1]);
+                                 long long *ptr = (long long *)(dsr + 1);
+
+                                 bcopy(&metric->src.pkts,     ptr++, sizeof(long long));
+                                 bcopy(&metric->src.bytes,    ptr++, sizeof(long long));
+                                 bcopy(&metric->dst.pkts,     ptr++, sizeof(long long));
+                                 bcopy(&metric->dst.bytes,    ptr++, sizeof(long long));
+
                                  break;
+                              }
 
                               case ARGUS_SRC_SHORT:
                                  dsr->argus_dsrvl8.qual = type;
@@ -2706,14 +2702,15 @@ ArgusGenerateV5Record (struct ArgusRecordStruct *rec, unsigned char state, char 
                                  ((unsigned int *)(dsr + 1))[0] = ((unsigned int) metric->src.pkts);
                                  ((unsigned int *)(dsr + 1))[1] = ((unsigned int) metric->src.bytes);
                                  break;
-                              case ARGUS_SRC_LONGLONG:
+                              case ARGUS_SRC_LONGLONG: {
                                  dsr->argus_dsrvl8.qual = type;
                                  dsr->argus_dsrvl8.len = 5;
-                                 ((unsigned int *)(dsr + 1))[0] = (((unsigned int *)&metric->src.pkts)[0]);
-                                 ((unsigned int *)(dsr + 1))[1] = (((unsigned int *)&metric->src.pkts)[1]);
-                                 ((unsigned int *)(dsr + 1))[2] = (((unsigned int *)&metric->src.bytes)[0]);
-                                 ((unsigned int *)(dsr + 1))[3] = (((unsigned int *)&metric->src.bytes)[1]);
+                                 long long *ptr = (long long *)(dsr + 1);
+
+                                 bcopy(&metric->src.pkts,     ptr++, sizeof(long long));
+                                 bcopy(&metric->src.bytes,    ptr++, sizeof(long long));
                                  break;
+                              }
 
                               case ARGUS_DST_SHORT:
                                  dsr->argus_dsrvl8.qual = type;
@@ -2727,14 +2724,15 @@ ArgusGenerateV5Record (struct ArgusRecordStruct *rec, unsigned char state, char 
                                  ((unsigned int *)(dsr + 1))[0] = ((unsigned int) metric->dst.pkts);
                                  ((unsigned int *)(dsr + 1))[1] = ((unsigned int) metric->dst.bytes);
                                  break;
-                              case ARGUS_DST_LONGLONG:
+                              case ARGUS_DST_LONGLONG: {
                                  dsr->argus_dsrvl8.qual = type;
                                  dsr->argus_dsrvl8.len = 5;
-                                 ((unsigned int *)(dsr + 1))[0] = (((unsigned int *)&metric->dst.pkts)[0]);
-                                 ((unsigned int *)(dsr + 1))[1] = (((unsigned int *)&metric->dst.pkts)[1]);
-                                 ((unsigned int *)(dsr + 1))[2] = (((unsigned int *)&metric->dst.bytes)[0]);
-                                 ((unsigned int *)(dsr + 1))[3] = (((unsigned int *)&metric->dst.bytes)[1]);
+                                 long long *ptr = (long long *)(dsr + 1);
+
+                                 bcopy(&metric->dst.pkts,     ptr++, sizeof(long long));
+                                 bcopy(&metric->dst.bytes,    ptr++, sizeof(long long));
                                  break;
+                              }
                            }
                         }
                         len     = dsr->argus_dsrvl8.len;
@@ -5162,8 +5160,8 @@ ArgusWriteOutSocket(struct ArgusOutputStruct *output,
    unsigned char *ptr;
    struct ArgusWireFmtBuffer *awf;
    struct ArgusQueueNode *node;
-   const char *outputbuf;
-   unsigned outputlen;
+   const char *outputbuf = NULL;
+   unsigned outputlen = 0;
 
    if ((list = asock->ArgusOutputList) != NULL) {
       if (asock->rec != NULL)

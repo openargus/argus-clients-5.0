@@ -181,6 +181,7 @@ static struct slist *xfer_to_x(struct arth *);
 static struct slist *xfer_to_a(struct arth *);
 static struct ablock *Argusgen_len(int, int);
 static struct ablock *Argusgen_linktype(unsigned int);
+static struct ablock *Argusgen_flowtype(unsigned int);
 
 #if !defined(CYGWIN)
 static u_int net_mask(u_int *);
@@ -310,22 +311,27 @@ deadman(pid_t pid)
 static void
 syntax()
 {
+   char *errormsg = "ERROR: syntax error in filter expression";
+
+#if defined(ARGUSFORKFILTER)
    extern struct ArgusParserStruct *ArgusParser;
-   char response, *errormsg = "ERROR: syntax error in filter expression";
+   char response;
    int len;
+#endif
 
 #if defined(ARGUSDEBUG)
       ArgusDebug (4, "ArgusFilterCompile syntax() %s\n", errormsg);
 #endif
 
+#if defined(ARGUSFORKFILTER)
    if (ArgusParser->ArgusFilterFiledes[1] != -1) {
       if ((len = write (ArgusParser->ArgusFilterFiledes[1], errormsg, strlen(errormsg))) < 0)
          ArgusLog (LOG_ERR, "ArgusFilterCompile: write retn %s\n", strerror(errno));
       if ((len = read (ArgusParser->ArgusControlFiledes[0], &response, 1)) < 0)
          ArgusLog (LOG_ERR, "ArgusFilterCompile: read retn %s\n", strerror(errno));
    } else
+#endif
       ArgusLog (LOG_ERR, errormsg);
-   exit (1);
 }
 
 
@@ -1005,9 +1011,25 @@ static struct ablock *
 Argusgen_linktype(unsigned int proto)
 {
    struct ablock *b1 = NULL;
+   struct ArgusMacStruct mac;
+   int offset = ((char *)&mac.mac.mac_union.ether.ehdr.ether_type - (char *)&mac);
+
+   b1 = Argusgen_cmp(ARGUS_MAC_INDEX, offset, NFF_H, (u_int) proto, Q_EQUAL, Q_DEFAULT);
+
+#if defined(ARGUSDEBUG)
+   ArgusDebug (4, "Argusgen_linktype (0x%x) returns %p\n", proto, b1);
+#endif
+
+   return (b1);
+}
+
+
+static struct ablock *
+Argusgen_flowtype(unsigned int proto)
+{
+   struct ablock *b1 = NULL;
    struct ArgusFlow flow;
    int offset = ((char *)&flow.hdr.argus_dsrvl8.qual - (char *)&flow);
- 
    switch (proto) {
       default:
          switch (proto) {
@@ -1043,7 +1065,7 @@ Argusgen_linktype(unsigned int proto)
    }
 
 #if defined(ARGUSDEBUG)
-   ArgusDebug (4, "Argusgen_linktype (0x%x) returns %p\n", proto, b1);
+   ArgusDebug (4, "Argusgen_flowtype (0x%x) returns %p\n", proto, b1);
 #endif
 
    return (b1);
@@ -1064,7 +1086,7 @@ Argusgen_prototype(unsigned int v, unsigned int proto)
          switch (proto) {
             case Q_IPV4:
                offset = ((char *)&flow.ip_flow.ip_p - (char *)&flow);
-               b0 = Argusgen_linktype(ETHERTYPE_IP);
+               b0 = Argusgen_flowtype(ETHERTYPE_IP);
                b1 = Argusgen_cmp(ARGUS_FLOW_INDEX, offset, NFF_B, v, Q_EQUAL, Q_DEFAULT);
                Argusgen_and(b0, b1);
                return b1;
@@ -1075,7 +1097,7 @@ Argusgen_prototype(unsigned int v, unsigned int proto)
 #else
                offset = ((char *)&flow.ipv6_flow - (char *)&flow) + 32;
 #endif
-               b0 = Argusgen_linktype(ETHERTYPE_IPV6);
+               b0 = Argusgen_flowtype(ETHERTYPE_IPV6);
                b1 = Argusgen_cmp(ARGUS_FLOW_INDEX, offset, NFF_B, v, Q_EQUAL, Q_DEFAULT);
                Argusgen_and(b0, b1);
                return b1;
@@ -2473,6 +2495,7 @@ Arguslookup_proto( char *name, int proto)
             ArgusLog(LOG_ERR, "unknown proto '%s'", name);
          break;
 
+      case Q_ETHER:
       case Q_LINK:
          /* XXX should look up h/w protocol type based on linktype */
          v = argus_nametoeproto(name);
@@ -2868,7 +2891,6 @@ Argusgen_dsb(int v, int dir, u_int op)
 static struct ablock *
 Argusgen_cocode(char *v, int dir, u_int op)
 {
-   extern struct ArgusParserStruct *ArgusParser;
    struct ablock *b0 = NULL, *b1 = NULL;
    struct ArgusCountryCodeStruct cocode;
    unsigned short val;
@@ -4513,7 +4535,8 @@ Argusgen_scode(char *name, struct qual q)
       case Q_DEFAULT:
       case Q_HOST:
          switch (proto) {
-            case Q_LINK: {
+            case Q_LINK:
+            case Q_ETHER: {
                eaddr = argus_ether_hostton(name);
                if (eaddr == NULL)
                   ArgusLog(LOG_ERR, "unknown ether host '%s'", name);

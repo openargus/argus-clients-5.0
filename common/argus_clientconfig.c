@@ -64,6 +64,9 @@ close_out:
 /* configuration files can contain values with backticks, such as
  * `hostname` and `hostuuid`.  Convert those to the actual values here.
  */
+
+char *ArgusExpandBackticks(const char * const);
+
 char *
 ArgusExpandBackticks(const char * const in)
 {

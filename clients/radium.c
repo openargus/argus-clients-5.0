@@ -626,7 +626,6 @@ RadiumParseResourceLine (struct ArgusParserStruct *parser, int linenum,
 {
    int retn = 0;
    char *ptr;
-   FILE *fd;
 
    switch (idx) {
       case RADIUM_MONITOR_ID: {

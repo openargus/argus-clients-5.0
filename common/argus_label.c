@@ -1430,6 +1430,9 @@ RaInsertAddress (struct ArgusParserStruct *parser, struct ArgusLabelerStruct *la
                                  ArgusLog (LOG_ERR, "RaInsertAddress: ArgusCalloc error %s\n", strerror(errno));
 
                               bcopy ((char *)&node->addr, (char *)&addr->addr, sizeof(addr->addr));
+                              if (node->addr.str != NULL)
+                                 addr->addr.str = strdup(node->addr.str);
+
                               addr->addr.masklen = maskn;
                               addr->offset = lt->offset;
                               addr->status = status;
@@ -1493,6 +1496,9 @@ RaInsertAddress (struct ArgusParserStruct *parser, struct ArgusLabelerStruct *la
                                  ArgusLog (LOG_ERR, "RaInsertAddress: ArgusCalloc error %s\n", strerror(errno));
 
                               bcopy ((char *)&node->addr, (char *)&addr->addr, sizeof(addr->addr));
+                              if (node->addr.str != NULL)
+                                 addr->addr.str = strdup(node->addr.str);
+
                               addr->addr.masklen = maskn;
                               addr->offset = rt->offset;
                               addr->status = status;
@@ -1590,7 +1596,10 @@ RaInsertAddress (struct ArgusParserStruct *parser, struct ArgusLabelerStruct *la
                if ((addr = (struct RaAddressStruct *) ArgusCalloc (1, sizeof(*addr))) == NULL)
                   ArgusLog (LOG_ERR, "RaInsertAddress: ArgusCalloc error %s\n", strerror(errno));
 
-               bcopy ((char *)&node->addr, (char *)&addr->addr, sizeof(addr->addr));
+               bcopy ((char *)&tree->addr, (char *)&addr->addr, sizeof(addr->addr));
+               if (tree->addr.str != NULL)
+                  addr->addr.str = strdup(tree->addr.str);
+
                addr->offset = tree->offset;
                addr->status = status;
 
@@ -2043,6 +2052,8 @@ ArgusGetCIDRList (struct ArgusCIDRAddr *addr, int *elem, int type)
                   ArgusLog (LOG_ERR, "ArgusGetCIDRList: ArgusCalloc error %s\n", strerror(errno));
  
                bcopy(addr, cidr, sizeof(*cidr));
+               if (addr->str != NULL)
+                  cidr->str = strdup(addr->str);
  
                cidr->masklen = (32 - i);
                cidr->mask[0] = 0xFFFFFFFF << i;
@@ -2177,6 +2188,9 @@ RaInsertAddressTree (struct ArgusParserStruct *parser, struct ArgusLabelerStruct
                      if (cptr && ((cidr = RaParseCIDRAddr (parser, cptr)) != NULL)) {
                         if ((saddr = (struct RaAddressStruct *) ArgusCalloc (1, sizeof(*saddr))) != NULL) {
                            bcopy ((char *)cidr, (char *)&saddr->addr, sizeof (*cidr));
+                           if (cidr->str != NULL) 
+                              saddr->str = strdup(cidr->str);
+
                            ArgusAddToQueue(ArgusAddressQueue, &saddr->qhdr, ARGUS_LOCK);
                         }
                      }
@@ -5232,6 +5246,7 @@ ArgusGetInterfaceAddresses(struct ArgusParserStruct *parser)
 
                      bzero ((char *)&node, sizeof(node));
                      bcopy (cidr, &node.addr, sizeof(*cidr));
+                     node.addr.str = NULL;
 
                      if ((raddr = RaFindAddress (parser, labeler->ArgusAddrTree[AF_INET], &node, ARGUS_EXACT_MATCH)) != NULL) {
                         RaLabelSuperAddresses(raddr);
@@ -5249,6 +5264,8 @@ ArgusGetInterfaceAddresses(struct ArgusParserStruct *parser)
 
                         bzero ((char *)&node, sizeof(node));
                         bcopy (cidr, &node.addr, sizeof(*cidr));
+                        if (cidr->str != NULL)
+                           node.addr.str = strdup(cidr->str);
 
                         if ((raddr = RaFindAddress (parser, labeler->ArgusAddrTree[AF_INET], &node, ARGUS_EXACT_MATCH)) != NULL)
                            raddr->locality = 4;

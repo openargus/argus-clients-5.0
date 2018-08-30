@@ -1080,7 +1080,7 @@ RaReadFlowLabels (struct ArgusParserStruct *parser, struct ArgusLabelerStruct *l
 {
    char strbuf[MAXSTRLEN], *str = strbuf;
    char *filter = NULL, *label = NULL, *color = NULL;
-   char *ptr, *end, *value;
+   char *ptr, *end;
 
    int retn = 1, linenum = 0;
    FILE *fd =  NULL;
@@ -1112,6 +1112,8 @@ RaReadFlowLabels (struct ArgusParserStruct *parser, struct ArgusLabelerStruct *l
                      while (!done) {
                         for (i = 0; i < ARGUS_RCITEMS; i++) {
                            if (!(strncmp(str, ArgusFlowLabelFields[i], strlen(ArgusFlowLabelFields[i])))) {
+                              char *value = NULL;
+
                               ptr = str + strlen(ArgusFlowLabelFields[i]); 
                               while (*ptr && isspace((int)*ptr)) ptr++;
 

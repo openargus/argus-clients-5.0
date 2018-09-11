@@ -1170,6 +1170,7 @@ ArgusParseArgs(struct ArgusParserStruct *parser, int argc, char **argv)
             if ((strncmp(parser->ArgusProgramName, "rahisto", 7)))
                parser->Hflag = 1;
             else {
+               int hopt_done = 0;
                char str[1024], Hstr[1024], *Hptr = Hstr;
                bzero (str, 1024);
                bzero (Hstr, 1024);
@@ -1190,10 +1191,16 @@ ArgusParseArgs(struct ArgusParserStruct *parser, int argc, char **argv)
 
                   snprintf (&str[strlen(str)], (1024 - strlen(str)), "%s ", optarg);
 
-                  if ((optarg = argv[optind]) != NULL)
+                  optarg = argv[optind];
+                  if (optarg != NULL) {
                      if (*optarg != '-')
                         optind++;
-               } while (optarg && (*optarg != '-'));
+                     else if (*(optarg+1) && isdigit(*(optarg+1)))
+                        optind++;
+                     else
+                        hopt_done = 1;
+                  }
+               } while (optarg && !hopt_done);
 
                RaParseOptHStr(str);
             }

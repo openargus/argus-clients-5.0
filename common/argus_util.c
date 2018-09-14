@@ -3234,6 +3234,13 @@ ArgusHandleRecord (struct ArgusParserStruct *parser, struct ArgusInput *input, s
                break;
          }
 
+         if (!(((ptr->hdr.type & ARGUS_MAR) && ((ptr->hdr.cause & 0xF0) == ARGUS_START))))
+            parser->ArgusTotalRecords++;
+
+         if (parser->sNflag && (parser->sNflag >= parser->ArgusTotalRecords))
+            return (ptr->hdr.len * 4);
+
+
          if ((argus = ArgusGenerateRecordStruct (parser, input, (struct ArgusRecord *) ptr)) != NULL) {
 
             ArgusProcessDirection(parser, argus);
@@ -3253,16 +3260,11 @@ ArgusHandleRecord (struct ArgusParserStruct *parser, struct ArgusInput *input, s
                      return (argus->hdr.len * 4);
                }
 
-               if (!(((ptr->hdr.type & 0xF0) == ARGUS_MAR) && (argus->status & ARGUS_INIT_MAR)))
-                  parser->ArgusTotalRecords++;
-               else {
+               if (((ptr->hdr.type & 0xF0) == ARGUS_MAR) && (argus->status & ARGUS_INIT_MAR)) {
 #ifdef _LITTLE_ENDIAN
                   ArgusHtoN(ptr);
 #endif
                }
-
-               if (parser->sNflag && (parser->sNflag >= parser->ArgusTotalRecords))
-                  return (argus->hdr.len * 4);
 
                if ((retn = ArgusCheckTime (parser, argus, ArgusTimeRangeStrategy)) != 0) {
                   if (parser->ArgusWfileList != NULL) {

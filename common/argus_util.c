@@ -2902,7 +2902,6 @@ RaClearConfiguration (struct ArgusParserStruct *parser)
    parser->gflag = 0;
    parser->Gflag = 0;
    parser->Hflag = 0;
-   parser->Hstr = NULL;
    parser->idflag = 0;
    parser->jflag = 0;
    parser->lflag = 0;

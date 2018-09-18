@@ -5808,211 +5808,6 @@ RaGetUserDataString (struct ArgusRecordStruct *argus)
    return (retn);
 }
 
-
-// Format is "[abs] metric bins[L][:range]" or "[abs] metric bins[:size]"
-// range is value-value and size if just a single number.  Value is 
-// %f[umsMHD] or %f[umKMG] depending on the type of metric used.
-//
-// If the format simply provides the number of bins, the range/size
-// part is determined from the data.  When this occurs the routine returns
-//
-//    ARGUS_HISTO_RANGE_UNSPECIFIED
-//
-// and the program needs to determine its own range.
-//
-// Appropriate metrics are any metrics support for sorting.
-
-
-int ArgusHistoMetricParse (struct ArgusParserStruct *, struct ArgusAggregatorStruct *);
-
-int
-ArgusHistoMetricParse (struct ArgusParserStruct *parser, struct ArgusAggregatorStruct *agr)
-{
-   char *ptr, *vptr, tmpbuf[128], *tmp = tmpbuf; 
-   char *str = parser->Hstr, *endptr = NULL;
-   char *metric = NULL;
-   int retn = 0, keyword = -1;
-
-   bzero (tmpbuf, 128);
-   snprintf (tmpbuf, 128, "%s", str);
-
-   if ((ptr = strstr (tmp, "abs ")) != NULL) {
-      agr->AbsoluteValue++;
-      tmp = ptr + 4;
-   }
-
-   if ((ptr = strchr (tmp, ' ')) != NULL) {
-      int x, found = 0;
-      metric = tmp;
-      *ptr++ = '\0';
-      tmp = ptr;
-
-         for (x = 0; x < MAX_METRIC_ALG_TYPES; x++) {
-            if (!strncmp(RaFetchAlgorithmTable[x].field, metric, strlen(metric))) {
-               agr->RaMetricFetchAlgorithm = RaFetchAlgorithmTable[x].fetch;
-               agr->ArgusMetricIndex = x;
-               keyword = x;
-               found++;
-               break;
-            }
-         }
-         if (!found)
-            usage();
-
-         if ((ptr = strchr (tmp, ':')) != NULL) {
-            *ptr++ = '\0';
-            vptr = ptr;
-
-            if (strchr (tmp, 'L'))
-               parser->RaHistoMetricLog++;
-
-            if (isdigit((int)*tmp))
-               if ((parser->RaHistoBins = atoi(tmp)) < 0)
-                  return (retn);
-
-// Need to add code to deal with ranges that include negative numbers
-// So parse a number, then check for the -, then parse another number
-// if needed.
-
-            parser->RaHistoStart = strtod(vptr, &endptr);
-            if (endptr == vptr)
-               return (retn);
-
-            vptr = endptr;
-            if ((ptr = strchr (vptr, '-')) != NULL) {
-               *ptr++ = '\0';
-               parser->RaHistoEnd = strtod(ptr, &endptr);
-               if (endptr == ptr)
-                  return (retn);
-            } else {
-               parser->RaHistoBinSize = parser->RaHistoStart;
-               parser->RaHistoStart = 0.0;
-               parser->RaHistoEnd = parser->RaHistoBinSize * (parser->RaHistoBins * 1.0);
-            }
-
-            switch (*endptr) {
-               case 'u': parser->RaHistoStart *= 0.000001;
-                         parser->RaHistoEnd   *= 0.000001; break;
-               case 'm': parser->RaHistoStart *= 0.001;
-                         parser->RaHistoEnd   *= 0.001;    break;
-               case 's': parser->RaHistoStart *= 1.0;
-                         parser->RaHistoEnd   *= 1.0;      break;
-               case 'M': {
-                  switch (keyword) {
-                     case ARGUSMETRICSTARTTIME:
-                     case ARGUSMETRICLASTTIME:
-                     case ARGUSMETRICDURATION:
-                     case ARGUSMETRICMEAN:
-                     case ARGUSMETRICMIN:
-                     case ARGUSMETRICMAX:
-                        parser->RaHistoStart *= 60.0;
-                        parser->RaHistoEnd   *= 60.0;
-                        break;
-
-                     default:
-                        parser->RaHistoStart *= 1000000.0;
-                        parser->RaHistoEnd   *= 1000000.0;
-                        break;
-                  }
-                  break;
-               }
-               case 'H': parser->RaHistoStart *= 3600.0;
-                         parser->RaHistoEnd   *= 3600.0;   break;
-               case 'D': parser->RaHistoStart *= 86400.0;
-                         parser->RaHistoEnd   *= 86400.0;  break;
-               case 'K': parser->RaHistoStart *= 1000.0;
-                         parser->RaHistoEnd   *= 1000.0;  break;
-               case 'G': parser->RaHistoStart *= 1000000000.0;
-                         parser->RaHistoEnd   *= 1000000000.0;  break;
-               case  ' ':
-               case '\0': break;
-
-               default:
-                  return (retn);
-            }
-
-            retn = 1;
-
-         } else {
-            if (isdigit((int)*tmp))
-               if ((parser->RaHistoBins = atoi(tmp)) < 0)
-                  return (retn);
-
-            retn = ARGUS_HISTO_RANGE_UNSPECIFIED;
-         }
-
-         if ((parser->RaHistoRecords = (struct ArgusRecordStruct **) ArgusCalloc (parser->RaHistoBins + 2, sizeof(struct ArgusRecordStruct *))) != NULL) {
-            parser->RaHistoRangeState = retn;
-
-            if (parser->RaHistoMetricLog) {
-               parser->RaHistoEndLog      = log10(parser->RaHistoEnd);
-
-               if (parser->RaHistoStart > 0) {
-                  parser->RaHistoStartLog = log10(parser->RaHistoStart);
-               } else {
-                  parser->RaHistoLogInterval = (parser->RaHistoEndLog/(parser->RaHistoBins * 1.0));
-                  parser->RaHistoStartLog = parser->RaHistoEndLog - (parser->RaHistoLogInterval * parser->RaHistoBins);
-               }
-
-               parser->RaHistoBinSize = (parser->RaHistoEndLog - parser->RaHistoStartLog) / parser->RaHistoBins * 1.0;
-
-            } else
-               parser->RaHistoBinSize = ((parser->RaHistoEnd - parser->RaHistoStart) * 1.0) / parser->RaHistoBins * 1.0;
-
-         } else
-            ArgusLog (LOG_ERR, "RaHistoMetricParse: ArgusCalloc %s\n", strerror(errno));
-   }
-
-#ifdef ARGUSDEBUG
-   ArgusDebug (3, "ArgusHistoMetricParse(%p): returning %d \n", parser, retn);
-#endif
-   return (retn);
-}
-
-
-int
-ArgusHistoTallyMetric (struct ArgusParserStruct *parser, struct ArgusRecordStruct *ns, double value)
-{
-   int retn = 0, i = 0;
-   double start, end, bsize;
-   double iptr;
-
-   if (parser && (ns != NULL)) {
-      bsize = parser->RaHistoBinSize;
-
-      if (parser->RaHistoMetricLog) {
-         value = log10(value);
-         start = parser->RaHistoStartLog;
-           end = parser->RaHistoEndLog;
-      } else {
-         start = parser->RaHistoStart;
-           end = parser->RaHistoEnd;
-      }
-
-      if (value >= start) {
-         modf((value - start)/bsize, &iptr);
-
-         if ((i = iptr) > parser->RaHistoBins)
-            i = parser->RaHistoBins + 1;
-
-         if (value < (end + bsize))
-            i++;
-      } else {
-         i = 0;
-      }
-   }
-
-   if (parser->RaHistoRecords[i] != NULL) {
-      ArgusMergeRecords (parser->ArgusAggregator, parser->RaHistoRecords[i], ns);
-   } else
-      parser->RaHistoRecords[i] = ArgusCopyRecordStruct(ns);
-
-#ifdef ARGUSDEBUG
-   ArgusDebug (3, "ArgusHistoTallyMetric(%p, %p): returning %d\n", parser, ns, retn);
-#endif
-   return (retn);
-}
-
 struct RaPolicyStruct *
 RaFlowModelOverRides(struct ArgusAggregatorStruct *na, struct ArgusRecordStruct *ns)
 {
@@ -7159,6 +6954,8 @@ ArgusMergeRecords (struct ArgusAggregatorStruct *na, struct ArgusRecordStruct *n
                               if (t1->src.start.tv_sec == 0) {
                                  bcopy ((char *)t2, (char *)t1, sizeof (*t1));
                               } else {
+                                 struct ArgusTimeObject t2cpy = *t2;
+
                                  if ((t1->src.start.tv_sec  >  t2->src.start.tv_sec) ||
                                     ((t1->src.start.tv_sec  == t2->src.start.tv_sec) &&
                                      (t1->src.start.tv_usec >  t2->src.start.tv_usec)))
@@ -7170,14 +6967,14 @@ ArgusMergeRecords (struct ArgusAggregatorStruct *na, struct ArgusRecordStruct *n
                                     t1->hdr.argus_dsrvl8.len = sizeof(*t1);
                                  }
                                  if ((t2->src.end.tv_sec == 0) || (t2->hdr.subtype == ARGUS_TIME_ABSOLUTE_TIMESTAMP)) {
-                                    t2->src.end = t2->src.start;
-                                    t2->hdr.subtype         = ARGUS_TIME_ABSOLUTE_RANGE;
-                                    t2->hdr.argus_dsrvl8.len = sizeof(*t1);
+                                    t2cpy.src.end = t2->src.start;
+                                    t2cpy.hdr.subtype         = ARGUS_TIME_ABSOLUTE_RANGE;
+                                    t2cpy.hdr.argus_dsrvl8.len = sizeof(*t1);
                                  }
-                                 if ((t1->src.end.tv_sec  <  t2->src.end.tv_sec) ||
-                                    ((t1->src.end.tv_sec  == t2->src.end.tv_sec) &&
-                                     (t1->src.end.tv_usec <  t2->src.end.tv_usec)))
-                                    t1->src.end = t2->src.end;
+                                 if ((t1->src.end.tv_sec  <  t2cpy.src.end.tv_sec) ||
+                                    ((t1->src.end.tv_sec  == t2cpy.src.end.tv_sec) &&
+                                     (t1->src.end.tv_usec <  t2cpy.src.end.tv_usec)))
+                                    t1->src.end = t2cpy.src.end;
                               }
                            }
                         }
@@ -8058,13 +7855,14 @@ ArgusMergeRecords (struct ArgusAggregatorStruct *na, struct ArgusRecordStruct *n
                         struct ArgusDataStruct *d2 = (struct ArgusDataStruct *) ns2->dsrs[i];
 
                         if (d1 && d2) {
+                           unsigned short d2count = d2->count;
                            int t1len = d1->size - d1->count;
                            int t2len = d2->size - d2->count;
 
                            if (t1len < 0) { d1->count = d1->size; t1len = 0; }
-                           if (t2len < 0) { d2->count = d2->size; t2len = 0; }
+                           if (t2len < 0) { d2count = d2->size; t2len = 0; }
 
-                           t1len = (t1len > d2->count) ? d2->count : t1len;
+                           t1len = (t1len > d2count) ? d2count : t1len;
 
                            if (t1len > 0) {
                               bcopy(d2->array, &d1->array[d1->count], t1len);

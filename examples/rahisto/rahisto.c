@@ -50,28 +50,252 @@
 #include <rasplit.h>
 #include <argus_sort.h>
 #include <argus_cluster.h>
+#include <argus_metric.h>
  
 #include <signal.h>
 #include <ctype.h>
 #include <math.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include "rahisto.h"
 
+/* The man page claims 112 metrics are supported.  Hopefully sixteen
+ * per run are enough.  Season to taste.
+ */
+#define RAHISTO_MAX_CONFIGS 16
  
 struct RaBinProcessStruct *RaBinProcess = NULL;
-int ArgusProcessOutLayers = 0;
+static struct ArgusRecordStruct **RaHistoRecordsPtrs[RAHISTO_MAX_CONFIGS];
+static struct ArgusAggregatorStruct *RaHistoAggregators[RAHISTO_MAX_CONFIGS];
+static struct RaHistoConfigStruct *RaHistoConfigMem[RAHISTO_MAX_CONFIGS];
+int RaHistoConfigCount;
+int ArgusProcessOutLayers;
 int ArgusProcessNoZero = 0;
 int ArgusPrintInterval = 0;
-int RaValuesAreIntegers = 1;
+int RaValuesAreIntegers[RAHISTO_MAX_CONFIGS];
 
-long long RaNumberOfValues  = 0;
-long long RaValueBufferSize = 100000;
-double *RaValueBuffer = NULL;
+long long RaNumberOfValues[RAHISTO_MAX_CONFIGS];
+long long RaValueBufferSize[RAHISTO_MAX_CONFIGS];
+double *RaValueBufferMem[RAHISTO_MAX_CONFIGS];
 static int argus_version = ARGUS_VERSION;
 
 int RaFindModes(double *, long long, double *, int);
 int RaSortValueBuffer (const void *, const void *);
 
+// Format is "[abs] metric bins[L][:range]" or "[abs] metric bins[:size]"
+// range is value-value and size if just a single number.  Value is 
+// %f[umsMHD] or %f[umKMG] depending on the type of metric used.
+//
+// If the format simply provides the number of bins, the range/size
+// part is determined from the data.  When this occurs the routine returns
+//
+//    ARGUS_HISTO_RANGE_UNSPECIFIED
+//
+// and the program needs to determine its own range.
+//
+// Appropriate metrics are any metrics support for sorting.
+static int
+ArgusHistoMetricParse (const char * const Hstr,
+                       int RaHistoConfigIndex)
+{
+   char *ptr, *vptr, tmpbuf[128], *tmp = tmpbuf;
+   char *endptr = NULL;
+   char *metric = NULL;
+   int retn = 0, keyword = -1;
+
+   struct RaHistoConfigStruct *RaHistoConfig;
+   struct ArgusAggregatorStruct *agr;
+
+   RaHistoConfig = RaHistoConfigMem[RaHistoConfigIndex];
+   agr = RaHistoAggregators[RaHistoConfigIndex];
+
+   bzero (tmpbuf, 128);
+   snprintf (tmpbuf, 128, "%s", Hstr);
+
+   if ((ptr = strstr (tmp, "abs ")) != NULL) {
+      agr->AbsoluteValue++;
+      tmp = ptr + 4;
+   }
+
+   if ((ptr = strchr (tmp, ' ')) != NULL) {
+      int x, found = 0;
+      metric = tmp;
+      *ptr++ = '\0';
+      tmp = ptr;
+
+         for (x = 0; x < MAX_METRIC_ALG_TYPES; x++) {
+            if (!strncmp(RaFetchAlgorithmTable[x].field, metric, strlen(metric))) {
+               agr->RaMetricFetchAlgorithm = RaFetchAlgorithmTable[x].fetch;
+               agr->ArgusMetricIndex = x;
+               keyword = x;
+               found++;
+               break;
+            }
+         }
+         if (!found)
+            usage();
+
+         if ((ptr = strchr (tmp, ':')) != NULL) {
+            *ptr++ = '\0';
+            vptr = ptr;
+
+            if (strchr (tmp, 'L'))
+               RaHistoConfig->RaHistoMetricLog++;
+
+            if (isdigit((int)*tmp))
+               if ((RaHistoConfig->RaHistoBins = atoi(tmp)) < 0)
+                  return (retn);
+
+// Need to add code to deal with ranges that include negative numbers
+// So parse a number, then check for the -, then parse another number
+// if needed.
+
+            RaHistoConfig->RaHistoStart = strtod(vptr, &endptr);
+            if (endptr == vptr)
+               return (retn);
+
+            vptr = endptr;
+            if ((ptr = strchr (vptr, '-')) != NULL) {
+               *ptr++ = '\0';
+               RaHistoConfig->RaHistoEnd = strtod(ptr, &endptr);
+               if (endptr == ptr)
+                  return (retn);
+            } else {
+               RaHistoConfig->RaHistoBinSize = RaHistoConfig->RaHistoStart;
+               RaHistoConfig->RaHistoStart = 0.0;
+               RaHistoConfig->RaHistoEnd = RaHistoConfig->RaHistoBinSize * (RaHistoConfig->RaHistoBins * 1.0);
+            }
+
+            switch (*endptr) {
+               case 'u': RaHistoConfig->RaHistoStart *= 0.000001;
+                         RaHistoConfig->RaHistoEnd   *= 0.000001; break;
+               case 'm': RaHistoConfig->RaHistoStart *= 0.001;
+                         RaHistoConfig->RaHistoEnd   *= 0.001;    break;
+               case 's': RaHistoConfig->RaHistoStart *= 1.0;
+                         RaHistoConfig->RaHistoEnd   *= 1.0;      break;
+               case 'M': {
+                  switch (keyword) {
+                     case ARGUSMETRICSTARTTIME:
+                     case ARGUSMETRICLASTTIME:
+                     case ARGUSMETRICDURATION:
+                     case ARGUSMETRICMEAN:
+                     case ARGUSMETRICMIN:
+                     case ARGUSMETRICMAX:
+                        RaHistoConfig->RaHistoStart *= 60.0;
+                        RaHistoConfig->RaHistoEnd   *= 60.0;
+                        break;
+
+                     default:
+                        RaHistoConfig->RaHistoStart *= 1000000.0;
+                        RaHistoConfig->RaHistoEnd   *= 1000000.0;
+                        break;
+                  }
+                  break;
+               }
+               case 'H': RaHistoConfig->RaHistoStart *= 3600.0;
+                         RaHistoConfig->RaHistoEnd   *= 3600.0;   break;
+               case 'D': RaHistoConfig->RaHistoStart *= 86400.0;
+                         RaHistoConfig->RaHistoEnd   *= 86400.0;  break;
+               case 'K': RaHistoConfig->RaHistoStart *= 1000.0;
+                         RaHistoConfig->RaHistoEnd   *= 1000.0;  break;
+               case 'G': RaHistoConfig->RaHistoStart *= 1000000000.0;
+                         RaHistoConfig->RaHistoEnd   *= 1000000000.0;  break;
+               case  ' ':
+               case '\0': break;
+
+               default:
+                  return (retn);
+            }
+
+            retn = 1;
+
+         } else {
+            if (isdigit((int)*tmp))
+               if ((RaHistoConfig->RaHistoBins = atoi(tmp)) < 0)
+                  return (retn);
+
+            retn = ARGUS_HISTO_RANGE_UNSPECIFIED;
+         }
+
+         if ((RaHistoRecordsPtrs[RaHistoConfigIndex] = (struct ArgusRecordStruct **)
+              ArgusCalloc (RaHistoConfig->RaHistoBins + 2,
+              sizeof(struct ArgusRecordStruct *))) != NULL) {
+            RaHistoConfig->RaHistoRangeState = retn;
+
+            if (RaHistoConfig->RaHistoMetricLog) {
+               RaHistoConfig->RaHistoEndLog      = log10(RaHistoConfig->RaHistoEnd);
+
+               if (RaHistoConfig->RaHistoStart > 0) {
+                  RaHistoConfig->RaHistoStartLog = log10(RaHistoConfig->RaHistoStart);
+               } else {
+                  RaHistoConfig->RaHistoLogInterval = (RaHistoConfig->RaHistoEndLog/(RaHistoConfig->RaHistoBins * 1.0));
+               }
+
+               RaHistoConfig->RaHistoBinSize = (RaHistoConfig->RaHistoEndLog - RaHistoConfig->RaHistoStartLog) / RaHistoConfig->RaHistoBins * 1.0;
+
+            } else
+               RaHistoConfig->RaHistoBinSize = ((RaHistoConfig->RaHistoEnd - RaHistoConfig->RaHistoStart) * 1.0) / RaHistoConfig->RaHistoBins * 1.0;
+
+         } else
+            ArgusLog (LOG_ERR, "%s: ArgusCalloc %s\n", __func__, strerror(errno));
+   }
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (3, "%s(RaHistoConfig=%p): returning %d \n", __func__, RaHistoConfig, retn);
+#endif
+   return (retn);
+}
+
+static int
+ArgusHistoTallyMetric (int RaHistoConfigIndex, struct ArgusRecordStruct *ns,
+                       double value)
+{
+   int retn = 0, i = 0;
+   double start, end, bsize;
+   double iptr;
+   struct RaHistoConfigStruct *RaHistoConfig;
+   struct ArgusAggregatorStruct *agg;
+   struct ArgusRecordStruct **RaHistoRecords;
+
+   if (ns == NULL)
+       goto out;
+
+   RaHistoConfig = RaHistoConfigMem[RaHistoConfigIndex];
+   agg = RaHistoAggregators[RaHistoConfigIndex];
+   RaHistoRecords = RaHistoRecordsPtrs[RaHistoConfigIndex];
+
+   if (RaHistoConfig->RaHistoMetricLog) {
+      value = log10(value);
+      start = RaHistoConfig->RaHistoStartLog;
+        end = RaHistoConfig->RaHistoEndLog;
+   } else {
+      start = RaHistoConfig->RaHistoStart;
+        end = RaHistoConfig->RaHistoEnd;
+   }
+
+   if (value >= start) {
+      bsize = RaHistoConfig->RaHistoBinSize;
+      modf((value - start)/bsize, &iptr);
+
+      if ((i = iptr) > RaHistoConfig->RaHistoBins)
+         i = RaHistoConfig->RaHistoBins + 1;
+
+      if (value < (end + bsize))
+         i++;
+   }
+
+   if (RaHistoRecords[i] != NULL) {
+      ArgusMergeRecords (agg, RaHistoRecords[i], ns);
+   } else
+      RaHistoRecords[i] = ArgusCopyRecordStruct(ns);
+
+out:
+#ifdef ARGUSDEBUG
+   ArgusDebug (3, "%s(RaHistoConfigIndex=%d, %p): returning %d\n", __func__,
+               RaHistoConfigIndex, ns, retn);
+#endif
+   return (retn);
+}
 
 void
 ArgusClientInit (struct ArgusParserStruct *parser)
@@ -80,8 +304,10 @@ ArgusClientInit (struct ArgusParserStruct *parser)
    parser->RaWriteOut = 0;
  
    if (!(parser->RaInitialized)) {
+      int i;
 
-      if (parser->Hstr == NULL)
+      if (RaHistoConfigCount == 0)
+      /* if (parser->Hstr == NULL) */
          usage();
 
       (void) signal (SIGHUP,  (void (*)(int)) RaParseComplete);
@@ -113,34 +339,17 @@ ArgusClientInit (struct ArgusParserStruct *parser)
            i++;
          }
       }
- 
-      if ((parser->ArgusAggregator = ArgusNewAggregator(parser, NULL, ARGUS_RECORD_AGGREGATOR)) == NULL)
-         ArgusLog (LOG_ERR, "ArgusClientInit: ArgusNewAggregator error");
- 
-      if (parser->Hstr) {
-         int retn;
-         if (!(retn = ArgusHistoMetricParse (parser, parser->ArgusAggregator)))
-            usage ();
 
-         switch (retn) {
-            case ARGUS_HISTO_RANGE_UNSPECIFIED: {
-               parser->ArgusPassNum = 2;
-               parser->RaHistoStart =  HUGE_VAL;
-               parser->RaHistoEnd   = -HUGE_VAL;
-               break;
-            }
-
-            default: 
-               parser->RaHistoRangeState |= ARGUS_HISTO_CAPTURE_VALUES;
-               break;
-         }
-      }
- 
       parser->nflag += 2;
 
       if (parser->vflag)
          ArgusReverseSortDir++;
  
+      for (i = 0; i < RaHistoConfigCount; i++) {
+          RaValuesAreIntegers[i] = 1;
+          RaValueBufferSize[i] = 100000;
+      }
+
       parser->RaInitialized++;
    }
 }
@@ -195,11 +404,12 @@ RaParseComplete (int sig)
    struct ArgusParserStruct *parser = ArgusParser;
    struct ArgusRecordStruct *ns = NULL;
    struct ArgusAgrStruct *tagr = NULL;
-   int freq, cum = 0, class = 1, start = 999999999, end = 0;
+   int freq, cum = 0, class, start = 999999999, end = 0;
    double bs = 0.0, be = 0.0, bf = 0.0;
    float rel, relcum = 0.0;
-   int i, printed = 0;
+   int i, printed;
    int _writing_records_to_stdout;
+   int cid;  /* rahisto config index */
 
    if (sig >= 0) {
       if (!parser->RaParseCompleting++) {
@@ -207,10 +417,26 @@ RaParseComplete (int sig)
          _writing_records_to_stdout =
           writing_records_to_stdout(parser->ArgusWfileList);
 
-         if (parser->RaHistoRecords) {
-            for (i = 0; i < parser->RaHistoBins + 2; i++) {
-               struct ArgusRecordStruct *argus = parser->RaHistoRecords[i];
-               if ((!ArgusProcessOutLayers && ((i > 0) && (i <= parser->RaHistoBins))) || ArgusProcessOutLayers) {
+         if (RaHistoConfigCount > 1
+             && !ArgusParser->qflag
+             && ArgusParser->ArgusPrintJson)
+            printf("[\n");
+
+         for (cid = 0; cid < RaHistoConfigCount; cid++) {
+            struct RaHistoConfigStruct *RaHistoConfig = RaHistoConfigMem[cid];
+            struct ArgusRecordStruct **RaHistoRecords = RaHistoRecordsPtrs[cid];
+            double *RaValueBuffer = RaValueBufferMem[cid];
+
+            if (RaHistoRecords == NULL)
+               continue;
+
+            class = 1;
+            printed = 0;
+            ns = NULL;
+
+            for (i = 0; i < RaHistoConfig->RaHistoBins + 2; i++) {
+               struct ArgusRecordStruct *argus = RaHistoRecords[i];
+               if ((!ArgusProcessOutLayers && ((i > 0) && (i <= RaHistoConfig->RaHistoBins))) || ArgusProcessOutLayers) {
                   if (argus) {
                      if (i < start) start = i;
                      if (i > end)   end   = i;
@@ -243,32 +469,32 @@ RaParseComplete (int sig)
                      meanStr = strdup(buf);
 
                      if (RaValueBuffer != NULL) {
-                        qsort (RaValueBuffer, RaNumberOfValues, sizeof(double), RaSortValueBuffer);
+                        qsort (RaValueBuffer, RaNumberOfValues[cid], sizeof(double), RaSortValueBuffer);
 
-                        if (RaNumberOfValues % 2) {
-                           median = RaValueBuffer[(RaNumberOfValues + 1)/2];
+                        if (RaNumberOfValues[cid] % 2) {
+                           median = RaValueBuffer[(RaNumberOfValues[cid] + 1)/2];
 
-                           if (RaValuesAreIntegers)
+                           if (RaValuesAreIntegers[cid])
                               pflag = 0;
 
                         } else {
-                           ind = (RaNumberOfValues / 2) - 1;
+                           ind = (RaNumberOfValues[cid] / 2) - 1;
                            median = (RaValueBuffer[ind] + RaValueBuffer[ind + 1]) / 2.0;
                         }
 
                         sprintf (buf, "%-.*f", pflag, median);
                         medianStr = strdup(buf);
 
-                        if (RaValuesAreIntegers)
+                        if (RaValuesAreIntegers[cid])
                            pflag = 0;
 
-                        ind = RaNumberOfValues * 0.95;
+                        ind = RaNumberOfValues[cid] * 0.95;
                         percentile = RaValueBuffer[ind];
 
                         sprintf (buf, "%-.*f", pflag, percentile);
                         percentStr = strdup(buf);
 
-                        numModes = RaFindModes(RaValueBuffer, RaNumberOfValues, modeValues, 1024);
+                        numModes = RaFindModes(RaValueBuffer, RaNumberOfValues[cid], modeValues, 1024);
 
                         if (numModes > 0) {
                            bzero(buf, sizeof(buf));
@@ -276,7 +502,7 @@ RaParseComplete (int sig)
                               if (i > 0)
                                  sprintf(&buf[strlen(buf)], ",");
  
-                              if (RaValuesAreIntegers)
+                              if (RaValuesAreIntegers[cid])
                                  sprintf(&buf[strlen(buf)], "%-.0f", modeValues[i]);
                               else
                                  sprintf(&buf[strlen(buf)], "%-.*f", pflag, modeValues[i]);
@@ -299,8 +525,11 @@ RaParseComplete (int sig)
                         if (ArgusParser->ArgusPrintJson) {
                            printf ("{\n");
                            printf (" \"N\":\"%d\", \"bins\":\"%d\", \"size\": \"%.*f\", \n \"mean\": \"%s\", \"stddev\": \"%s\", \"max\": \"%s\", \"min\": \"%s\",",
-                                        tagr->act.n, parser->RaHistoBins, pflag, parser->RaHistoBinSize, meanStr, stdStr, maxValStr, minValStr);
-                           printf ("\n \"median\": \"%s\", \"95%%\": \"%s\",\n", medianStr, percentStr);
+                                        tagr->act.n, RaHistoConfig->RaHistoBins, pflag, RaHistoConfig->RaHistoBinSize, meanStr, stdStr, maxValStr, minValStr);
+                           printf ("\n \"median\": \"%s\", \"95%%\": \"%s\", ", medianStr, percentStr);
+                           if (RaHistoConfigCount > 1)
+                              printf ("\"metric\": \"%s\",\n",
+                                      RaFetchAlgorithmTable[RaHistoAggregators[cid]->ArgusMetricIndex].field);
                         } else {
                            if ((c = ArgusParser->RaFieldDelimiter) != '\0') {
                               printf ("N=%d%cmean=%s%cstddev=%s%cmax=%s%cmin=%s%c",
@@ -310,6 +539,9 @@ RaParseComplete (int sig)
                               printf (" N = %-6d  mean = %*s  stddev = %*s  max = %s  min = %s\n",
                                            tagr->act.n, len, meanStr, len, stdStr, maxValStr, minValStr);
                               printf ("           median = %*s     95%% = %s\n", len, medianStr, percentStr);
+                              if (RaHistoConfigCount > 1)
+                                 printf ("           metric = %s\n",
+                                         RaFetchAlgorithmTable[RaHistoAggregators[cid]->ArgusMetricIndex].field);
                            }
                         }
 
@@ -380,36 +612,36 @@ RaParseComplete (int sig)
                   }
                }
 
-               if (parser->RaHistoMetricLog) {
-                  start = parser->RaHistoStartLog;
+               if (RaHistoConfig->RaHistoMetricLog) {
+                  start = RaHistoConfig->RaHistoStartLog;
                } else {
-                  start = parser->RaHistoStart;
+                  start = RaHistoConfig->RaHistoStart;
                }
-               bsize = parser->RaHistoBinSize;
+               bsize = RaHistoConfig->RaHistoBinSize;
 
-               for (i = 0; i < parser->RaHistoBins + 2; i++) {
-                  struct ArgusRecordStruct *argus = parser->RaHistoRecords[i];
+               for (i = 0; i < RaHistoConfig->RaHistoBins + 2; i++) {
+                  struct ArgusRecordStruct *argus = RaHistoRecords[i];
 
                   if (i == 0) {
-                     bs = 0;
+                     bs = -HUGE_VAL;
                      be = start;
-                     if (parser->RaHistoMetricLog)
-                        be = pow(10.0, be);
+                     if (RaHistoConfig->RaHistoMetricLog)
+                        be = (be > 0 ) ? pow(10.0, be) : 0;
 
                   } else {
                      bs = (start + ((i - 1) * bsize));
-                     if (i > parser->RaHistoBins) {
+                     if (i > RaHistoConfig->RaHistoBins) {
                         be = bs;
                      } else {
                         be = (start +  (i * bsize));
                      }
-                     if (parser->RaHistoMetricLog) {
-                        bs = pow(10.0, bs);
+                     if (RaHistoConfig->RaHistoMetricLog) {
+                        bs = (bs > 0 ) ? pow(10.0, bs) : 0;
                         be = pow(10.0, be);
                      }
                   }
 
-                  if ((!ArgusProcessOutLayers && ((i > 0) && (i <= parser->RaHistoBins))) || ArgusProcessOutLayers) {
+                  if ((!ArgusProcessOutLayers && ((i > 0) && (i <= RaHistoConfig->RaHistoBins))) || ArgusProcessOutLayers) {
                      if (!ArgusProcessNoZero || (ArgusProcessNoZero && ((i >= start) && (i <= end)))) {
                         if (parser->ArgusWfileList != NULL) {
                            if (argus) {
@@ -493,14 +725,14 @@ RaParseComplete (int sig)
                               cum    += freq;
                               relcum += rel;
 
-                              if (i > parser->RaHistoBins) {
+                              if (i > RaHistoConfig->RaHistoBins) {
                                  if (argus && (agr && (agr->count > 0))) {
                                     bf = be;
                                     do {
-                                       if (parser->RaHistoMetricLog)
-                                          bf += pow(10.0, parser->RaHistoBinSize);
+                                       if (RaHistoConfig->RaHistoMetricLog)
+                                          bf += pow(10.0, RaHistoConfig->RaHistoBinSize);
                                        else
-                                          bf += parser->RaHistoBinSize;
+                                          bf += RaHistoConfig->RaHistoBinSize;
                                     } while (!(bf >= agr->act.maxval));
 
                                     printThis++;
@@ -517,11 +749,7 @@ RaParseComplete (int sig)
                               }
                            } else {
                               if (!ArgusProcessNoZero) {
-                                 if (i == 0) {
-                                    if (be != bs)
-                                       printThis++;
-                                 } else
-                                    printThis++;
+                                 printThis++;
                               }
                            }
 
@@ -565,10 +793,16 @@ RaParseComplete (int sig)
                   }
                }
 
-                if (!ArgusParser->qflag) {
-                  if (ArgusParser->ArgusPrintJson) 
-                     printf ("\n  ]\n}\n");
+               if (!ArgusParser->qflag) {
+                  if (ArgusParser->ArgusPrintJson) {
+                     printf("\n  ]\n}");
+                     if (RaHistoConfigCount > 1)
+                         printf("%s", cid < (RaHistoConfigCount-1) ? "," : "");
+                  }
+                  printf("\n");
                }
+
+               ArgusDeleteRecordStruct(ArgusParser, ns);
             }
          }
 
@@ -608,6 +842,11 @@ RaParseComplete (int sig)
                break;
             }
          }
+
+         if (RaHistoConfigCount > 1
+             && !ArgusParser->qflag
+             && ArgusParser->ArgusPrintJson)
+            printf("]\n");
       }
    }
 }
@@ -679,37 +918,48 @@ RaProcessRecord (struct ArgusParserStruct *parser, struct ArgusRecordStruct *arg
 
       case ARGUS_NETFLOW:
       case ARGUS_FAR: {
-         struct ArgusAggregatorStruct *agg = parser->ArgusAggregator;
+         int i;
 
-         switch (parser->ArgusPassNum)  {
+         for (i = 0; i < RaHistoConfigCount; i++) {
+
+         struct ArgusAggregatorStruct *agg;
+         struct RaHistoConfigStruct *RaHistoConfig;
+         double *RaValueBuffer;
+
+         agg = RaHistoAggregators[i];
+         RaHistoConfig = RaHistoConfigMem[i];
+         RaValueBuffer = RaValueBufferMem[i];
+
+         switch (RaHistoConfig->ArgusPassNum)  {
             case 2: {
-               if (parser->RaHistoRangeState & ARGUS_HISTO_RANGE_UNSPECIFIED) {
+               if (RaHistoConfig->RaHistoRangeState & ARGUS_HISTO_RANGE_UNSPECIFIED) {
                   if (agg && (agg->RaMetricFetchAlgorithm != NULL)) {
                      double frac, value, inte;
                      value = agg->RaMetricFetchAlgorithm(argus);
                      if (agg->AbsoluteValue) value = fabs(value);
 
                      if ((frac = modf(value, &inte)) != 0.0)
-                         RaValuesAreIntegers = 0;
+                         RaValuesAreIntegers[i] = 0;
 
-                     if (RaValueBuffer == NULL) {
-                        if ((RaValueBuffer = malloc(sizeof(double) * RaValueBufferSize)) == NULL)
+                     if (RaValueBufferMem[i] == NULL) {
+                        if ((RaValueBufferMem[i] = malloc(sizeof(double) * RaValueBufferSize[i])) == NULL)
                            ArgusLog (LOG_ERR, "RaProcessRecord: malloc error %s", strerror(errno));
                      } else {
-                        if (RaNumberOfValues >= RaValueBufferSize) {
-                           RaValueBufferSize += 100000;
-                           if ((RaValueBuffer = realloc(RaValueBuffer, sizeof(double) * RaValueBufferSize)) == NULL)
+                        if (RaNumberOfValues[i] >= RaValueBufferSize[i]) {
+                           RaValueBufferSize[i] += 100000;
+                           if ((RaValueBufferMem[i] = realloc(RaValueBuffer, sizeof(double) * RaValueBufferSize[i])) == NULL)
                               ArgusLog (LOG_ERR, "RaProcessRecord: realloc error %s", strerror(errno));
                         }
                      }
 
-                     RaValueBuffer[RaNumberOfValues++] = value;
+                     RaValueBuffer = RaValueBufferMem[i];
+                     RaValueBuffer[RaNumberOfValues[i]++] = value;
 
-                     if (parser->RaHistoStart > value)
-                        parser->RaHistoStart = value;
+                     if (RaHistoConfig->RaHistoStart > value)
+                        RaHistoConfig->RaHistoStart = value;
 
-                     if (parser->RaHistoEnd < value)
-                        parser->RaHistoEnd = value;
+                     if (RaHistoConfig->RaHistoEnd < value)
+                        RaHistoConfig->RaHistoEnd = value;
                   }
                }
                break;
@@ -718,15 +968,15 @@ RaProcessRecord (struct ArgusParserStruct *parser, struct ArgusRecordStruct *arg
             case 1: {
                double range, value, frac, inte;
 
-               if (parser->RaHistoRangeState & ARGUS_HISTO_RANGE_UNSPECIFIED) {
+               if (RaHistoConfig->RaHistoRangeState & ARGUS_HISTO_RANGE_UNSPECIFIED) {
                   int cycle = 0;
 
-                  parser->RaHistoRangeState &= ~ARGUS_HISTO_RANGE_UNSPECIFIED;
+                  RaHistoConfig->RaHistoRangeState &= ~ARGUS_HISTO_RANGE_UNSPECIFIED;
 
-                  if (parser->RaHistoStart > 0) 
-                     parser->RaHistoStart = 0.0;
+                  if (RaHistoConfig->RaHistoStart > 0)
+                     RaHistoConfig->RaHistoStart = 0.0;
 
-                  if ((value = (parser->RaHistoEnd - parser->RaHistoStart) / (parser->RaHistoBins * 1.0)) > 0) {
+                  if ((value = (RaHistoConfig->RaHistoEnd - RaHistoConfig->RaHistoStart) / (RaHistoConfig->RaHistoBins * 1.0)) > 0) {
                      while (value < 10.0) {
                         value *= 10.0;
                         cycle++;
@@ -736,39 +986,40 @@ RaProcessRecord (struct ArgusParserStruct *parser, struct ArgusRecordStruct *arg
                   if ((frac = modf(value, &range)) != 0.0) 
                      range += 1.0;
 
-                  parser->RaHistoEnd = range * parser->RaHistoBins;
+                  RaHistoConfig->RaHistoEnd = range * RaHistoConfig->RaHistoBins;
                   while (cycle > 0) {
-                     parser->RaHistoEnd /= 10.0;
+                     RaHistoConfig->RaHistoEnd /= 10.0;
                      cycle--;
                   }
 
-                  parser->RaHistoBinSize = ((parser->RaHistoEnd - parser->RaHistoStart) * 1.0) / parser->RaHistoBins * 1.0;
+                  RaHistoConfig->RaHistoBinSize = ((RaHistoConfig->RaHistoEnd - RaHistoConfig->RaHistoStart) * 1.0) / RaHistoConfig->RaHistoBins * 1.0;
                }
 
                value = agg->RaMetricFetchAlgorithm(argus);
                if (agg->AbsoluteValue) value = fabs(value);
 
-               if (parser->RaHistoRangeState & ARGUS_HISTO_CAPTURE_VALUES) {
-                     if ((value >= parser->RaHistoStart) && (value <= parser->RaHistoEnd)) {
+               if (RaHistoConfig->RaHistoRangeState & ARGUS_HISTO_CAPTURE_VALUES) {
+                     if ((value >= RaHistoConfig->RaHistoStart) && (value <= RaHistoConfig->RaHistoEnd)) {
                         if ((frac = modf(value, &inte)) != 0.0)
-                            RaValuesAreIntegers = 0;
+                            RaValuesAreIntegers[i] = 0;
 
-                        if (RaValueBuffer == NULL) {
-                           if ((RaValueBuffer = malloc(sizeof(double) * RaValueBufferSize)) == NULL)
+                        if (RaValueBufferMem[i] == NULL) {
+                           if ((RaValueBufferMem[i] = malloc(sizeof(double) * RaValueBufferSize[i])) == NULL)
                               ArgusLog (LOG_ERR, "RaProcessRecord: malloc error %s", strerror(errno));
                         } else {
-                           if (RaNumberOfValues >= RaValueBufferSize) {
-                              RaValueBufferSize += 100000;
-                              if ((RaValueBuffer = realloc(RaValueBuffer, sizeof(double) * RaValueBufferSize)) == NULL)
+                           if (RaNumberOfValues[i] >= RaValueBufferSize[i]) {
+                              RaValueBufferSize[i] += 100000;
+                              if ((RaValueBufferMem[i] = realloc(RaValueBuffer, sizeof(double) * RaValueBufferSize[i])) == NULL)
                                  ArgusLog (LOG_ERR, "RaProcessRecord: realloc error %s", strerror(errno));
                            }
                         }
 
-                     RaValueBuffer[RaNumberOfValues++] = value;
+                     RaValueBuffer = RaValueBufferMem[i];
+                     RaValueBuffer[RaNumberOfValues[i]++] = value;
                   }
                }
 
-               if (ArgusParser && ArgusParser->ArgusAggregator) {
+               if (agg) {
                   struct ArgusAgrStruct *agr = (void *)argus->dsrs[ARGUS_AGR_INDEX];
 
                   if (agr) {
@@ -789,10 +1040,11 @@ RaProcessRecord (struct ArgusParserStruct *parser, struct ArgusRecordStruct *arg
                }
 
                if (agg && (agg->RaMetricFetchAlgorithm != NULL))
-                  ArgusHistoTallyMetric (parser, argus, value);
+                  ArgusHistoTallyMetric (i, argus, value);
                break;
             }
          }
+      }
       }
    }
 }
@@ -838,3 +1090,59 @@ RaFindModes(double *buf, long long num, double *modeValues, int len)
 
    return (retn);
 }
+
+
+
+int
+RaParseOptHStr(const char *const Hstr) {
+   int retn;
+   struct RaHistoConfigStruct *RaHistoConfig;
+
+   if (!Hstr)
+      return 0;
+
+   RaHistoAggregators[RaHistoConfigCount] =
+    ArgusNewAggregator(ArgusParser, NULL, ARGUS_RECORD_AGGREGATOR);
+   if (RaHistoAggregators[RaHistoConfigCount] == NULL)
+      ArgusLog (LOG_ERR, "%s: ArgusNewAggregator error", __func__);
+
+   RaHistoConfigMem[RaHistoConfigCount] = ArgusCalloc(1, sizeof(*RaHistoConfigMem[0]));
+   if (RaHistoConfigMem[RaHistoConfigCount] == NULL)
+      ArgusLog (LOG_ERR, "%s: unable to allocate config structure", __func__);
+   RaHistoConfig = RaHistoConfigMem[RaHistoConfigCount];
+
+   if (!(retn = ArgusHistoMetricParse (Hstr, RaHistoConfigCount)))
+      usage ();
+
+   RaHistoConfig->ArgusPassNum = 1;
+   RaHistoConfigCount++;
+
+   switch (retn) {
+      case ARGUS_HISTO_RANGE_UNSPECIFIED: {
+         RaHistoConfig->ArgusPassNum = ArgusParser->ArgusPassNum = 2;
+         RaHistoConfig->RaHistoStart =  HUGE_VAL;
+         RaHistoConfig->RaHistoEnd   = -HUGE_VAL;
+         break;
+      }
+
+      default:
+         RaHistoConfig->RaHistoRangeState |= ARGUS_HISTO_CAPTURE_VALUES;
+         break;
+   }
+   return 1;
+}
+
+int
+RaOnePassComplete(void) {
+   int i;
+
+   for (i = 0; i < RaHistoConfigCount; i++) {
+       struct RaHistoConfigStruct *RaHistoConfig;
+
+       RaHistoConfig = RaHistoConfigMem[i];
+       RaHistoConfig->ArgusPassNum--;
+   }
+   return 1;
+}
+
+/**** What to do with binary output file when multiple metrics? *****/

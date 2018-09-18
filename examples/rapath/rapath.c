@@ -76,9 +76,6 @@ int RaPrintAddr = 0;
 int RaPrintTreeNode = 0;
 int RaPrintDistance = 0;
 
-extern int RaHistoStart;
-extern int RaHistoEnd;
-
 struct ArgusQueueStruct *ArgusModelerQueue;
 
 int RaCompareArgusStore (const void *, const void *);
@@ -276,12 +273,6 @@ ArgusClientInit (struct ArgusParserStruct *parser)
       }
 
       parser->RaCumulativeMerge = 1;
-
-      if (parser->Hflag) {
-         if (!(ArgusHistoMetricParse (parser, parser->ArgusPathAggregator)))
-            usage();
-      }
-
       parser->RaInitialized++;
       parser->ArgusPrintJson = 0;
    }

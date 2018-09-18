@@ -416,6 +416,19 @@ static int RaDescend(char *, size_t, size_t);
 time_t timegm (struct tm *);
 #endif
 
+#ifdef __sun
+# pragma weak RaParseOptHStr
+#endif
+int RaParseOptHStr(const char *const str)
+#ifdef __GNUC__
+ __attribute__((weak));
+#endif
+
+int RaParseOptHStr(const char *const str)
+{
+   return 0;
+}
+
 int ArgusMkdirPath(const char * const path)
 {
    struct stat statbuf;
@@ -1157,6 +1170,7 @@ ArgusParseArgs(struct ArgusParserStruct *parser, int argc, char **argv)
             if ((strncmp(parser->ArgusProgramName, "rahisto", 7)))
                parser->Hflag = 1;
             else {
+               int hopt_done = 0;
                char str[1024], Hstr[1024], *Hptr = Hstr;
                bzero (str, 1024);
                bzero (Hstr, 1024);
@@ -1177,12 +1191,18 @@ ArgusParseArgs(struct ArgusParserStruct *parser, int argc, char **argv)
 
                   snprintf (&str[strlen(str)], (1024 - strlen(str)), "%s ", optarg);
 
-                  if ((optarg = argv[optind]) != NULL)
+                  optarg = argv[optind];
+                  if (optarg != NULL) {
                      if (*optarg != '-')
                         optind++;
-               } while (optarg && (*optarg != '-'));
+                     else if (*(optarg+1) && isdigit(*(optarg+1)))
+                        optind++;
+                     else
+                        hopt_done = 1;
+                  }
+               } while (optarg && !hopt_done);
 
-               parser->Hstr = strdup(str);
+               RaParseOptHStr(str);
             }
             break;
          }
@@ -2889,7 +2909,6 @@ RaClearConfiguration (struct ArgusParserStruct *parser)
    parser->gflag = 0;
    parser->Gflag = 0;
    parser->Hflag = 0;
-   parser->Hstr = NULL;
    parser->idflag = 0;
    parser->jflag = 0;
    parser->lflag = 0;
@@ -2968,7 +2987,6 @@ RaClearConfiguration (struct ArgusParserStruct *parser)
 
    parser->ArgusMinuteUpdate = 1;
    parser->ArgusHourlyUpdate = 1;
-   parser->RaHistoMetricSeries = 1;
    parser->RaSeparateAddrPortWithPeriod = 1;
 
    parser->RaPolicyStatus = ARGUS_POLICY_PERMIT_OTHERS;

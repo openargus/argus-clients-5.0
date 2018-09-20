@@ -353,6 +353,7 @@ if ( !$opt_k ) {
         my $total = $grandtotal_href->{''}->{'freq'};
         delete $grandtotal_href->{''};
 
+        printf("%5s %15s %10s %10s\n", 'Class', 'Interval', 'Freq', 'Rel.Freq');
         for my $k ( sort {$a <=> $b} keys $grandtotal_href ) {
             my $elem = $grandtotal_href->{$k};
 
@@ -360,9 +361,9 @@ if ( !$opt_k ) {
                 next;
             }
 
-            print $elem->{'class'} . "\t"
-              . $elem->{'bin_interval'} . "\t"
-              . ( $elem->{'freq'} / $total * 100 ) . "\n";
+            printf("%5d %15.6e %10u %10.6f%%\n", $elem->{'class'},
+              $elem->{'bin_interval'}, $elem->{'freq'},
+              ( $elem->{'freq'} / $total * 100 ));
         }
     }
 }
@@ -390,12 +391,14 @@ else {
           one_aggregate_query( $dbh, $index_href, $query_prefixes,
             \@one_query_time, $query_model );
         my $kldiv = rahisto_kldiv(@histograms);
-        if ( defined $kldiv ) {
+        my $jsdiv = rahisto_jsdiv(@histograms);
+        if ( defined $kldiv || defined $jsdiv) {
             push @divergences,
               {
                 'stime'      => $one_query_time[0],
                 'ltime'      => $one_query_time[2],
-                'divergence' => rahisto_kldiv(@histograms),
+                'kldiv'      => $kldiv,
+                'jsdiv'      => $jsdiv,
               };
             shift @histograms;
         }
@@ -406,10 +409,20 @@ else {
         }
     }
 
-    printf( "# %-25s %-25s %s\n", 'Start time', 'End time', 'Divergence' );
+    printf( "# %-25s %-25s %-15s %-15s\n", 'Start time', 'End time',
+            'KL-Divergence', 'JS-Divergence' );
     for my $x (@divergences) {
-        printf( " %-25s %-25s %f\n",
-            $x->{'stime'}, $x->{'ltime'}, $x->{'divergence'} );
+        my $kldiv = $x->{'kldiv'};
+        my $jsdiv = $x->{'jsdiv'};
+
+        if ( !defined $kldiv ) {
+            # indicate that the kl-divergence was undefined by printing -1.
+            # This is easy to skip over in gnuplot, etc.
+            $kldiv = -1;
+        }
+
+        printf( "  %-25s %-25s %-15f %-15f\n",
+            $x->{'stime'}, $x->{'ltime'}, $kldiv, $jsdiv );
     }
 }
 

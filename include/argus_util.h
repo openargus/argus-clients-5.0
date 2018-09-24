@@ -98,6 +98,20 @@ struct anamemem {
    char *name, *alias;
 };
 
+struct gnamemem {
+   struct gnamemem *g_nxt;
+   unsigned int status, hashval, secs, ref;
+   char *name;
+   void *group;
+};
+
+struct snamemem {
+   struct snamemem *s_nxt;
+   unsigned int status, hashval, secs, ref;
+   char *name;
+   void *service;
+};
+
 struct dbtblmem {
    struct dbtblmem *p_nxt;
    unsigned int hashval;
@@ -1473,6 +1487,7 @@ void ArgusProcessDirection (struct ArgusParserStruct *, struct ArgusRecordStruct
 struct RaAddressStruct *RaProcessAddress (struct ArgusParserStruct *, struct ArgusLabelerStruct *, unsigned int *, int, int, int); 
 int RaProcessAddressLocality (struct ArgusParserStruct *, struct ArgusLabelerStruct *, unsigned int *, int, int, int); 
 char *RaFetchAddressLocalityLabel (struct ArgusParserStruct *, struct ArgusLabelerStruct *, unsigned int *, int, int, int);
+int RaFetchAddressLocality (struct ArgusParserStruct *, struct ArgusLabelerStruct *, unsigned int *, int, int, int);
 
 struct ArgusQueueStruct *ArgusNewQueue (void);
 void ArgusDeleteQueue (struct ArgusQueueStruct *);
@@ -1514,6 +1529,7 @@ void clearArgusWfile(struct ArgusParserStruct *);
 extern unsigned int thisnet, localaddr, localnet, netmask;
 
 void ArgusProcessLabelOptions(struct ArgusParserStruct *, char *);
+void ArgusProcessGroupOptions(struct ArgusParserStruct *, char *);
 
 void (*RaPrintAlgorithms[ARGUS_MAX_PRINT_ALG])(struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int) = {
    ArgusPrintStartDate,
@@ -1549,6 +1565,10 @@ extern struct nnamemem *lookup_nmem(struct nnamemem *, const u_char *);
 extern struct nnamemem *check_nmem(struct nnamemem *, const u_char *);
 extern struct dbtblmem *lookup_dbtbl(struct dbtblmem *, const u_char *);
 extern struct dbtblmem *check_dbtbl(struct dbtblmem *, const u_char *);
+extern struct gnamemem *check_group(struct gnamemem *, const u_char *);
+extern struct gnamemem *lookup_group(struct gnamemem *, const u_char *);
+extern struct snamemem *check_service(struct snamemem *, const u_char *);
+extern struct snamemem *lookup_service(struct snamemem *, const u_char *);
 
 extern char *lookup_srcid(const u_char *, struct anamemem *);
 extern char *lookup_alias(const u_char *, struct anamemem *);
@@ -1764,6 +1784,7 @@ extern struct ArgusPrintFieldStruct RaPrintAlgorithmTable[MAX_PRINT_ALG_TYPES];
 extern void (*RaPrintAlgorithms[ARGUS_MAX_PRINT_ALG])(struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
 
 extern void ArgusProcessLabelOptions(struct ArgusParserStruct *, char *);
+extern void ArgusProcessGroupOptions(struct ArgusParserStruct *, char *);
 
 extern void ArgusLoadList(struct ArgusListStruct *, struct ArgusListStruct *);
 extern void ArgusInitAddrtoname(struct ArgusParserStruct *, u_int, u_int);
@@ -1791,6 +1812,12 @@ extern struct dbtblmem *lookup_dbtbl(struct dbtblmem *, const u_char *);
 extern struct dbtblmem *check_dbtbl(struct dbtblmem *, const u_char *);
 extern struct enamemem *lookup_emem(struct enamemem *, const u_char *);
 extern struct enamemem *check_emem(struct enamemem *, const u_char *);
+
+extern struct gnamemem *lookup_group(struct gnamemem *, const u_char *);
+extern struct gnamemem *check_group(struct gnamemem *, const u_char *);
+
+extern struct snamemem *lookup_service(struct snamemem *, const u_char *);
+extern struct snamemem *check_service(struct snamemem *, const u_char *);
 
 extern char *lookup_srcid(const u_char *, struct anamemem *);
 extern char *lookup_alias(const u_char *, struct anamemem *);
@@ -1829,6 +1856,7 @@ extern void ArgusProcessDirection (struct ArgusParserStruct *, struct ArgusRecor
 extern struct RaAddressStruct *RaProcessAddress (struct ArgusParserStruct *, struct ArgusLabelerStruct *, unsigned int *, int, int, int); 
 extern int RaProcessAddressLocality (struct ArgusParserStruct *, struct ArgusLabelerStruct *, unsigned int *, int, int, int); 
 extern char *RaFetchAddressLocalityLabel (struct ArgusParserStruct *, struct ArgusLabelerStruct *, unsigned int *, int, int, int);
+extern int RaFetchAddressLocality (struct ArgusParserStruct *, struct ArgusLabelerStruct *, unsigned int *, int, int, int);
 
 extern struct ArgusQueueStruct *ArgusNewQueue (void);
 extern void ArgusDeleteQueue (struct ArgusQueueStruct *);

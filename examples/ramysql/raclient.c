@@ -105,8 +105,6 @@ char *ArgusCreateSQLSaveTableName (struct ArgusParserStruct *, struct ArgusRecor
 
 void ArgusThreadsInit(pthread_attr_t *);
 
-void RaInsertAddressTree (struct ArgusParserStruct *, struct ArgusLabelerStruct *labeler, char *);
-
 extern int ArgusCloseDown;
 
 int ArgusProcessQueue (struct RaBinStruct *, struct ArgusQueueStruct *, int status);

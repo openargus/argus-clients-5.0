@@ -50,8 +50,6 @@
 
 void ArgusThreadsInit(pthread_attr_t *);
 
-void RaInsertAddressTree (struct ArgusParserStruct *, struct ArgusLabelerStruct *labeler, char *);
-
 extern int ArgusCloseDown;
 int RaTopReplace = 0;;
 

@@ -108,6 +108,7 @@ rm -f %{argusbin}/rasplit
 %{argussbin}/radium
 %config /etc/ra.conf
 %config /etc/radium.conf
+%{_datarootdir}/argus-clients/std.sig
 %if 0%{!?_workstation:1}
 %config /etc/sasl2/radium.conf
 %config /usr/argus/ralabel.country.conf
@@ -358,6 +359,17 @@ ln -f -s %{_datarootdir}/argus-clients/emerging-Block-IPs-2018-03-22.conf \
 if [ $1 -eq 0 ] ; then
 	rm -f %{_datarootdir}/argus-clients/emerging-threats-current.conf
 fi
+
+
+%package policy
+Summary: Argus Client Software Policy Validation Tools
+Group: Applications/Internet
+Requires: argus-clients, mariadb-libs
+%description policy
+Tools to evaluate argus flow data for policy conformance
+Copyright 2018 QoSient, LLC
+%files policy
+%{_bindir}/raup
 
 %endif
 

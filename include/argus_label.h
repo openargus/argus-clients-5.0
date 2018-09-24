@@ -42,10 +42,12 @@ extern "C" {
 #define ARGUS_LABELER_DEBUG	    0x0100
 #define ARGUS_LABELER_DEBUG_LOCAL   0x0200
 #define ARGUS_LABELER_DEBUG_NODE    0x0400
+#define ARGUS_LABELER_DEBUG_GROUP   0x0800
 
 #define ARGUS_TREE_DEBUG	    0x0100
 #define ARGUS_TREE_DEBUG_LOCAL      0x0200
 #define ARGUS_TREE_DEBUG_NODE       0x0400
+#define ARGUS_TREE_DEBUG_GROUP      0x0800
 
 #define ARGUS_LABELER_COCODE	    0x01
 #define ARGUS_LABELER_ADDRESS	    0x02
@@ -133,6 +135,7 @@ struct ArgusLabelerStruct {
 #define ARGUS_ANY_MATCH         0x02
 #define ARGUS_NODE_MATCH        0x04
 #define ARGUS_MASK_MATCH        0x05
+#define ARGUS_SUPER_MATCH       0x06
 
 struct RaAddressStruct {
    struct ArgusQueueHeader qhdr;
@@ -230,6 +233,9 @@ void RaPrintLabelTree (struct ArgusLabelerStruct *, struct RaAddressStruct *, in
 struct RaAddressStruct *RaFindAddress (struct ArgusParserStruct *, struct RaAddressStruct *, struct RaAddressStruct *, int);
 struct RaAddressStruct *RaInsertAddress (struct ArgusParserStruct *, struct ArgusLabelerStruct *, struct RaAddressStruct *, struct RaAddressStruct *, int);
 
+int RaInsertAddressTree (struct ArgusParserStruct *, struct ArgusLabelerStruct *labeler, char *);
+int RaInsertLocalityTree (struct ArgusParserStruct *, struct ArgusLabelerStruct *labeler, char *);
+
 char *RaPruneAddressTree (struct ArgusLabelerStruct *, struct RaAddressStruct *, int, int);
 
 void RaLabelMaskAddressStatus(struct RaAddressStruct *, unsigned int);
@@ -285,6 +291,10 @@ extern int ArgusAddToRecordLabel (struct ArgusParserStruct *, struct ArgusRecord
 
 extern struct RaAddressStruct *RaFindAddress (struct ArgusParserStruct *, struct RaAddressStruct *, struct RaAddressStruct *, int);
 extern struct RaAddressStruct *RaInsertAddress (struct ArgusParserStruct *, struct ArgusLabelerStruct *, struct RaAddressStruct *, struct RaAddressStruct *, int);
+
+extern int RaInsertAddressTree (struct ArgusParserStruct *, struct ArgusLabelerStruct *labeler, char *);
+extern int RaInsertLocalityTree (struct ArgusParserStruct *, struct ArgusLabelerStruct *labeler, char *);
+
 extern char *RaPruneAddressTree (struct ArgusLabelerStruct *, struct RaAddressStruct *, int, int);
 
 extern void RaLabelMaskAddressStatus(struct RaAddressStruct *, unsigned int);

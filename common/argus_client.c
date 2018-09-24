@@ -6514,7 +6514,8 @@ ArgusMergeLabel(struct ArgusLabelStruct *l1, struct ArgusLabelStruct *l2, char *
 
 
 void
-ArgusMergeRecords (struct ArgusAggregatorStruct *na, struct ArgusRecordStruct *ns1, struct ArgusRecordStruct *ns2)
+ArgusMergeRecords (const struct ArgusAggregatorStruct * const na,
+                   struct ArgusRecordStruct *ns1, struct ArgusRecordStruct *ns2)
 {
    struct ArgusAgrStruct *agr = NULL;
    double seconds;

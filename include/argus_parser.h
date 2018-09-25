@@ -135,7 +135,10 @@ extern "C" {
 
 */
 
+struct ArgusParserStruct;
 typedef void (*ArgusEmptyHashCallback)(void *);
+typedef void (*ArgusHashForEachCallback)(void *, void*);
+
  
 struct ArgusHashStruct {
    unsigned int len, hash;

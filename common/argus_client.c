@@ -5167,7 +5167,7 @@ ArgusDeleteHashTable (struct ArgusHashTable *htbl)
 }
 
 void
-ArgusEmptyHashTable (struct ArgusHashTable *htbl)
+ArgusEmptyHashTable2 (struct ArgusHashTable *htbl, ArgusEmptyHashCallback dcb)
 {
    struct ArgusHashTableHdr *htblhdr = NULL, *tmp;
    int i;
@@ -5181,6 +5181,8 @@ ArgusEmptyHashTable (struct ArgusHashTable *htbl)
             htblhdr->prv->nxt = NULL;
             while ((tmp = htblhdr) != NULL) {
                htblhdr = htblhdr->nxt;
+               if (dcb)
+                  dcb(tmp->object);
                if (tmp->hstruct.buf != NULL)
                   ArgusFree (tmp->hstruct.buf);
                ArgusFree (tmp);
@@ -5198,6 +5200,40 @@ ArgusEmptyHashTable (struct ArgusHashTable *htbl)
 #endif
 }
 
+void
+ArgusEmptyHashTable (struct ArgusHashTable *htbl)
+{
+   ArgusEmptyHashTable2(htbl, NULL);
+}
+
+void
+ArgusHashForEach(struct ArgusHashTable *htbl, ArgusHashForEachCallback fcb,
+                 void *user)
+{
+   struct ArgusHashTableHdr *htblhdr;
+   struct ArgusHashTableHdr *first;
+   int i;
+
+#if defined(ARGUS_THREADS)
+   pthread_mutex_lock(&htbl->lock);
+#endif
+   for (i = 0; i < htbl->size; i++) {
+      if ((htblhdr = htbl->array[i]) != NULL) {
+         first = htblhdr;
+         do {
+            fcb(htblhdr->object, user);
+            htblhdr = htblhdr->nxt;
+         } while (htblhdr != first);
+      }
+   }
+#if defined(ARGUS_THREADS)
+   pthread_mutex_unlock(&htbl->lock);
+#endif
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (6, "%s (%p, %p) returning\n", __func__, htbl, fcb);
+#endif
+}
 
 struct ArgusHashTableHdr *
 ArgusFindHashEntry (struct ArgusHashTable *htable, struct ArgusHashStruct *hstruct)
@@ -6514,7 +6550,8 @@ ArgusMergeLabel(struct ArgusLabelStruct *l1, struct ArgusLabelStruct *l2, char *
 
 
 void
-ArgusMergeRecords (struct ArgusAggregatorStruct *na, struct ArgusRecordStruct *ns1, struct ArgusRecordStruct *ns2)
+ArgusMergeRecords (const struct ArgusAggregatorStruct * const na,
+                   struct ArgusRecordStruct *ns1, struct ArgusRecordStruct *ns2)
 {
    struct ArgusAgrStruct *agr = NULL;
    double seconds;

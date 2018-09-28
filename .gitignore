@@ -40,3 +40,6 @@ include/argus_config.h
 /pkg/win7/argus-clients.wxs
 /pkg/osx/BUILDROOT
 /examples/radhcp/radhcp-query
+/examples/rahisto/rahisto-delsql
+/examples/rahisto/rahisto-querysql
+/examples/rahisto/rahisto-updatesql

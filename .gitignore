@@ -17,6 +17,7 @@ argus-clients.xcodeproj/xcuserdata/
 .gitignore
 .debug
 .devel
+.nfs*
 
 *.o
 *.swp

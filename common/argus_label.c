@@ -4218,7 +4218,7 @@ RaAddressLabel (struct ArgusParserStruct *parser, struct ArgusRecordStruct *argu
 }
 
 
-char RaLocalityLabelBuffer[256];
+static char RaLocalityLabelBuffer[256];
 
 char *
 RaLocalityLabel (struct ArgusParserStruct *parser, struct ArgusRecordStruct *argus)
@@ -4231,6 +4231,7 @@ RaLocalityLabel (struct ArgusParserStruct *parser, struct ArgusRecordStruct *arg
    if ((labeler = parser->ArgusLocalLabeler) != NULL) {
       if (labeler->ArgusAddrTree) {
          struct ArgusFlow *flow = (struct ArgusFlow *) argus->dsrs[ARGUS_FLOW_INDEX];
+         int slen = 0;
 
          if (flow != NULL) {
             switch(flow->hdr.subtype & 0x3F) {
@@ -4394,17 +4395,14 @@ RaLocalityLabel (struct ArgusParserStruct *parser, struct ArgusRecordStruct *arg
          }
 
          if (saddr && saddr->label) {
-            int slen = strlen(RaLocalityLabelBuffer);
-            snprintf (&RaLocalityLabelBuffer[slen], 128 - slen, "sloc=%s", saddr->label);
+            slen = snprintf(RaLocalityLabelBuffer, sizeof(RaLocalityLabelBuffer),
+                            "sloc=%s", saddr->label);
             found++;
          }
          if (daddr && daddr->label) {
-            int slen = strlen(RaLocalityLabelBuffer);
-            if (found) {
-               snprintf (&RaLocalityLabelBuffer[slen], 256 - slen, ":");
-               slen++;
-            }
-            snprintf (&RaLocalityLabelBuffer[slen], 256 - slen, "daddr=%s", daddr->label);
+            snprintf(&RaLocalityLabelBuffer[slen],
+                     sizeof(RaLocalityLabelBuffer) - slen,
+                     "%sdaddr=%s", found ? ":" : "", daddr->label);
             found++;
          }
       }

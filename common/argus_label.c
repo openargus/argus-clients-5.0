@@ -82,8 +82,9 @@
 
 #if defined(ARGUS_GEOIP)
 #include <GeoIPCity.h>
-#include "argus_label_geoip.h"
 #endif
+
+#include "argus_label_geoip.h"
 
 struct ArgusLabelerStruct *ArgusLabeler;
 
@@ -483,7 +484,12 @@ RaLabelParseResourceStr (struct ArgusParserStruct *parser, struct ArgusLabelerSt
                      case RALABEL_GEOIP_V4_ASN_FILE: 
                      case RALABEL_GEOIP_V6_ASN_FILE: {
                         int status = MMDB_open(optarg, MMDB_MODE_MMAP, &labeler->RaGeoIPAsnObject);
-                        /* FIXME: check status */
+
+                        if (status != MMDB_SUCCESS) {
+                           ArgusLog(LOG_ERR,
+                                    "%s: failed to open GeoIP2 ASN database: %s\n",
+                                    __func__, MMDB_strerror(status));
+                        }
                         break;
                      }
 
@@ -492,7 +498,9 @@ RaLabelParseResourceStr (struct ArgusParserStruct *parser, struct ArgusLabelerSt
                            labeler->RaLabelGeoIPCity = 0;
                         } else {
                            char *sptr, *fptr, *tptr;
-                           int ind = 0, x;
+                           int ind = 0;
+                           int maxlabels = sizeof(labeler->RaLabelGeoIPCityLabels)/
+                                           sizeof(labeler->RaLabelGeoIPCityLabels[0]);
 
                            bzero(labeler->RaLabelGeoIPCityLabels, sizeof(labeler->RaLabelGeoIPCityLabels));
 
@@ -509,15 +517,14 @@ RaLabelParseResourceStr (struct ArgusParserStruct *parser, struct ArgusLabelerSt
                            } else
                               labeler->RaLabelGeoIPCity |= ARGUS_ADDR_MASK;
 
-                           while ((sptr = strtok(tptr, ",")) != NULL) {
-                              for (x = 1; x < ARGUS_GEOIP_TOTAL_OBJECTS; x++) {
-                                 if (!(strncmp(sptr, ArgusGeoIPCityObjects[x].field, ArgusGeoIPCityObjects[x].length))) {
-                                    labeler->RaLabelGeoIPCityLabels[ind] = ArgusGeoIPCityObjects[x].value;
-                                    ind++;
-                                    break;
-                                 }
-                              }
+                           while ((sptr = strtok(tptr, ",")) != NULL && ind < maxlabels) {
+                              int obidx = ArgusGeoIP2FindObject(sptr);
+
                               tptr = NULL;
+                              if (obidx >= 0) {
+                                 labeler->RaLabelGeoIPCityLabels[ind] = obidx;
+                                 ind++;
+                              }
                            }
                         }
                         break;
@@ -526,8 +533,13 @@ RaLabelParseResourceStr (struct ArgusParserStruct *parser, struct ArgusLabelerSt
                      case RALABEL_GEOIP_CITY_FILE:
                      case RALABEL_GEOIP_V4_CITY_FILE:
                      case RALABEL_GEOIP_V6_CITY_FILE: {
-                        int status = MMDB_open(optarg, MMDB_MODE_MMAP, &labeler->RaGeoIPAsnObject);
-                        /* FIXME: check status */
+                        int status = MMDB_open(optarg, MMDB_MODE_MMAP, &labeler->RaGeoIPCityObject);
+
+                        if (status != MMDB_SUCCESS) {
+                           ArgusLog(LOG_ERR,
+                                    "%s: failed to open GeoIP2 city database: %s\n",
+                                    __func__, MMDB_strerror(status));
+                        }
                         break;
                      }
 #endif
@@ -738,6 +750,8 @@ ArgusLabelRecord (struct ArgusParserStruct *parser, struct ArgusRecordStruct *ar
 
 #if defined(ARGUS_GEOIP)
    ArgusLabelRecordGeoIP(parser, argus, label, MAXSTRLEN, &found);
+#elif defined(ARGUS_GEOIP2)
+   ArgusLabelRecordGeoIP2(parser, argus, label, MAXSTRLEN, &found);
 #endif
 
    if (found)

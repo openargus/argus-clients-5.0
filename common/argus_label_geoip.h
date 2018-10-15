@@ -18,7 +18,6 @@
  *
  */
 
-#if defined(ARGUS_GEOIP)
 
 #ifdef HAVE_CONFIG_H
 #include "argus_config.h"
@@ -30,10 +29,17 @@
 #include <argus_client.h>
 #include "argus_parser.h"
 
+#if defined(ARGUS_GEOIP)
 #define ARGUS_GEOIP_TOTAL_OBJECTS       14
 extern struct ArgusGeoIPCityObject ArgusGeoIPCityObjects[];
 
 int ArgusLabelRecordGeoIP(struct ArgusParserStruct *,
                           struct ArgusRecordStruct *, char *, size_t, int *);
 
+#endif
+
+#if defined(ARGUS_GEOIP2)
+int ArgusLabelRecordGeoIP2(struct ArgusParserStruct *,
+                           struct ArgusRecordStruct *, char *, size_t, int *);
+int ArgusGeoIP2FindObject(const char * const);
 #endif

@@ -3350,7 +3350,7 @@ ArgusHandleRecord (struct ArgusParserStruct *parser, struct ArgusInput *input, s
                                        if ((parser->exceptfile == NULL) || strcmp(wfile->filename, parser->exceptfile)) {
                                           if (!(((argus->hdr.type & ARGUS_MAR) && ((argus->hdr.cause & 0xF0) == ARGUS_START)))) {
 
-                                             if (argus->status & RA_MODIFIED) {
+                                             if (argus->status & ARGUS_RECORD_MODIFIED) {
                                                 struct ArgusRecord *ns = NULL;
                                                 int version = ARGUS_VERSION;
 
@@ -3500,7 +3500,7 @@ ArgusHandleRecordStruct (struct ArgusParserStruct *parser, struct ArgusInput *in
                                  if ((parser->exceptfile == NULL) || strcmp(wfile->filename, parser->exceptfile)) {
                                     if (!(((argus->hdr.type & ARGUS_MAR) && ((argus->hdr.cause & 0xF0) == ARGUS_START)))) {
 
-                                       if (argus->status & RA_MODIFIED) {
+                                       if (argus->status & ARGUS_RECORD_MODIFIED) {
                                           struct ArgusRecord *ns = NULL;
                                           int version = ARGUS_VERSION;
 
@@ -4280,6 +4280,8 @@ ArgusUniDirectionalRecord (struct ArgusRecordStruct *argus)
    argus->dload = 0.0;
    argus->drate = 0.0;
 
+   argus->status |= ARGUS_RECORD_MODIFIED;
+
 #ifdef ARGUSDEBUG
    ArgusDebug (10, "ArgusUniDirectionalRecord (%p)", argus);
 #endif
@@ -4784,6 +4786,8 @@ ArgusReverseRecordWithFlag (struct ArgusRecordStruct *argus, int flags)
          }
       }
    }
+
+   argus->status |= ARGUS_RECORD_MODIFIED;
 
 #ifdef ARGUSDEBUG
    ArgusDebug (10, "ArgusReverseRecord (%p, 0x%x)", argus, flags);

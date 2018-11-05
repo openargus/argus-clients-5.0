@@ -183,38 +183,6 @@ struct ArgusGeoIPCityObject {
 }
 */
 
-#define ARGUS_GEOIP_TOTAL_OBJECTS       14
-
-struct ArgusGeoIPCityObject ArgusGeoIPCityObjects[ARGUS_GEOIP_TOTAL_OBJECTS] = {
-   { "", "%s", 0, 0, 0, 0},
-#define ARGUS_GEOIP_COUNTRY_CODE        1
-   { "cco", "%s", 3, 2, 0, ARGUS_GEOIP_COUNTRY_CODE},
-#define ARGUS_GEOIP_COUNTRY_CODE_3      2
-   { "cco3", "%s", 4, 3, 0, ARGUS_GEOIP_COUNTRY_CODE_3},
-#define ARGUS_GEOIP_COUNTRY_NAME        3
-   { "cname", "%s", 5, 128, 0, ARGUS_GEOIP_COUNTRY_NAME},
-#define ARGUS_GEOIP_REGION              4
-   { "region", "%s", 6, 128, 0, ARGUS_GEOIP_REGION},
-#define ARGUS_GEOIP_CITY_NAME           5
-   { "city", "%s", 4, 128, 0, ARGUS_GEOIP_CITY_NAME},
-#define ARGUS_GEOIP_POSTAL_CODE         6
-   { "pcode", "%s", 5, 16, 0, ARGUS_GEOIP_POSTAL_CODE},
-#define ARGUS_GEOIP_LATITUDE            7
-   { "lat", "%f", 3, 16, 0, ARGUS_GEOIP_LATITUDE},
-#define ARGUS_GEOIP_LONGITUDE           8
-   { "lon", "%f", 3, 16, 0, ARGUS_GEOIP_LONGITUDE},
-#define ARGUS_GEOIP_METRO_CODE          9
-   { "metro", "%d", 5, 16, 0, ARGUS_GEOIP_METRO_CODE},
-#define ARGUS_GEOIP_AREA_CODE           10
-   { "area", "%d", 4, 16, 0, ARGUS_GEOIP_AREA_CODE},
-#define ARGUS_GEOIP_CHARACTER_SET       11
-   { "charset", "%d", 7, 16, 0, ARGUS_GEOIP_CHARACTER_SET},
-#define ARGUS_GEOIP_CONTINENT_CODE      12
-   { "cont", "%s", 4, 16, 0, ARGUS_GEOIP_CONTINENT_CODE},
-#define ARGUS_GEOIP_NETMASK             13
-   { "netmask", "%d", 7, 4, 0, ARGUS_GEOIP_NETMASK},
-};
-
 int RaLabelParseResourceFile (struct ArgusParserStruct *, struct ArgusLabelerStruct *, char *);
 int RaLabelParseResourceBuffer (struct ArgusParserStruct *, struct ArgusLabelerStruct *, char **);
 int RaLabelParseResourceStr (struct ArgusParserStruct *, struct ArgusLabelerStruct *, char *);
@@ -222,7 +190,7 @@ int RaLabelParseResourceStr (struct ArgusParserStruct *, struct ArgusLabelerStru
 struct ArgusLabelerStruct *ArgusNewLabeler (struct ArgusParserStruct *, int);
 void ArgusDeleteLabeler (struct ArgusParserStruct *, struct ArgusLabelerStruct *);
 
-struct ArgusLabelerStruct *ArgusLabeler = NULL;
+extern struct ArgusLabelerStruct *ArgusLabeler;
 int ArgusAddToRecordLabel (struct ArgusParserStruct *, struct ArgusRecordStruct *, char *);
 
 struct ArgusRecordStruct *ArgusLabelRecord (struct ArgusParserStruct *, struct ArgusRecordStruct *);

@@ -1334,13 +1334,13 @@ RaPrintAlgorithmTable[MAX_PRINT_ALG_TYPES] = {
 #define ARGUSPRINTSRCLONGITUDE		202
    { "slon", "", 3 , 1, 0, ARGUSPRINTSRCLONGITUDE, ArgusPrintSrcLongitude, ArgusPrintSrcLongitudeLabel, "double", 0},
 #define ARGUSPRINTDSTLATITUDE		203
-   { "dlat", "", 3 , 1, 0, ARGUSPRINTSRCLATITUDE, ArgusPrintDstLatitude, ArgusPrintDstLatitudeLabel, "double", 0},
+   { "dlat", "", 3 , 1, 0, ARGUSPRINTDSTLATITUDE, ArgusPrintDstLatitude, ArgusPrintDstLatitudeLabel, "double", 0},
 #define ARGUSPRINTDSTLONGITUDE		204
-   { "dlon", "", 3 , 1, 0, ARGUSPRINTSRCLONGITUDE, ArgusPrintDstLongitude, ArgusPrintDstLongitudeLabel, "double", 0},
+   { "dlon", "", 3 , 1, 0, ARGUSPRINTDSTLONGITUDE, ArgusPrintDstLongitude, ArgusPrintDstLongitudeLabel, "double", 0},
 #define ARGUSPRINTINODELATITUDE		205
-   { "ilat", "", 3 , 1, 0, ARGUSPRINTSRCLATITUDE, ArgusPrintInodeLatitude, ArgusPrintInodeLatitudeLabel, "double", 0},
+   { "ilat", "", 3 , 1, 0, ARGUSPRINTINODELATITUDE, ArgusPrintInodeLatitude, ArgusPrintInodeLatitudeLabel, "double", 0},
 #define ARGUSPRINTINODELONGITUDE	206
-   { "ilon", "", 3 , 1, 0, ARGUSPRINTSRCLONGITUDE, ArgusPrintInodeLongitude, ArgusPrintInodeLongitudeLabel, "double", 0},
+   { "ilon", "", 3 , 1, 0, ARGUSPRINTINODELONGITUDE, ArgusPrintInodeLongitude, ArgusPrintInodeLongitudeLabel, "double", 0},
 #define ARGUSPRINTSRCLOCAL		207
    { "sloc", "", 3 , 1, 0, ARGUSPRINTSRCLOCAL, ArgusPrintSrcLocal, ArgusPrintSrcLocalLabel, "tinyint unsigned", 0},
 #define ARGUSPRINTDSTLOCAL		208

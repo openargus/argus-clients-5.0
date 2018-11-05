@@ -80,11 +80,13 @@
 #include <netinet/igmp.h>
 #include <netinet/tcp.h>
 
-#include <ctype.h>
-
 #if defined(ARGUS_GEOIP)
 #include <GeoIPCity.h>
 #endif
+
+#include "argus_label_geoip.h"
+
+struct ArgusLabelerStruct *ArgusLabeler;
 
 int RaReadAddressConfig (struct ArgusParserStruct *, struct ArgusLabelerStruct *, char *);
 int RaReadIeeeAddressConfig (struct ArgusParserStruct *, struct ArgusLabelerStruct *, char *);
@@ -482,10 +484,12 @@ RaLabelParseResourceStr (struct ArgusParserStruct *parser, struct ArgusLabelerSt
                      case RALABEL_GEOIP_V4_ASN_FILE: 
                      case RALABEL_GEOIP_V6_ASN_FILE: {
                         int status = MMDB_open(optarg, MMDB_MODE_MMAP, &labeler->RaGeoIPAsnObject);
-/*
-                        if ((labeler->RaGeoAsnObject = GeoIP_open (optarg, GEOIP_INDEX_CACHE)) == NULL)
-                           ArgusLog (LOG_ERR, "RaLabelParseResourceFile: RaReadGeoIPAsn database error");
-*/
+
+                        if (status != MMDB_SUCCESS) {
+                           ArgusLog(LOG_ERR,
+                                    "%s: failed to open GeoIP2 ASN database: %s\n",
+                                    __func__, MMDB_strerror(status));
+                        }
                         break;
                      }
 
@@ -494,7 +498,9 @@ RaLabelParseResourceStr (struct ArgusParserStruct *parser, struct ArgusLabelerSt
                            labeler->RaLabelGeoIPCity = 0;
                         } else {
                            char *sptr, *fptr, *tptr;
-                           int ind = 0, x;
+                           int ind = 0;
+                           int maxlabels = sizeof(labeler->RaLabelGeoIPCityLabels)/
+                                           sizeof(labeler->RaLabelGeoIPCityLabels[0]);
 
                            bzero(labeler->RaLabelGeoIPCityLabels, sizeof(labeler->RaLabelGeoIPCityLabels));
 
@@ -511,15 +517,14 @@ RaLabelParseResourceStr (struct ArgusParserStruct *parser, struct ArgusLabelerSt
                            } else
                               labeler->RaLabelGeoIPCity |= ARGUS_ADDR_MASK;
 
-                           while ((sptr = strtok(tptr, ",")) != NULL) {
-                              for (x = 1; x < ARGUS_GEOIP_TOTAL_OBJECTS; x++) {
-                                 if (!(strncmp(sptr, ArgusGeoIPCityObjects[x].field, ArgusGeoIPCityObjects[x].length))) {
-                                    labeler->RaLabelGeoIPCityLabels[ind] = ArgusGeoIPCityObjects[x].value;
-                                    ind++;
-                                    break;
-                                 }
-                              }
+                           while ((sptr = strtok(tptr, ",")) != NULL && ind < maxlabels) {
+                              int obidx = ArgusGeoIP2FindObject(sptr);
+
                               tptr = NULL;
+                              if (obidx >= 0) {
+                                 labeler->RaLabelGeoIPCityLabels[ind] = obidx;
+                                 ind++;
+                              }
                            }
                         }
                         break;
@@ -528,11 +533,13 @@ RaLabelParseResourceStr (struct ArgusParserStruct *parser, struct ArgusLabelerSt
                      case RALABEL_GEOIP_CITY_FILE:
                      case RALABEL_GEOIP_V4_CITY_FILE:
                      case RALABEL_GEOIP_V6_CITY_FILE: {
-                        int status = MMDB_open(optarg, MMDB_MODE_MMAP, &labeler->RaGeoIPAsnObject);
-/*
-                        if ((labeler->RaGeoIPv4CityObject = GeoIP_open( optarg, GEOIP_INDEX_CACHE)) == NULL)
-                           ArgusLog (LOG_ERR, "RaLabelParseResourceFile: RaReadGeoIPAsn database error");
-*/
+                        int status = MMDB_open(optarg, MMDB_MODE_MMAP, &labeler->RaGeoIPCityObject);
+
+                        if (status != MMDB_SUCCESS) {
+                           ArgusLog(LOG_ERR,
+                                    "%s: failed to open GeoIP2 city database: %s\n",
+                                    __func__, MMDB_strerror(status));
+                        }
                         break;
                      }
 #endif
@@ -556,84 +563,6 @@ RaLabelParseResourceStr (struct ArgusParserStruct *parser, struct ArgusLabelerSt
 
    return (retn);
 }
-
-
-#if defined(ARGUS_GEOIP)
-int ArgusPrintGeoIPRecord (struct ArgusParserStruct *, GeoIPRecord *, char *, int, int, char*);
-
-int
-ArgusPrintGeoIPRecord (struct ArgusParserStruct *parser, GeoIPRecord *gir, char *label, int len, int found, char *prefix)
-{
-   int slen = strlen(label), x, tf = 0;
-
-   if (found) {
-      snprintf (&label[slen], len - slen, ":");
-      slen++;
-   }
-
-   snprintf (&label[slen], len - slen, "%s", prefix);
-   slen = strlen(label);
-
-   for (x = 0; x < ARGUS_GEOIP_TOTAL_OBJECTS; x++) {
-      struct ArgusGeoIPCityObject *obj;
-      int ind;
-      if ((ind = parser->ArgusLabeler->RaLabelGeoIPCityLabels[x]) > 0) {
-         if (tf) {
-            snprintf (&label[slen], len - slen, "%c", ',');
-            slen++;
-         }
-         obj = &ArgusGeoIPCityObjects[ind];
-         switch (obj->value) {
-            case ARGUS_GEOIP_COUNTRY_CODE:
-               snprintf (&label[slen], len - slen, obj->format, gir->country_code);
-               break;
-            case ARGUS_GEOIP_COUNTRY_CODE_3:
-               snprintf (&label[slen], len - slen, obj->format, gir->country_code3);
-               break;
-            case ARGUS_GEOIP_COUNTRY_NAME:
-               snprintf (&label[slen], len - slen, obj->format, gir->country_name);
-               break;
-            case ARGUS_GEOIP_REGION:
-               snprintf (&label[slen], len - slen, obj->format, gir->region);
-               break;
-            case ARGUS_GEOIP_CITY_NAME:
-               snprintf (&label[slen], len - slen, obj->format, gir->city);
-               break;
-            case ARGUS_GEOIP_POSTAL_CODE:
-               snprintf (&label[slen], len - slen, obj->format, gir->postal_code);
-               break;
-            case ARGUS_GEOIP_LATITUDE:
-               snprintf (&label[slen], len - slen, obj->format, gir->latitude);
-               break;
-            case ARGUS_GEOIP_LONGITUDE:
-               snprintf (&label[slen], len - slen, obj->format, gir->longitude);
-               break;
-            case ARGUS_GEOIP_METRO_CODE:
-               snprintf (&label[slen], len - slen, obj->format, gir->metro_code);
-               break;
-            case ARGUS_GEOIP_AREA_CODE:
-               snprintf (&label[slen], len - slen, obj->format, gir->area_code);
-               break;
-            case ARGUS_GEOIP_CHARACTER_SET:
-               snprintf (&label[slen], len - slen, obj->format, gir->charset);
-               break;
-            case ARGUS_GEOIP_CONTINENT_CODE:
-               snprintf (&label[slen], len - slen, obj->format, gir->continent_code);
-               break;
-//          case ARGUS_GEOIP_NETMASK:
-//             snprintf (&label[slen], len - slen, obj->format, gir->netmask);
-//             break;
-         }
-         slen = strlen(label);
-         tf++;
-
-      } else
-         break;
-   }
-
-   return found;
-}
-#endif
 
 
 int
@@ -820,241 +749,9 @@ ArgusLabelRecord (struct ArgusParserStruct *parser, struct ArgusRecordStruct *ar
    }
 
 #if defined(ARGUS_GEOIP)
-
-   if (labeler->RaLabelGeoIPAsn) {
-      if (labeler->RaGeoIPv4AsnObject != NULL) {
-         struct ArgusAsnStruct *asn = (struct ArgusAsnStruct *) argus->dsrs[ARGUS_ASN_INDEX];
-         struct ArgusFlow *flow = (struct ArgusFlow *) argus->dsrs[ARGUS_FLOW_INDEX];
-         struct ArgusIcmpStruct *icmp = (void *)argus->dsrs[ARGUS_ICMP_INDEX];
-
-         if (flow != NULL) {
-            if (asn == NULL) {
-               if ((asn = ArgusCalloc(1, sizeof(*asn))) == NULL)
-                  ArgusLog (LOG_ERR, "RaProcessRecord: ArgusCalloc error %s", strerror(errno));
-
-               asn->hdr.type              = ARGUS_ASN_DSR;
-               asn->hdr.subtype           = ARGUS_ASN_ORIGIN;
-               asn->hdr.argus_dsrvl8.qual = 0;
-               asn->hdr.argus_dsrvl8.len  = 3;
-
-               argus->dsrs[ARGUS_ASN_INDEX] = (struct ArgusDSRHeader *) asn;
-               argus->dsrindex |= (0x01 << ARGUS_ASN_INDEX);
-            }
-
-            switch (flow->hdr.subtype & 0x3F) {
-               case ARGUS_FLOW_CLASSIC5TUPLE:
-               case ARGUS_FLOW_LAYER_3_MATRIX: {
-                  switch (flow->hdr.argus_dsrvl8.qual & 0x1F) {
-                     case ARGUS_TYPE_IPV4: {
-                        if (asn->src_as == 0) {
-                           if ((rstr = GeoIP_org_by_ipnum (labeler->RaGeoIPv4AsnObject, flow->ip_flow.ip_src)) != NULL) {
-                              if (strlen(rstr)) {
-                                 int result = 0;
-                                 if (sscanf(rstr, "AS%d", &result) == 1)
-                                    asn->src_as = result;
-                              }
-                              free(rstr);
-                           }
-                        }
-
-                        if (asn->dst_as == 0) {
-                           if ((rstr = GeoIP_org_by_ipnum (labeler->RaGeoIPv4AsnObject, flow->ip_flow.ip_dst)) != NULL) {
-                              if (strlen(rstr)) {
-                                 int result = 0;
-                                 if (sscanf(rstr, "AS%d", &result) == 1)
-                                    asn->dst_as = result;
-                              }
-                              free(rstr);
-                           }
-                        }
-
-                        if (asn->inode_as == 0) {
-                           if (icmp != NULL) {
-                              if (icmp->hdr.argus_dsrvl8.qual & ARGUS_ICMP_MAPPED) {
-                                 if ((rstr = GeoIP_org_by_ipnum (labeler->RaGeoIPv4AsnObject, icmp->osrcaddr)) != NULL) {
-                                    if (strlen(rstr)) {
-                                       int result = 0;
-                                       if (sscanf(rstr, "AS%d", &result) == 1)
-                                          asn->inode_as = result;
-
-                                       asn->hdr.argus_dsrvl8.len  = 4;
-                                    }
-                                    free(rstr);
-                                 }
-                              }
-                           }
-                        }
-                        break;
-                     }
-
-                     case ARGUS_TYPE_IPV6: {
-                        if (labeler->RaGeoIPv6AsnObject) {
-                           if (asn->src_as == 0) {
-                              struct in6_addr saddr;
-
-                              bcopy(flow->ipv6_flow.ip_src, saddr.s6_addr, sizeof(saddr));
-
-                              if ((rstr = GeoIP_org_by_ipnum_v6 (labeler->RaGeoIPv6AsnObject, saddr)) != NULL) {
-                                 if (strlen(rstr)) {
-                                    int result = 0;
-                                    if (sscanf(rstr, "AS%d", &result) == 1)
-                                       asn->src_as = result;
-                                 }
-                                 free(rstr);
-                              }
-                           }
-
-                           if (asn->dst_as == 0) {
-                              struct in6_addr daddr;
-
-                              bcopy(flow->ipv6_flow.ip_dst, daddr.s6_addr, sizeof(daddr));
-
-                              if ((rstr = GeoIP_org_by_ipnum_v6 (labeler->RaGeoIPv6AsnObject, daddr)) != NULL) {
-                                 if (strlen(rstr)) {
-                                    int result = 0;
-                                    if (sscanf(rstr, "AS%d", &result) == 1)
-                                       asn->dst_as = result;
-                                 }
-                                 free(rstr);
-                              }
-                           }
-                        }
-                        break;
-                     }
-                  }
-                  break;
-               }
-            }
-         }
-      }
-   }
-
-   if (labeler->RaLabelGeoIPCity) {
-      if (labeler->RaGeoIPv4CityObject != NULL) {
-         struct ArgusFlow *flow = (struct ArgusFlow *) argus->dsrs[ARGUS_FLOW_INDEX];
-         GeoIPRecord *gir;
-
-         if (flow != NULL) {
-            switch (flow->hdr.subtype & 0x3F) {
-               case ARGUS_FLOW_CLASSIC5TUPLE:
-               case ARGUS_FLOW_LAYER_3_MATRIX: {
-                  switch (flow->hdr.argus_dsrvl8.qual & 0x1F) {
-                     case ARGUS_TYPE_IPV4: {
-                        struct ArgusGeoLocationStruct *geo = NULL;
-
-                        if (labeler->RaLabelGeoIPCity & ARGUS_SRC_ADDR)
-                           if ((gir = GeoIP_record_by_ipnum (labeler->RaGeoIPv4CityObject, flow->ip_flow.ip_src)) != NULL) {
-                              if ((geo = (struct ArgusGeoLocationStruct *)argus->dsrs[ARGUS_GEO_INDEX]) == NULL) {
-                                 geo = (struct ArgusGeoLocationStruct *) ArgusCalloc(1, sizeof(*geo));
-                                 geo->hdr.type = ARGUS_GEO_DSR;
-                                 geo->hdr.argus_dsrvl8.len = (sizeof(*geo) + 3) / 4;
-
-                                 argus->dsrs[ARGUS_GEO_INDEX] = &geo->hdr;
-                                 argus->dsrindex |= (0x1 << ARGUS_GEO_INDEX);
-                              }
-                              geo->hdr.argus_dsrvl8.qual |= ARGUS_SRC_GEO;
-                              geo->src.lat = gir->latitude;
-                              geo->src.lon = gir->longitude;
-                              
-                              ArgusPrintGeoIPRecord(parser, gir, label, sizeof(label), found, "scity=");
-                              GeoIPRecord_delete(gir);
-                              found++;
-                           }
-
-                        if (labeler->RaLabelGeoIPCity & ARGUS_DST_ADDR)
-                           if ((gir = GeoIP_record_by_ipnum (labeler->RaGeoIPv4CityObject, flow->ip_flow.ip_dst)) != NULL) {
-                              if ((geo = (struct ArgusGeoLocationStruct *)argus->dsrs[ARGUS_GEO_INDEX]) == NULL) {
-                                 geo = (struct ArgusGeoLocationStruct *) ArgusCalloc(1, sizeof(*geo));
-                                 geo->hdr.type = ARGUS_GEO_DSR;
-                                 geo->hdr.argus_dsrvl8.len = (sizeof(*geo) + 3) / 4;
-                                 argus->dsrs[ARGUS_GEO_INDEX] = &geo->hdr;
-                                 argus->dsrindex |= (0x1 << ARGUS_GEO_INDEX);
-                              }
-                              geo->hdr.argus_dsrvl8.qual |= ARGUS_DST_GEO;
-                              geo->dst.lat = gir->latitude;
-                              geo->dst.lon = gir->longitude;
-                              ArgusPrintGeoIPRecord(parser, gir, label, sizeof(label), found, "dcity=");
-                              GeoIPRecord_delete(gir);
-                              found++;
-                           }
-
-                        if (labeler->RaLabelGeoIPCity & ARGUS_INODE_ADDR) {
-                           struct ArgusIcmpStruct *icmp = (void *)argus->dsrs[ARGUS_ICMP_INDEX];
-
-                           if (icmp != NULL) {
-                              if (icmp->hdr.argus_dsrvl8.qual & ARGUS_ICMP_MAPPED) {
-                                 struct ArgusFlow *flow = (void *)argus->dsrs[ARGUS_FLOW_INDEX];
-
-                                 if (flow != NULL) {
-                                    switch (flow->hdr.subtype & 0x3F) {
-                                       case ARGUS_FLOW_CLASSIC5TUPLE:
-                                       case ARGUS_FLOW_LAYER_3_MATRIX: {
-                                          switch (flow->hdr.argus_dsrvl8.qual & 0x1F) {
-                                             case ARGUS_TYPE_IPV4:
-                                                if ((gir = GeoIP_record_by_ipnum (labeler->RaGeoIPv4CityObject, icmp->osrcaddr)) != NULL) {
-                                                   if ((geo = (struct ArgusGeoLocationStruct *)argus->dsrs[ARGUS_GEO_INDEX]) == NULL) {
-                                                      geo = (struct ArgusGeoLocationStruct *) ArgusCalloc(1, sizeof(*geo));
-                                                      geo->hdr.type = ARGUS_GEO_DSR;
-                                                      geo->hdr.argus_dsrvl8.len = (sizeof(*geo) + 3) / 4;
-                                                      argus->dsrs[ARGUS_GEO_INDEX] = &geo->hdr;
-                                                      argus->dsrindex |= (0x1 << ARGUS_GEO_INDEX);
-                                                   }
-                                                   geo->hdr.argus_dsrvl8.qual |= ARGUS_INODE_GEO;
-                                                   geo->inode.lat = gir->latitude;
-                                                   geo->inode.lon = gir->longitude;
-                                                   ArgusPrintGeoIPRecord(parser, gir, label, sizeof(label), found, "icity=");
-                                                   GeoIPRecord_delete(gir);
-                                                   found++;
-                                                }
-                                                break;
-
-                                             case ARGUS_TYPE_IPV6:
-                                                break;
-                                          }
-                                          break;
-                                       }
-
-                                       default:
-                                          break;
-                                    }
-                                 }
-                              }
-                           }
-                        }
-                        break;
-                     }
-                     case ARGUS_TYPE_IPV6: {
-                        if (labeler->RaGeoIPv6CityObject != NULL) {
-                           if (labeler->RaLabelGeoIPCity & ARGUS_SRC_ADDR) {
-                              struct in6_addr saddr;
-                              bcopy(flow->ipv6_flow.ip_src, saddr.s6_addr, sizeof(saddr));
-
-                              if ((gir = GeoIP_record_by_ipnum_v6 (labeler->RaGeoIPv6CityObject, saddr)) != NULL) {
-                                 ArgusPrintGeoIPRecord(parser, gir, label, sizeof(label), found, "scity=");
-                                 GeoIPRecord_delete(gir);
-                                 found++;
-                              }
-                           }
-
-                           if (labeler->RaLabelGeoIPCity & ARGUS_DST_ADDR) {
-                              struct in6_addr daddr;
-                              bcopy(flow->ipv6_flow.ip_dst, daddr.s6_addr, sizeof(daddr));
-
-                              if ((gir = GeoIP_record_by_ipnum_v6 (labeler->RaGeoIPv6CityObject, daddr)) != NULL) {
-                                 ArgusPrintGeoIPRecord(parser, gir, label, sizeof(label), found, "dcity=");
-                                 GeoIPRecord_delete(gir);
-                                 found++;
-                              }
-                           }
-                        }
-                        break;
-                     }
-                  }
-               }
-            }
-         }
-      }
-   }
+   ArgusLabelRecordGeoIP(parser, argus, label, MAXSTRLEN, &found);
+#elif defined(ARGUS_GEOIP2)
+   ArgusLabelRecordGeoIP2(parser, argus, label, MAXSTRLEN, &found);
 #endif
 
    if (found)

@@ -4402,7 +4402,7 @@ RaLocalityLabel (struct ArgusParserStruct *parser, struct ArgusRecordStruct *arg
          if (daddr && daddr->label) {
             snprintf(&RaLocalityLabelBuffer[slen],
                      sizeof(RaLocalityLabelBuffer) - slen,
-                     "%sdaddr=%s", found ? ":" : "", daddr->label);
+                     "%sdloc=%s", found ? ":" : "", daddr->label);
             found++;
          }
       }

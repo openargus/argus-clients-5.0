@@ -74,6 +74,7 @@ int ArgusAutoId = 0;
 int ArgusDropTable = 0;
 int ArgusCreateTable = 0;
 
+char *RaProgramPath = RABINPATH;
 char *RaTempFilePath = "/tmp";
 char *RaRoleString = NULL;
 char *RaProbeString = NULL;
@@ -955,9 +956,9 @@ RaSQLProcessQueue (struct ArgusQueueStruct *queue)
                                        ArgusLog(LOG_ERR, "RaSQLProcessQueue: alloc error", strerror(errno));
 
                                     if (RaRoleString != NULL)
-                                       sprintf (command, "/usr/local/bin/ra -nnS %s:%d%s/%s/%s -w %s", RaHost, RaPort, RaArchive, RaRoleString, file, filenamebuf);
+                                       sprintf (command, "\"%s/ra\" -S %s:%d%s/%s/%s -w %s", RaProgramPath, RaHost, RaPort, RaArchive, RaRoleString, file, filenamebuf);
                                     else
-                                       sprintf (command, "/usr/local/bin/ra -nnS %s:%d%s/%s -w %s", RaHost, RaPort, RaArchive, file, filenamebuf);
+                                       sprintf (command, "\"%s/ra\" -S %s:%d%s/%s -w %s", RaProgramPath, RaHost, RaPort, RaArchive, file, filenamebuf);
 #ifdef ARGUSDEBUG
                                     ArgusDebug (2, "RaSQLProcessQueue: remote file caching command  %s\n", command);
 #endif

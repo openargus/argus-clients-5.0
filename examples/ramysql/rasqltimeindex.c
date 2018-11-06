@@ -960,6 +960,7 @@ ArgusClientInit (struct ArgusParserStruct *parser)
 
          file = parser->ArgusInputFileList;
          parser->ArgusInputFileList = NULL;
+         parser->ArgusInputFileListTail = NULL;
 
          do {
             int retn, fileindex = -1, filestatus = -1;

@@ -96,6 +96,7 @@ AC_CHECK_HEADERS([stdlib.h stddef.h string.h strings.h sys/file.h sys/ioctl.h sy
 
 AC_CHECK_HEADERS([sys/mount.h sys/time.h sys/vfs.h syslog.h termios.h unistd.h values.h ifaddrs.h dns_sd.h])
 AC_CHECK_HEADERS([uuid/uuid.h uuid.h])
+AC_CHECK_HEADERS([sys/systm.h])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
@@ -430,6 +431,7 @@ AS_IF([test "x$with_systemdsystemunitdir" != "xno"],
       [AC_SUBST([systemdsystemunitdir], [$with_systemdsystemunitdir])])
 
 LIBCURL_CHECK_CONFIG
+AC_QOSIENT_CURLEXE
 AC_QOSIENT_LIBUUID
 AC_CHECK_PROG([HAVE_SWIG], [swig], [1], [0])
 if test "$HAVE_SWIG" = "1" ; then

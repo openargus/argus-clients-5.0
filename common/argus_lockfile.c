@@ -47,7 +47,7 @@ typedef struct _argus_lock_context {
 } *ArgusLockContext;
 
 # if defined(CYGWIN)
-static char *
+char *
 ArgusCygwinConvPath2Win(const char * const posix)
 {
    ssize_t size;
@@ -247,6 +247,7 @@ ArgusReleaseLockFile(ArgusLockContext *ctx)
    if (fcntl((*ctx)->fd, F_SETLK, &(*ctx)->lock) < 0)
       ArgusLog(LOG_WARNING, "%s: unable to unlock file\n", __func__);
 
+   close((*ctx)->fd);
    unlink((*ctx)->filename); /* try to clean up, but ok to fail */
 
    free((*ctx)->filename);

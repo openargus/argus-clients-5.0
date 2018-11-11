@@ -55,7 +55,7 @@ VPATH = @srcdir@
 
 CC = @CC@
 CCOPT = @V_CCOPT@
-INCLS = -I. -I../include -I../common @V_INCLS@
+INCLS = -I. -I../include -I../common @V_INCLS@ @LIBCARES_CFLAGS@
 DEFS = @DEFS@ -DSYSCONFDIR=\"@sysconfdir@\" -DSHAREDSTATEDIR=\"@sharedstatedir@\"
 COMPATLIB = @V_PCRE@ @COMPATLIB@ @LIB_SASL@ @LIBS@ @V_THREADS@ @V_GEOIPDEP@ @V_FTDEP@ @ZLIB@ @LIBMAXMINDDB_LIBS@
 
@@ -116,7 +116,7 @@ all: $(PROGS)
 	$(CC) $(CFLAGS) -o $@ rastream.o $(LIB) $(COMPATLIB)
 
 @INSTALL_BIN@/ramanage: ramanage.o ramanage_sha1.o $(LIB)
-	$(CC) $(CFLAGS) -o $@ ramanage.o ramanage_sha1.o $(LIB) $(COMPATLIB) @LIBCURL@
+	$(CC) $(CFLAGS) -o $@ ramanage.o ramanage_sha1.o $(LIB) $(COMPATLIB) @LIBCURL@ @LIBCARES_LIBS@
 
 ramanage_sha1.o: ../common/sha1.c
 	$(CC) $(CFLAGS) -c $^ -o $@

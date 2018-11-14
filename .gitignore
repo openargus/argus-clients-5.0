@@ -44,3 +44,4 @@ include/argus_config.h
 /examples/rahisto/rahisto-delsql
 /examples/rahisto/rahisto-querysql
 /examples/rahisto/rahisto-updatesql
+/man/man5/ramanage.conf.5

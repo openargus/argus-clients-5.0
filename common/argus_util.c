@@ -22242,7 +22242,7 @@ ArgusPrintCountryCode (struct ArgusParserStruct *parser, struct ArgusRecordStruc
                while (caddr && strlen(caddr->cco) == 0) caddr = caddr->p;
 
                if (caddr != NULL) 
-                  snprintf (buf, 3, "%s", caddr->cco);
+                  snprintf (buf, 4, "%s", caddr->cco);
                else
                   snprintf (buf, 3, "ZZ");
             }
@@ -22254,7 +22254,7 @@ ArgusPrintCountryCode (struct ArgusParserStruct *parser, struct ArgusRecordStruc
       }
 
    } else
-      snprintf (buf, 2, "  ");
+      sprintf (buf, "  ");
 
 #ifdef ARGUSDEBUG
    ArgusDebug (10, "ArgusPrintCountryCode (%p, %p, %p, %d, %d, %p) returning\n", parser, argus, addr, type, len, buf);

@@ -1015,8 +1015,6 @@ ArgusMainInit (struct ArgusParserStruct *parser, int argc, char **argv)
 static void
 ArgusParseArgs(struct ArgusParserStruct *parser, int argc, char **argv)
 {
-   extern char *optarg;
-   extern int optind, opterr;
    int op, retn = 0, rcmdline = 0, Scmdline = 0;
    char *cmdbuf = NULL, *str = NULL;
    char *getoptStr = NULL;
@@ -2452,7 +2450,7 @@ RaParseResourceLine(struct ArgusParserStruct *parser, int linenum,
             if ((parser->ArgusLabeler = ArgusNewLabeler(parser, 0L)) == NULL)
                ArgusLog (LOG_ERR, "ArgusClientInit: ArgusNewLabeler error");
 
-            RaReadSrvSignature (parser, parser->ArgusLabeler, optarg);
+         RaReadSrvSignature (parser, parser->ArgusLabeler, optarg);
          break;
       }
 
@@ -4368,7 +4366,7 @@ ArgusReverseLabel(struct ArgusLabelStruct *l)
             snprintf (&ArgusReverseLabelBuf[tlen], MAXBUFFERLEN - tlen, "%s=%s", obj, label);
 
          } else
-            snprintf (&ArgusReverseLabelBuf[tlen], MAXBUFFERLEN - tlen, "%s", obj);
+            snprintf (&ArgusReverseLabelBuf[tlen], MAXBUFFERLEN - tlen, "%s", label);
          ptr = NULL;
       }
 
@@ -6961,7 +6959,7 @@ ArgusPrintCor (struct ArgusParserStruct *parser, char *buf, struct ArgusRecordSt
                      }
                   }
                }
-               sprintf(cbuf, "%s", value);
+               snprintf(cbuf, sizeof(cbuf), "%s", value ? value : "");
                cmets++;
                len -= sizeof(*cmets);
 
@@ -22242,7 +22240,7 @@ ArgusPrintCountryCode (struct ArgusParserStruct *parser, struct ArgusRecordStruc
                while (caddr && strlen(caddr->cco) == 0) caddr = caddr->p;
 
                if (caddr != NULL) 
-                  snprintf (buf, 3, "%s", caddr->cco);
+                  snprintf (buf, 4, "%s", caddr->cco);
                else
                   snprintf (buf, 3, "ZZ");
             }
@@ -22254,7 +22252,7 @@ ArgusPrintCountryCode (struct ArgusParserStruct *parser, struct ArgusRecordStruc
       }
 
    } else
-      snprintf (buf, 2, "  ");
+      sprintf (buf, "  ");
 
 #ifdef ARGUSDEBUG
    ArgusDebug (10, "ArgusPrintCountryCode (%p, %p, %p, %d, %d, %p) returning\n", parser, argus, addr, type, len, buf);

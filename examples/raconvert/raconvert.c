@@ -103,7 +103,6 @@ unsigned int ArgusIdType = 0;
 int
 main (int argc, char **argv)
 {
-   extern char *optarg;
    int ArgusExitStatus;
    int i, cc;
 

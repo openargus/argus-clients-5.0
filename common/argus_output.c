@@ -4994,7 +4994,8 @@ ArgusTcpWrapper (struct ArgusOutputStruct *output, int fd, struct sockaddr *from
       struct sockaddr_storage remoteaddr, localaddr;
       char localip[60], remoteip[60];
       char hbuf[NI_MAXHOST];
-      unsigned int salen, niflags;
+      unsigned int niflags;
+      socklen_t salen;
 
       salen = sizeof(remoteaddr);
       bzero(hbuf, sizeof(hbuf));

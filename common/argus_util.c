@@ -2452,7 +2452,7 @@ RaParseResourceLine(struct ArgusParserStruct *parser, int linenum,
             if ((parser->ArgusLabeler = ArgusNewLabeler(parser, 0L)) == NULL)
                ArgusLog (LOG_ERR, "ArgusClientInit: ArgusNewLabeler error");
 
-            RaReadSrvSignature (parser, parser->ArgusLabeler, optarg);
+         RaReadSrvSignature (parser, parser->ArgusLabeler, optarg);
          break;
       }
 

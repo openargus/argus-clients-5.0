@@ -870,11 +870,15 @@ RaReadFlowLabels (struct ArgusParserStruct *parser, struct ArgusLabelerStruct *l
                                  ArgusLog (LOG_ERR, "RaReadFlowLabels ArgusFilterCompile returned error");
                            }
 
-                           if (label != NULL)
-                              raflow->labelstr = label; label = NULL;
+                           if (label != NULL) {
+                              raflow->labelstr = label;
+                              label = NULL;
+                           }
 
-                           if (color != NULL)
-                              raflow->colorstr = color; color = NULL;
+                           if (color != NULL) {
+                              raflow->colorstr = color;
+                              color = NULL;
+                           }
 
                            if (cont != 0)
                               raflow->cont = 1;

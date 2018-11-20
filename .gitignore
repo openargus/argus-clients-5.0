@@ -45,3 +45,10 @@ include/argus_config.h
 /examples/rahisto/rahisto-querysql
 /examples/rahisto/rahisto-updatesql
 /man/man5/ramanage.conf.5
+
+# compiled perl library
+/perllib/qosient
+/perllib/swig.stamp
+/perllib/swig_ArgusParseTime_wrap.c
+/perllib/util.so
+/perllib/util.dylib

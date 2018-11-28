@@ -50,7 +50,7 @@
 #include <netdb.h>
 #include <sys/socket.h>
  
-#include <mysql.h>
+#include "argus_mysql.h"
 
 #include <rasqltimeindex.h>
 

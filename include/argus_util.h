@@ -48,8 +48,8 @@ extern "C" {
 #include <argus/cons_out.h>
 #include <argus/cflowd.h>
 
-#define ARGUS_MAX_PRINT_ALG     	227
-#define MAX_PRINT_ALG_TYPES     	227
+#define ARGUS_MAX_PRINT_ALG     	226
+#define MAX_PRINT_ALG_TYPES     	226
 
 
 #include <argus/CflowdFlowPdu.h>
@@ -1388,7 +1388,7 @@ RaPrintAlgorithmTable[MAX_PRINT_ALG_TYPES] = {
    { "idlemin", "%u", 8 , 1, 0, ARGUSPRINTMINIDLE, ArgusPrintIdleMin, ArgusPrintIdleMinLabel, "double unsigned", 0},
 #define ARGUSPRINTMAXIDLE		224
    { "idlemax", "%u", 8 , 1, 0, ARGUSPRINTMAXIDLE, ArgusPrintIdleMax, ArgusPrintIdleMaxLabel, "double unsigned", 0},
-#define ARGUSPRINTSTDDEVIDLE  		226
+#define ARGUSPRINTSTDDEVIDLE  		225
    { "idlestddev", "%u", 8 , 1, 0, ARGUSPRINTSTDDEVIDLE, ArgusPrintIdleStdDeviation, ArgusPrintIdleStdDeviationLabel, "double unsigned", 0},
 };
 

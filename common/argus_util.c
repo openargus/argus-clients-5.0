@@ -26090,8 +26090,7 @@ ArgusLog (int priority, char *fmt, ...)
       }
  
       if (!ArgusIsatty()) {
-         openlog (ArgusParser->ArgusProgramName, LOG_PID | LOG_PERROR,
-                  LOG_DAEMON);
+         openlog (ArgusParser->ArgusProgramName, LOG_PID, LOG_DAEMON);
          syslog (priority, "%s", buf);
          closelog ();
       }

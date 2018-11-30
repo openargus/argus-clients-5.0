@@ -82,7 +82,7 @@ unsigned long long ArgusTotalCommitSQLStatements = 0ULL;
 #include <netdb.h>
 #include <sys/socket.h>
 
-#include <mysql.h>
+#include "argus_mysql.h"
 
 char *RaDatabase = NULL;
 char **RaTables = NULL;

@@ -74,7 +74,7 @@ void RaClientSortQueue (struct ArgusSorterStruct *, struct ArgusQueueStruct *, i
 void ArgusShiftArray (struct ArgusParserStruct *, struct RaBinProcessStruct *, int, int);
 
 #if defined(ARGUS_MYSQL)
-#include <mysql.h>
+# include "argus_mysql.h"
 
 int ArgusScheduleSQLQuery (struct ArgusParserStruct *, struct ArgusAggregatorStruct *, struct ArgusRecordStruct *, char *, int);
 struct ArgusRecordStruct *RaLookupDBCache (struct ArgusParserStruct *, struct ArgusAggregatorStruct *, struct ArgusRecordStruct *, struct ArgusHashStruct *);

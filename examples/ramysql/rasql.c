@@ -53,7 +53,7 @@
 #include <rasplit.h>
 #include "rasql_common.h"
  
-#include <mysql.h>
+#include "argus_mysql.h"
 #include <mysqld_error.h>
 
 char *RaDatabase = NULL;

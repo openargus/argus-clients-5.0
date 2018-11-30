@@ -183,6 +183,8 @@ ArgusClientInit (struct ArgusParserStruct *parser)
                else
                if (!(strncasecmp (mode->mode, "noman", 5)))
                   parser->ArgusPrintMan = 0;
+               else
+               if (!(strcmp (mode->mode, "lock")));
                else {
                   int done = 0;
                   for (i = 0, ind = -1; !(done) && (i < ARGUSSPLITMODENUM); i++) {
@@ -1136,10 +1138,15 @@ RaSendArgusRecord(struct ArgusRecordStruct *argus)
                      struct ArgusRecord *argusrec = NULL;
 
                      if ((argusrec = ArgusGenerateRecord (argus, 0L, ArgusRecordBuffer, argus_version)) != NULL) {
+                        int rv;
+
 #ifdef _LITTLE_ENDIAN
                         ArgusHtoN(argusrec);
 #endif
-                        ArgusWriteNewLogfile (ArgusParser, argus->input, wfile, argusrec);
+                        rv = ArgusWriteNewLogfile (ArgusParser, argus->input,
+                                                   wfile, argusrec);
+                        if (rv < 0)
+                           ArgusLog(LOG_ERR, "%s unable to open file\n", __func__);
                      }
                   }
                }

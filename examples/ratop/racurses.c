@@ -1347,10 +1347,16 @@ ArgusProcessTerminator(WINDOW *win, int status, int ch)
 
                      if (pass != 0) {
                         if ((argusrec = ArgusGenerateRecord (ns, 0L, ArgusRecordBuffer, argus_version)) != NULL) {
+                           int rv;
+
 #ifdef _LITTLE_ENDIAN
                            ArgusHtoN(argusrec);
 #endif
-                           ArgusWriteNewLogfile (ArgusParser, ns->input, wfile, argusrec);
+                           rv = ArgusWriteNewLogfile (ArgusParser, ns->input,
+                                                      wfile, argusrec);
+                           if (rv < 0)
+                              ArgusLog(LOG_ERR, "%s unable to open file\n",
+                                       __func__);
 
                         }
                      }
@@ -4589,11 +4595,16 @@ argus_command_string(void)
 
                      if (pass != 0) {
                         if ((argusrec = ArgusGenerateRecord (ns, 0L, ArgusRecordBuffer, argus_version)) != NULL) {
+                           int rv;
+
 #ifdef _LITTLE_ENDIAN
                            ArgusHtoN(argusrec);
 #endif
-                           ArgusWriteNewLogfile (ArgusParser, ns->input, wfile, argusrec);
-
+                           rv = ArgusWriteNewLogfile (ArgusParser, ns->input,
+                                                      wfile, argusrec);
+                           if (rv < 0)
+                              ArgusLog(LOG_ERR, "%s unable to open file\n",
+                                       __func__);
                         }
                      }
                   }

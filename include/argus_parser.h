@@ -359,8 +359,6 @@ struct ArgusParserStruct {
    pthread_cond_t cond;
 #endif /* ARGUS_THREADS */
 
-   void *ArgusClientContext;
-
    pid_t ArgusSessionId;
 
    char ArgusTimeoutThread, NonBlockingDNS;
@@ -389,7 +387,7 @@ struct ArgusParserStruct {
    struct ArgusQueueStruct *ArgusRemoteList;
 
    regex_t upreg[ARGUS_MAX_REGEX];
-   regex_t lpreg, dpreg;
+   regex_t lpreg;
    regex_t sgpreg, dgpreg;
 
    int ArgusHashTableSize;
@@ -487,7 +485,6 @@ struct ArgusParserStruct {
    int ArgusControlFiledes[2];
 
    char RaCumulativeMerge;
-   char RaFlowMajorModified;
    char RaAllocHashTableHeaders;
    char RaAllocArgusRecord;
    char RaThisActiveIndex;
@@ -504,7 +501,6 @@ struct ArgusParserStruct {
    char RaAgMode;
    char RaMonMode;
    char RaUniMode;
-   char RaZeroMode;
    char RaPruneMode;
    char RaPrintMode;
    char RaCursesMode;

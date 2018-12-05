@@ -2787,10 +2787,10 @@ ArgusNewLabeler (struct ArgusParserStruct *parser, int status)
    if ((retn->queue = ArgusNewQueue()) == NULL)
       ArgusLog (LOG_ERR, "ArgusNewLabeler: ArgusNewQueue error %s", strerror(errno));
 
-   if ((retn->htable.array = (struct ArgusHashTableHdr **) ArgusCalloc (RA_HASHTABLESIZE, sizeof(void *))) == NULL)
+   if ((retn->htable.array = (struct ArgusHashTableHdr **) ArgusCalloc (parser->ArgusHashTableSize, sizeof(void *))) == NULL)
       ArgusLog (LOG_ERR, "ArgusNewLabeler: ArgusCalloc error %s", strerror(errno));
 
-   retn->htable.size = RA_HASHTABLESIZE;
+   retn->htable.size = parser->ArgusHashTableSize;
 
    retn->status = status;
 

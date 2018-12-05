@@ -185,7 +185,7 @@ int RaParseResourceFile (struct ArgusParserStruct *parser, char *file,
 static int RaParseResourceLine(struct ArgusParserStruct *, int, char *, int, int);
 void setArgusEventDataRecord (struct ArgusParserStruct *, char *);
 
-#define ARGUS_RCITEMS                           79
+#define ARGUS_RCITEMS                           80
 
 #define RA_ARGUS_SERVER                         0
 #define RA_SOURCE_PORT				1
@@ -266,6 +266,7 @@ void setArgusEventDataRecord (struct ArgusParserStruct *, char *);
 #define RA_SRCID_ALIAS				76
 #define RA_RECORD_CORRECTION			77
 #define RA_STATUS_EVENT				78
+#define RA_HASHTABLE_SIZE			79
 
 
 char *ArgusResourceFileStr [] = {
@@ -347,7 +348,8 @@ char *ArgusResourceFileStr [] = {
    "RADIUM_ZEROCONF_REGISTER=",
    "RA_SRCID_ALIAS=",
    "RA_RECORD_CORRECTION=",
-   "RA_STATUS_EVENT="
+   "RA_STATUS_EVENT=",
+   "RA_HASHTABLE_SIZE="
 };
 
 #include <ctype.h>
@@ -2518,6 +2520,10 @@ RaParseResourceLine(struct ArgusParserStruct *parser, int linenum,
       }
       case RA_STATUS_EVENT: {
          setArgusEventDataRecord (parser, optarg);
+         break;
+      }
+      case RA_HASHTABLE_SIZE: {
+         setArgusHashTableSize (parser, atoi(optarg));
          break;
       }
    }
@@ -29916,6 +29922,15 @@ setArgusEventDataRecord (struct ArgusParserStruct *src, char *ptr)
    ArgusDebug (2, "setArgusEventDataRecord(%s)\n", ptr);
 #endif
 }
+
+void
+setArgusHashTableSize (struct ArgusParserStruct *src, int value)
+{
+   if (src != NULL) {
+      src->ArgusHashTableSize = value;
+   }
+}
+
 
 void
 ArgusProcessLabelOptions(struct ArgusParserStruct *parser, char *label)

@@ -432,6 +432,7 @@ char *ArgusTrimString (char *str);
 char *ArgusGetString (struct ArgusParserStruct *, u_char *, int);
 char *ArgusGetUuidString (struct ArgusParserStruct *, u_char *, int);
 
+void setArgusHashTableSize (struct ArgusParserStruct *, int);
 void setArgusID(struct ArgusAddrStruct *, void *, int, unsigned int);
 void setTransportArgusID(struct ArgusTransportStruct *, void *, int, unsigned int);
 void setParserArgusID(struct ArgusParserStruct *, void *, int, unsigned int);

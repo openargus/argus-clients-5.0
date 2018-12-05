@@ -10937,7 +10937,7 @@ ArgusNewAggregator (struct ArgusParserStruct *parser, char *masklist, int type)
       if ((retn->timeout = ArgusNewQueue()) == NULL)
          ArgusLog (LOG_ERR, "ArgusNewAggregator: ArgusNewQueue error %s", strerror(errno));
 
-      if ((retn->htable = ArgusNewHashTable (RA_HASHTABLESIZE)) == NULL)
+      if ((retn->htable = ArgusNewHashTable (ArgusParser->ArgusHashTableSize)) == NULL)
          ArgusLog (LOG_ERR, "ArgusNewAggregator: ArgusNewHashTable error %s", strerror(errno));
 
       retn->RaMetricFetchAlgorithm = ArgusFetchDuration;
@@ -11037,7 +11037,7 @@ ArgusCopyAggregator (struct ArgusAggregatorStruct *agg)
       if ((tagg->timeout = ArgusNewQueue()) == NULL)
          ArgusLog (LOG_ERR, "ArgusNewAggregator: ArgusNewQueue error %s", strerror(errno));
 
-      if ((tagg->htable = ArgusNewHashTable (RA_HASHTABLESIZE)) == NULL)
+      if ((tagg->htable = ArgusNewHashTable (ArgusParser->ArgusHashTableSize)) == NULL)
          ArgusLog (LOG_ERR, "ArgusNewAggregator: ArgusNewHashTable error %s", strerror(errno));
 
       if (agg->filterstr != NULL) {

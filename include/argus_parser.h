@@ -390,6 +390,7 @@ struct ArgusParserStruct {
    regex_t lpreg, dpreg;
    regex_t sgpreg, dgpreg;
 
+   int ArgusHashTableSize;
    int ArgusRegExItems;
    int ArgusListens;
 

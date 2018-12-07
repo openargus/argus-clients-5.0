@@ -1213,7 +1213,8 @@ struct ArgusListRecord *ArgusPopFrontList(struct ArgusListStruct *, int);
 
 int ArgusProcessServiceAvailability (struct ArgusParserStruct *, struct ArgusRecordStruct *);
 int ArgusCheckTime (struct ArgusParserStruct *, struct ArgusRecordStruct *, int);
-int ArgusCheckTimeout (struct ArgusParserStruct *, struct ArgusRecordStruct *, struct ArgusRecordStruct *);
+int ArgusCheckTimeout (struct ArgusParserStruct *, struct ArgusInput *);
+void ArgusSetTimeout (struct ArgusParserStruct *, struct ArgusInput *);
 
 int RaTestUserData(struct RaBinStruct *, struct ArgusRecordStruct *, struct ArgusRecordStruct *, int);
 void ArgusMergeUserData(struct RaBinStruct *, struct ArgusRecordStruct *, struct ArgusRecordStruct *);
@@ -1230,7 +1231,8 @@ struct RaSrvSignature *RaValidateService(struct ArgusParserStruct *, struct Argu
 extern struct ArgusLabelerStruct *ArgusNewLabeler (struct ArgusParserStruct *, int);
 
 struct RaBinStruct *RaNewBin (struct ArgusParserStruct *, struct RaBinProcessStruct *, struct ArgusRecordStruct *, long long, int);
-void RaDeleteBin (struct ArgusParserStruct *, struct RaBinStruct *);
+void RaDeleteBin (struct ArgusParserStruct *, struct RaBinProcessStruct *, int);
+
 
 void ArgusAlignConfig(struct ArgusParserStruct *, struct ArgusAdjustStruct *);
 void ArgusAlignInit(struct ArgusParserStruct *, struct ArgusRecordStruct *, struct ArgusAdjustStruct *);
@@ -1250,6 +1252,7 @@ int ArgusReadSflowDatagramSocket (struct ArgusParserStruct *, struct ArgusInput 
 int ArgusReadCiscoStreamSocket (struct ArgusParserStruct *, struct ArgusInput *);
 int ArgusReadCiscoDatagramSocket (struct ArgusParserStruct *, struct ArgusInput *);
 
+void ArgusShiftArray (struct ArgusParserStruct *, struct RaBinProcessStruct *, int, int);
 
 #else /* ArgusClient */
 
@@ -1387,10 +1390,11 @@ extern struct ArgusLabelerStruct *ArgusNewLabeler (struct ArgusParserStruct *, i
 
 extern int ArgusProcessServiceAvailability (struct ArgusParserStruct *, struct ArgusRecordStruct *);
 extern int ArgusCheckTime (struct ArgusParserStruct *, struct ArgusRecordStruct *, int);
-extern int ArgusCheckTimeout (struct ArgusParserStruct *, struct ArgusRecordStruct *, struct ArgusRecordStruct *);
+extern int ArgusCheckTimeout (struct ArgusParserStruct *, struct ArgusInput *);
+extern void ArgusSetTimeout (struct ArgusParserStruct *, struct ArgusInput *);
 
 extern struct RaBinStruct *RaNewBin (struct ArgusParserStruct *, struct RaBinProcessStruct *, struct ArgusRecordStruct *, long long, int);
-extern void RaDeleteBin (struct ArgusParserStruct *, struct RaBinStruct *);
+extern void RaDeleteBin (struct ArgusParserStruct *, struct RaBinProcessStruct *, int);
 
 extern void ArgusAlignConfig(struct ArgusParserStruct *, struct ArgusAdjustStruct *);
 extern void ArgusAlignInit(struct ArgusParserStruct *, struct ArgusRecordStruct *, struct ArgusAdjustStruct *);
@@ -1408,6 +1412,7 @@ extern int ArgusReadCiscoDatagramSocket (struct ArgusParserStruct *, struct Argu
 extern int ArgusReadSflowStreamSocket (struct ArgusParserStruct *, struct ArgusInput *);
 extern int ArgusReadSflowDatagramSocket (struct ArgusParserStruct *, struct ArgusInput *);
 
+extern void ArgusShiftArray (struct ArgusParserStruct *, struct RaBinProcessStruct *, int, int);
 
 #endif
 #ifdef __cplusplus

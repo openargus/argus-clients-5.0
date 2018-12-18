@@ -208,9 +208,13 @@ RaLabelParseResourceBuffer (struct ArgusParserStruct *parser, struct ArgusLabele
 int
 RaLabelParseResourceFile (struct ArgusParserStruct *parser, struct ArgusLabelerStruct *labeler, char *file)
 {
+   extern int ArgusEtherArrayInited;
    char strbuf[MAXSTRLEN], *str = strbuf;
    int retn = 1, lines = 0;
    FILE *fd = NULL;
+
+   if (ArgusEtherArrayInited == 0)
+      ArgusInitEtherarray();
 
    if (file) {
       if ((fd = fopen (file, "r")) != NULL) {

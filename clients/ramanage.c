@@ -849,6 +849,7 @@ RamanageLibcurlWriteCallback(char *ptr, size_t size, size_t nmemb, void *user)
    return size*nmemb;
 }
 
+# ifdef ARGUSDEBUG
 static int
 __trace(CURL *handle, curl_infotype type, char *data, size_t size, void *userp)
 {
@@ -870,7 +871,8 @@ __trace(CURL *handle, curl_infotype type, char *data, size_t size, void *userp)
 
   return 0;
 }
-#endif
+# endif /* ARGUSDEBUG */
+#endif /* HAVE_LIBCURL */
 
 /* hash must have 20 bytes allocated */
 static int
@@ -1723,28 +1725,6 @@ RamanageCheckPaths(const struct ArgusParserStruct * const parser,
 }
 
 static int
-RamanageStat(const struct ArgusParserStruct * const parser)
-{
-   struct ArgusFileInput *file;
-
-   file = (struct ArgusFileInput *)parser->ArgusInputFileList;
-   while (file) {
-      /* ArgusFileInput structures are zero-filled at creation.  If the
-       * stat buffer holds a modification time of the unix epoch
-       * (0), assume that it hasn't already been filled in and we
-       * need to call stat().
-       */
-      if (file->statbuf.st_mtime == 0
-          && stat(file->filename, &file->statbuf) < 0) {
-         DEBUGLOG(1, "unable to stat file \"%s\": %s\n", file->filename,
-                  strerror(errno));
-      }
-      file = (struct ArgusFileInput *)file->qhdr.nxt;
-   }
-   return 0;
-}
-
-static int
 __compare_argus_input_file_mtime(const void *a, const void *b)
 {
    const struct ArgusFileInput * const *aa = a;
@@ -1761,26 +1741,84 @@ __compare_argus_input_file_mtime(const void *a, const void *b)
    return 1;
 }
 
-/* return an array of pointers into the file list, sorted by
- * modification time.
+/* Return an array of pointers into the file list, sorted by
+ * modification time.  Do not add files to the array that
+ * are missing (stat failed) or that are the file given to
+ * the -r parameter.
 */
-static struct ArgusFileInput **
+static size_t
 RamanageSortFiles(const struct ArgusParserStruct * const parser,
+                  struct ArgusFileInput *exemplar,
                   struct ArgusFileInput **filvec)
 {
    struct ArgusFileInput *tmp;
    size_t i;
+   size_t off;
+
+   if (parser->ArgusInputFileCount == 0)
+      return 0;
 
    tmp = parser->ArgusInputFileList;
-   for (i = 0; i < parser->ArgusInputFileCount; i++) {
-      *(filvec+i) = tmp;
+   for (i = 0, off = 0; i < parser->ArgusInputFileCount; i++) {
+      if (tmp->statbuf.st_mtime != 0
+          && (exemplar == NULL
+              || tmp->statbuf.st_ino != exemplar->statbuf.st_ino)) {
+         *(filvec+off) = tmp;
+         off++;
+      } else {
+         DEBUGLOG(2, "%s skipping file %s\n", __func__, tmp->filename);
+      }
       tmp = (struct ArgusFileInput *)tmp->qhdr.nxt;
    }
 
-   qsort(filvec, parser->ArgusInputFileCount, sizeof(*filvec),
-         __compare_argus_input_file_mtime);
+   qsort(filvec, off, sizeof(*filvec), __compare_argus_input_file_mtime);
 
-   return filvec;
+   return off;
+}
+
+/* Append whatever files we found in the staging directory to the filvec,
+ * but DO NOT sort the resulting array since the only thing done after
+ * this is removal of old files.  RamanageRemove() does not assume the
+ * array is sorted and will walk the entire contents.
+ */
+static struct ArgusFileInput **
+RamanageAppendStagingFiles(const struct ArgusParserStruct * const parser,
+                           struct ArgusFileInput **filvec,
+                           size_t *filcount, size_t filindex,
+                           const configuration_t * const config)
+{
+   struct ArgusFileInput *tmp;
+   struct ArgusFileInput **newvec = filvec;
+   size_t prev_length = *filcount;
+   size_t i;
+   size_t off;
+
+   DEBUGLOG(1, "%s: adding files from staging directory\n", __func__);
+   if (RaProcessRecursiveFiles(config->path_staging, ARGUS_FILES_NOSORT) == 0) {
+      DEBUGLOG(1, "%s: unable to add files from staging directory (%s)\n",
+               __func__, config->path_staging);
+   }
+
+   newvec = ArgusRealloc(filvec,
+                         (parser->ArgusInputFileCount+1) * sizeof(*filvec));
+   if (newvec == NULL) {
+      ArgusLog(LOG_INFO, "unable to allocate memory for file array\n");
+      return NULL;
+   }
+
+   tmp = parser->ArgusInputFileList;
+   for (i = 0, off = filindex; i < parser->ArgusInputFileCount; i++) {
+      if (i >= prev_length)           /* if past the existing file structures . . . */
+         *(newvec+i+filindex) = tmp;  /* array data is offset by "filindex" entries */
+      tmp = (struct ArgusFileInput *)tmp->qhdr.nxt;
+   }
+
+   DEBUGLOG(2, "%s: added %u files\n", __func__,
+            (size_t)parser->ArgusInputFileCount - prev_length);
+
+   /* NOTE: filevec/newvec is NOT sorted after appending the staged files */
+   *filcount += (parser->ArgusInputFileCount - prev_length);
+   return newvec;
 }
 
 /* prereq: filvec must be sorted in order of increasing
@@ -1795,7 +1833,7 @@ RamanageTrimFiles(size_t filcount,
    size_t i;
    size_t trimmed = 0;
 
-   if (filcount < 1)
+   if (exemplar == NULL || filcount < 1)
       return 0;
 
    i = filcount - 1;
@@ -1839,8 +1877,13 @@ main(int argc, char **argv)
    struct ArgusFileInput *exemplar;
    size_t trimmed;
    size_t filcount;
-   size_t filindex; /* index into filvec[] of first existing file */
 
+   /* index into filvec[] of first existing file: assume no -r option
+    * given and therefor filvec[0] == NULL
+    */
+   size_t filindex = 1;
+
+   int process_archive = 0;
    int cmdmask = 0;
    int cmdres = 0;
    int i;
@@ -1857,8 +1900,8 @@ main(int argc, char **argv)
       ArgusMainInit (parser, argc, argv);
    }
 
-   if (parser->ArgusInputFileCount != 1)
-      ArgusLog(LOG_ERR, "Need exactly *one* source file (-r)\n");
+   if (parser->ArgusInputFileCount > 1)
+      ArgusLog(LOG_ERR, "Need at most *one* source file (-r)\n");
    exemplar = (struct ArgusFileInput *)parser->ArgusInputFileList;
 
    if ((mode = parser->ArgusModeList) != NULL) {
@@ -1875,9 +1918,6 @@ main(int argc, char **argv)
          mode = mode->nxt;
       }
    }
-
-   if (parser->ArgusInputFileList == NULL)
-      goto out;
 
    cmdres = RamanageConfigure(parser, &global_config);
    if (cmdres)
@@ -1908,23 +1948,23 @@ main(int argc, char **argv)
       if (ArgusCreateLockFile(global_config.lockfile, 0, &lockctx) < 0) {
          cmdres = 1;
          ArgusLog(LOG_WARNING, "unable to create lock file\n");
-         goto out;
+         goto out_nolock;
       }
    }
 
    if (global_config.rpolicy_ignore_archive == 0 &&
        __should_process_archive(&global_config) == 1) {
       DEBUGLOG(1, "%s: adding files from archive directory\n", __func__);
-      if (RaProcessRecursiveFiles(global_config.path_archive) == 0) {
+      if (RaProcessRecursiveFiles(global_config.path_archive,
+                                  ARGUS_FILES_NOSORT) == 0) {
          cmdres = 1;
          goto out;
       }
-      __save_state();
-   }
 
-   if (RamanageStat(parser) < 0) {
-      cmdres = 1;
-      goto out;
+      /* used later to decide if we should also process staged files */
+      process_archive = 1;
+
+      __save_state();
    }
 
    if (RamanageCheckPaths(parser, &global_config) < 0) {
@@ -1932,13 +1972,7 @@ main(int argc, char **argv)
       goto out;
    }
 
-   /* RaProcessRecursiveFiles() sorts *all* files in the list, not
-    * just the files it added.  So the file specified on the command
-    * line with -r will almost certainly not be the first file in
-    * the list any more.  Sort the files again based on modification
-    * timestamp.  If this program is run from rastream, the target
-    * file will end up somewhere near the end of the list.
-    *
+   /*
     * Allocate one extra entry in the file array so that the zeroeth
     * entry can remain empty until after the files are sorted and
     * the array trimmed.  Then the file specified on the command
@@ -1949,7 +1983,24 @@ main(int argc, char **argv)
    if (filvec == NULL)
       ArgusLog(LOG_ERR, "unable to allocate memory for file array\n");
 
-   RamanageSortFiles(parser, filvec+1);
+   filcount = RamanageSortFiles(parser, exemplar, filvec+1);
+
+   /* The zeroeth element of the array has been left unused, so
+    * let's put the file specified by the -r option there.
+    */
+   if (exemplar) {
+      filvec[0] = exemplar;
+      filcount++;
+      filindex = 0;
+
+      /* It is possible that another process already dealt with our primary
+       * input file.  Update the statbuf for this one file here.
+       */
+      memset(&exemplar->statbuf, 0, sizeof(exemplar->statbuf));
+      if (stat(exemplar->filename, &exemplar->statbuf) < 0)
+         /* the file no longer exists - we're done */
+         goto out;
+   }
 
    /* remove files newer than the file we were asked to process.
     * Also remove the duplicate of that file in the list, which will be there
@@ -1957,29 +2008,10 @@ main(int argc, char **argv)
     * This will avoid monkeying with the files that rastream still
     * has open.
     */
-   trimmed = RamanageTrimFiles(parser->ArgusInputFileCount-1, exemplar,
+   trimmed = RamanageTrimFiles(exemplar ? filcount-1 : filcount, exemplar,
                                filvec+1);
    DEBUGLOG(1, "Trimmed %zu files from the array\n", trimmed);
-   filcount = parser->ArgusInputFileCount - trimmed;
-
-   /* The zeroeth element of the array has been left unused, so
-    * let's put the file specified by the -r option there
-    * and remove it from the last entry in the array where
-    * the recursive directory search put it.
-    */
-   filvec[filcount] = NULL;
-   filvec[0] = exemplar;
-
-   /* Since the files are sorted by st_mtime, any files for which stat()
-    * failed will be at the front of the array.  Figure out how many
-    * of the entries are unusable (if any).
-    */
-   filindex = 0;
-   while (filindex < filcount && filvec[filindex]->statbuf.st_mtime == 0) {
-      filindex++;
-      filcount--;
-   }
-   DEBUGLOG(2, "The first %d files of filvec[] are missing\n", filindex);
+   filcount -= trimmed;
 
 #ifdef ARGUSDEBUG
    {
@@ -2012,20 +2044,32 @@ main(int argc, char **argv)
          goto out;
    }
    if (cmdmask & RAMANAGE_CMDMASK_REMOVE) {
+      if (process_archive) {
+         struct ArgusFileInput **tmp;
+
+         /* RamanageAppendStagingFiles needs filvec, not &filvec[filindex]
+          * because it will re-allocate the file array.
+          */
+         tmp = RamanageAppendStagingFiles(parser, filvec, &filcount,
+                                          filindex, &global_config);
+         if (tmp)
+            filvec = tmp;
+      }
       cmdres = RamanageRemove(parser, &filvec[filindex], filcount,
                               &global_config);
       if (cmdres)
          goto out;
    }
 
+out:
    if (global_config.lockfile) {
       if (ArgusReleaseLockFile(&lockctx) < 0) {
          cmdres = 1;
-         goto out;
+         goto out_nolock;
       }
    }
 
-out:
+out_nolock:
 #ifdef HAVE_LIBCARES
    RamanageCleanupLibcares();
 #endif

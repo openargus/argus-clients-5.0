@@ -1131,7 +1131,7 @@ ArgusProcessTerminator(WINDOW *win, int status, int ch)
             if (strlen(strbuf) > 0) {
                ArgusDeleteFileList(ArgusParser);
                while ((ptr = strtok(str, " ")) != NULL) {
-                  RaProcessRecursiveFiles (ptr);
+                  RaProcessRecursiveFiles (ptr, ARGUS_FILES_SORT);
                   str = NULL;
                }
             }
@@ -4376,7 +4376,7 @@ argus_command_string(void)
             if (strlen(strbuf) > 0) {
                ArgusDeleteFileList(ArgusParser);
                while ((ptr = strtok(str, " ")) != NULL) {
-                  RaProcessRecursiveFiles (ptr);
+                  RaProcessRecursiveFiles (ptr, ARGUS_FILES_SORT);
                   str = NULL;
                }
             }

@@ -184,6 +184,7 @@ int RaParseResourceFile (struct ArgusParserStruct *parser, char *file,
                          ResourceCallback cb);
 static int RaParseResourceLine(struct ArgusParserStruct *, int, char *, int, int);
 void setArgusEventDataRecord (struct ArgusParserStruct *, char *);
+static void ArgusInitAddrtoname(struct ArgusParserStruct *);
 
 #define ARGUS_RCITEMS                           80
 
@@ -5310,10 +5311,7 @@ ArgusPrintRecord (struct ArgusParserStruct *parser, char *buf, struct ArgusRecor
    int slen = 0, dlen = len;
 
    if (!(ArgusParseInited)) {
-      if (argus->input)
-         ArgusInitAddrtoname (parser, argus->input->ArgusLocalNet, argus->input->ArgusNetMask);
-      else
-         ArgusInitAddrtoname (parser, 0L, 0L);
+      ArgusInitAddrtoname (parser);
       ArgusParseInited = 1;
    }
    if (parser->ArgusPrintJson) {
@@ -22087,17 +22085,19 @@ ArgusInitDSCodepointarray()
  * of the local network.  mask is its subnet mask.
  */
 
-void ArgusInitAddrtoname(struct ArgusParserStruct *, u_int, u_int);
-
 void
-ArgusInitAddrtoname(struct ArgusParserStruct *parser, u_int localnet, u_int mask)
+ArgusSetLocalNet(u_int localnet, u_int mask)
 {
-   netmask = mask;
-   if (parser->fflag) {
-      f_localnet = localnet;
-      f_netmask = mask;
+   if (ArgusParser->fflag) {
+       f_localnet = localnet;
+       f_netmask = mask;
+       netmask = mask;
    }
+}
 
+static void
+ArgusInitAddrtoname(struct ArgusParserStruct *parser)
+{
    if (ArgusEtherArrayInited == 0)
       ArgusInitEtherarray();
 
@@ -22112,7 +22112,7 @@ ArgusInitAddrtoname(struct ArgusParserStruct *parser, u_int localnet, u_int mask
    ArgusInitDSCodepointarray();
 
 #ifdef ARGUSDEBUG
-   ArgusDebug (1, "ArgusInitAddrtoname (%p, 0x%x, 0x%x)\n", parser, localnet, mask);
+   ArgusDebug (1, "ArgusInitAddrtoname (%p)\n", parser);
 #endif
 }
 

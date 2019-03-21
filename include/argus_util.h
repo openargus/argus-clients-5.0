@@ -137,6 +137,8 @@ struct nnamemem {
    struct ArgusListStruct *cnames;
    struct ArgusListStruct *aliases;
    struct ArgusListStruct *ptrs;
+   struct ArgusListStruct *servers;
+   struct ArgusListStruct *clients;
 };
 
 #define e_bs e_nsap        /* for byestringtable */
@@ -195,6 +197,7 @@ struct ArgusFileEntry {
 #define ARGUS_STRING_LIST       6
 #define ARGUS_RR_LIST           7
 #define ARGUS_EVENT_LIST        8
+#define ARGUS_OBJECT_LIST       9
 
 struct ArgusListObjectStruct {
    struct ArgusListObjectStruct *nxt, *prv;

@@ -1286,7 +1286,7 @@ ArgusClientInit (struct ArgusParserStruct *parser)
                                                  &RaBinProcess->nadp, RaTable);
       }
 
-      if (RaTables == NULL) {
+      if ((RaTables == NULL) && (RaTable != NULL)) {
          sprintf (ArgusSQLTableNameBuf, "%s", RaTable);
 
          if ((RaTables = ArgusCalloc(sizeof(void *), 2)) == NULL)
@@ -1295,28 +1295,30 @@ ArgusClientInit (struct ArgusParserStruct *parser)
          RaTables[0] = strdup(ArgusSQLTableNameBuf);
       }
 
-      bzero(&ArgusTableColumnName, sizeof (ArgusTableColumnName));
+      if (RaTables != NULL) {
+         bzero(&ArgusTableColumnName, sizeof (ArgusTableColumnName));
 
-      tableIndex = 0;
-      retn = -1;
-      while ((table = RaTables[tableIndex]) != NULL) {
-         if (strcmp("Seconds", table)) {
-            sprintf (ArgusSQLStatement, "desc %s", table);
-            if ((retn = mysql_real_query(RaMySQL, ArgusSQLStatement , strlen(ArgusSQLStatement))) != 0) {
-               if (mysql_errno(RaMySQL) != ER_NO_SUCH_TABLE) {
-                  ArgusLog(LOG_ERR, "mysql_real_query error %s", mysql_error(RaMySQL));
+         tableIndex = 0;
+         retn = -1;
+         while ((table = RaTables[tableIndex]) != NULL) {
+            if (strcmp("Seconds", table)) {
+               sprintf (ArgusSQLStatement, "desc %s", table);
+               if ((retn = mysql_real_query(RaMySQL, ArgusSQLStatement , strlen(ArgusSQLStatement))) != 0) {
+                  if (mysql_errno(RaMySQL) != ER_NO_SUCH_TABLE) {
+                     ArgusLog(LOG_ERR, "mysql_real_query error %s", mysql_error(RaMySQL));
 #ifdef ARGUSDEBUG
-               } else {
-                  ArgusDebug (4, "%s: skip missing table %s", __func__, table);
+                  } else {
+                     ArgusDebug (4, "%s: skip missing table %s", __func__, table);
 #endif
+                  }
+               } else {
+                  found++;
+                  break;
                }
-            } else {
-               found++;
-               break;
-            }
-         } else
-            retn = 0;
-         tableIndex++;
+            } else
+               retn = 0;
+            tableIndex++;
+         }
       }
 
       if (retn == 0) {

@@ -176,7 +176,7 @@ struct protoidmem {
 
 #include <netinet/ip_icmp.h>
 #undef ICMP_MAXTYPE
-#define ICMP_MAXTYPE	46
+#define ICMP_MAXTYPE	44
 
  
 struct ArgusFileEntry {
@@ -1443,9 +1443,22 @@ char *icmptypestr[ICMP_MAXTYPE + 1] = {
    "MSR", "SEC", "ROB", "ROB", "ROB", "ROB",
    "ROB", "ROB", "ROB", "ROB", "ROB", "ROB",
    "TRC", "DCE", "MHR", "WAY", "IAH", "MRQ",
-   "MRP", "DNQ", "DNP", "SKP", "PHO", "NRS",
-   "NRA", "NNS", "NNA", "PTB",
-};   
+   "MRP", "DNQ", "DNP", "SKP", "PHO", "EXM",
+   "EEO", "EER",
+};
+
+char *icmptypelongstr[ICMP_MAXTYPE + 1] = {
+   "echoreply", "unas", "unassigned", "dstunreach", "srcquench",
+   "redirect", "althostaddr", "unassigned", "echo", "rtrad",
+   "rtrsel", "timeexceed", "param", "tstamp", "tstreply",
+   "inforeq", "inforeply", "maskreq", "maskreply", "security",
+
+   "robust", "robust", "robust", "robust", "robust",
+   "robust", "robust", "robust", "robust", "robust",
+   "trace", "datconverr", "mobhostred", "ipv6way", "ipv6iah",
+   "mrreq", "mrreply", "dnsreq", "dnsreply", "skip",
+   "photuris", "expmobile", "extecho", "extechoreply",
+};
 
 struct ArgusTokenStruct llcsap_db[] = {
    { LLCSAP_NULL,   "null" },
@@ -1851,6 +1864,7 @@ extern void ArgusSetLocalNet(u_int localnet, u_int mask);
 
 extern char *ip_proto_string [];
 extern char *icmptypestr[];
+extern char *icmptypelongstr[];
 
 extern unsigned int getnamehash(const u_char *);
 extern struct cnamemem *lookup_cmem(struct cnamemem *, const u_char *);

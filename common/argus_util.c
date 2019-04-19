@@ -184,7 +184,6 @@ int RaParseResourceFile (struct ArgusParserStruct *parser, char *file,
                          ResourceCallback cb);
 static int RaParseResourceLine(struct ArgusParserStruct *, int, char *, int, int);
 void setArgusEventDataRecord (struct ArgusParserStruct *, char *);
-static void ArgusInitAddrtoname(struct ArgusParserStruct *);
 
 #define ARGUS_RCITEMS                           80
 
@@ -22334,7 +22333,7 @@ ArgusSetLocalNet(u_int localnet, u_int mask)
    }
 }
 
-static void
+void
 ArgusInitAddrtoname(struct ArgusParserStruct *parser)
 {
    if (ArgusEtherArrayInited == 0)

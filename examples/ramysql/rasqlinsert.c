@@ -2106,6 +2106,12 @@ struct ArgusSQLQueryStruct *
 ArgusGenerateSQLQuery (struct ArgusParserStruct *parser, struct ArgusAggregatorStruct *agg, struct ArgusRecordStruct *ns, char *tbl, int state)
 {
    struct ArgusSQLQueryStruct *sqry = NULL;
+   extern int ArgusParseInited;
+
+   if (!(ArgusParseInited)) {
+      ArgusInitAddrtoname (parser);
+      ArgusParseInited = 1;
+   }
 
    if (tbl != NULL) {
       if ((sqry = (void *) ArgusCalloc(1, sizeof(*sqry))) != NULL) {
@@ -2213,8 +2219,6 @@ ArgusGenerateSQLQuery (struct ArgusParserStruct *parser, struct ArgusAggregatorS
          }
          ArgusParser->uflag = uflag;
          MUTEX_UNLOCK(&parser->lock);
-
-         parser->nflag   = nflag;
 
          switch (state) {
             case ARGUS_SQL_SELECT: {
@@ -2324,6 +2328,7 @@ ArgusGenerateSQLQuery (struct ArgusParserStruct *parser, struct ArgusAggregatorS
             }
          }
 
+         parser->nflag   = nflag;
          ns->qhdr.logtime = ArgusParser->ArgusRealTime;
 
          sqry->tbl  = strdup(tbl);

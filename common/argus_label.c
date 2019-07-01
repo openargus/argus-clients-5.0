@@ -2340,10 +2340,11 @@ RaInsertLocalityTree (struct ArgusParserStruct *parser, struct ArgusLabelerStruc
                saddr->addr.addr[0] = i;
             }
 
-
-            if ((node = RaInsertAddress (parser, labeler, NULL, saddr, ARGUS_VISITED)) != saddr) {
-               ArgusFree(saddr);
-               saddr = node;
+            if ((node = RaFindAddress (parser, labeler->ArgusAddrTree[saddr->addr.type], saddr, ARGUS_EXACT_MATCH)) == NULL) {
+               if ((node = RaInsertAddress (parser, labeler, NULL, saddr, ARGUS_VISITED)) != saddr) {
+                  ArgusFree(saddr);
+                  saddr = node;
+               }
             }
 
             if (saddr != NULL) {

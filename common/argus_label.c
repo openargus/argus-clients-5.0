@@ -2376,8 +2376,12 @@ RaInsertLocalityTree (struct ArgusParserStruct *parser, struct ArgusLabelerStruc
             }
          }
 
-         mstep = pow (2.0, (32 - saddr->addr.masklen));
-         step = mstep;
+         if (saddr != NULL) {
+            mstep = pow (2.0, (32 - saddr->addr.masklen));
+            step = mstep;
+         } else {
+            break;
+         }
       }
    }
 

@@ -456,7 +456,7 @@ struct ArgusParserStruct {
    char tflag, uflag, Wflag, vflag, Vflag, iflag;
    char Iflag, rflag, Rflag, Sflag, sflag, Tflag, xflag;
    char Xflag, yflag, zflag, Zflag, domainonly;
-   char Uflag, noflag;
+   char Uflag, noflag, labelflag;
    char ver3flag;
 
    char *estr, *Mflag;

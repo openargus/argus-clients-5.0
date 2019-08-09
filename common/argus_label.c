@@ -761,6 +761,7 @@ ArgusLabelRecord (struct ArgusParserStruct *parser, struct ArgusRecordStruct *ar
    if (found)
       ArgusAddToRecordLabel (parser, argus, label);
 
+   retn->status |=  ARGUS_RECORD_MODIFIED;
    return (retn);
 }
 
@@ -2167,13 +2168,23 @@ void RaLabelSubAddresses(struct RaAddressStruct *);
 
 
 void
-RaLabelAddressLocality(struct RaAddressStruct *addr, int locality) {
+RaLabelAddressLocality(struct RaAddressStruct *addr, int locality)
+{
+   char buf[16];
 
-   if (ArgusParser->ArgusLocalLabeler && (ArgusParser->ArgusLocalLabeler->RaLabelLocalityOverwrite))
+   if (ArgusParser->ArgusLocalLabeler && (ArgusParser->ArgusLocalLabeler->RaLabelLocalityOverwrite)) {
+      snprintf (buf, 16, "%d", locality);
       addr->locality = locality;
-   else
-      if (addr->locality < locality)
+      if (addr->label != NULL) free (addr->label);
+      addr->label = strdup(buf);
+   } else {
+      if (addr->locality < locality) {
          addr->locality = locality;
+         snprintf (buf, 16, "%d", locality);
+         if (addr->label != NULL) free (addr->label);
+         addr->label = strdup(buf);
+      }
+   }
 
    if (addr->l != NULL) RaLabelAddressLocality(addr->l, locality);
    if (addr->r != NULL) RaLabelAddressLocality(addr->r, locality);
@@ -2223,28 +2234,21 @@ RaInsertLocalityTree (struct ArgusParserStruct *parser, struct ArgusLabelerStruc
                else
                   bcopy ((char *)&scidr, (char *)&dcidr, sizeof (scidr));
 
-               state = ARGUS_PARSING_LABEL;
+               state = ARGUS_PARSING_LOCALITY;
                break;
             }
 
             case ARGUS_PARSING_END_ADDRESS: {
                if (sptr && ((cidr = RaParseCIDRAddr (parser, sptr)) != NULL))
                   bcopy ((char *)cidr, (char *)&dcidr, sizeof (*cidr));
-               state = ARGUS_PARSING_LABEL;
-               break;
-            }
-
-            case ARGUS_PARSING_LABEL: {
-               if (*sptr == '-')
-                  state = ARGUS_PARSING_END_ADDRESS;
-               else {
-                  label = sptr;
-                  state = ARGUS_PARSING_LOCALITY;
-               }
+               state = ARGUS_PARSING_LOCALITY;
                break;
             }
 
             case ARGUS_PARSING_LOCALITY: {
+               if (*sptr == '-')
+                  state = ARGUS_PARSING_END_ADDRESS;
+               else {
                if (sptr != NULL) {
                   char *endptr = NULL;
                   locality = strtod(sptr, &endptr);
@@ -2254,6 +2258,7 @@ RaInsertLocalityTree (struct ArgusParserStruct *parser, struct ArgusLabelerStruc
                      state = ARGUS_PARSING_ASN;
                } else
                   state = ARGUS_PARSING_DONE;
+               }
                break;
             }
 
@@ -2294,7 +2299,6 @@ RaInsertLocalityTree (struct ArgusParserStruct *parser, struct ArgusLabelerStruc
       if (masklen < scidr.masklen) {
          scidr.masklen = masklen;
          scidr.mask[0] = 0xFFFFFFFF << (32 - masklen);
-         
       }
 
       for (i = scidr.addr[0]; i <= dcidr.addr[0]; i += step) {
@@ -5201,7 +5205,11 @@ ArgusGetInterfaceAddresses(struct ArgusParserStruct *parser)
 
                      if ((raddr = RaFindAddress (parser, labeler->ArgusAddrTree[AF_INET], &node, ARGUS_SUPER_MATCH)) != NULL) {
                         RaLabelSuperAddresses(raddr);
-                        raddr->locality = 5;
+                        if (raddr->locality != 5) {
+                           raddr->locality = 5;
+                           if (raddr->label != NULL) free(raddr->label);
+                           raddr->label = strdup("5");
+                        }
                      }
                   }
 
@@ -5218,8 +5226,13 @@ ArgusGetInterfaceAddresses(struct ArgusParserStruct *parser)
                         if (cidr->str != NULL)
                            node.addr.str = strdup(cidr->str);
 
-                        if ((raddr = RaFindAddress (parser, labeler->ArgusAddrTree[AF_INET], &node, ARGUS_SUPER_MATCH)) != NULL)
-                           raddr->locality = 4;
+                        if ((raddr = RaFindAddress (parser, labeler->ArgusAddrTree[AF_INET], &node, ARGUS_SUPER_MATCH)) != NULL) {
+                           if (raddr->locality != 4) {
+                              raddr->locality = 4;
+                              if (raddr->label != NULL) free(raddr->label);
+                              raddr->label = strdup("4");
+                           }
+                        }
                      }
                   }
 

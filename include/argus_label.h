@@ -134,8 +134,10 @@ struct ArgusLabelerStruct {
 #define ARGUS_LONGEST_MATCH     0x01
 #define ARGUS_ANY_MATCH         0x02
 #define ARGUS_NODE_MATCH        0x04
-#define ARGUS_MASK_MATCH        0x05
-#define ARGUS_SUPER_MATCH       0x06
+#define ARGUS_MASK_MATCH        0x08
+#define ARGUS_SUPER_MATCH       0x10
+
+#define ARGUS_LABEL_RECORD      0x20
 
 struct RaAddressStruct {
    struct ArgusQueueHeader qhdr;

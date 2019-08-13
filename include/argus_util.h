@@ -131,7 +131,7 @@ struct nnamemem {
    unsigned int status, hashval, ref;
    struct timeval stime, ltime;
 
-   char *n_name, *d_name;
+   char *n_name, *d_name, *tld_name;
    struct ArgusListStruct *refers;
    struct ArgusListStruct *cidrs;
    struct ArgusListStruct *cnames;

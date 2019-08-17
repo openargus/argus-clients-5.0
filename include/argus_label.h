@@ -203,7 +203,7 @@ void RaPrintLabelTree (struct ArgusLabelerStruct *, struct RaAddressStruct *, in
 struct RaAddressStruct *RaFindAddress (struct ArgusParserStruct *, struct RaAddressStruct *, struct RaAddressStruct *, int);
 struct RaAddressStruct *RaInsertAddress (struct ArgusParserStruct *, struct ArgusLabelerStruct *, struct RaAddressStruct *, struct RaAddressStruct *, int);
 
-int RaInsertAddressTree (struct ArgusParserStruct *, struct ArgusLabelerStruct *labeler, char *);
+int RaInsertAddressTree (struct ArgusParserStruct *, struct ArgusLabelerStruct *labeler, char *, char *);
 int RaInsertLocalityTree (struct ArgusParserStruct *, struct ArgusLabelerStruct *labeler, char *);
 
 char *RaPruneAddressTree (struct ArgusLabelerStruct *, struct RaAddressStruct *, int, int);
@@ -262,7 +262,7 @@ extern int ArgusAddToRecordLabel (struct ArgusParserStruct *, struct ArgusRecord
 extern struct RaAddressStruct *RaFindAddress (struct ArgusParserStruct *, struct RaAddressStruct *, struct RaAddressStruct *, int);
 extern struct RaAddressStruct *RaInsertAddress (struct ArgusParserStruct *, struct ArgusLabelerStruct *, struct RaAddressStruct *, struct RaAddressStruct *, int);
 
-extern int RaInsertAddressTree (struct ArgusParserStruct *, struct ArgusLabelerStruct *labeler, char *);
+extern int RaInsertAddressTree (struct ArgusParserStruct *, struct ArgusLabelerStruct *labeler, char *, char *);
 extern int RaInsertLocalityTree (struct ArgusParserStruct *, struct ArgusLabelerStruct *labeler, char *);
 
 extern char *RaPruneAddressTree (struct ArgusLabelerStruct *, struct RaAddressStruct *, int, int);

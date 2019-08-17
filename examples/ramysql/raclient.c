@@ -2375,7 +2375,7 @@ ArgusCorrelateRecord (struct ArgusRecordStruct *ns)
                char buf[MAXSTRLEN], *label = NULL;
                bzero(buf, sizeof(buf));
 
-               if ((label = ArgusMergeLabel(l1, l2, buf, MAXSTRLEN, ARGUS_UNION)) != NULL) {
+               if ((label = ArgusMergeLabel(l1->l_un.label, l2->l_un.label, buf, MAXSTRLEN, ARGUS_UNION)) != NULL) {
                   int slen = strlen(label);
                   int len = 4 * ((slen + 3)/4);
 

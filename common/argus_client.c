@@ -6232,7 +6232,7 @@ struct ArgusLabelObject {
 };
 
 
-char *ArgusMergeLabel(struct ArgusLabelStruct *, struct ArgusLabelStruct *, char *buf, int len, int type);
+char *ArgusMergeLabel(char *, char *, char *buf, int len, int type);
 
 // char *ArgusMergeLabel(struct ArgusLabelStruct *l1, struct ArgusLabelStruct *l2, char *buf, int len, int type)
 //
@@ -6244,7 +6244,7 @@ char *ArgusMergeLabel(struct ArgusLabelStruct *, struct ArgusLabelStruct *, char
 
 
 char *
-ArgusMergeLabel(struct ArgusLabelStruct *l1, struct ArgusLabelStruct *l2, char *buf, int len, int type)
+ArgusMergeLabel(char *l1, char *l2, char *buf, int len, int type)
 {
    struct ArgusLabelObject *l1labs = NULL, *l2labs = NULL;
    char *l1buf = NULL, *l2buf = NULL;
@@ -6253,6 +6253,9 @@ ArgusMergeLabel(struct ArgusLabelStruct *l1, struct ArgusLabelStruct *l2, char *
    int l1len, l2len;
    int i, y, z; 
 
+   
+   if ((l1 != NULL) && (l2 != NULL)) {
+
    if (l1 != NULL) {
       if ((l1labs = calloc(256, sizeof(struct ArgusLabelObject))) == NULL)
          ArgusLog (LOG_ERR, "ArgusMergeLabel: calloc error %s", strerror(errno));
@@ -6260,11 +6263,11 @@ ArgusMergeLabel(struct ArgusLabelStruct *l1, struct ArgusLabelStruct *l2, char *
       if ((l1buf = calloc(1, MAXBUFFERLEN)) == NULL)
          ArgusLog (LOG_ERR, "ArgusMergeLabel: calloc error %s", strerror(errno));
 
-      if (l1->l_un.label != NULL) {
-         if ((l1len = strlen(l1->l_un.label)) > MAXBUFFERLEN)
+      if (l1 != NULL) {
+         if ((l1len = strlen(l1)) > MAXBUFFERLEN)
             ArgusLog (LOG_ERR, "ArgusMergeLabel: l1len gt MAXBUFFERLEN");
 
-         bcopy(l1->l_un.label, l1buf, l1len);
+         bcopy(l1, l1buf, l1len);
       }
    }
    if (l2 != NULL) {
@@ -6274,14 +6277,13 @@ ArgusMergeLabel(struct ArgusLabelStruct *l1, struct ArgusLabelStruct *l2, char *
       if ((l2buf = calloc(1, MAXBUFFERLEN)) == NULL)
          ArgusLog (LOG_ERR, "ArgusMergeLabel: calloc error %s", strerror(errno));
 
-      if (l2->l_un.label != NULL) {
-         if ((l2len = strlen(l2->l_un.label)) > MAXBUFFERLEN)
+      if (l2 != NULL) {
+         if ((l2len = strlen(l2)) > MAXBUFFERLEN)
             ArgusLog (LOG_ERR, "ArgusMergeLabel: l2len gt MAXBUFFERLEN");
          
-         bcopy(l2->l_un.label, l2buf, l2len);
+         bcopy(l2, l2buf, l2len);
       }
    }
-
 
 // first parse all the attributes and values. This system limits the 
 // number of attributes to 256 and ARGUS_MAX_LABEL_VALUES per attribute.
@@ -6446,6 +6448,7 @@ ArgusMergeLabel(struct ArgusLabelStruct *l1, struct ArgusLabelStruct *l2, char *
    }
    if (l2labs != NULL) free(l2labs);
    if (l2buf  != NULL) free(l2buf);
+}
 
    return (retn);
 }
@@ -7975,7 +7978,7 @@ ArgusMergeRecords (const struct ArgusAggregatorStruct * const na,
                               if (strcmp(l1->l_un.label, l2->l_un.label)) {
                                  char *buf = calloc(1, MAXBUFFERLEN);
 
-                                 if ((ArgusMergeLabel(l1, l2, buf, MAXBUFFERLEN, ARGUS_UNION)) != NULL) {
+                                 if ((ArgusMergeLabel(l1->l_un.label, l2->l_un.label, buf, MAXBUFFERLEN, ARGUS_UNION)) != NULL) {
                                     free(l1->l_un.label);
                                     l1->l_un.label = strdup(buf);
                                  }

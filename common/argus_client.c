@@ -6255,6 +6255,9 @@ ArgusMergeLabel(char *l1, char *l2, char *buf, int len, int type)
 
    
    if ((l1 != NULL) && (l2 != NULL)) {
+      if (strcmp(l1, l2) == 0) 
+         return retn;
+   }
 
    if (l1 != NULL) {
       if ((l1labs = calloc(256, sizeof(struct ArgusLabelObject))) == NULL)
@@ -6448,7 +6451,6 @@ ArgusMergeLabel(char *l1, char *l2, char *buf, int len, int type)
    }
    if (l2labs != NULL) free(l2labs);
    if (l2buf  != NULL) free(l2buf);
-}
 
    return (retn);
 }

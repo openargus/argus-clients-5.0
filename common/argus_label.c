@@ -2872,7 +2872,6 @@ ArgusNewLabeler (struct ArgusParserStruct *parser, int status)
 
    retn->RaPrintLabelTreeMode = ARGUS_TREE;
 
-
    if (parser->ArgusLabelerFileList != NULL) {
 /*
       struct ArgusWfileStruct *wfile = NULL, *start = NULL;
@@ -4965,6 +4964,34 @@ RaPrintLabelTree (struct ArgusLabelerStruct *labeler, struct RaAddressStruct *no
 
                for (i = olen, len = strlen(RaAddrTreeArray); i < len; i++)
                   RaAddrTreeArray[i] = '\0';
+            }
+            break;
+         }
+
+         case ARGUS_LABEL: {
+            level = node->addr.masklen;
+            if (node->r || node->l) {
+               RaPrintLabelTree(labeler, node->r, level + 1, RA_SRV_RIGHT);
+               RaPrintLabelTree(labeler, node->l, level + 1, RA_SRV_LEFT);
+            }
+
+           if (node->label) {
+              char nbuf[1024];
+              int slen;
+              if (node->addr.str) {
+                 snprintf (nbuf, 1024, "%s", node->addr.str);
+              } else  {
+                 if (node->addr.masklen == 32) {
+                    snprintf (nbuf, 1024, "%s", intoa(node->addr.addr[0] & (0xFFFFFFFF << (32 - node->addr.masklen))));
+                 } else
+                 if (node->addr.masklen > 0) {
+                    snprintf (nbuf, 1024, "%s/%d", intoa(node->addr.addr[0] & (0xFFFFFFFF << (32 - node->addr.masklen))), node->addr.masklen);
+                 } else
+                    snprintf (nbuf, 1024, "0.0.0.0");
+              }
+              slen = strlen(nbuf);
+              snprintf (&nbuf[slen], 1024 - slen, "\t%s", node->label);
+              printf ("%s\n", nbuf);
             }
             break;
          }

@@ -43,6 +43,7 @@ extern "C" {
 #define ARGUS_LABELER_DEBUG_LOCAL   0x0200
 #define ARGUS_LABELER_DEBUG_NODE    0x0400
 #define ARGUS_LABELER_DEBUG_GROUP   0x0800
+#define ARGUS_LABELER_DUMP          0x1000
 
 #define ARGUS_TREE_DEBUG	    0x0100
 #define ARGUS_TREE_DEBUG_LOCAL      0x0200
@@ -59,8 +60,9 @@ extern "C" {
 #define ARGUS_VISITED               0x10
 
 #define ARGUS_NEWICK                0x20
-#define ARGUS_GRAPH                 0x40
-#define ARGUS_JSON                  0x80
+#define ARGUS_GRAPH                 0x30
+#define ARGUS_JSON                  0x40
+#define ARGUS_LABEL                 0x50
 
 #define ARGUS_UNION		    0x01
 #define ARGUS_INTERSECT		    0x02

@@ -1911,7 +1911,7 @@ RaInsertAddressTree (struct ArgusParserStruct *parser, struct ArgusLabelerStruct
       snprintf (tstrbuf, MAXSTRLEN, "%s", str);
       ptr = tstrbuf;
 
-      while ((sptr = strtok(ptr, " \t\n\"\r")) != NULL) {
+      while ((sptr = strtok(ptr, " \t\n\r")) != NULL) {
          switch (state) {
             case ARGUS_PARSING_START_ADDRESS: {
                if (strchr(sptr, ',') != NULL) {
@@ -1986,7 +1986,11 @@ RaInsertAddressTree (struct ArgusParserStruct *parser, struct ArgusLabelerStruct
                if (label || object) {
                   char lbuf[128];
                   if ((object != NULL) && (label != NULL)) {
-                     snprintf(lbuf, 128, "%s.%s", object, label);
+                     if ((*label == '"') || (*label == '{')) {
+                        snprintf(lbuf, 128, "{ \"%s\":{ %s }}", object, label);
+                     } else {
+                        snprintf(lbuf, 128, "%s.%s", object, label);
+                     }
                   } else 
                   if (object != NULL) {
                      snprintf(lbuf, 128, "%s", object);
@@ -2020,7 +2024,11 @@ RaInsertAddressTree (struct ArgusParserStruct *parser, struct ArgusLabelerStruct
                if (label || object) {
                   char lbuf[128];
                   if ((object != NULL) && (label != NULL)) {
-                     snprintf(lbuf, 128, "%s.%s", object, label);
+                     if ((*label == '"') || (*label == '{')) {
+                        snprintf(lbuf, 128, "{ \"%s\":{ %s }}", object, label);
+                     } else {
+                        snprintf(lbuf, 128, "%s.%s", object, label);
+                     }
                   } else
                   if (object != NULL) {
                      snprintf(lbuf, 128, "%s", object);
@@ -2121,7 +2129,11 @@ RaInsertAddressTree (struct ArgusParserStruct *parser, struct ArgusLabelerStruct
                   if (label || object) {
                      char lbuf[128];
                      if ((object != NULL) && (label != NULL)) {
-                        snprintf(lbuf, 128, "%s.%s", object, label);
+                        if ((*label == '"') || (*label == '{')) {
+                           snprintf(lbuf, 128, "{ \"%s\":{ %s }}", object, label);
+                        } else {
+                           snprintf(lbuf, 128, "%s.%s", object, label);
+                        }
                      } else
                      if (object != NULL) {
                         snprintf(lbuf, 128, "%s", object);
@@ -2155,7 +2167,11 @@ RaInsertAddressTree (struct ArgusParserStruct *parser, struct ArgusLabelerStruct
                   if (label || object) {
                      char lbuf[128];
                      if ((object != NULL) && (label != NULL)) {
-                        snprintf(lbuf, 128, "%s.%s", object, label);
+                        if ((*label == '"') || (*label == '{')) {
+                           snprintf(lbuf, 128, "{ \"%s\":{ %s }}", object, label);
+                        } else {
+                           snprintf(lbuf, 128, "%s.%s", object, label);
+                        }
                      } else
                      if (object != NULL) {
                         snprintf(lbuf, 128, "%s", object);

@@ -72,6 +72,7 @@
 #include <argus_metric.h>
 #include <argus_histo.h>
 #include <argus_label.h>
+#include <argus_json.h>
 
 #include <rasplit.h>
 
@@ -6214,12 +6215,23 @@ ArgusMergeAddress(unsigned int *a1, unsigned int *a2, int type, int dir, unsigne
 }
 
 
+// 
+// Labels are metadata, and use metadata conventions for format, syntax, etc... 
+// 
+// Historically, label metadata was a string of colon separated fields.  This proved
+// to be somewhat limiting, and so JSON style formats were adopted in late 2019.
+// To distinquish one from the other, is the occurence of a '{', a JSON object delimimter,
+// as the first char, if not there, then it is consider a legacy format and parsed.
+// 
 // Merging the label object is either an intersection of the label objects in
 // the two records,  or a union of the two labels.
 //
 // OK, the label syntax is:
 //    label[:label]
 //    label :: [object=]word[,word[;[object=]word[,word]]]
+//    word  :: value,array
+//    value :: value,array
+//    array :: [value, ...]
 //
 // So when we merge these together, we'd like to preserve the labels and the object
 // specification, and by default we'll do the union, to see that that goes.
@@ -6250,7 +6262,7 @@ ArgusMergeLabel(char *l1, char *l2, char *buf, int len, int type)
    char *l1buf = NULL, *l2buf = NULL;
    int l1labsindex = 0, l2labsindex = 0;
    char *retn = NULL, *ptr, *sptr, *obj;
-   int l1len, l2len;
+   int l1len, l2len, format = 0;
    int i, y, z; 
 
    
@@ -6291,54 +6303,88 @@ ArgusMergeLabel(char *l1, char *l2, char *buf, int len, int type)
 // first parse all the attributes and values. This system limits the 
 // number of attributes to 256 and ARGUS_MAX_LABEL_VALUES per attribute.
 
+#define ARGUS_LEGACY_LABEL	1
+#define ARGUS_JSON_LABEL	2
+
    if (l1 != NULL) {
       ptr = l1buf;
-      while ((obj = strtok(ptr, ":")) != NULL) {
-         if (l1labsindex < 256) {
-            l1labs[l1labsindex].object = obj;
-            l1labsindex++;
-         }     
-         ptr = NULL; 
-      }
+      while (*ptr && isspace((int)*ptr)) ptr++;
+      if (*ptr == '{') format = ARGUS_JSON_LABEL; else format = ARGUS_LEGACY_LABEL;
 
-      for (i = 0; i < l1labsindex; i++) {
-         if ((obj =  l1labs[i].object) != NULL) {
-            if ((sptr = strchr(obj, '=')) != NULL) {
-               int vind = 0;
-               char *val;
+      switch (format) {
+         case ARGUS_LEGACY_LABEL: {
+            while ((obj = strtok(ptr, ":")) != NULL) {
+               if (l1labsindex < 256) {
+                  l1labs[l1labsindex].object = obj;
+                  l1labsindex++;
+               }     
+               ptr = NULL; 
+            }
 
-               *sptr++ = '\0';
-               while ((val = strtok(sptr, ",")) != NULL) {
-                  l1labs[i].values[vind++] = val;
-                  sptr = NULL;
+            for (i = 0; i < l1labsindex; i++) {
+               if ((obj =  l1labs[i].object) != NULL) {
+                  if ((sptr = strchr(obj, '=')) != NULL) {
+                     int vind = 0;
+                     char *val;
+
+                     *sptr++ = '\0';
+                     while ((val = strtok(sptr, ",")) != NULL) {
+                        l1labs[i].values[vind++] = val;
+                        sptr = NULL;
+                     }
+                  }
                }
             }
+            break;
+         }
+
+         case ARGUS_JSON_LABEL: {
+            ArgusJsonValue root, *result;
+            if ((result = ArgusJsonParse(l1, &root)) != NULL) {
+               ArgusJsonPrint(result);
+            }
+            break;
          }
       }
    }
 
    if (l2 != NULL) {
       ptr = l2buf;
-      while ((obj = strtok(ptr, ":")) != NULL) {
-         if (l2labsindex < 256) {
-            l2labs[l2labsindex].object = obj;
-            l2labsindex++;
-         }
-         ptr = NULL;
-      }
+      while (*ptr && isspace((int)*ptr)) ptr++;
+      if (*ptr == '{') format = ARGUS_JSON_LABEL; else format = ARGUS_LEGACY_LABEL;
 
-      for (i = 0; i < l2labsindex; i++) {
-         if ((obj =  l2labs[i].object) != NULL) {
-            if ((sptr = strchr(obj, '=')) != NULL) {
-               int vind = 0;
-               char *val;
-      
-               *sptr++ = '\0';
-               while ((val = strtok(sptr, ",")) != NULL) {
-                  l2labs[i].values[vind++] = val;
-                  sptr = NULL;
+      switch (format) {
+         case ARGUS_LEGACY_LABEL: {
+            while ((obj = strtok(ptr, ":")) != NULL) {
+               if (l2labsindex < 256) {
+                  l2labs[l2labsindex].object = obj;
+                  l2labsindex++;
+               }
+               ptr = NULL;
+            }
+
+            for (i = 0; i < l2labsindex; i++) {
+               if ((obj =  l2labs[i].object) != NULL) {
+                  if ((sptr = strchr(obj, '=')) != NULL) {
+                     int vind = 0;
+                     char *val;
+            
+                     *sptr++ = '\0';
+                     while ((val = strtok(sptr, ",")) != NULL) {
+                        l2labs[i].values[vind++] = val;
+                        sptr = NULL;
+                     }
+                  }
                }
             }
+         }
+
+         case ARGUS_JSON_LABEL: {
+            ArgusJsonValue root, *result;
+            if ((result = ArgusJsonParse(l1, &root)) != NULL) {
+               ArgusJsonPrint(result);
+            }
+            break;
          }
       }
    }

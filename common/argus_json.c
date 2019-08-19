@@ -152,13 +152,13 @@ has_char(const char** cursor, char character) {
 
 static int
 json_parse_object(const char** cursor, ArgusJsonValue *parent) {
-   ArgusJsonValue result = { .type = ARGUS_TYPE_OBJECT };
+   ArgusJsonValue result = { .type = ARGUS_JSON_OBJECT };
    vector_init(&result.value.object, sizeof(ArgusJsonValue));
 
    int retn = 1;
    while (retn && !has_char(cursor, '}')) {
-      ArgusJsonValue key = { .type = ARGUS_TYPE_KEY };
-      ArgusJsonValue value = { .type = ARGUS_TYPE_NULL };
+      ArgusJsonValue key = { .type = ARGUS_JSON_KEY };
+      ArgusJsonValue value = { .type = ARGUS_JSON_NULL };
       retn = json_parse_value(cursor, &key);
       retn = retn && has_char(cursor, ':');
       retn = retn && json_parse_value(cursor, &value);
@@ -196,7 +196,7 @@ json_parse_array(const char** cursor, ArgusJsonValue *parent) {
       return retn;
    }
    while (retn) {
-      ArgusJsonValue new_value = { .type = ARGUS_TYPE_NULL };
+      ArgusJsonValue new_value = { .type = ARGUS_JSON_NULL };
       retn = json_parse_value(cursor, &new_value);
       if (!retn) break;
       skip_whitespace(cursor);
@@ -215,18 +215,18 @@ json_free_value(ArgusJsonValue *val) {
    if (!val) return;
 
    switch (val->type) {
-      case ARGUS_TYPE_STRING:
+      case ARGUS_JSON_STRING:
          free(val->value.string);
          val->value.string = NULL;
          break;
-      case ARGUS_TYPE_ARRAY:
-      case ARGUS_TYPE_OBJECT:
+      case ARGUS_JSON_ARRAY:
+      case ARGUS_JSON_OBJECT:
          vector_foreach(&(val->value.array), (void(*)(void*))json_free_value);
          vector_free(&(val->value.array));
          break;
    }
 
-   val->type = ARGUS_TYPE_NULL;
+   val->type = ARGUS_JSON_NULL;
 }
 
 int
@@ -260,8 +260,8 @@ json_parse_value(const char** cursor, ArgusJsonValue *parent) {
             memcpy(new_string, start, len);
             new_string[len] = '\0';
 
-            if (parent->type != ARGUS_TYPE_KEY) {
-               parent->type = ARGUS_TYPE_STRING;
+            if (parent->type != ARGUS_JSON_KEY) {
+               parent->type = ARGUS_JSON_STRING;
             }
             parent->value.string = new_string;
 
@@ -275,7 +275,7 @@ json_parse_value(const char** cursor, ArgusJsonValue *parent) {
          retn = json_parse_object(cursor, parent);
          break;
       case '[':
-         parent->type = ARGUS_TYPE_ARRAY;
+         parent->type = ARGUS_JSON_ARRAY;
          vector_init(&parent->value.array, sizeof(ArgusJsonValue));
          ++(*cursor);
          skip_whitespace(cursor);
@@ -287,7 +287,7 @@ json_parse_value(const char** cursor, ArgusJsonValue *parent) {
       case 't': {
          retn = json_is_literal(cursor, "true");
          if (retn) {
-            parent->type = ARGUS_TYPE_BOOL;
+            parent->type = ARGUS_JSON_BOOL;
             parent->value.boolean = 1;
          }
          break;
@@ -295,7 +295,7 @@ json_parse_value(const char** cursor, ArgusJsonValue *parent) {
       case 'f': {
          retn = json_is_literal(cursor, "false");
          if (retn) {
-            parent->type = ARGUS_TYPE_BOOL;
+            parent->type = ARGUS_JSON_BOOL;
             parent->value.boolean = 0;
          }
          break;
@@ -308,9 +308,9 @@ json_parse_value(const char** cursor, ArgusJsonValue *parent) {
          double number = strtod(*cursor, &end);
          if (*cursor != end) {
             if (number == (int) number) {
-               parent->type = ARGUS_TYPE_INTEGER;
+               parent->type = ARGUS_JSON_INTEGER;
             } else {
-               parent->type = ARGUS_TYPE_DOUBLE;
+               parent->type = ARGUS_JSON_DOUBLE;
             }
             parent->value.number = number;
             *cursor = end;
@@ -326,30 +326,30 @@ json_print_value(ArgusJsonValue *parent) {
    int retn = 0;
 
    switch (parent->type) {
-      case ARGUS_TYPE_BOOL:
+      case ARGUS_JSON_BOOL:
          printf ("%s", parent->value.boolean ? "true" : "false");
          break;
-      case ARGUS_TYPE_INTEGER:
+      case ARGUS_JSON_INTEGER:
          printf ("%d", (int)parent->value.number);
          break;
-      case ARGUS_TYPE_DOUBLE:
+      case ARGUS_JSON_DOUBLE:
          printf ("%f", parent->value.number);
          break;
-      case ARGUS_TYPE_KEY: {
+      case ARGUS_JSON_KEY: {
          printf ("\"%s\":", parent->value.string);
          break;
       }
-      case ARGUS_TYPE_STRING: {
+      case ARGUS_JSON_STRING: {
          printf ("%s", parent->value.string);
          break;
       }
-      case ARGUS_TYPE_ARRAY: {
+      case ARGUS_JSON_ARRAY: {
          printf ("[");
          vector_foreach(&(parent->value.array), (void(*)(void*))json_print_value);
          printf ("]");
          break;
       }
-      case ARGUS_TYPE_OBJECT: {
+      case ARGUS_JSON_OBJECT: {
          printf ("{");
          vector_foreach(&(parent->value.array), (void(*)(void*))json_print_value);
          printf ("}");

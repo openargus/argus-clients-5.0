@@ -6309,7 +6309,17 @@ ArgusMergeLabel(char *l1, char *l2, char *buf, int len, int type)
    if (l1 != NULL) {
       ptr = l1buf;
       while (*ptr && isspace((int)*ptr)) ptr++;
-      if (*ptr == '{') format = ARGUS_JSON_LABEL; else format = ARGUS_LEGACY_LABEL;
+      switch (*ptr) {
+         case '"': 
+         case '{': {
+            format = ARGUS_JSON_LABEL;
+            break;
+         }
+         default: {
+            format = ARGUS_LEGACY_LABEL;
+            break;
+         }
+      }
 
       switch (format) {
          case ARGUS_LEGACY_LABEL: {

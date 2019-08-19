@@ -21,14 +21,14 @@ typedef int(*vector_foreach_data_t)(void*, void*);
 void vector_foreach_data(const vector* v, vector_foreach_data_t fp, void* data);
 
 enum json_value_type {
-    ARGUS_TYPE_NULL,
-    ARGUS_TYPE_BOOL,
-    ARGUS_TYPE_INTEGER,
-    ARGUS_TYPE_DOUBLE,
-    ARGUS_TYPE_OBJECT, // Is a vector with pairwise entries, key, value
-    ARGUS_TYPE_ARRAY,  // Is a vector, all entries are plain 
-    ARGUS_TYPE_STRING,
-    ARGUS_TYPE_KEY
+    ARGUS_JSON_NULL,
+    ARGUS_JSON_BOOL,
+    ARGUS_JSON_INTEGER,
+    ARGUS_JSON_DOUBLE,
+    ARGUS_JSON_OBJECT, // Is a vector with pairwise entries, key, value
+    ARGUS_JSON_ARRAY,  // Is a vector, all entries are plain 
+    ARGUS_JSON_STRING,
+    ARGUS_JSON_KEY
 };
 
 typedef struct {

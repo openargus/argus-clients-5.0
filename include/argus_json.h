@@ -8,18 +8,6 @@ typedef struct {
    char* data;
 } vector;
 
-void vector_init(vector* v, size_t data_size);
-void vector_free(vector* v);
-void* vector_get(const vector* v, size_t index);
-void* vector_get_checked(const vector* v, size_t index);
-void vector_reserve(vector* v, size_t new_capacity);
-void vector_push_back(vector* v, void* data);
-
-typedef void(*vector_foreach_t)(void*);
-void vector_foreach(const vector* v, vector_foreach_t fp);
-typedef int(*vector_foreach_data_t)(void*, void*);
-void vector_foreach_data(const vector* v, vector_foreach_data_t fp, void* data);
-
 enum json_value_type {
     ARGUS_JSON_NULL,
     ARGUS_JSON_BOOL,
@@ -43,17 +31,38 @@ typedef struct {
     } value;
 } ArgusJsonValue;
 
+void vector_init(vector* v, size_t data_size);
+void vector_free(vector* v);
+void* vector_get(const vector* v, size_t index);
+void* vector_get_checked(const vector* v, size_t index);
+void vector_reserve(vector* v, size_t new_capacity);
+void vector_push_back(vector* v, void* data);
+ 
+typedef void(*vector_foreach_t)(void*);
+void vector_foreach(const vector* v, ArgusJsonValue *, vector_foreach_t fp);
+
+typedef void(*vector_foreach_print_t)(void*, void*, int);
+void vector_foreach_print(const vector*, ArgusJsonValue *, vector_foreach_print_t, char *, int);
+
+typedef int(*vector_foreach_data_t)(void*, void*);
+void vector_foreach_data(const vector*, vector_foreach_data_t, void*);
+
 // Parse string into structure of json elements and values
 // return 1 if successful.
 
-ArgusJsonValue *ArgusJsonParse(const char* input, ArgusJsonValue* root);
-int ArgusJsonPrint(ArgusJsonValue *);
+ArgusJsonValue *ArgusJsonMergeValues(ArgusJsonValue *, ArgusJsonValue *);
+
+ArgusJsonValue *ArgusJsonParse(const char* input, ArgusJsonValue *);
+char *ArgusJsonPrint(ArgusJsonValue *, char *, int);
 
 // Free the structure and all the allocated values
 void json_free_value(ArgusJsonValue* val);
 
 // Convert value to string if possible, asserts if not
 char* json_value_to_string(ArgusJsonValue* value);
+
+// Convert value to integer if possible asserts if not
+int json_value_to_integer(ArgusJsonValue* value);
 
 // Convert value to double if possible asserts if not
 double json_value_to_double(ArgusJsonValue* value);

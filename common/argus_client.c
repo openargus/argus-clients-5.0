@@ -6265,6 +6265,7 @@ ArgusMergeLabel(char *l1, char *l2, char *buf, int len, int type)
    int l1len, l2len, format = 0;
    int i, y, z; 
 
+   ArgusJsonValue l1root, l2root, *res1 = NULL, *res2 = NULL;
    
    if ((l1 != NULL) && (l2 != NULL)) {
       if (strcmp(l1, l2) == 0) 
@@ -6349,10 +6350,7 @@ ArgusMergeLabel(char *l1, char *l2, char *buf, int len, int type)
          }
 
          case ARGUS_JSON_LABEL: {
-            ArgusJsonValue root, *result;
-            if ((result = ArgusJsonParse(l1, &root)) != NULL) {
-               ArgusJsonPrint(result);
-            }
+            res1 = ArgusJsonParse(l1, &l1root);
             break;
          }
       }
@@ -6390,14 +6388,13 @@ ArgusMergeLabel(char *l1, char *l2, char *buf, int len, int type)
          }
 
          case ARGUS_JSON_LABEL: {
-            ArgusJsonValue root, *result;
-            if ((result = ArgusJsonParse(l1, &root)) != NULL) {
-               ArgusJsonPrint(result);
-            }
+            res2 = ArgusJsonParse(l2, &l2root);
             break;
          }
       }
    }
+
+   if (!(res1 && res2)) {
 
 // OK, now based on the merge type, setup l1abs to hold the
 // results of any union or replace operations for attributes
@@ -6406,49 +6403,50 @@ ArgusMergeLabel(char *l1, char *l2, char *buf, int len, int type)
 
 // first gather entries from l2 into l1 for union or replace.
 
-   if ((l1 != NULL) && (l2 != NULL)) {
-      for (i = 0; i < l2labsindex; i++) {
-         int found = 0;
+      if ((l1 != NULL) && (l2 != NULL)) {
+         for (i = 0; i < l2labsindex; i++) {
+            int found = 0;
 
-         if (l2labs[i].object != NULL) {
-            for (y = 0; y < l1labsindex && !found; y++) {
-               if (l1labs[y].object != NULL) {
-                  if (!(strcmp(l1labs[y].object, l2labs[i].object))) {
-                     //  we have matching attributes.  based on type
-                     //  add, replace or remove values in 1.
-                     switch (type) {
-                        case ARGUS_REPLACE: {
-                           bcopy(l2labs[i].values, l1labs[y].values, sizeof(l1labs[y].values));
-                           break;
-                        }
-
-                        case ARGUS_INTERSECT:
-                        case ARGUS_UNION: {
-                           char *v1ptr, *v2ptr;
-                           int v2ind = 0;
-                           while ((v2ptr = l2labs[i].values[v2ind]) != NULL) {
-                              int v1ind = 0, vfound = 0;
-                              while (!vfound && ((v1ptr = l1labs[y].values[v1ind]) != NULL)) {
-                                 if (!(strcmp(v1ptr, v2ptr))) {
-                                    vfound = 1;
-                                    break;
-                                 }
-                                 v1ind++;
-                              }
-                              if (!vfound) {
-                                 if (type == ARGUS_UNION) {
-                                    int xind = (v1ind < ARGUS_MAX_LABEL_VALUES) ? v1ind : ARGUS_MAX_LABEL_VALUES - 1;
-                                    l1labs[y].values[xind] = v2ptr;
-                                 } else
-                                    bzero(l1labs[y].values, sizeof(l1labs[y].values));
-                              }
-                              v2ind++;
+            if (l2labs[i].object != NULL) {
+               for (y = 0; y < l1labsindex && !found; y++) {
+                  if (l1labs[y].object != NULL) {
+                     if (!(strcmp(l1labs[y].object, l2labs[i].object))) {
+                        //  we have matching attributes.  based on type
+                        //  add, replace or remove values in 1.
+                        switch (type) {
+                           case ARGUS_REPLACE: {
+                              bcopy(l2labs[i].values, l1labs[y].values, sizeof(l1labs[y].values));
+                              break;
                            }
-                           break;
+
+                           case ARGUS_INTERSECT:
+                           case ARGUS_UNION: {
+                              char *v1ptr, *v2ptr;
+                              int v2ind = 0;
+                              while ((v2ptr = l2labs[i].values[v2ind]) != NULL) {
+                                 int v1ind = 0, vfound = 0;
+                                 while (!vfound && ((v1ptr = l1labs[y].values[v1ind]) != NULL)) {
+                                    if (!(strcmp(v1ptr, v2ptr))) {
+                                       vfound = 1;
+                                       break;
+                                    }
+                                    v1ind++;
+                                 }
+                                 if (!vfound) {
+                                    if (type == ARGUS_UNION) {
+                                       int xind = (v1ind < ARGUS_MAX_LABEL_VALUES) ? v1ind : ARGUS_MAX_LABEL_VALUES - 1;
+                                       l1labs[y].values[xind] = v2ptr;
+                                    } else
+                                       bzero(l1labs[y].values, sizeof(l1labs[y].values));
+                                 }
+                                 v2ind++;
+                              }
+                              break;
+                           }
                         }
+                        l2labs[i].object = NULL;
+                        found = 1;
                      }
-                     l2labs[i].object = NULL;
-                     found = 1;
                   }
                }
             }
@@ -6459,52 +6457,60 @@ ArgusMergeLabel(char *l1, char *l2, char *buf, int len, int type)
 // OK, at this point were ready to go, just go through all the attributes
 // first in l1 and then in l2, and create the actual label string.
 
-   z = 0;
-   if (l1 != NULL) {
-      for (i = 0; i < l1labsindex; i++) {
-         if (l1labs[i].object != NULL) {
-            if (z == 0)
-               sprintf (&buf[strlen(buf)], "%s", l1labs[i].object);
-            else
-               sprintf (&buf[strlen(buf)], ":%s", l1labs[i].object);
+   if (res1 && res2) {
+      ArgusJsonValue *result;
+      if ((result = ArgusJsonMergeValues(res1, res2)) != NULL) {
+         retn = ArgusJsonPrint(result, buf, len);
+      }
 
-            if (l1labs[i].values[0] != NULL) {
-               int y = 1;
-               sprintf (&buf[strlen(buf)], "=%s", l1labs[i].values[0]);
-               while ((y < ARGUS_MAX_LABEL_VALUES) && (l1labs[i].values[y] != NULL)) {
-                  sprintf (&buf[strlen(buf)], ",%s", l1labs[i].values[y]);
-                  y++;
+   } else {
+      z = 0;
+      if (l1 != NULL) {
+         for (i = 0; i < l1labsindex; i++) {
+            if (l1labs[i].object != NULL) {
+               if (z == 0)
+                  sprintf (&buf[strlen(buf)], "%s", l1labs[i].object);
+               else
+                  sprintf (&buf[strlen(buf)], ":%s", l1labs[i].object);
+
+               if (l1labs[i].values[0] != NULL) {
+                  int y = 1;
+                  sprintf (&buf[strlen(buf)], "=%s", l1labs[i].values[0]);
+                  while ((y < ARGUS_MAX_LABEL_VALUES) && (l1labs[i].values[y] != NULL)) {
+                     sprintf (&buf[strlen(buf)], ",%s", l1labs[i].values[y]);
+                     y++;
+                  }
                }
+               z++;
             }
-            z++;
+            retn = buf;
          }
-         retn = buf;
+      }
+      if (l2 != NULL) {
+         for (i = 0; i < l2labsindex; i++) {
+            if (l2labs[i].object != NULL) {
+               if (z == 0)
+                  sprintf (&buf[strlen(buf)], "%s", l2labs[i].object);
+               else
+                  sprintf (&buf[strlen(buf)], ":%s", l2labs[i].object);
+
+               if (l2labs[i].values[0] != NULL) {
+                  int y = 1;
+                  sprintf (&buf[strlen(buf)], "=%s", l2labs[i].values[0]);
+                  while ((y < ARGUS_MAX_LABEL_VALUES) && (l2labs[i].values[y] != NULL)) {
+                     sprintf (&buf[strlen(buf)], ",%s", l2labs[i].values[y]);
+                     y++;
+                  }
+               }
+               z++;
+            }
+            retn = buf;
+         }
       }
    }
+
    if (l1labs != NULL) free(l1labs);
    if (l1buf  != NULL) free(l1buf);
-
-   if (l2 != NULL) {
-      for (i = 0; i < l2labsindex; i++) {
-         if (l2labs[i].object != NULL) {
-            if (z == 0)
-               sprintf (&buf[strlen(buf)], "%s", l2labs[i].object);
-            else
-               sprintf (&buf[strlen(buf)], ":%s", l2labs[i].object);
-
-            if (l2labs[i].values[0] != NULL) {
-               int y = 1;
-               sprintf (&buf[strlen(buf)], "=%s", l2labs[i].values[0]);
-               while ((y < ARGUS_MAX_LABEL_VALUES) && (l2labs[i].values[y] != NULL)) {
-                  sprintf (&buf[strlen(buf)], ",%s", l2labs[i].values[y]);
-                  y++;
-               }
-            }
-            z++;
-         }
-         retn = buf;
-      }
-   }
    if (l2labs != NULL) free(l2labs);
    if (l2buf  != NULL) free(l2buf);
 

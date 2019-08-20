@@ -788,6 +788,8 @@ ArgusUpgradeLabel(char *label)
          char *key = NULL, *value = NULL;
          int cnt = 0;
 
+         lbuf[0] = '{';
+
          while ((tptr = strtok(sptr, ":")) != NULL) {
             char *nptr;
             if ((nptr = strchr(tptr, '=')) != NULL) {
@@ -812,17 +814,18 @@ ArgusUpgradeLabel(char *label)
             sptr = NULL;
             cnt++;
          }
+         lbuf[strlen(lbuf)] = '}';
          free(tlabel);
       }
 
-      if (strchr(label, '{')) {
-         if (strchr(label, ':')) {
+      if (strchr(lbuf, '{')) {
+         if (strchr(lbuf, ':')) {
          }
       } else {
          char *tlabel = strdup(label);
          char tvalue[1024];
 
-         char *tptr, *sptr = tlabel;
+         char *sptr = tlabel;
          char *key = NULL, *value = NULL;
 
          if ((sptr = strchr(tlabel, ':')) != NULL) {
@@ -839,12 +842,16 @@ ArgusUpgradeLabel(char *label)
 
             slen = strlen(lbuf);
             if (*key != '\"') {
-               snprintf (&lbuf[slen], 1024 - slen, "\"%s\":%s", key, value);
+               snprintf (&lbuf[slen], 1024 - slen, "{ \"%s\":%s }", key, value);
             } else {
-               snprintf (&lbuf[slen], 1024 - slen, "%s:%s", key, value);
+               snprintf (&lbuf[slen], 1024 - slen, "{ %s:%s }", key, value);
             }
          }
          free(tlabel);
+      }
+
+      if (strlen(lbuf) > 0) {
+         retn = strdup(lbuf);
       }
    }
    return retn;
@@ -2071,7 +2078,7 @@ RaInsertAddressTree (struct ArgusParserStruct *parser, struct ArgusLabelerStruct
                if (label || object) {
                   char lbuf[128];
                   if ((object != NULL) && (label != NULL)) {
-                     if ((*label == '"') || (*label == '{')) {
+                     if (*label == '"') {
                         snprintf(lbuf, 128, "{ \"%s\":{ %s }}", object, label);
                      } else {
                         snprintf(lbuf, 128, "%s.%s", object, label);
@@ -2221,7 +2228,7 @@ RaInsertAddressTree (struct ArgusParserStruct *parser, struct ArgusLabelerStruct
                         }
                      } else
                      if (object != NULL) {
-                        snprintf(lbuf, 128, "%s", object);
+                        snprintf(lbuf, 128, "{ %s }", object);
                      } else
                      if (label != NULL) {
                         snprintf(lbuf, 128, "%s", label);
@@ -2558,7 +2565,9 @@ RaReadAddressConfig (struct ArgusParserStruct *parser, struct ArgusLabelerStruct
             ArgusLog (LOG_ERR, "RaReadAddressConfig: ArgusCalloc error %s\n", strerror(errno));
 
 //  In address configurations, the first or second comment line will include the name of the
-//  configuration.  We'll try to find it and use it for labeling.
+//  configuration.  We'll try to find it and use it for labeling.  The label will become the
+//  key for the complete configuration labels.
+//  
 
       if ((fd = fopen (file, "r")) != NULL) {
          while ((ptr = fgets (str, MAXSTRLEN, fd)) != NULL) {
@@ -2579,7 +2588,9 @@ RaReadAddressConfig (struct ArgusParserStruct *parser, struct ArgusLabelerStruct
                            if ((slen = strlen(cptr)) > 0) {
                               if (cptr[slen - 1] == '\n') cptr[slen - 1] = '\0';
                               banner = strdup(cptr);
-                              snprintf(labelbuf, 256, "%s", banner);
+                              if (strstr(banner, "firehol_")) {
+                                 snprintf(labelbuf, 256, "\"firehol\":\"%s\"", &banner[8]);
+                              }
                               label = labelbuf;
                            }
                         }
@@ -2607,6 +2618,8 @@ RaReadAddressConfig (struct ArgusParserStruct *parser, struct ArgusLabelerStruct
 
       if (labeler->prune) 
          RaPruneAddressTree(labeler, labeler->ArgusAddrTree[AF_INET], ARGUS_TREE_PRUNE_ADJ, 0);
+
+      if (banner != NULL) free(banner);
       ArgusFree(str);
    }
 

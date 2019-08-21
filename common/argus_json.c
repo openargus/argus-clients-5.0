@@ -69,6 +69,13 @@ vector_free(vector* v) {
    }
 }
 
+void
+vector_zero(vector* v) {
+   if (v) {
+      v->data = NULL;
+   }
+}
+
 // Return the element at index, does not do a range check
 void *
 vector_get(const vector* v, size_t index) {
@@ -131,27 +138,29 @@ vector_foreach_print(const vector* v, ArgusJsonValue *parent, vector_foreach_pri
       for (i = 0; i < v->size; i++) {
          int slen = strlen(buf);
          if (fp == (vector_foreach_print_t) json_print_value) {
-            fp(item, &buf[slen], len - slen);
-            switch (parent->type) {
-               case ARGUS_JSON_OBJECT: {
-                  int objs = v->size / 2;
-                  if (objs > 1) {
-                     if ((i % 2) && ((i / 2) < (objs - 1))) {
-                        slen = strlen(buf);
-                        snprintf (&buf[slen], len - slen, ",");
+            if (((ArgusJsonValue *)item)->type) {
+               fp(item, &buf[slen], len - slen);
+               switch (parent->type) {
+                  case ARGUS_JSON_OBJECT: {
+                     int objs = v->size / 2;
+                     if (objs > 1) {
+                        if ((i % 2) && ((i / 2) < (objs - 1))) {
+                           slen = strlen(buf);
+                           snprintf (&buf[slen], len - slen, ",");
+                        }
                      }
+                     break;
                   }
-                  break;
-               }
 
-               case ARGUS_JSON_ARRAY: {
-                  if (v->size > 1) {
-                     if (i < (v->size - 1)) {
-                        slen = strlen(buf);
-                        snprintf (&buf[slen], len - slen, ",");
+                  case ARGUS_JSON_ARRAY: {
+                     if (v->size > 1) {
+                        if (i < (v->size - 1)) {
+                           slen = strlen(buf);
+                           snprintf (&buf[slen], len - slen, ",");
+                        }
                      }
+                     break;
                   }
-                  break;
                }
             }
          }
@@ -272,6 +281,24 @@ json_free_value(ArgusJsonValue *val) {
          break;
    }
 
+   val->type = ARGUS_JSON_NULL;
+}
+
+
+void
+json_zero_value(ArgusJsonValue *val) {
+   if (!val) return;
+
+   switch (val->type) {
+      case ARGUS_JSON_STRING:
+         val->value.string = NULL;
+         break;
+      case ARGUS_JSON_ARRAY:
+      case ARGUS_JSON_OBJECT:
+         vector_foreach(&(val->value.array), val, (void(*)(void*))json_zero_value);
+         vector_zero(&(val->value.array));
+         break;
+   }
    val->type = ARGUS_JSON_NULL;
 }
 
@@ -422,8 +449,11 @@ json_add_value(ArgusJsonValue *p1, ArgusJsonValue *p2) {
       vector_push_back(&p1->value.array, &value);
       vector_push_back(&p1->value.array, p2);
 
+      p1->status |= ARGUS_JSON_MODIFIED;
+
    } else {
       vector_push_back(&p1->value.array, p2);
+      p1->status |= ARGUS_JSON_MODIFIED;
    }
    return retn;
 }
@@ -432,109 +462,166 @@ static int
 json_merge_value(ArgusJsonValue *p1, ArgusJsonValue *p2) {
    int retn = 0;
 
-   switch (p1->type) {
-      case ARGUS_JSON_BOOL:
-         if (p1->value.boolean != p2->value.boolean) {
-            p1->value.boolean = 0;
+   if (p1->type == p2->type) {
+      switch (p1->type) {
+         case ARGUS_JSON_BOOL:
+            if (p1->value.boolean != p2->value.boolean) {
+               p1->value.boolean = 0;
+            }
+            break;
+
+         case ARGUS_JSON_INTEGER:
+         case ARGUS_JSON_DOUBLE:
+            if (p1->value.number != p2->value.number) {
+               json_add_value(p1, p2);
+            }
+            break;
+         case ARGUS_JSON_STRING: {
+            if (strcmp(p1->value.string, p2->value.string)) {
+               json_add_value(p1, p2);
+            }
+            break;
          }
-         break;
-
-      case ARGUS_JSON_INTEGER:
-      case ARGUS_JSON_DOUBLE:
-         if (p1->value.number != p2->value.number) {
-            json_add_value(p1, p2);
+         case ARGUS_JSON_KEY: {
+            break;
          }
-         break;
-      case ARGUS_JSON_STRING: {
-         if (strcmp(p1->value.string, p2->value.string)) {
-            json_add_value(p1, p2);
-         }
-         break;
-      }
-      case ARGUS_JSON_KEY: {
-         break;
-      }
-      case ARGUS_JSON_ARRAY: {
-         vector *v1 = json_value_to_array(p1);
-         vector *v2 = json_value_to_array(p2);
+         case ARGUS_JSON_ARRAY: {
+            vector *v1 = json_value_to_array(p1);
+            vector *v2 = json_value_to_array(p2);
 
-         ArgusJsonValue *v2item = (ArgusJsonValue *)v2->data;
-         size_t i, x;
+            ArgusJsonValue *v2item = (ArgusJsonValue *)v2->data;
+            size_t i, x;
 
-         if (v2item != NULL) {
-            for (i = 0; i < v2->size; i++) {
-               int p2valuefound = 0;
-               ArgusJsonValue *v1item = (ArgusJsonValue *)v1->data;
+            if (v2item != NULL) {
+               for (i = 0; i < v2->size; i++) {
+                  int p2valuefound = 0;
+                  ArgusJsonValue *v1item = (ArgusJsonValue *)v1->data;
 
-               if (v1item != NULL) {
-                  for (x = 0; x < v1->size; x++) {
-                     if (v1item->type == v2item->type) {
-                        switch (v1item->type) {
-                           case ARGUS_JSON_BOOL:
-                              if (v1item->value.boolean == v2item->value.boolean) {
-                                 p2valuefound = 1;
+                  if (v1item != NULL) {
+                     for (x = 0; x < v1->size; x++) {
+                        if (v1item->type == v2item->type) {
+                           switch (v1item->type) {
+                              case ARGUS_JSON_BOOL:
+                                 if (v1item->value.boolean == v2item->value.boolean) {
+                                    p2valuefound = 1;
+                                 }
+                                 break;
+
+                              case ARGUS_JSON_INTEGER:
+                              case ARGUS_JSON_DOUBLE:
+                                 if (v1item->value.number == v2item->value.number) {
+                                    p2valuefound = 1;
+                                 }
+                                 break;
+                              case ARGUS_JSON_STRING: {
+                                 if (strcmp(v1item->value.string, v2item->value.string) == 0) {
+                                    p2valuefound = 1;
+                                 }
+                                 break;
                               }
-                              break;
-
-                           case ARGUS_JSON_INTEGER:
-                           case ARGUS_JSON_DOUBLE:
-                              if (v1item->value.number == v2item->value.number) {
-                                 p2valuefound = 1;
+                              case ARGUS_JSON_KEY: {
+                                 printf ("\"%s\" ... \"%s\"", p1->value.string, p2->value.string);
+                                 break;
                               }
-                              break;
-                           case ARGUS_JSON_STRING: {
-                              if (strcmp(v1item->value.string, v2item->value.string) == 0) {
-                                 p2valuefound = 1;
-                              }
-                              break;
-                           }
-                           case ARGUS_JSON_KEY: {
-                              printf ("\"%s\" ... \"%s\"", p1->value.string, p2->value.string);
-                              break;
                            }
                         }
+                        v1item++;
                      }
-                     v1item++;
+                  }
+                  if (!(p2valuefound)) {
+                     vector_push_back(&p1->value.array, v2item);
+                     p1->status |= ARGUS_JSON_MODIFIED;
+                  }
+                  v2item++;
+               }
+            }
+            break;
+         }
+         case ARGUS_JSON_OBJECT: {
+            ArgusJsonValue *p1data = (ArgusJsonValue*)p1->value.object.data;
+            ArgusJsonValue *p2data = (ArgusJsonValue*)p2->value.object.data;
+
+            size_t i, p1size = p1->value.object.size;
+            size_t x, p2size = p2->value.object.size;
+            int found = 0;
+
+            for (i = 0; (i < p1size); i += 2) {
+               found = 0;
+               char *key = p1data[i].value.string;
+               ArgusJsonValue *p1value = &p1data[i +1];
+
+               for (x = 0; ((x < p2size) && !(found)); x += 2) {
+                  if (strcmp(p2data[x].value.string, key) == 0) {
+                     ArgusJsonValue *p2value = &p2data[x + 1];
+                     json_merge_value(p1value, p2value);
+
+                     if (p1value->status & ARGUS_JSON_MODIFIED) {
+                        json_zero_value(&p2data[x]);
+                        json_zero_value(&p2data[x + 1]);
+                        p1value->status &= ~ARGUS_JSON_MODIFIED;
+                     }
+                     if (p2value->status & ARGUS_JSON_MODIFIED) {
+                        json_zero_value(&p1data[x]);
+                        json_zero_value(&p1data[x + 1]);
+                        p2value->status &= ~ARGUS_JSON_MODIFIED;
+                     }
                   }
                }
-               if (!(p2valuefound)) {
-                  vector_push_back(&p1->value.array, v2item);
-               }
-               v2item++;
             }
-         }
-         break;
-      }
-      case ARGUS_JSON_OBJECT: {
-         ArgusJsonValue *p1data = (ArgusJsonValue*)p1->value.object.data;
-         ArgusJsonValue *p2data = (ArgusJsonValue*)p2->value.object.data;
-
-         size_t i, p1size = p1->value.object.size;
-         size_t x, p2size = p2->value.object.size;
-         int found = 0;
-
-         for (i = 0; (i < p1size); i += 2) {
-            found = 0;
-            char *key = p1data[i].value.string;
-            ArgusJsonValue *p1value = &p1data[i +1];
 
             for (x = 0; ((x < p2size) && !(found)); x += 2) {
-               if (strcmp(p2data[x].value.string, key) == 0) {
-                  ArgusJsonValue *p2value = &p2data[x + 1];
-                  json_merge_value(p1value, p2value);
-                  json_free_value(&p2data[x]);
-                  json_free_value(&p2data[x + 1]);
+               if (((ArgusJsonValue *)&p2data[x])->type) {
+                  vector_push_back(&p1->value.array, &p2data[x]);
+                  vector_push_back(&p1->value.array, &p2data[x + 1]);
+                  p1->status |= ARGUS_JSON_MODIFIED;
                }
             }
+            break;
          }
+      }
 
-         for (x = 0; ((x < p2size) && !(found)); x += 2) {
-            if (((ArgusJsonValue *)&p2data[x])->type) {
-               vector_push_back(&p1->value.array, &p2data[x]);
-               vector_push_back(&p1->value.array, &p2data[x + 1]);
+   } else {
+      if ((p1->type == ARGUS_JSON_ARRAY) || (p2->type == ARGUS_JSON_ARRAY)) {
+         ArgusJsonValue *array = (p1->type == ARGUS_JSON_ARRAY) ? p1 : p2;
+         ArgusJsonValue *value = (p1->type != ARGUS_JSON_ARRAY) ? p1 : p2;
+
+         vector *v = json_value_to_array(array);
+         ArgusJsonValue *aitem = (ArgusJsonValue *)v->data;
+         size_t i, asize = v->size;
+         int found = 0;
+
+         for (i = 0; i < asize; i++) {
+            if (aitem->type == value->type) {
+               switch (aitem->type) {
+                  case ARGUS_JSON_BOOL:
+                     if (aitem->value.boolean == value->value.boolean) {
+                        found = 1;
+                     }
+                     break;
+
+                  case ARGUS_JSON_INTEGER:
+                  case ARGUS_JSON_DOUBLE:
+                     if (aitem->value.number == value->value.number) {
+                        found = 1;
+                     }
+                     break;
+                  case ARGUS_JSON_STRING: {
+                     if (strcmp(aitem->value.string, value->value.string) == 0) {
+                        found = 1;
+                     }
+                     break;
+                  }
+                  case ARGUS_JSON_KEY: {
+                     break;
+                  }
+               }
             }
+            aitem++;
          }
-         break;
+         if (!found) {
+            vector_push_back(v, value);
+            array->status |= ARGUS_JSON_MODIFIED;
+         }
       }
    }
    return retn;

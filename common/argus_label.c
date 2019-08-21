@@ -2228,7 +2228,11 @@ RaInsertAddressTree (struct ArgusParserStruct *parser, struct ArgusLabelerStruct
                         }
                      } else
                      if (object != NULL) {
-                        snprintf(lbuf, 128, "{ %s }", object);
+                        if (*object == '{') {
+                           snprintf(lbuf, 128, "%s", object);
+                        } else {
+                           snprintf(lbuf, 128, "{ %s }", object);
+                        }
                      } else
                      if (label != NULL) {
                         snprintf(lbuf, 128, "%s", label);
@@ -2589,7 +2593,9 @@ RaReadAddressConfig (struct ArgusParserStruct *parser, struct ArgusLabelerStruct
                               if (cptr[slen - 1] == '\n') cptr[slen - 1] = '\0';
                               banner = strdup(cptr);
                               if (strstr(banner, "firehol_")) {
-                                 snprintf(labelbuf, 256, "\"firehol\":\"%s\"", &banner[8]);
+                                 snprintf(labelbuf, 256, "{\"firehol\":\"%s\" }", &banner[8]);
+                              } else {
+                                 snprintf(labelbuf, 256, "%s", banner);
                               }
                               label = labelbuf;
                            }

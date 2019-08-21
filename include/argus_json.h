@@ -1,7 +1,10 @@
 #ifndef HS_JSON_H
 #define HS_JSON_H
 
+#define ARGUS_JSON_MODIFIED	0x10
+
 typedef struct {
+   int status;
    size_t capacity;
    size_t data_size;
    size_t size;
@@ -20,7 +23,7 @@ enum json_value_type {
 };
 
 typedef struct {
-    int type;
+    int status, type;
     union {
         int boolean;
         double number;

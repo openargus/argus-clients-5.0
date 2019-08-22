@@ -231,6 +231,8 @@ char *RaFlowLabel (struct ArgusParserStruct *, struct ArgusRecordStruct *, char 
 char *RaFlowColor (struct ArgusParserStruct *, struct ArgusRecordStruct *);
 char *RaFetchIPPortLabel(struct ArgusParserStruct *, unsigned short, unsigned short);
 
+char *ArgusUpgradeLabel(char *, char *, int);
+
 #else
 
 #define ARGUS_GEOIP_COUNTRY_CODE        1
@@ -289,6 +291,7 @@ extern char *RaPortLabel (struct ArgusParserStruct *, struct ArgusRecordStruct *
 extern char *RaFlowLabel (struct ArgusParserStruct *, struct ArgusRecordStruct *, char *, int);
 extern char *RaFlowColor (struct ArgusParserStruct *, struct ArgusRecordStruct *);
 extern char *RaFetchIPPortLabel(struct ArgusParserStruct *, unsigned short, unsigned short);
+extern char *ArgusUpgradeLabel(char *, char *, int);
 
 #endif
 #ifdef __cplusplus

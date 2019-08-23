@@ -36,6 +36,7 @@ typedef struct {
 
 void vector_init(vector* v, size_t data_size);
 void vector_free(vector* v);
+void vector_zero(vector* v);
 void* vector_get(const vector* v, size_t index);
 void* vector_get_checked(const vector* v, size_t index);
 void vector_reserve(vector* v, size_t new_capacity);
@@ -60,6 +61,9 @@ char *ArgusJsonPrint(ArgusJsonValue *, char *, int);
 
 // Free the structure and all the allocated values
 void json_free_value(ArgusJsonValue* val);
+
+// Zero out the structure, leaving all the allocated values
+void json_zero_value(ArgusJsonValue* val);
 
 // Convert value to string if possible, asserts if not
 char* json_value_to_string(ArgusJsonValue* value);

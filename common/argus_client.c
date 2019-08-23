@@ -3914,6 +3914,8 @@ ArgusCopyRecordStruct (struct ArgusRecordStruct *rec)
                retn->drate   = rec->drate;
                retn->sload   = rec->sload;
                retn->dload   = rec->dload;
+               retn->sloss   = ArgusFetchSrcLoss(retn);
+               retn->dloss   = ArgusFetchDstLoss(retn);
                retn->sploss  = ArgusFetchPercentSrcLoss(retn);
                retn->dploss  = ArgusFetchPercentDstLoss(retn);
                retn->pcr     = ArgusFetchAppByteRatio(retn);
@@ -12382,11 +12384,11 @@ ArgusFetchSrcLoss (struct ArgusRecordStruct *ns)
                               if (net != NULL) {
                                  if (net->hdr.subtype == ARGUS_RTP_FLOW) {
                                     struct ArgusRTPObject *rtp = (void *)&net->net_union.rtp;
-                                    retn = rtp->sdrop * 1.0;
+                                    retn = rtp->sdrop;
                                  } else 
                                  if (net->hdr.subtype == ARGUS_UDT_FLOW) {
                                     struct ArgusUDTObject *udt = (void *)&net->net_union.udt;
-                                    retn = (udt->src.drops) * 1.0;
+                                    retn = (udt->src.drops);
                                  }
                               }
                               break;
@@ -12401,7 +12403,7 @@ ArgusFetchSrcLoss (struct ArgusRecordStruct *ns)
 
                                  if (tcp->state != 0) {
                                     if (metric->src.pkts)
-                                       retn = tcp->src.retrans * 1.0;
+                                       retn = tcp->src.retrans;
                                  }
                               }
                               break;
@@ -12410,7 +12412,7 @@ ArgusFetchSrcLoss (struct ArgusRecordStruct *ns)
                               if ((net != NULL) && (metric != NULL)) {
                                  struct ArgusESPObject *esp = (void *)&net->net_union.esp;
                                  if (metric->src.pkts)
-                                    retn = esp->lostseq * 1.0;
+                                    retn = esp->lostseq;
                               }
                               break;
                            }
@@ -12424,11 +12426,11 @@ ArgusFetchSrcLoss (struct ArgusRecordStruct *ns)
                               if (net != NULL) {
                                  if (net->hdr.subtype == ARGUS_RTP_FLOW) {
                                     struct ArgusRTPObject *rtp = (void *)&net->net_union.rtp;
-                                    retn = rtp->sdrop * 1.0;
+                                    retn = rtp->sdrop;
                                  } else 
                                  if (net->hdr.subtype == ARGUS_UDT_FLOW) {
                                     struct ArgusUDTObject *udt = (void *)&net->net_union.udt;
-                                    retn = (udt->src.drops) * 1.0;
+                                    retn = (udt->src.drops);
                                  }
                               }
                               break;
@@ -12444,7 +12446,7 @@ ArgusFetchSrcLoss (struct ArgusRecordStruct *ns)
 
                                  if ((tcp != NULL) && (tcp->state != 0)) {
                                     if (metric->src.pkts)
-                                       retn = tcp->src.retrans * 1.0;
+                                       retn = tcp->src.retrans;
                                  }
                               }
                               break;

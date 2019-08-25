@@ -128,7 +128,7 @@ struct cnamemem {
 
 struct nnamemem {
    struct nnamemem *n_nxt;
-   unsigned int status, hashval, ref;
+   unsigned int status, hashval, ref, index;
    struct timeval stime, ltime;
 
    char *n_name, *d_name, *tld_name;

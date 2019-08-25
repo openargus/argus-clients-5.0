@@ -1620,9 +1620,11 @@ RaInsertAddress (struct ArgusParserStruct *parser, struct ArgusLabelerStruct *la
                   ArgusLog (LOG_ERR, "RaInsertAddress: ArgusCalloc error %s\n", strerror(errno));
 
                bcopy ((char *)&tree->addr, (char *)&addr->addr, sizeof(addr->addr));
-               if (tree->addr.str != NULL)
-                  addr->addr.str = strdup(tree->addr.str);
 
+//             if (tree->addr.str != NULL)
+//                addr->addr.str = strdup(tree->addr.str);
+
+               addr->addr.str = NULL;
                addr->offset = tree->offset;
                addr->status = status;
 
@@ -3184,10 +3186,8 @@ ArgusNewLabeler (struct ArgusParserStruct *parser, int status)
    if ((retn->queue = ArgusNewQueue()) == NULL)
       ArgusLog (LOG_ERR, "ArgusNewLabeler: ArgusNewQueue error %s", strerror(errno));
 
-   if ((retn->htable.array = (struct ArgusHashTableHdr **) ArgusCalloc (parser->ArgusHashTableSize, sizeof(void *))) == NULL)
+   if ((retn->htable = ArgusNewHashTable(parser->ArgusHashTableSize)) == NULL)
       ArgusLog (LOG_ERR, "ArgusNewLabeler: ArgusCalloc error %s", strerror(errno));
-
-   retn->htable.size = parser->ArgusHashTableSize;
 
    retn->status = status;
 
@@ -3210,7 +3210,6 @@ ArgusNewLabeler (struct ArgusParserStruct *parser, int status)
          } while (wfile != start);
       }
 */
-
    }
 
    if (status & ARGUS_LABELER_COCODE) {
@@ -3225,6 +3224,9 @@ ArgusNewLabeler (struct ArgusParserStruct *parser, int status)
          if (!(RaReadAddressConfig (parser, retn, parser->ArgusFlowModelFile) > 0))
             ArgusLog (LOG_ERR, "ArgusNewLabeler: RaReadAddressConfig error");
       }
+   }
+
+   if (status & ARGUS_LABELER_NAMES) {
    }
 
    retn->prune = 1;
@@ -3247,10 +3249,8 @@ ArgusDeleteLabeler (struct ArgusParserStruct *parser, struct ArgusLabelerStruct 
       if (labeler->queue !=  NULL)
          ArgusDeleteQueue (labeler->queue);
 
-      ArgusEmptyHashTable (&labeler->htable);
-
-      if (labeler->htable.array != NULL)
-         ArgusFree(labeler->htable.array);
+      if (labeler->htable !=  NULL)
+         ArgusDeleteHashTable (labeler->htable);
 
       if ((ArgusAddrTree = labeler->ArgusAddrTree) != NULL) {
          if (labeler->ArgusAddrTree[AF_INET] != NULL)

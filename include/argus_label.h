@@ -52,6 +52,7 @@ extern "C" {
 
 #define ARGUS_LABELER_COCODE	    0x01
 #define ARGUS_LABELER_ADDRESS	    0x02
+#define ARGUS_LABELER_NAMES	    0x04
 
 #define ARGUS_TREE                  0x01
 #define ARGUS_TREE_VISITED          0x02
@@ -68,11 +69,11 @@ extern "C" {
 #define ARGUS_INTERSECT		    0x02
 #define ARGUS_REPLACE		    0x03
 
-
 #define ARGUS_TREE_PRUNE_LABEL      0x00
 #define ARGUS_TREE_PRUNE_CCO        0x01
 #define ARGUS_TREE_PRUNE_LOCALITY   0x02
 #define ARGUS_TREE_PRUNE_RECORD     0x03
+#define ARGUS_TREE_PRUNE_NAMES      0x04
 
 #define ARGUS_TREE_PRUNE_ADJ        0x10
 #define ARGUS_TREE_PRUNE_ANY        0x20
@@ -86,17 +87,30 @@ struct ArgusGeoIPCityObject {
 };
  
 struct ArgusLabelerStruct {
-   int status, mask, inserts, prune, count;
+   int status;
+
+   struct ArgusQueueStruct *queue;
+   struct ArgusHashTable *htable;
+ 
+   struct RaAddressStruct **ArgusAddrTree;
+   struct RaAddressStruct **ArgusRIRTree;
+   struct RaNameStruct **ArgusNameTree;
+
+   struct RaPolicyStruct *drap, *rap;
+   struct RaFlowModelStruct *fmodel;
+
+   int mask, inserts, prune, count;
    int RaPrintLabelTreeMode;
-   int RaLabelIanaAddress;
-   int RaLabelIeeeAddress;
-   int RaLabelCountryCode;
-   int RaLabelBindName;
-   int RaLabelIanaPort;
-   int RaLabelArgusFlow;
-   int RaLabelLocality;
-   int RaLabelLocalityOverwrite;
-   int RaLabelLocalityInterfaceIsMe;
+
+   char RaLabelIanaAddress;
+   char RaLabelIeeeAddress;
+   char RaLabelCountryCode;
+   char RaLabelBindName;
+   char RaLabelIanaPort;
+   char RaLabelArgusFlow;
+   char RaLabelLocality;
+   char RaLabelLocalityOverwrite;
+   char RaLabelLocalityInterfaceIsMe;
 
 #if defined(ARGUS_GEOIP) && !defined(ARGUS_GEOIP2)
    int RaLabelGeoIPAsn;
@@ -118,15 +132,6 @@ struct ArgusLabelerStruct {
    int RaLabelGeoIPCityLabels[16];
 #endif
 
-   struct RaPolicyStruct *drap, *rap;
-   struct RaFlowModelStruct *fmodel;
-   struct ArgusQueueStruct *queue;
-   struct ArgusHashTable htable;
-   struct ArgusHashStruct hstruct;
-
-   struct RaAddressStruct **ArgusAddrTree;
-   struct RaAddressStruct **ArgusRIRTree;
-
    struct RaPortStruct **ArgusTCPPortLabels;
    struct RaPortStruct **ArgusUDPPortLabels;
    struct ArgusQueueStruct *ArgusFlowQueue;
@@ -140,6 +145,20 @@ struct ArgusLabelerStruct {
 #define ARGUS_SUPER_MATCH       0x10
 
 #define ARGUS_LABEL_RECORD      0x20
+
+struct RaNameStruct {
+   struct ArgusQueueHeader qhdr;
+   struct RaNameStruct *l, *r, *p, *tld;
+   struct ArgusRecordStruct *ns;
+
+   struct ArgusCIDRAddr addr;
+
+   int type, status, offset, count;
+   struct timeval atime, rtime;
+   char *str, *label, *asnlabel;
+
+   void *obj;
+};
 
 struct RaAddressStruct {
    struct ArgusQueueHeader qhdr;

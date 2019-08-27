@@ -5528,7 +5528,7 @@ ArgusPrintRecord (struct ArgusParserStruct *parser, char *buf, struct ArgusRecor
 
       if ((parser->RaPrintAlgorithm = parser->RaPrintAlgorithmList[parser->RaPrintIndex]) != NULL) {
          if (parser->RaPrintAlgorithm->print != NULL) {
-            bzero(tmpbuf, 16);
+            bzero(tmpbuf, sizeof(tmpbuf));
 
             parser->RaPrintAlgorithm->print(parser, tmpbuf, argus, parser->RaPrintAlgorithm->length);
 

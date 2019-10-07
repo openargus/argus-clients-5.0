@@ -26409,6 +26409,9 @@ ArgusLog (int priority, char *fmt, ...)
    size_t len = 0;
    size_t remain = sizeof(buf);
 
+   if (ArgusParser->qflag) 
+      return;
+
    if (priority == LOG_NOTICE)
       return;
 

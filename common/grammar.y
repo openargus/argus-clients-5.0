@@ -110,7 +110,7 @@ static struct qual qerr = { Q_UNDEF, Q_UNDEF, Q_UNDEF};
 %type	<rblk>	other
 
 %token  START STOP STATUS SHUTDOWN ERROR
-%token  MAN FAR EVENT INDEX
+%token  MAN FAR EVENT INDEX BASELINE MATCH
 %token  REMOTE LOCAL INTERNET INTRANET LOC
 %token  DST SRC HOST INODE GATEWAY IPID TTL TOS DSB SRCID SID NODE INF TCPBASE
 %token  NET AMASK MASKLEN PORT EQUAL NOTEQUAL LESS GREATER PROTO BYTE PKT APPBYTE
@@ -371,6 +371,8 @@ sname:	  START			{ $$ = Q_START; }
 	| FAR  			{ $$ = Q_FAR; }
 	| EVENT			{ $$ = Q_EVENT; }
 	| INDEX			{ $$ = Q_INDEX; }
+	| BASELINE		{ $$ = Q_BASELINE; }
+	| MATCH			{ $$ = Q_MATCH; }
 	| SVC			{ $$ = Q_SVC; }
         | NORMAL		{ $$ = Q_NORMAL; }
         | WAIT			{ $$ = Q_WAIT; }

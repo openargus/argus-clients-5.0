@@ -2946,11 +2946,14 @@ RaReadLocalityConfig (struct ArgusParserStruct *parser, struct ArgusLabelerStruc
 
          fclose(fd);
 
-      } else
-         ArgusLog (LOG_ERR, "%s: %s", file, strerror(errno));
+         if (labeler->prune) 
+            RaPruneAddressTree(labeler, labeler->ArgusAddrTree[AF_INET], ARGUS_TREE_PRUNE_LABEL | ARGUS_TREE_PRUNE_ADJ, 0);
 
-      if (labeler->prune) 
-         RaPruneAddressTree(labeler, labeler->ArgusAddrTree[AF_INET], ARGUS_TREE_PRUNE_LABEL | ARGUS_TREE_PRUNE_ADJ, 0);
+      } else {
+#ifdef ARGUSDEBUG
+         ArgusDebug (1, "RaReadAddressConfig (0x%x, 0x%x, %s) error %s\n", parser, labeler, file, strerror(errno));
+#endif
+      }
    }
 
 #ifdef ARGUSDEBUG

@@ -29265,9 +29265,9 @@ ArgusAddFileList (struct ArgusParserStruct *parser, char *ptr, int type, long lo
             }
 
             wordfree (&p);
+            file->fd = -1;
          }
 
-         file->fd = -1;
          parser->ArgusInputFileCount++;
          retn = 1;
       }

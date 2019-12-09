@@ -164,6 +164,7 @@ struct RaAddressStruct {
    struct ArgusQueueHeader qhdr;
    struct RaAddressStruct *l, *r, *p;
    struct ArgusRecordStruct *ns;
+   struct ArgusLabelerStruct *labeler;
 
    struct ArgusCIDRAddr addr;
 

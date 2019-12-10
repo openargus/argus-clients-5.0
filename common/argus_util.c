@@ -3993,7 +3993,7 @@ RaFetchAddressLocalityLabel (struct ArgusParserStruct *parser, struct ArgusLabel
 void
 ArgusProcessDirection (struct ArgusParserStruct *parser, struct ArgusRecordStruct *ns)
 {
-   if (parser->ArgusDirectionFunction) {
+   if (parser->ArgusDirectionFunction && parser->ArgusPerformCorrection) {
       struct ArgusLabelerStruct *labeler = NULL;
       int tested = 0, reverse = 0;
       char dbuf[16];

@@ -2899,8 +2899,6 @@ RaReadLocalityConfig (struct ArgusParserStruct *parser, struct ArgusLabelerStruc
                                     if ((parser->ArgusLocalLabeler = ArgusNewLabeler(parser, 0L)) == NULL)
                                        ArgusLog (LOG_ERR, "ArgusClientInit: ArgusNewLabeler error");
 
-                                 ArgusGetInterfaceAddresses(parser);
-
                               } else
                                  labeler->RaLabelLocalityInterfaceIsMe = 0;
 
@@ -2946,14 +2944,15 @@ RaReadLocalityConfig (struct ArgusParserStruct *parser, struct ArgusLabelerStruc
 
          fclose(fd);
 
-         if (labeler->prune) 
-            RaPruneAddressTree(labeler, labeler->ArgusAddrTree[AF_INET], ARGUS_TREE_PRUNE_LABEL | ARGUS_TREE_PRUNE_ADJ, 0);
-
       } else {
 #ifdef ARGUSDEBUG
          ArgusDebug (1, "RaReadAddressConfig (0x%x, 0x%x, %s) error %s\n", parser, labeler, file, strerror(errno));
 #endif
       }
+      ArgusGetInterfaceAddresses(parser);
+
+      if (labeler->prune) 
+         RaPruneAddressTree(labeler, labeler->ArgusAddrTree[AF_INET], ARGUS_TREE_PRUNE_LABEL | ARGUS_TREE_PRUNE_ADJ, 0);
    }
 
 #ifdef ARGUSDEBUG
@@ -5630,6 +5629,7 @@ ArgusGetInterfaceAddresses(struct ArgusParserStruct *parser)
                   }
 
                   RaInsertAddressTree (parser, labeler, ip_addr, NULL);
+
                   if ((cidr = RaParseCIDRAddr (parser, ip_addr)) != NULL) {
                      struct RaAddressStruct *raddr = NULL;
                      struct RaAddressStruct node;
@@ -5646,6 +5646,7 @@ ArgusGetInterfaceAddresses(struct ArgusParserStruct *parser)
                            raddr->label = strdup("5");
                         }
                      }
+                     cidrlen = cidr->masklen;
                   }
 
                   if (cidrlen < 32) {

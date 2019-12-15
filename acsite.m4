@@ -887,7 +887,7 @@ ARGUS_MYSQL_MAKEFILE=no
             fi
          fi
 
-         ARGUS_MYSQL="./ramysql"
+         ARGUS_MYSQL="./ramysql ./rasql_udf_cidr"
          ARGUS_MYSQL_MAKEFILE="./examples/ramysql/Makefile"
          ARGUS_MYSQL="ramysql"
          AC_SUBST(MYSQL_LDFLAGS)

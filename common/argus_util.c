@@ -3990,6 +3990,77 @@ RaFetchAddressLocalityLabel (struct ArgusParserStruct *parser, struct ArgusLabel
 }
 
 
+char *RaPrintLocalityGroup (struct RaAddressStruct *, char *, int);
+
+char *
+RaPrintLocalityGroup (struct RaAddressStruct *raddr, char *buf, int len)
+{
+   int llen, slen;
+
+   if (raddr->p != NULL) {
+      RaPrintLocalityGroup(raddr->p, buf, len);
+   }
+   if (raddr->group && ((llen = strlen(raddr->group)) > 0)) {
+      if ((slen = strlen(buf)) > 0) {
+         if ((slen + llen) < len) {
+            sprintf (&buf[slen], ",%s", raddr->group);
+         }
+      } else {
+         if (llen < len)
+            sprintf (buf, "%s", raddr->group);
+      }
+   }
+   return (buf);
+}
+
+
+char *
+RaFetchAddressLocalityGroup (struct ArgusParserStruct *parser, struct ArgusLabelerStruct *labeler, unsigned int *addr, int mask, int type, int mode)
+{
+   struct RaAddressStruct *raddr;
+   char sbuf[2048];
+   char *retn = NULL;
+
+   bzero(sbuf, 2048);
+
+   if ((labeler != NULL) && (labeler->ArgusAddrTree != NULL)) {
+      switch (type) {
+         case ARGUS_TYPE_IPV4: {
+            struct RaAddressStruct node;
+            bzero ((char *)&node, sizeof(node));
+
+            node.addr.type = AF_INET;
+            node.addr.len = 4;
+            node.addr.addr[0] = *addr;
+            node.addr.mask[0] = 0xFFFFFFFF << (32 - mask);
+            node.addr.masklen = mask;
+
+            if ((raddr = RaFindAddress (parser, labeler->ArgusAddrTree[AF_INET], &node, ARGUS_SUPER_MATCH)) == NULL)
+               if (mode == ARGUS_NODE_MATCH)
+                  raddr = RaFindAddress (parser, labeler->ArgusAddrTree[AF_INET], &node, ARGUS_NODE_MATCH);
+
+            if (raddr != NULL) {
+               // get the group label from above to below.
+               RaPrintLocalityGroup(raddr, sbuf, 2048);
+               if (strlen(sbuf) > 0)
+                  retn = strdup(sbuf);
+            }
+            break;
+         }
+
+         case ARGUS_TYPE_IPV6:
+            break;
+      }
+
+#ifdef ARGUSDEBUG
+      ArgusDebug (5, "RaFetchAddressLocalityGroup (%p, %p, %p, %d, %d) returning %s\n", parser, labeler, addr, type, mode, retn);
+#endif
+   }
+
+   return (retn);
+}
+
+
 void
 ArgusProcessDirection (struct ArgusParserStruct *parser, struct ArgusRecordStruct *ns)
 {
@@ -12953,7 +13024,7 @@ ArgusPrintSrcGroup (struct ArgusParserStruct *parser, char *buf, struct ArgusRec
       if (((label = (void *)argus->dsrs[ARGUS_LABEL_INDEX]) != NULL)) {
          if ((lbuf = label->l_un.label) != NULL) {
             char *ptr;
-            if ((ptr = strstr(lbuf, "sloc=")) != NULL) {
+            if ((ptr = strstr(lbuf, "sgrp=")) != NULL) {
                labelbuf = &lbuf[5];
             }
          }
@@ -12968,7 +13039,7 @@ ArgusPrintSrcGroup (struct ArgusParserStruct *parser, char *buf, struct ArgusRec
                   switch (flow->hdr.argus_dsrvl8.qual & 0x1F) {
                      case ARGUS_TYPE_IPV4: {
                         if ((labeler = parser->ArgusLocalLabeler) != NULL) {
-                           labelbuf = RaFetchAddressLocalityLabel (parser, labeler, &flow->ip_flow.ip_src, flow->ip_flow.smask, ARGUS_TYPE_IPV4, ARGUS_NODE_MATCH);
+                           labelbuf = RaFetchAddressLocalityGroup (parser, labeler, &flow->ip_flow.ip_src, flow->ip_flow.smask, ARGUS_TYPE_IPV4, ARGUS_NODE_MATCH);
                            break;
                         }
                      }
@@ -13021,7 +13092,7 @@ ArgusPrintDstGroup (struct ArgusParserStruct *parser, char *buf, struct ArgusRec
       if (((label = (void *)argus->dsrs[ARGUS_LABEL_INDEX]) != NULL)) {
          if ((lbuf = label->l_un.label) != NULL) {
             char *ptr;
-            if ((ptr = strstr(lbuf, "dloc=")) != NULL) {
+            if ((ptr = strstr(lbuf, "dgrp=")) != NULL) {
                labelbuf = &lbuf[5];
             }
          }
@@ -13036,7 +13107,7 @@ ArgusPrintDstGroup (struct ArgusParserStruct *parser, char *buf, struct ArgusRec
                   switch (flow->hdr.argus_dsrvl8.qual & 0x1F) {
                      case ARGUS_TYPE_IPV4: {
                         if ((labeler = parser->ArgusLocalLabeler) != NULL) {
-                           labelbuf = RaFetchAddressLocalityLabel (parser, labeler, &flow->ip_flow.ip_dst, flow->ip_flow.dmask, ARGUS_TYPE_IPV4, ARGUS_NODE_MATCH);
+                           labelbuf = RaFetchAddressLocalityGroup (parser, labeler, &flow->ip_flow.ip_dst, flow->ip_flow.dmask, ARGUS_TYPE_IPV4, ARGUS_NODE_MATCH);
                            break;
                         }
                      }

@@ -170,7 +170,7 @@ struct RaAddressStruct {
 
    int type, status, offset, count, ttl;
    struct timeval atime, rtime;
-   char *str, *label, *asnlabel;
+   char *str, *label, *asnlabel, *group;
 
    struct ArgusListStruct *dns;
    void *obj;

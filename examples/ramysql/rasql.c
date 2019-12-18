@@ -76,7 +76,6 @@ int ArgusDropTable = 0;
 int ArgusCreateTable = 0;
 
 char *RaProgramPath = RABINPATH;
-char *RaTempFilePath = "/tmp";
 char *RaRoleString = NULL;
 char *RaProbeString = NULL;
 char *RaSQLSaveTable = NULL;
@@ -1128,7 +1127,8 @@ RaSQLProcessQueue (struct ArgusQueueStruct *queue)
                            if ((filepath = ArgusMalloc(MAXSTRLEN)) == NULL)
                               ArgusLog(LOG_ERR, "RaSQLProcessQueue: alloc error", strerror(errno));
 
-                           sprintf(filepath, "%s/%s", RaTempFilePath, filenamebuf);
+                           if (ArgusParser->RaTempFilePath != NULL)
+                              sprintf(filepath, "%s/%s", ArgusParser->RaTempFilePath, filenamebuf);
 
                            if ((stat (filepath, &statbuf)) != 0) {  // is file in temporary cache 
 

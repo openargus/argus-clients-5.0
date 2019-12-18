@@ -186,7 +186,7 @@ int RaParseResourceFile (struct ArgusParserStruct *parser, char *file,
 static int RaParseResourceLine(struct ArgusParserStruct *, int, char *, int, int);
 void setArgusEventDataRecord (struct ArgusParserStruct *, char *);
 
-#define ARGUS_RCITEMS                           80
+#define ARGUS_RCITEMS                           81
 
 #define RA_ARGUS_SERVER                         0
 #define RA_SOURCE_PORT				1
@@ -268,6 +268,7 @@ void setArgusEventDataRecord (struct ArgusParserStruct *, char *);
 #define RA_RECORD_CORRECTION			77
 #define RA_STATUS_EVENT				78
 #define RA_HASHTABLE_SIZE			79
+#define RA_TMP_PATH				80
 
 
 char *ArgusResourceFileStr [] = {
@@ -351,6 +352,7 @@ char *ArgusResourceFileStr [] = {
    "RA_RECORD_CORRECTION=",
    "RA_STATUS_EVENT=",
    "RA_HASHTABLE_SIZE="
+   "RA_TMP_PATH="
 };
 
 #include <ctype.h>
@@ -1843,6 +1845,12 @@ RaParseResourceLine(struct ArgusParserStruct *parser, int linenum,
             ArgusLog (LOG_ERR, "host %s unknown\n", optarg);
          }
          break;
+
+      case RA_TMP_PATH: {
+         if (parser->RaTempFilePath != NULL) free(parser->RaTempFilePath);
+         parser->RaTempFilePath = strdup(optarg);
+         break;
+      }
 
       case RA_SOURCE_PORT:
          parser->ArgusSourcePort = atoi (optarg);

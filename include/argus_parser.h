@@ -326,7 +326,7 @@ struct ArgusParserStruct {
    char *ArgusSQLStatement, *MySQLDBEngine;
    char *ArgusAliasFile, *RadiumSrcidConvertFile;
    char *ArgusSourceIDString, *RaMarInfName;
-   char *ArgusBaseLineFile;
+   char *RaTempFilePath, *ArgusBaseLineFile;
    char *ArgusSearchString;
 
    struct timeval ArgusRealTime, ArgusGlobalTime;

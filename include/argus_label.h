@@ -72,14 +72,18 @@ extern "C" {
 #define ARGUS_TREE_PRUNE_LABEL      0x00
 #define ARGUS_TREE_PRUNE_CCO        0x01
 #define ARGUS_TREE_PRUNE_LOCALITY   0x02
-#define ARGUS_TREE_PRUNE_RECORD     0x03
-#define ARGUS_TREE_PRUNE_NAMES      0x04
+#define ARGUS_TREE_PRUNE_RECORD     0x04
+#define ARGUS_TREE_PRUNE_NAMES      0x08
+#define ARGUS_TREE_PRUNE_ASN        0x10
+#define ARGUS_TREE_PRUNE_GROUP      0x20
 
-#define ARGUS_TREE_PRUNE_ADJ        0x10
-#define ARGUS_TREE_PRUNE_ANY        0x20
+#define ARGUS_TREE_PRUNE_ADJ        0x100
+#define ARGUS_TREE_PRUNE_ANY        0x200
 
-#define ARGUS_TREE_DNS_TLD          0x40
-#define ARGUS_TREE_DNS_SLD          0x80
+#define ARGUS_TREE_DNS_TLD          0x400
+#define ARGUS_TREE_DNS_SLD          0x800
+
+#define ARGUS_PRUNE_TREE            0x1000
 
 struct ArgusGeoIPCityObject {
    char *field, *format;

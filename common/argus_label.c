@@ -1762,6 +1762,7 @@ RaDeleteAddressTree(struct ArgusLabelerStruct *labeler, struct RaAddressStruct *
 
    if (node->addr.str) { free(node->addr.str); node->addr.str = NULL;}
    if (node->str)      { free(node->str); node->str = NULL;}
+   if (node->group)    { free(node->group); node->group = NULL;}
    if (node->label)    { free(node->label); node->label = NULL;}
 
    if (node->dns)      { ArgusFree(node->dns); node->dns = NULL;}
@@ -1819,8 +1820,9 @@ RaPruneAddressTree (struct ArgusLabelerStruct *labeler, struct RaAddressStruct *
    char *retn = NULL, *lstr = NULL, *rstr = NULL;
 
    if (node != NULL) {
-      switch (mode & 0x0F) {
+      switch (mode & 0xFF) {
          case ARGUS_TREE_PRUNE_CCO:
+         case ARGUS_TREE_PRUNE_GROUP:
          case ARGUS_TREE_PRUNE_LABEL: {
             if (node->l || node->r) {   // if we have sub-trees, grab the labels below.
                if ((lstr = RaPruneAddressTree(labeler, node->l, mode, level)) != NULL) {
@@ -1842,7 +1844,7 @@ RaPruneAddressTree (struct ArgusLabelerStruct *labeler, struct RaAddressStruct *
                }
 
                if (node->l && node->r) {
-                  if (lstr && rstr) {    // the idea here is to propagate up the label or country 
+                  if (lstr && rstr) {    // the idea here is to propagate up the label, group, or country 
                                          // code so that if they are equal, then we can trim
                                          // the tree, by removing everything below.
                      int llen = strlen(lstr);
@@ -1916,9 +1918,13 @@ RaPruneAddressTree (struct ArgusLabelerStruct *labeler, struct RaAddressStruct *
                if (retn && strlen(retn)) {              // there is a child label, so compare to current
                   char *str = NULL;
 
-                  switch (mode & 0x0F) {
+                  switch (mode & 0xFF) {
                      case ARGUS_TREE_PRUNE_CCO: {
                         str = node->cco;
+                        break;
+                     }
+                     case ARGUS_TREE_PRUNE_GROUP: {
+                        str = node->group;
                         break;
                      }
                      case ARGUS_TREE_PRUNE_LABEL: {
@@ -1938,6 +1944,11 @@ RaPruneAddressTree (struct ArgusLabelerStruct *labeler, struct RaAddressStruct *
                            retn = node->cco;
                            break;
                         }
+                        case ARGUS_TREE_PRUNE_GROUP: {
+                           node->group = strdup(retn);
+                           retn = node->group;
+                           break;
+                        }
                         case ARGUS_TREE_PRUNE_LABEL: {
                            node->label = strdup(retn);
                            retn = node->label;
@@ -1948,9 +1959,13 @@ RaPruneAddressTree (struct ArgusLabelerStruct *labeler, struct RaAddressStruct *
                }
 
             } else {                                     // if there are no children, then give back current label
-               switch (mode & 0x0F) {
+               switch (mode & 0xFF) {
                   case ARGUS_TREE_PRUNE_CCO: {     
                      retn = node->cco;
+                     break;
+                  }
+                  case ARGUS_TREE_PRUNE_GROUP: {
+                     retn = node->group;
                      break;
                   }
                   case ARGUS_TREE_PRUNE_LABEL: {
@@ -1973,6 +1988,54 @@ RaPruneAddressTree (struct ArgusLabelerStruct *labeler, struct RaAddressStruct *
             break;
          }
 
+         case ARGUS_TREE_PRUNE_ASN: {
+            char *lstr = NULL, *rstr = NULL;
+
+            if (node->l != NULL) lstr = RaPruneAddressTree(labeler, node->l, mode, 0);
+            if (node->r != NULL) rstr = RaPruneAddressTree(labeler, node->r, mode, 0);
+
+            if (lstr || rstr) {    // if we have prunable sub-trees, check this level
+               if (lstr && rstr) {
+                  if ((node->l->asn || node->r->asn) &&
+                     ((node->l->asn  == node->r->asn) &&
+                      (node->l->addr.mask[0] == node->r->addr.mask[0]))) {
+                     node->asn = node->l->asn;
+                     RaDeleteAddressTree(labeler, node->l);
+                     RaDeleteAddressTree(labeler, node->r);
+                     node->l = NULL;
+                     node->r = NULL;
+                     retn = lstr;
+                  }
+
+               } else {
+                  if (node->l && node->r)
+                     retn = NULL;
+                  else
+                     retn = "TRUE";
+
+                  if (lstr) {
+                     if (node->l->asn && (node->l->asn == node->asn)) {
+                        RaDeleteAddressTree(labeler, node->l);
+                        node->l = NULL;
+                     } else
+                        retn = NULL;
+                  }
+
+                  if (rstr) {
+                     if (node->r->asn && (node->r->asn == node->asn)) {
+                        RaDeleteAddressTree(labeler, node->r);
+                        node->r = NULL;
+                     } else
+                        retn = NULL;
+                  }
+               }
+
+            } else
+               if (!(node->l || node->r))
+                  retn = "TRUE";
+
+            break;
+         }
          case ARGUS_TREE_PRUNE_LOCALITY: {
             char *lstr = NULL, *rstr = NULL;
 
@@ -2182,7 +2245,8 @@ RaInsertRIRTree (struct ArgusParserStruct *parser, struct ArgusLabelerStruct *la
 #define ARGUS_PARSING_LABEL		2
 #define ARGUS_PARSING_LOCALITY		3
 #define ARGUS_PARSING_ASN		4
-#define ARGUS_PARSING_DONE		5
+#define ARGUS_PARSING_GROUP		5
+#define ARGUS_PARSING_DONE		6
 
 
 int
@@ -2518,6 +2582,7 @@ RaLabelMaskAddressStatus(struct RaAddressStruct *addr, unsigned int mask) {
 
 void RaLabelAddressLocality(struct RaAddressStruct *, int);
 void RaLabelAddressAsn(struct RaAddressStruct *, int);
+void RaLabelAddressGroup(struct RaAddressStruct *, char *);
 void RaLabelSuperAddresses(struct RaAddressStruct *);
 void RaLabelSubAddresses(struct RaAddressStruct *);
 
@@ -2557,13 +2622,26 @@ RaLabelAddressAsn(struct RaAddressStruct *addr, int asn) {
    if (addr->r != NULL) RaLabelAddressAsn(addr->r, asn);
 }
 
+void
+RaLabelAddressGroup(struct RaAddressStruct *addr, char *group) {
+   if (ArgusParser->ArgusLocalLabeler && (ArgusParser->ArgusLocalLabeler->RaLabelLocalityOverwrite)) {
+      if (addr->group != NULL) free(addr->group);
+      addr->group = strdup(group);
+   } else
+      if (addr->group == NULL)
+         addr->group = strdup(group);
+
+   if (addr->l != NULL) RaLabelAddressGroup(addr->l, group);
+   if (addr->r != NULL) RaLabelAddressGroup(addr->r, group);
+}
+
 int
 RaInsertLocalityTree (struct ArgusParserStruct *parser, struct ArgusLabelerStruct *labeler, char *str)
 {
    struct RaAddressStruct *saddr = NULL, *node;
    struct ArgusCIDRAddr *cidr, scidr, dcidr;
    char *sptr = NULL, *eptr = NULL, *ptr = NULL;
-   char tstrbuf[MAXSTRLEN], *tptr = NULL, *label = NULL;
+   char tstrbuf[MAXSTRLEN], *tptr = NULL, *label = NULL, *group = NULL;
    int retn = 0, locality = -1, asn = -1;
    long long i, step = 0, arange;
    unsigned int masklen = 32;
@@ -2575,7 +2653,7 @@ RaInsertLocalityTree (struct ArgusParserStruct *parser, struct ArgusLabelerStruc
       snprintf (tstrbuf, MAXSTRLEN, "%s", str);
       ptr = tstrbuf;
 
-      while ((sptr = strtok(ptr, " \t\r\n\"")) != NULL) {
+      while ((sptr = strtok(ptr, "\t\r\n\"")) != NULL) {
          switch (state) {
             case ARGUS_PARSING_START_ADDRESS: {
                if ((eptr = strchr(sptr, '-')) != NULL)
@@ -2621,8 +2699,24 @@ RaInsertLocalityTree (struct ArgusParserStruct *parser, struct ArgusLabelerStruc
                if (sptr != NULL) {
                   char *endptr = NULL;
                   asn = strtod(sptr, &endptr);
-               }
-               state = ARGUS_PARSING_DONE;
+                  if (endptr == sptr) {
+                     state = ARGUS_PARSING_DONE;
+                  } else
+                     state = ARGUS_PARSING_GROUP;
+               } else
+                  state = ARGUS_PARSING_DONE;
+               break;
+            }
+
+            case ARGUS_PARSING_GROUP: {
+               if (sptr != NULL) {
+                  if (strstr(sptr, "//")) {
+                     state = ARGUS_PARSING_DONE;
+                  } else {
+                     group = sptr;
+                  }
+               } else
+                  state = ARGUS_PARSING_DONE;
                break;
             }
 
@@ -2715,23 +2809,28 @@ RaInsertLocalityTree (struct ArgusParserStruct *parser, struct ArgusLabelerStruc
                RaLabelSuperAddresses(saddr);
 
                if (label != NULL) {
+                  labeler->prune |= ARGUS_TREE_PRUNE_LABEL;
                   if (saddr->label) free(saddr->label);
                   saddr->label = strdup(label);
                }
 
-               if (locality > 0)
-                  saddr->locality = locality;
-
-               if (asn >= 0)
-                  saddr->asn = asn;
+               if (locality >= 0) {
+                  labeler->prune |= ARGUS_TREE_PRUNE_LOCALITY;
+                  RaLabelAddressLocality(saddr, locality);
+               }
+               if (asn >= 0) {
+                  labeler->prune |= ARGUS_TREE_PRUNE_ASN;
+                  RaLabelAddressAsn(saddr, asn);
+               }
+               if (group != NULL) {
+                  labeler->prune |= ARGUS_TREE_PRUNE_GROUP;
+                  RaLabelAddressGroup(saddr, group);
+               }
 
                if (labeler->status & ARGUS_LABELER_DEBUG_NODE) {
                   RaPrintLabelTree (labeler, labeler->ArgusAddrTree[AF_INET], 0, 0);
                   printf("\n");
                }
-
-               if (locality >= 0) RaLabelAddressLocality(saddr, locality);
-               if (asn >= 0)       RaLabelAddressAsn(saddr, asn);
             }
          }
 
@@ -2951,8 +3050,23 @@ RaReadLocalityConfig (struct ArgusParserStruct *parser, struct ArgusLabelerStruc
       }
       ArgusGetInterfaceAddresses(parser);
 
-      if (labeler->prune) 
-         RaPruneAddressTree(labeler, labeler->ArgusAddrTree[AF_INET], ARGUS_TREE_PRUNE_LABEL | ARGUS_TREE_PRUNE_ADJ, 0);
+      if (labeler->prune & ARGUS_PRUNE_TREE)  {
+         if (labeler->prune & ARGUS_TREE_PRUNE_GROUP) {
+            RaPruneAddressTree(labeler, labeler->ArgusAddrTree[AF_INET], ARGUS_TREE_PRUNE_GROUP, 0);
+         } else
+         if (labeler->prune & ARGUS_TREE_PRUNE_CCO) {
+            RaPruneAddressTree(labeler, labeler->ArgusAddrTree[AF_INET], ARGUS_TREE_PRUNE_CCO, 0);
+         } else
+         if (labeler->prune & ARGUS_TREE_PRUNE_LOCALITY) {
+            RaPruneAddressTree(labeler, labeler->ArgusAddrTree[AF_INET], ARGUS_TREE_PRUNE_LOCALITY, 0);
+         } else
+         if (labeler->prune & ARGUS_TREE_PRUNE_ASN) {
+            RaPruneAddressTree(labeler, labeler->ArgusAddrTree[AF_INET], ARGUS_TREE_PRUNE_ASN, 0);
+         } else
+         if (labeler->prune & ARGUS_TREE_PRUNE_LABEL) {
+            RaPruneAddressTree(labeler, labeler->ArgusAddrTree[AF_INET], ARGUS_TREE_PRUNE_LABEL, 0);
+         }
+      }
    }
 
 #ifdef ARGUSDEBUG
@@ -3231,13 +3345,14 @@ ArgusNewLabeler (struct ArgusParserStruct *parser, int status)
    if (status & ARGUS_LABELER_NAMES) {
    }
 
-   retn->prune = 1;
+   retn->prune = ARGUS_PRUNE_TREE;
 
 #ifdef ARGUSDEBUG
    ArgusDebug (1, "ArgusNewLabeler (%p, %d) returning %p\n", parser, status, retn);
 #endif
    return (retn);
 }
+
 
 void
 ArgusDeleteLabeler (struct ArgusParserStruct *parser, struct ArgusLabelerStruct *labeler)
@@ -5254,11 +5369,14 @@ RaPrintLabelTree (struct ArgusLabelerStruct *labeler, struct RaAddressStruct *no
                      printf ("0.0.0.0/0 ");
                }
 
-               if (strlen(node->cco))
+               if (node->cco && strlen(node->cco))
                   printf ("%s ", node->cco);
 
-               if (node->label)
-                  printf ("%s ", node->label);
+               if (node->group && strlen(node->group))
+                  printf ("'%s' ", node->group);
+
+               if (node->label && strlen(node->label))
+                  printf ("'%s' ", node->label);
 
                if (node->ns) {
                   char buf[MAXSTRLEN];

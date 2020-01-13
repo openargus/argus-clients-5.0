@@ -186,7 +186,7 @@ int RaParseResourceFile (struct ArgusParserStruct *parser, char *file,
 static int RaParseResourceLine(struct ArgusParserStruct *, int, char *, int, int);
 void setArgusEventDataRecord (struct ArgusParserStruct *, char *);
 
-#define ARGUS_RCITEMS                           81
+#define ARGUS_RCITEMS                           82
 
 #define RA_ARGUS_SERVER                         0
 #define RA_SOURCE_PORT				1
@@ -269,6 +269,7 @@ void setArgusEventDataRecord (struct ArgusParserStruct *, char *);
 #define RA_STATUS_EVENT				78
 #define RA_HASHTABLE_SIZE			79
 #define RA_TMP_PATH				80
+#define RA_LOCAL_CORRECT			81
 
 
 char *ArgusResourceFileStr [] = {
@@ -351,8 +352,9 @@ char *ArgusResourceFileStr [] = {
    "RA_SRCID_ALIAS=",
    "RA_RECORD_CORRECTION=",
    "RA_STATUS_EVENT=",
-   "RA_HASHTABLE_SIZE="
-   "RA_TMP_PATH="
+   "RA_HASHTABLE_SIZE=",
+   "RA_TMP_PATH=",
+   "RA_LOCAL_CORRECT=",
 };
 
 #include <ctype.h>
@@ -2482,6 +2484,14 @@ RaParseResourceLine(struct ArgusParserStruct *parser, int linenum,
                ArgusLog (LOG_ERR, "ArgusClientInit: ArgusNewLabeler error");
 
          RaReadLocalityConfig (parser, parser->ArgusLocalLabeler, optarg);
+         break;
+      }
+
+      case RA_LOCAL_CORRECT: {
+         if (!(strncasecmp(optarg, "yes", 3)))
+            parser->ArgusPerformCorrection = 1;
+         else
+            parser->ArgusPerformCorrection = 0;
          break;
       }
 

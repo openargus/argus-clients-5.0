@@ -4192,10 +4192,12 @@ ArgusProcessDirection (struct ArgusParserStruct *parser, struct ArgusRecordStruc
                         }
 
                         if (!tested && (parser->ArgusDirectionFunction & ARGUS_PORT_WELLKNOWN)) {
-                           if ((sport < 1024) || (dport < 1024)) {
-                              tested++;
-                              if (sport < dport) {
-                                 reverse++;
+                           if ((sport != 0) && (dport != 0)) {
+                              if ((sport < 1024) || (dport < 1024)) {
+                                 tested++;
+                                 if (sport < dport) {
+                                    reverse++;
+                                 }
                               }
                            }
                         }

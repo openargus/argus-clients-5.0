@@ -1170,10 +1170,9 @@ ArgusParseArgs(struct ArgusParserStruct *parser, int argc, char **argv)
             }
             break;
          case 'F': 
-            if (!(RaParseResourceFile (parser, optarg, ARGUS_SOPTIONS_PROCESS,
-                                       ArgusResourceFileStr, ARGUS_RCITEMS,
-                                       RaParseResourceLine)))
-               ArgusLog(LOG_ERR, "%s: %s", optarg, strerror(errno));
+            RaParseResourceFile (parser, optarg, ARGUS_SOPTIONS_PROCESS,
+                                 ArgusResourceFileStr, ARGUS_RCITEMS,
+                                 RaParseResourceLine);
             break;
 
          case 'g': {
@@ -3917,21 +3916,26 @@ RaFetchAddressLocality (struct ArgusParserStruct *parser, struct ArgusLabelerStr
    if ((labeler != NULL) && (labeler->ArgusAddrTree != NULL)) {
       switch (type) {
          case ARGUS_TYPE_IPV4: {
-            struct RaAddressStruct node;
-            bzero ((char *)&node, sizeof(node));
+            if (*addr < 8) {
+               retn = 4;
 
-            node.addr.type = AF_INET;
-            node.addr.len = 4;
-            node.addr.addr[0] = *addr;
-            node.addr.mask[0] = 0xFFFFFFFF << (32 - mask);
-            node.addr.masklen = mask;
+            } else {
+               struct RaAddressStruct node;
+               bzero ((char *)&node, sizeof(node));
 
-            if ((raddr = RaFindAddress (parser, labeler->ArgusAddrTree[AF_INET], &node, ARGUS_SUPER_MATCH)) == NULL)
-               if (mode == ARGUS_NODE_MATCH)
-                  raddr = RaFindAddress (parser, labeler->ArgusAddrTree[AF_INET], &node, ARGUS_NODE_MATCH);
+               node.addr.type = AF_INET;
+               node.addr.len = 4;
+               node.addr.addr[0] = *addr;
+               node.addr.mask[0] = 0xFFFFFFFF << (32 - mask);
+               node.addr.masklen = mask;
 
-            if (raddr != NULL) {
-               retn = raddr->locality;
+               if ((raddr = RaFindAddress (parser, labeler->ArgusAddrTree[AF_INET], &node, ARGUS_SUPER_MATCH)) == NULL)
+                  if (mode == ARGUS_NODE_MATCH)
+                     raddr = RaFindAddress (parser, labeler->ArgusAddrTree[AF_INET], &node, ARGUS_NODE_MATCH);
+
+               if (raddr != NULL) {
+                  retn = raddr->locality;
+               }
             }
             break;
          }

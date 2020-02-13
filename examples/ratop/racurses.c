@@ -1995,11 +1995,13 @@ ArgusProcessCharacter(WINDOW *win, int status, int ch)
       switch (retn) {
          case RAGOTcolon:
          case RAGOTslash: {
+            int awu = ArgusAlwaysUpdate;
             ArgusZeroDebugString();
             switch (ch) {
                case 0x07: {
                   ArgusDisplayStatus = (ArgusDisplayStatus ? 0 : 1);
                   ArgusTouchScreen();
+                  ArgusAlwaysUpdate = 1;
                   break;
                }
                case '%': {
@@ -2009,14 +2011,17 @@ ArgusProcessCharacter(WINDOW *win, int status, int ch)
                   else
                      RaInputString = "Toggle percent off";
                   ArgusTouchScreen();
+                  ArgusAlwaysUpdate = 1;
                   break;
                }
                case 'A':
                   ArgusParser->Aflag = ArgusParser->Aflag ? 0 : 1;
                   break;
-               case 'H':
+               case 'H': {
+                  ArgusAlwaysUpdate = 1;
                   ArgusParser->Hflag = ArgusParser->Hflag ? 0 : 1;
                   break;
+               }
                case 'P': {
                   ArgusParser->Pauseflag = (ArgusParser->Pauseflag > 0.0) ? 0.0 : 1.0;
                   if (ArgusParser->Pauseflag)
@@ -2436,6 +2441,8 @@ ArgusProcessCharacter(WINDOW *win, int status, int ch)
                   break;
                }
             }
+            ArgusDrawWindow(RaCurrentWindow);
+            ArgusAlwaysUpdate = awu;
             break;
          }
 
@@ -2813,6 +2820,9 @@ ArgusProcessCharacter(WINDOW *win, int status, int ch)
                }
                break;
             }
+            wclear(RaCurrentWindow->window);
+            ArgusTouchScreen();
+            RaRefreshDisplay();
          }
 
          default: {

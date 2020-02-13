@@ -31739,6 +31739,12 @@ ArgusAbbreviateMetric(struct ArgusParserStruct *parser, char *buf, int len, doub
       ind++;
    }
 
+   if (ind == 0) {
+      if (value >= 1.0) {
+         value /= 1000.0;
+      }
+   }
+
    snprintf (buf, len, "%.03f", value);
    if (parser->pflag < 3) {
       ptr = strchr(buf, '.');
@@ -31748,7 +31754,7 @@ ArgusAbbreviateMetric(struct ArgusParserStruct *parser, char *buf, int len, doub
    }
 
    switch (ind) {
-      case 0: sprintf (&buf[strlen(buf)], "%c", ' '); break;
+      case 0: sprintf (&buf[strlen(buf)], "%c", 'K'); break;
       case 1: sprintf (&buf[strlen(buf)], "%c", 'K'); break;
       case 2: sprintf (&buf[strlen(buf)], "%c", 'M'); break;
       case 3: sprintf (&buf[strlen(buf)], "%c", 'G'); break;

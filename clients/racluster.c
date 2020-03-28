@@ -853,12 +853,24 @@ RaProcessThisRecord (struct ArgusParserStruct *parser, struct ArgusRecordStruct 
                                           break;
                                        }
 
-                                       default:
-                                          ArgusReverseRecord (ns);
+                                       default: {
+                                          double  nstime = ArgusFetchStartTime(ns);
+                                          double tnstime = ArgusFetchStartTime(tns);
+                                          if (tnstime > nstime) {
+                                             struct ArgusFlow *tflow = (struct ArgusFlow *) tns->dsrs[ARGUS_FLOW_INDEX];
+                                             ArgusRemoveHashEntry(&tns->htblhdr);
+                                             ArgusReverseRecord (tns);
+                                             hstruct = ArgusGenerateHashStruct(agg, tns, (struct ArgusFlow *)&agg->fstruct);
+                                             tns->htblhdr = ArgusAddHashEntry (agg->htable, tns, hstruct);
+                                             tflow->hdr.subtype &= ~ARGUS_REVERSE;
+                                             tflow->hdr.argus_dsrvl8.qual &= ~ARGUS_DIRECTION;
+                                          } else
+                                             ArgusReverseRecord (ns);
                                           break;
+                                       }
                                     }
+                                    break;
                                  }
-                                 break;
 
                                  case ARGUS_TYPE_IPV6: {
                                     switch (flow->ipv6_flow.ip_p) {
@@ -889,15 +901,40 @@ RaProcessThisRecord (struct ArgusParserStruct *parser, struct ArgusRecordStruct 
                                           break;
                                        }
 
-                                       default:
-                                          ArgusReverseRecord (ns);
+                                       default: {
+                                          double  nstime = ArgusFetchStartTime(ns);
+                                          double tnstime = ArgusFetchStartTime(tns);
+                                          if (tnstime > nstime) {
+                                             struct ArgusFlow *tflow = (struct ArgusFlow *) tns->dsrs[ARGUS_FLOW_INDEX];
+                                             ArgusRemoveHashEntry(&tns->htblhdr);
+                                             ArgusReverseRecord (tns);
+                                             hstruct = ArgusGenerateHashStruct(agg, tns, (struct ArgusFlow *)&agg->fstruct);
+                                             tns->htblhdr = ArgusAddHashEntry (agg->htable, tns, hstruct);
+                                             tflow->hdr.subtype &= ~ARGUS_REVERSE;
+                                             tflow->hdr.argus_dsrvl8.qual &= ~ARGUS_DIRECTION;
+                                          } else
+                                             ArgusReverseRecord (ns);
                                           break;
+                                       }
                                     }
+                                    break;
                                  }
-                                 break;
 
-                                 default:
-                                    ArgusReverseRecord (ns);
+                                 default: {
+                                    double  nstime = ArgusFetchStartTime(ns);
+                                    double tnstime = ArgusFetchStartTime(tns);
+                                    if (tnstime > nstime) {
+                                       struct ArgusFlow *tflow = (struct ArgusFlow *) tns->dsrs[ARGUS_FLOW_INDEX];
+                                       ArgusRemoveHashEntry(&tns->htblhdr);
+                                       ArgusReverseRecord (tns);
+                                       hstruct = ArgusGenerateHashStruct(agg, tns, (struct ArgusFlow *)&agg->fstruct);
+                                       tns->htblhdr = ArgusAddHashEntry (agg->htable, tns, hstruct);
+                                       tflow->hdr.subtype &= ~ARGUS_REVERSE;
+                                       tflow->hdr.argus_dsrvl8.qual &= ~ARGUS_DIRECTION;
+                                    } else
+                                       ArgusReverseRecord (ns);
+                                    break;
+                                 }
                               }
                            }
                            }

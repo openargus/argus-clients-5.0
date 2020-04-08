@@ -1,6 +1,6 @@
- /*
+/*
  * Gargoyle Client Software. Tools to read, analyze and manage Argus data.
- * Copyright (c) 2000-2016 QoSient, LLC
+ * Copyright (c) 2000-2020 QoSient, LLC
  * All rights reserved.
  *
  * THE ACCOMPANYING PROGRAM IS PROPRIETARY SOFTWARE OF QoSIENT, LLC,
@@ -20,12 +20,6 @@
  * rasqltimeindex  - Read Argus data and build a time index suitable for
  *                   inserting into a database schema.
  *
- */
-
-/* 
- * $Id: //depot/gargoyle/clients/examples/ramysql/rasqltimeindex.c#11 $
- * $DateTime: 2016/11/30 12:35:01 $
- * $Change: 3247 $
  */
 
 #ifdef HAVE_CONFIG_H
@@ -1011,8 +1005,8 @@ ArgusClientInit (struct ArgusParserStruct *parser)
                   parser->ArgusInputFileListTail->qhdr.nxt = &file->qhdr;
                } else {
                   parser->ArgusInputFileList = file;
-                  parser->ArgusInputFileListTail = file;
                }
+               parser->ArgusInputFileListTail = file;
                parser->ArgusInputFileCount++;
 
             } else {

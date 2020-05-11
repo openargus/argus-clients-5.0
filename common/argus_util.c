@@ -3446,6 +3446,12 @@ ArgusHandleRecord (struct ArgusParserStruct *parser, struct ArgusInput *input, s
                               struct ArgusWfileStruct *wfile = NULL;
                               struct ArgusListObjectStruct *lobj = NULL;
                               int i, count = parser->ArgusWfileList->count;
+                              int version = ARGUS_VERSION;
+
+                              if (parser->ver3flag) {
+                                 version = ARGUS_VERSION_3;
+                                 argus->status |= ARGUS_RECORD_MODIFIED;
+                              }
 
                               if ((lobj = parser->ArgusWfileList->start) != NULL) {
                                  for (i = 0; i < count; i++) {
@@ -3461,7 +3467,6 @@ ArgusHandleRecord (struct ArgusParserStruct *parser, struct ArgusInput *input, s
 
                                                 if (argus->status & ARGUS_RECORD_MODIFIED) {
                                                    struct ArgusRecord *ns = NULL;
-                                                   int version = ARGUS_VERSION;
 
                                                    /* FIXME: version should be in ArgusWfileStruct */
                                                    /* if (parser->ArgusOutput != NULL)
@@ -25356,6 +25361,7 @@ ArgusHtoN (struct ArgusRecord *argus)
                case ARGUS_IDIS_UUID:
                   break;
          
+               default: 
                case ARGUS_IDIS_INT: {
                   argus->argus_mar.value = htonl(argus->argus_mar.value);
                   break;
@@ -29993,6 +29999,10 @@ ArgusWriteNewLogfile (struct ArgusParserStruct *parser, struct ArgusInput *input
       unsigned char initversion = parser->ArgusInitCon.hdr.type & ARGUS_VERSION_MASK;
       struct ArgusRecord *ns = &parser->ArgusInitCon;
       int len = ntohs(parser->ArgusInitCon.hdr.len) * 4;
+
+      if (parser->ver3flag) {
+         version = ARGUS_VERSION_3;
+      }
 
       if (len == 0 || (version != initversion)) {
          ns->hdr.type   = (ARGUS_MAR | version);

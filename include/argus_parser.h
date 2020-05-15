@@ -236,6 +236,7 @@ struct ArgusRecordStruct {
    struct ArgusAggregatorStruct *agg;
    unsigned int status, dsrindex, rank, autoid;
    unsigned short timeout, idle;
+   struct timeval lastSrcStartTime, lastDstStartTime;
    struct RaBinProcessStruct *bins;
    struct ArgusHashTableHdr *htblhdr;
    struct ArgusHashTableHdr *hinthdr;

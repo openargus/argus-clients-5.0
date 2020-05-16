@@ -2881,8 +2881,6 @@ ArgusDrawWindow(struct ArgusWindowStruct *ws)
 #ifdef ARGUSDEBUG
          ArgusDebug (3, "RaDrawWindow(%p) RaWindowModified %d RaWindowStatus %d\n", ws, RaWindowModified, RaWindowStatus);
 #endif
-         parser->RaLabel = NULL;
-
          if (RaWindowStatus) {
             if ((parser->status & ARGUS_FILE_LIST_PROCESSED) || (parser->ProcessRealTime > 0)) {
 #if defined(ARGUS_THREADS)
@@ -2922,6 +2920,11 @@ ArgusDrawWindow(struct ArgusWindowStruct *ws)
                   }
                }
 
+               if (ArgusParser->ns)
+                  parser->RaLabel = ArgusGenerateLabel(parser, parser->ns);
+               else
+                  parser->RaLabel = NULL;
+
                if (queue->array != NULL) {
                   int i, firstRow = 1;
 
@@ -2949,12 +2952,11 @@ ArgusDrawWindow(struct ArgusWindowStruct *ws)
                               wattron(win, attrs);
                            }
 #endif
-                           if (parser->RaLabel == NULL)
-                              parser->RaLabel = ArgusGenerateLabel(parser, parser->ns);
-
-                           mvwaddnstr (win, 0, 0, parser->RaLabel, RaScreenColumns);
-                           if (strlen(parser->RaLabel) < RaScreenColumns)
-                              wclrtoeol(win);
+                           if (parser->RaLabel != NULL) {
+                              mvwaddnstr (win, 0, 0, parser->RaLabel, RaScreenColumns);
+                              if (strlen(parser->RaLabel) < RaScreenColumns)
+                                 wclrtoeol(win);
+                           }
 #if defined(ARGUS_COLOR_SUPPORT)
                            if (ArgusTerminalColors) {
                               wattroff(win, attrs);

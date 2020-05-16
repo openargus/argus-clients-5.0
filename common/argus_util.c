@@ -15050,238 +15050,6 @@ ArgusPrintIntFlowDist (struct ArgusParserStruct *parser, char *buf, struct Argus
 #endif
 }
 
-
-void
-ArgusPrintActiveIntFlowDist (struct ArgusParserStruct *parser, char *buf, struct ArgusRecordStruct *argus, int len)
-{
-/*
-   struct ArgusAgrStruct *agr;
-   char value[128];
-
-   bzero(value, sizeof(value));
-
-   switch (argus->hdr.type & 0xF0) {
-      case ARGUS_MAR:
-         break;
-
-      case ARGUS_EVENT:
-      case ARGUS_NETFLOW:
-      case ARGUS_FAR: {
-         if ((agr = (struct ArgusAgrStruct *)argus->dsrs[ARGUS_AGR_INDEX]) != NULL) {
-            if (agr->hdr.subtype & ARGUS_HISTO_EXP) {
-               int i, tpkts[8], count = 0, max = 0, tlen, tmax;
-
-               for (i = 0; i < 8; i++) {
-                  tpkts[i] = agr->src.act.dist_union.fdist[i];
-                  count   += tpkts[i];
-                  max = (max < tpkts[i]) ? tpkts[i] : max;
-               }
-
-               tlen  = ((len == 8) || (len == 16)) ? len : ((len < 16) ? 8 : 16);
-               tmax  = ((tlen == 8)) ? 15 : 255;
-
-               if (max > tmax)
-                  for (i = 0; i < 8; i++) {
-                     if (tpkts[i]) {
-                        tpkts[i] = (tpkts[i] * tmax) / max;
-                        if (tpkts[i] == 0)
-                           tpkts[i] = 1;
-                     }
-                  }
-
-               switch (tlen) {
-                  case  8:
-                     for (i = 0; i < 8; i++)
-                        sprintf (&value[strlen(value)], "%1.1x", tpkts[i]);
-                     break;
-
-                  case 16:
-                     for (i = 0; i < 8; i++)
-                        sprintf (&value[strlen(value)], "%2.2x", tpkts[i]);
-                     break;
-               }
-            } else
-               sprintf (value, " ");
-         }
-         break;
-      }
-   }
-
-   if (parser->ArgusPrintXml) {
-      sprintf (buf, " SrcIntDist = \"%s\"", value);
-   } else {
-      if (parser->RaFieldWidth != RA_FIXED_WIDTH) {
-         len = strlen(value);
-      } else {
-         if (strlen(value) > len) {
-            value[len - 1] = '*';
-            value[len]     = '\0';
-         }
-      }
-      sprintf (buf, "%*.*s ", len, len, value);
-   } 
-
-#ifdef ARGUSDEBUG
-   ArgusDebug (10, "ArgusPrintActiveIntFlowDist (%p, %p)", buf, argus);
-#endif
-*/
-}
-
-
-void
-ArgusPrintIdleIntFlowDist (struct ArgusParserStruct *parser, char *buf, struct ArgusRecordStruct *argus, int len)
-{
-/*
-   struct ArgusAgrStruct *agr;
-   char value[128];
-
-   bzero(value, sizeof(value));
-
-   switch (argus->hdr.type & 0xF0) {
-      case ARGUS_MAR:
-         break;
-
-      case ARGUS_EVENT:
-      case ARGUS_NETFLOW:
-      case ARGUS_FAR: {
-         if ((agr = (struct ArgusAgrStruct *)argus->dsrs[ARGUS_AGR_INDEX]) != NULL) {
-            if (agr->hdr.subtype & ARGUS_HISTO_EXP) {
-               int i, tpkts[8], count = 0, max = 0, tlen, tmax;
-
-               for (i = 0; i < 8; i++) {
-                  tpkts[i] = agr->src.idle.dist_union.fdist[i];
-                  count   += tpkts[i];
-                  max = (max < tpkts[i]) ? tpkts[i] : max;
-               }
-
-               tlen  = ((len == 8) || (len == 16)) ? len : ((len < 16) ? 8 : 16);
-               tmax  = ((tlen == 8)) ? 15 : 255;
-
-               if (max > tmax)
-                  for (i = 0; i < 8; i++) {
-                     if (tpkts[i]) {
-                        tpkts[i] = (tpkts[i] * tmax) / max;
-                        if (tpkts[i] == 0)
-                           tpkts[i] = 1;
-                     }
-                  } 
-
-               switch (tlen) {
-                  case  8:
-                     for (i = 0; i < 8; i++)
-                        sprintf (&value[strlen(value)], "%1.1x", tpkts[i]);
-                     break;
-
-                  case 16:
-                     for (i = 0; i < 8; i++)
-                        sprintf (&value[strlen(value)], "%2.2x", tpkts[i]);
-                     break;
-               }
-            } else
-               sprintf (value, " ");
-         }
-         break;
-      }
-   }
-
-   if (parser->ArgusPrintXml) {
-      sprintf (buf, " SrcIntDist = \"%s\"", value);
-   } else {
-      if (parser->RaFieldWidth != RA_FIXED_WIDTH) {
-         len = strlen(value);
-      } else {
-         if (strlen(value) > len) {
-            value[len - 1] = '*';
-            value[len]     = '\0';
-         }
-      }
-      sprintf (buf, "%*.*s ", len, len, value);
-   } 
-
-#ifdef ARGUSDEBUG
-   ArgusDebug (10, "ArgusPrintIdleIntFlowDist (%p, %p)", buf, argus);
-#endif
-*/
-}
-
-
-void
-ArgusPrintActiveIntFlow (struct ArgusParserStruct *parser, char *buf, struct ArgusRecordStruct *argus, int len)
-{
-   struct ArgusAgrStruct *agr; 
-   char value[128];
-   bzero(value, sizeof(value));
- 
-   switch (argus->hdr.type & 0xF0) {
-      case ARGUS_MAR:
-         break;
-
-      case ARGUS_EVENT:
-      case ARGUS_NETFLOW:
-      case ARGUS_FAR: 
-         if ((agr = (struct ArgusAgrStruct *)argus->dsrs[ARGUS_AGR_INDEX]) != NULL)
-            sprintf (value, "%.*f", parser->pflag, agr->act.meanval/1000.0);   
-         break;
-   }
-
-   if (parser->ArgusPrintXml) {
-      sprintf (buf, " SrcActiveIntFlow = \"%s\"", value);
-   } else {
-      if (parser->RaFieldWidth != RA_FIXED_WIDTH) {
-         len = strlen(value);
-      } else {
-         if (strlen(value) > len) {
-            value[len - 1] = '*';
-            value[len]     = '\0';
-         }
-      }
-      sprintf (buf, "%*.*s ", len, len, value);
-   } 
-
-#ifdef ARGUSDEBUG
-   ArgusDebug (10, "ArgusPrintActiveIntFlow (%p, %p)", buf, argus);
-#endif
-}
-
-void
-ArgusPrintIdleIntFlow (struct ArgusParserStruct *parser, char *buf, struct ArgusRecordStruct *argus, int len)
-{
-   struct ArgusAgrStruct *agr; 
-   char value[128];
-
-   bzero(value, sizeof(value));
- 
-   switch (argus->hdr.type & 0xF0) {
-      case ARGUS_MAR:
-         break;
-
-      case ARGUS_EVENT:
-      case ARGUS_NETFLOW:
-      case ARGUS_FAR:
-         if ((agr = (struct ArgusAgrStruct *)argus->dsrs[ARGUS_AGR_INDEX]) != NULL)
-            sprintf (value, "%.*f", parser->pflag, agr->idle.meanval/1000.0);
-         break;
-   }
-
-   if (parser->ArgusPrintXml) {
-      sprintf (buf, " SrcIdleIntFlow = \"%s\"", value);
-   } else {
-      if (parser->RaFieldWidth != RA_FIXED_WIDTH) {
-         len = strlen(value);
-      } else {
-         if (strlen(value) > len) {
-            value[len - 1] = '*';
-            value[len]     = '\0';
-         }
-      }
-      sprintf (buf, "%*.*s ", len, len, value);
-   } 
-
-#ifdef ARGUSDEBUG
-   ArgusDebug (10, "ArgusPrintIdleIntFlow (%p, %p)", buf, argus);
-#endif
-}
-
 void
 ArgusPrintIntFlowMax (struct ArgusParserStruct *parser, char *buf, struct ArgusRecordStruct *argus, int len)
 {
@@ -15304,7 +15072,7 @@ ArgusPrintIntFlowMax (struct ArgusParserStruct *parser, char *buf, struct ArgusR
       case ARGUS_FAR: {
          if ((agr = (struct ArgusAgrStruct *)argus->dsrs[ARGUS_AGR_INDEX]) != NULL) {
             float maxval = agr->idle.maxval;
-            sprintf (value, "%.*f", parser->pflag, maxval/1000.0);
+            sprintf (value, "%.*f", parser->pflag, maxval);
          }
 
          if (parser->ArgusPrintXml) {
@@ -15421,232 +15189,6 @@ ArgusPrintIntFlowMin (struct ArgusParserStruct *parser, char *buf, struct ArgusR
 #endif
 }
 
-
-void
-ArgusPrintActiveIntFlowStdDev (struct ArgusParserStruct *parser, char *buf, struct ArgusRecordStruct *argus, int len)
-{
-   struct ArgusAgrStruct *agr;
-   char value[128];
-   bzero(value, sizeof(value));
-
-   switch (argus->hdr.type & 0xF0) {
-      case ARGUS_MAR:
-         break;
-
-      case ARGUS_EVENT:
-      case ARGUS_NETFLOW:
-      case ARGUS_FAR: 
-         if ((agr = (struct ArgusAgrStruct *)argus->dsrs[ARGUS_AGR_INDEX]) != NULL)
-            sprintf (value, "%.*f", parser->pflag, agr->act.stdev/1000.0);
-         break;
-   }
-
-   if (parser->ArgusPrintXml) {
-      sprintf (buf, " SrcActIntFlowStdDev = \"%s\"", value);
-   } else {
-      if (parser->RaFieldWidth != RA_FIXED_WIDTH) {
-         len = strlen(value);
-      } else {
-         if (strlen(value) > len) {
-            value[len - 1] = '*';
-            value[len]     = '\0';
-         }  
-      } 
-      sprintf (buf, "%*.*s ", len, len, value);
-   } 
-
-#ifdef ARGUSDEBUG
-   ArgusDebug (10, "ArgusPrintActiveIntFlowStdDev (%p, %p)", buf, argus);
-#endif
-}
-
-void
-ArgusPrintActiveIntFlowMax (struct ArgusParserStruct *parser, char *buf, struct ArgusRecordStruct *argus, int len)
-{
-   struct ArgusAgrStruct *agr;
-   char value[128];
-   bzero(value, sizeof(value));
-
-   switch (argus->hdr.type & 0xF0) {
-      case ARGUS_MAR:
-         break;
-
-      case ARGUS_EVENT:
-      case ARGUS_NETFLOW:
-      case ARGUS_FAR:
-         if ((agr = (struct ArgusAgrStruct *)argus->dsrs[ARGUS_AGR_INDEX]) != NULL)
-            sprintf (value, "%.*f", parser->pflag, agr->act.maxval/1000.0);
-         break;
-   }
-
-   if (parser->ArgusPrintXml) {
-      sprintf (buf, " SrcActIntFlowMax = \"%s\"", value);
-   } else {
-      if (parser->RaFieldWidth != RA_FIXED_WIDTH) {
-         len = strlen(value);
-      } else {
-         if (strlen(value) > len) {
-            value[len - 1] = '*';
-            value[len]     = '\0';
-         }
-      }
-      sprintf (buf, "%*.*s ", len, len, value);
-   }
-
-#ifdef ARGUSDEBUG
-   ArgusDebug (10, "ArgusPrintActiveIntFlowMax (%p, %p)", buf, argus);
-#endif
-}
-
-void
-ArgusPrintActiveIntFlowMin (struct ArgusParserStruct *parser, char *buf, struct ArgusRecordStruct *argus, int len)
-{
-   struct ArgusAgrStruct *agr;
-   char value[128];
-   bzero(value, sizeof(value));
-
-   switch (argus->hdr.type & 0xF0) {
-      case ARGUS_MAR:
-         break;
-
-      case ARGUS_EVENT:
-      case ARGUS_NETFLOW:
-      case ARGUS_FAR: 
-         if ((agr = (struct ArgusAgrStruct *)argus->dsrs[ARGUS_AGR_INDEX]) != NULL)
-            sprintf (value, "%.*f", parser->pflag, agr->act.minval/1000.0);
-         break;
-   }
-
-   if (parser->ArgusPrintXml) {
-      sprintf (buf, " SrcActIntFlowMin = \"%s\"", value);
-   } else {
-      if (parser->RaFieldWidth != RA_FIXED_WIDTH) {
-         len = strlen(value);
-      } else {
-         if (strlen(value) > len) {
-            value[len - 1] = '*';
-            value[len]     = '\0';
-         }  
-      } 
-      sprintf (buf, "%*.*s ", len, len, value);
-   } 
-
-#ifdef ARGUSDEBUG
-   ArgusDebug (10, "ArgusPrintActiveIntFlowMin (%p, %p)", buf, argus);
-#endif
-}
-
-
-void
-ArgusPrintIdleIntFlowStdDev (struct ArgusParserStruct *parser, char *buf, struct ArgusRecordStruct *argus, int len)
-{
-   struct ArgusAgrStruct *agr;
-   char value[128];
-   bzero(value, sizeof(value));
-
-   switch (argus->hdr.type & 0xF0) {
-      case ARGUS_MAR:
-         break;
-
-      case ARGUS_EVENT:
-      case ARGUS_NETFLOW:
-      case ARGUS_FAR:
-         if ((agr = (struct ArgusAgrStruct *)argus->dsrs[ARGUS_AGR_INDEX]) != NULL)
-            sprintf (value, "%.*f", parser->pflag, agr->idle.stdev/1000.0);
-         break;
-   }
-
-   if (parser->ArgusPrintXml) {
-   } else {
-      if (parser->RaFieldWidth != RA_FIXED_WIDTH) {
-         len = strlen(value);
-      } else {
-         if (strlen(value) > len) {
-            value[len - 1] = '*';
-            value[len]     = '\0';
-         }
-      }
-      sprintf (buf, "%*.*s ", len, len, value);
-   }
-
-#ifdef ARGUSDEBUG
-   ArgusDebug (10, "ArgusPrintIdleIntFlowStdDev (%p, %p)", buf, argus);
-#endif
-}
-
-void
-ArgusPrintIdleIntFlowMax (struct ArgusParserStruct *parser, char *buf, struct ArgusRecordStruct *argus, int len)
-{
-   struct ArgusAgrStruct *agr;
-   char value[128];
-   bzero(value, sizeof(value));
-
-   switch (argus->hdr.type & 0xF0) {
-      case ARGUS_MAR:
-         break;
-
-      case ARGUS_EVENT:
-      case ARGUS_NETFLOW:
-      case ARGUS_FAR:
-         if ((agr = (struct ArgusAgrStruct *)argus->dsrs[ARGUS_AGR_INDEX]) != NULL)
-            sprintf (value, "%.*f", parser->pflag, agr->idle.maxval/1000.0);
-         break;
-   }
-
-   if (parser->ArgusPrintXml) {
-   } else {
-      if (parser->RaFieldWidth != RA_FIXED_WIDTH) {
-         len = strlen(value);
-      } else {
-         if (strlen(value) > len) {
-            value[len - 1] = '*';
-            value[len]     = '\0';
-         }  
-      } 
-      sprintf (buf, "%*.*s ", len, len, value);
-   } 
-
-#ifdef ARGUSDEBUG
-   ArgusDebug (10, "ArgusPrintIdleIntFlowMax (%p, %p)", buf, argus);
-#endif
-}
-
-void
-ArgusPrintIdleIntFlowMin (struct ArgusParserStruct *parser, char *buf, struct ArgusRecordStruct *argus, int len)
-{
-   struct ArgusAgrStruct *agr;
-   char value[128];
-   bzero(value, sizeof(value));
-
-   switch (argus->hdr.type & 0xF0) {
-      case ARGUS_MAR:
-         break;
-
-      case ARGUS_EVENT:
-      case ARGUS_NETFLOW:
-      case ARGUS_FAR:
-         if ((agr = (struct ArgusAgrStruct *)argus->dsrs[ARGUS_AGR_INDEX]) != NULL)
-            sprintf (value, "%.*f", parser->pflag, agr->idle.minval/1000.0);
-         break;
-   }
-
-   if (parser->ArgusPrintXml) {
-   } else {
-      if (parser->RaFieldWidth != RA_FIXED_WIDTH) {
-         len = strlen(value);
-      } else {
-         if (strlen(value) > len) {
-            value[len - 1] = '*';
-            value[len]     = '\0';
-         }  
-      } 
-      sprintf (buf, "%*.*s ", len, len, value);
-   } 
-
-#ifdef ARGUSDEBUG
-   ArgusDebug (10, "ArgusPrintIdleIntFlowMin (%p, %p)", buf, argus);
-#endif
-}
 
 
 void
@@ -18936,14 +18478,23 @@ ArgusGenerateLabel(struct ArgusParserStruct *parser, struct ArgusRecordStruct *a
          for (x = 0; x < MAX_PRINT_ALG_TYPES; x++) {
             if (((void *) parser->RaPrintAlgorithmList[i]->print != NULL) &&
                 ((void *) parser->RaPrintAlgorithmList[i]->print == (void *) RaPrintAlgorithmTable[x].print)) {
-               char labelbuf[MAXSTRLEN], *lptr = labelbuf;
-               bzero(labelbuf, sizeof(labelbuf));
-               RaPrintAlgorithmTable[x].label(parser, labelbuf, parser->RaPrintAlgorithmList[i]->length);
+               char *labelbuf, *lptr;
+               int labelen = (parser->RaPrintAlgorithmList[i]->length > MAXSTRLEN) ? MAXSTRLEN : parser->RaPrintAlgorithmList[i]->length;
+               int slen = sizeof(parser->RaLabelStr) - strlen(parser->RaLabel);
+
+               if ((labelbuf = ArgusCalloc (1, MAXSTRLEN)) == NULL) 
+                  ArgusLog(LOG_ERR, "ArgusGenerateLabel: ArgusCalloc: error %s", strerror(errno));
+
+               lptr = labelbuf;
+               RaPrintAlgorithmTable[x].label(parser, labelbuf, labelen);
+
                if (parser->RaFieldWidth != RA_FIXED_WIDTH) {
                   lptr = ArgusTrimString(labelbuf);
-                  sprintf(&parser->RaLabel[strlen(parser->RaLabel)], "%s ", lptr);
-               } else
-                  sprintf(&parser->RaLabel[strlen(parser->RaLabel)], "%s", lptr);
+                  snprintf(&parser->RaLabel[strlen(parser->RaLabel)], slen, "%s ", lptr);
+               } else {
+                  snprintf(&parser->RaLabel[strlen(parser->RaLabel)], slen, "%s", lptr);
+               }
+               ArgusFree(labelbuf);
                break;
             }
          }
@@ -19794,30 +19345,6 @@ ArgusPrintIntFlowDistLabel (struct ArgusParserStruct *parser, char *buf, int len
 }
  
 void
-ArgusPrintActiveIntFlowLabel (struct ArgusParserStruct *parser, char *buf, int len)
-{
-   sprintf (buf, "%*.*s ", len, len, "IntFlowAct");
-}
- 
-void
-ArgusPrintActiveIntFlowDistLabel (struct ArgusParserStruct *parser, char *buf, int len)
-{
-   sprintf (buf, "%*.*s ", len, len, "IntActFlowDist");
-}
- 
-void
-ArgusPrintIdleIntFlowLabel (struct ArgusParserStruct *parser, char *buf, int len)
-{
-   sprintf (buf, "%*.*s ", len, len, "IntFlowIdl");
-}
- 
-void
-ArgusPrintIdleIntFlowDistLabel (struct ArgusParserStruct *parser, char *buf, int len)
-{
-   sprintf (buf, "%*.*s ", len, len, "IntIdlFlowDist");
-}
- 
-void
 ArgusPrintIntFlowStdDevLabel (struct ArgusParserStruct *parser, char *buf, int len)
 {
    sprintf (buf, "%*.*s ", len, len, "IntFlowStd");
@@ -19834,43 +19361,6 @@ ArgusPrintIntFlowMinLabel (struct ArgusParserStruct *parser, char *buf, int len)
 {
    sprintf (buf, "%*.*s ", len, len, "IntFlowMin");
 }
-
-void
-ArgusPrintActiveIntFlowStdDevLabel (struct ArgusParserStruct *parser, char *buf, int len)
-{
-   sprintf (buf, "%*.*s ", len, len, "ActIntFlowStd");
-}
-
-void
-ArgusPrintActiveIntFlowMaxLabel (struct ArgusParserStruct *parser, char *buf, int len)
-{
-   sprintf (buf, "%*.*s ", len, len, "ActIntFlowMax");
-}
-
-void
-ArgusPrintActiveIntFlowMinLabel (struct ArgusParserStruct *parser, char *buf, int len)
-{
-   sprintf (buf, "%*.*s ", len, len, "ActIntFlowMin");
-}
-
-void
-ArgusPrintIdleIntFlowStdDevLabel (struct ArgusParserStruct *parser, char *buf, int len)
-{
-   sprintf (buf, "%*.*s ", len, len, "IdlIntFlowStd");
-}
-
-void
-ArgusPrintIdleIntFlowMaxLabel (struct ArgusParserStruct *parser, char *buf, int len)
-{
-   sprintf (buf, "%*.*s ", len, len, "IdlIntFlowMax");
-}
-
-void
-ArgusPrintIdleIntFlowMinLabel (struct ArgusParserStruct *parser, char *buf, int len)
-{
-   sprintf (buf, "%*.*s ", len, len, "IdlIntFlowMin");
-}
-
 
 void
 ArgusPrintSrcJitterLabel (struct ArgusParserStruct *parser, char *buf, int len)

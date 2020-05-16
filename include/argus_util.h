@@ -48,8 +48,8 @@ extern "C" {
 #include <argus/cons_out.h>
 #include <argus/cflowd.h>
 
-#define ARGUS_MAX_PRINT_ALG     	240
-#define MAX_PRINT_ALG_TYPES     	240
+#define ARGUS_MAX_PRINT_ALG     	232
+#define MAX_PRINT_ALG_TYPES     	232
 
 
 #include <argus/CflowdFlowPdu.h>
@@ -547,19 +547,9 @@ void ArgusPrintIdleDstIntPktMin (struct ArgusParserStruct *, char *, struct Argu
 
 void ArgusPrintIntFlow (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
 void ArgusPrintIntFlowDist (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
-void ArgusPrintActiveIntFlow (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
-void ArgusPrintActiveIntFlowDist (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
-void ArgusPrintIdleIntFlow (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
-void ArgusPrintIdleIntFlowDist (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
 void ArgusPrintIntFlowStdDev (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
 void ArgusPrintIntFlowMax (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
 void ArgusPrintIntFlowMin (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
-void ArgusPrintActiveIntFlowStdDev (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
-void ArgusPrintActiveIntFlowMax (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
-void ArgusPrintActiveIntFlowMin (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
-void ArgusPrintIdleIntFlowStdDev (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
-void ArgusPrintIdleIntFlowMax (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
-void ArgusPrintIdleIntFlowMin (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
 
 void ArgusPrintSrcJitter (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
 void ArgusPrintDstJitter (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
@@ -819,19 +809,9 @@ void ArgusPrintIdleDstIntPktMinLabel (struct ArgusParserStruct *, char *, int);
 
 void ArgusPrintIntFlowLabel (struct ArgusParserStruct *, char *, int);
 void ArgusPrintIntFlowDistLabel (struct ArgusParserStruct *, char *, int);
-void ArgusPrintActiveIntFlowLabel (struct ArgusParserStruct *, char *, int);
-void ArgusPrintActiveIntFlowDistLabel (struct ArgusParserStruct *, char *, int);
-void ArgusPrintIdleIntFlowLabel (struct ArgusParserStruct *, char *, int);
-void ArgusPrintIdleIntFlowDistLabel (struct ArgusParserStruct *, char *, int);
 void ArgusPrintIntFlowStdDevLabel (struct ArgusParserStruct *, char *, int);
 void ArgusPrintIntFlowMaxLabel (struct ArgusParserStruct *, char *, int);
 void ArgusPrintIntFlowMinLabel (struct ArgusParserStruct *, char *, int);
-void ArgusPrintActiveIntFlowStdDevLabel (struct ArgusParserStruct *, char *, int);
-void ArgusPrintActiveIntFlowMaxLabel (struct ArgusParserStruct *, char *, int);
-void ArgusPrintActiveIntFlowMinLabel (struct ArgusParserStruct *, char *, int);
-void ArgusPrintIdleIntFlowStdDevLabel (struct ArgusParserStruct *, char *, int);
-void ArgusPrintIdleIntFlowMaxLabel (struct ArgusParserStruct *, char *, int);
-void ArgusPrintIdleIntFlowMinLabel (struct ArgusParserStruct *, char *, int);
 
 void ArgusPrintSrcJitterLabel (struct ArgusParserStruct *, char *, int);
 void ArgusPrintDstJitterLabel (struct ArgusParserStruct *, char *, int);
@@ -1453,33 +1433,14 @@ RaPrintAlgorithmTable[MAX_PRINT_ALG_TYPES] = {
    { "smss", "%d", 6 , 1, 0, ARGUSPRINTSRCMAXSEG, ArgusPrintSrcMaxSeg, ArgusPrintSrcMaxSegLabel, "tinyint unsigned", 0},
 #define ARGUSPRINTDSTMAXSEG  		227
    { "dmss", "%d", 6 , 1, 0, ARGUSPRINTDSTMAXSEG, ArgusPrintDstMaxSeg, ArgusPrintDstMaxSegLabel, "tinyint unsigned", 0},
-
-
 #define ARGUSPRINTINTFLOW		228
    { "intflow", "", 12 , 1, 0, ARGUSPRINTINTFLOW, ArgusPrintIntFlow, ArgusPrintIntFlowLabel, "double", 0},
-#define ARGUSPRINTACTINTFLOW		229
-   { "intflowact", "", 12 , 1, 0, ARGUSPRINTACTINTFLOW, ArgusPrintActiveIntFlow, ArgusPrintActiveIntFlowLabel, "double", 0},
-#define ARGUSPRINTIDLEINTFLOW		230
-   { "intflowidl", "", 12 , 1, 0, ARGUSPRINTIDLEINTFLOW, ArgusPrintIdleIntFlow, ArgusPrintIdleIntFlowLabel, "double", 0},
-#define ARGUSPRINTINTFLOWMAX		231
+#define ARGUSPRINTINTFLOWMAX		229
    { "intflowmax", "", 12 , 1, 0, ARGUSPRINTINTFLOWMAX, ArgusPrintIntFlowMax, ArgusPrintIntFlowMaxLabel, "double", 0},
-#define ARGUSPRINTINTFLOWMIN		232
+#define ARGUSPRINTINTFLOWMIN		230
    { "intflowmin", "", 12 , 1, 0, ARGUSPRINTINTFLOWMIN, ArgusPrintIntFlowMin, ArgusPrintIntFlowMinLabel, "double", 0},
-#define ARGUSPRINTINTFLOWSDEV		233
+#define ARGUSPRINTINTFLOWSDEV		231
    { "intflowsdev", "", 12 , 1, 0, ARGUSPRINTINTFLOWSDEV, ArgusPrintIntFlowStdDev, ArgusPrintIntFlowStdDevLabel, "double", 0},
-#define ARGUSPRINTACTINTFLOWMAX		234
-   { "intflowactmax", "", 12 , 1, 0, ARGUSPRINTACTINTFLOWMAX, ArgusPrintActiveIntFlowMax, ArgusPrintActiveIntFlowMaxLabel, "double", 0},
-#define ARGUSPRINTACTINTFLOWMIN		235
-   { "intflowactmin", "", 12 , 1, 0, ARGUSPRINTACTINTFLOWMIN, ArgusPrintActiveIntFlowMin, ArgusPrintActiveIntFlowMinLabel, "double", 0},
-#define ARGUSPRINTACTINTFLOWSDEV	236
-   { "intflowsactdev", "", 12 , 1, 0, ARGUSPRINTACTINTFLOWSDEV, ArgusPrintActiveIntFlowStdDev, ArgusPrintActiveIntFlowStdDevLabel, "double", 0},
-#define ARGUSPRINTIDLEINTFLOWMAX	237
-   { "intflowidlmax", "", 12 , 1, 0, ARGUSPRINTIDLEINTFLOWMAX, ArgusPrintIdleIntFlowMax, ArgusPrintIdleIntFlowMaxLabel, "double", 0},
-#define ARGUSPRINTIDLEINTFLOWMIN	238
-   { "intflowidlmin", "", 12 , 1, 0, ARGUSPRINTIDLEINTFLOWMIN, ArgusPrintIdleIntFlowMin, ArgusPrintIdleIntFlowMinLabel, "double", 0},
-#define ARGUSPRINTIDLEINTFLOWSDEV	239
-   { "intflowsactdev", "", 12 , 1, 0, ARGUSPRINTIDLEINTFLOWSDEV, ArgusPrintIdleIntFlowStdDev, ArgusPrintIdleIntFlowStdDevLabel, "double", 0},
-
 };
 
 

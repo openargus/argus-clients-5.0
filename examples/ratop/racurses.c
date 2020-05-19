@@ -33,6 +33,9 @@
 #include "argus_config.h"
 #endif
 
+#include <sys/time.h>
+void RaResizeAlarmHandler(int);
+
 #if defined(CYGWIN)
 #define USE_IPV6
 #endif
@@ -79,6 +82,7 @@ main(int argc, char **argv)
       sigdelset(&blocked_signals, SIGTERM);
       sigdelset(&blocked_signals, SIGINT);
       sigdelset(&blocked_signals, SIGWINCH);
+      sigdelset(&blocked_signals, SIGALRM);
 
       pthread_sigmask(SIG_BLOCK, &blocked_signals, NULL);
 
@@ -3129,6 +3133,7 @@ ArgusCursesProcessInit()
 */
 
    (void) signal (SIGWINCH,(void (*)(int)) RaResizeHandler);
+   (void) signal (SIGALRM,(void (*)(int)) RaResizeAlarmHandler);
 #endif
 
    if (ArgusCursesEnabled)
@@ -5655,6 +5660,11 @@ ArgusResetSearch (void)
    RaWindowStartLine = 0;
 }
 
+void
+RaResizeAlarmHandler(int sig)
+{
+   ArgusProcessNewPage(RaCurrentWindow->window, 0, 0);
+}
 
 void
 RaResizeScreen(void)
@@ -5701,12 +5711,6 @@ RaResizeScreen(void)
       }
    }
 
-   queue->status |= RA_MODIFIED;
-
-#ifdef ARGUSDEBUG
-   ArgusDebug (3, "RaResizeScreen() y %d x %d\n", RaScreenLines, RaScreenColumns);
-#endif
-
 #else
    delwin(RaHeaderWindow);
    RaHeaderWindow = newwin (RaHeaderWinSize, RaScreenColumns, 0, 0);
@@ -5723,12 +5727,28 @@ RaResizeScreen(void)
          notimeout(dom->ws->window, TRUE);
       }
    }
-
 #endif    // ARGUS_SOLARIS 
 
-   ArgusTouchScreen();
-   RaRefreshDisplay();
+   {
+      struct itimerval it_val;
+
+      if (signal(SIGALRM, (void (*)(int)) RaResizeAlarmHandler) == SIG_ERR) {
+         ArgusLog (LOG_ERR, "RaResizeScreen() signal error %s\n", strerror(errno));
+      }
+      it_val.it_interval.tv_sec  = 0;
+      it_val.it_interval.tv_usec  = 0;
+      it_val.it_value.tv_sec  = 0;
+      it_val.it_value.tv_usec = 100000;
+
+      if (setitimer(ITIMER_REAL, &it_val, NULL) == -1) {
+         ArgusLog (LOG_ERR, "RaResizeScreen() setitimer error %s\n", strerror(errno));
+      }
+   }
    RaScreenResize = FALSE;
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (3, "RaResizeScreen() y %d x %d\n", RaScreenLines, RaScreenColumns);
+#endif
 }
 
 

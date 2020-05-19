@@ -129,7 +129,7 @@ struct cnamemem {
 struct nnamemem {
    struct nnamemem *n_nxt;
    unsigned int status, hashval, ref, index;
-   struct timeval stime, ltime;
+   struct timeval stime, rtime, ltime;
 
    char *n_name, *d_name, *tld_name;
    struct ArgusListStruct *refers;

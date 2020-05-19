@@ -15118,7 +15118,7 @@ ArgusPrintIntFlowStdDev (struct ArgusParserStruct *parser, char *buf, struct Arg
       case ARGUS_FAR: {
          if ((agr = (struct ArgusAgrStruct *)argus->dsrs[ARGUS_AGR_INDEX]) != NULL) {
             float stddev = agr->idle.stdev;
-            sprintf (value, "%.*f", parser->pflag, stddev/1000.0);
+            sprintf (value, "%.*f", parser->pflag, stddev);
          }
 
          if (parser->ArgusPrintXml) {

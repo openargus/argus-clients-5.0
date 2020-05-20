@@ -4605,6 +4605,37 @@ RaLocalityLabel (struct ArgusParserStruct *parser, struct ArgusRecordStruct *arg
                         break;
                      }
                      case ARGUS_TYPE_IPV6: {
+                        struct ArgusNetspatialStruct *nss = NULL;
+                        if ((nss = (struct ArgusNetspatialStruct *)argus->dsrs[ARGUS_LOCAL_INDEX]) == NULL) {
+                           nss = (struct ArgusNetspatialStruct *) ArgusCalloc(1, sizeof(*nss));
+                           nss->hdr.type = ARGUS_LOCAL_DSR;
+                           nss->hdr.argus_dsrvl8.len = (sizeof(*nss) + 3) / 4;
+
+                           argus->dsrs[ARGUS_LOCAL_INDEX] = &nss->hdr;
+                           argus->dsrindex |= (0x1 << ARGUS_LOCAL_INDEX);
+
+                           nss->hdr.argus_dsrvl8.qual |= ARGUS_SRC_LOCAL;
+                           nss->sloc = 4;
+                           nss->hdr.argus_dsrvl8.qual |= ARGUS_DST_LOCAL;
+                           nss->dloc = 4;
+
+                        } else {
+                           if (labeler->RaLabelLocalityOverwrite) {
+                              nss->hdr.argus_dsrvl8.qual |= ARGUS_SRC_LOCAL;
+                              nss->sloc = 4;
+                              nss->hdr.argus_dsrvl8.qual |= ARGUS_DST_LOCAL;
+                              nss->dloc = 4;
+                           } else {
+                              if (!(nss->hdr.argus_dsrvl8.qual & ARGUS_SRC_LOCAL)) {
+                                 nss->hdr.argus_dsrvl8.qual |= ARGUS_SRC_LOCAL;
+                                 nss->sloc = 4;
+                              }
+                              if (!(nss->hdr.argus_dsrvl8.qual & ARGUS_DST_LOCAL)) {
+                                 nss->hdr.argus_dsrvl8.qual |= ARGUS_DST_LOCAL;
+                                 nss->dloc = 4;
+                              }
+                           }
+                        }
                         break;
                      }
                      case ARGUS_TYPE_RARP: {

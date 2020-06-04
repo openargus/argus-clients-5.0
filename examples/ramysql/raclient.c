@@ -1499,8 +1499,7 @@ RaProcessThisRecord (struct ArgusParserStruct *parser, struct ArgusRecordStruct 
 
             offset = (ArgusParser->Bflag * 1000000)/RaBinProcess->nadp.size;
 
-            if (!(ns->status & ARGUS_RECORD_PROCESSED)) {
-               while ((tns = ArgusAlignRecord(parser, ns, &RaBinProcess->nadp)) != NULL) {
+            while ((!(ns->status & ARGUS_RECORD_PROCESSED)) && ((tns = ArgusAlignRecord(parser, ns, &RaBinProcess->nadp)) != NULL)) {
                   if ((tretn = ArgusCheckTime (parser, tns, ArgusTimeRangeStrategy)) != 0) {
                      struct ArgusRecordStruct *rec = NULL;
 
@@ -1556,7 +1555,6 @@ RaProcessThisRecord (struct ArgusParserStruct *parser, struct ArgusRecordStruct 
                   }
                   if (tns)
                      ArgusDeleteRecordStruct(parser, tns);
-               }
             }
             ArgusDeleteRecordStruct(parser, ns);
             found++;

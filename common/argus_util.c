@@ -1711,8 +1711,7 @@ ArgusParseArgs(struct ArgusParserStruct *parser, int argc, char **argv)
                    parser->writeDbstr = strdup(optarg);
 
                } else
-               if ((*tmparg != '-') || ((*tmparg == '-') &&
-                                       (!(strcmp (tmparg, "-"))))) {
+               if ((*tmparg != '-') || ((*tmparg == '-') && (!(strcmp (tmparg, "-"))))) {
                   if (argc == optind)
                      filter = NULL;
                   else {
@@ -20981,6 +20980,8 @@ ArgusDeleteList (struct ArgusListStruct *list, int type)
 
              case ARGUS_WFILE_LIST: {
                 struct ArgusWfileStruct *wfile = (struct ArgusWfileStruct *) retn;
+                if (wfile->agg != NULL)
+                   ArgusDeleteAggregator (ArgusParser, wfile->agg);
                 if (wfile->filename != NULL)
                    free(wfile->filename);
                 if (wfile->filterstr != NULL)
@@ -30638,6 +30639,9 @@ setArgusWfile(struct ArgusParserStruct *parser, char *file, char *filter)
 
       if ((wfile = (struct ArgusWfileStruct *) ArgusCalloc (1, sizeof (*wfile))) != NULL) {
          ArgusPushFrontList(parser->ArgusWfileList, (struct ArgusListRecord *)wfile, ARGUS_LOCK);
+
+         if ((wfile->agg = ArgusNewAggregator(parser, NULL, ARGUS_RECORD_AGGREGATOR)) == NULL)
+            ArgusLog (LOG_ERR, "ArgusClientInit: ArgusNewAggregator error");
 
          wfile->filename  = ptr;
 

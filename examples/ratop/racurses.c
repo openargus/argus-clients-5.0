@@ -4662,6 +4662,7 @@ argus_command_string(void)
                ArgusParser->timearg = strdup(RaCommandInputStr);
 
             ArgusCheckTimeFormat (&ArgusParser->RaTmStruct, ArgusParser->timearg);
+
             ArgusDeleteFileList(ArgusParser);
             ArgusReadSQLTables (ArgusParser);
 

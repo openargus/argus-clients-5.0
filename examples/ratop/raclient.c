@@ -458,7 +458,6 @@ ArgusProcessData (void *arg)
                RaArgusInputComplete(input);
                ArgusParser->ArgusCurrentInput = NULL;
                ArgusCloseInput(ArgusParser, input);
-               input = NULL;
 
                file = (struct ArgusFileInput *)file->qhdr.nxt;
             }
@@ -467,6 +466,7 @@ ArgusProcessData (void *arg)
          }
 
          ArgusFree(input);
+         input = NULL;
 
 // Then process the realtime stream input, if any
 

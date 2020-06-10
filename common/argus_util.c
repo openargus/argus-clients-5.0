@@ -769,35 +769,6 @@ ArgusShutDown (int sig)
 
       ArgusParser->ArgusCurrentInput = NULL;
 
-      if (ArgusParser->ArgusRemoteHosts != NULL) {
-         struct ArgusQueueStruct *queue =  ArgusParser->ArgusRemoteHosts;
-         struct ArgusInput *input = NULL;
- 
-         while (queue->count > 0) {
-            if ((input = (struct ArgusInput *) ArgusPopQueue(queue, ARGUS_LOCK)) != NULL) {
-               ArgusCloseInput(ArgusParser, input);
-               if (input->hostname != NULL)
-                  free (input->hostname);
-               if (input->filename != NULL)
-                  free (input->filename);
-               if (input->user != NULL)
-                  free (input->user);
-               if (input->pass != NULL)
-                  free (input->pass);
-#if HAVE_GETADDRINFO
-               if (input->host != NULL)
-                  freeaddrinfo (input->host);
-#endif
-#if defined(ARGUS_THREADS)
-               pthread_mutex_destroy(&input->lock);
-#endif
-               ArgusFree(input);
-            }
-         }
-         ArgusDeleteQueue(queue);
-         ArgusParser->ArgusRemoteHosts = NULL;
-      }
-
       if (ArgusParser->ArgusActiveHosts != NULL) {
          struct ArgusQueueStruct *queue =  ArgusParser->ArgusActiveHosts;
          struct ArgusInput *input = NULL;
@@ -826,11 +797,43 @@ ArgusShutDown (int sig)
                pthread_join(input->tid, &retn);
 #endif
 
-            ArgusFree(input);
+            ArgusDeleteQueue(input->queue);
+            input->queue = NULL;
          }
 
          ArgusDeleteQueue(queue);
          ArgusParser->ArgusActiveHosts = NULL;
+      }
+
+      if (ArgusParser->ArgusRemoteHosts != NULL) {
+         struct ArgusQueueStruct *queue =  ArgusParser->ArgusRemoteHosts;
+         struct ArgusInput *input = NULL;
+ 
+         while (queue->count > 0) {
+            if ((input = (struct ArgusInput *) ArgusPopQueue(queue, ARGUS_LOCK)) != NULL) {
+               ArgusCloseInput(ArgusParser, input);
+               if (input->hostname != NULL)
+                  free (input->hostname);
+               if (input->filename != NULL)
+                  free (input->filename);
+               if (input->user != NULL)
+                  free (input->user);
+               if (input->pass != NULL)
+                  free (input->pass);
+#if HAVE_GETADDRINFO
+               if (input->host != NULL)
+                  freeaddrinfo (input->host);
+#endif
+#if defined(ARGUS_THREADS)
+               pthread_mutex_destroy(&input->lock);
+#endif
+               ArgusDeleteQueue(input->queue);
+               input->queue = NULL;
+               ArgusFree(input);
+            }
+         }
+         ArgusDeleteQueue(queue);
+         ArgusParser->ArgusRemoteHosts = NULL;
       }
 
       if (sig >= 0)
@@ -29478,11 +29481,6 @@ ArgusWriteConnection (struct ArgusParserStruct *parser, struct ArgusInput *input
 void
 ArgusCloseInput(struct ArgusParserStruct *parser, struct ArgusInput *input)
 {
-   if ((input != NULL) && (input->status & ARGUS_CLOSED)) {
-      input->fd = -1;
-      return;
-   }
-
 #if defined(ARGUS_THREADS)
    pthread_mutex_lock(&input->lock); 
 #endif
@@ -29492,6 +29490,11 @@ ArgusCloseInput(struct ArgusParserStruct *parser, struct ArgusInput *input)
 #endif
 
    input->status |= ARGUS_CLOSED;
+
+   if (input->file) {
+      fclose(input->file);
+      input->file = NULL;
+   }
 
    if (input->pipe) {
       pclose(input->pipe);
@@ -29523,35 +29526,34 @@ ArgusCloseInput(struct ArgusParserStruct *parser, struct ArgusInput *input)
    }
 #endif
 */
-
-   if (parser->RaCloseInputFd && (input->fd >= 0)) {
+   if (input->fd > 0) {
       if (close (input->fd))
          ArgusLog (LOG_ERR, "ArgusCloseInput: close error %s", strerror(errno));
 
       input->fd = -1;
+   }
 
-      if ((parser->eNflag >= 0) && (parser->ArgusTotalRecords > parser->eNflag)) {
-         if (parser->ArgusReliableConnection)
-            parser->ArgusReliableConnection = 0;
-         parser->RaShutDown = 1;
-      }
+   if ((parser->eNflag >= 0) && (parser->ArgusTotalRecords > parser->eNflag)) {
+      if (parser->ArgusReliableConnection)
+         parser->ArgusReliableConnection = 0;
+      parser->RaShutDown = 1;
+   }
  
-      if (!(parser->RaShutDown) && (parser->ArgusReliableConnection)) {
-         if (input->qhdr.queue != NULL)
-            ArgusRemoveFromQueue(input->qhdr.queue, &input->qhdr, ARGUS_LOCK);
-
+/*
+   if (!(parser->RaShutDown) && (parser->ArgusReliableConnection)) {
+      if (input->qhdr.queue != NULL) {
+         ArgusRemoveFromQueue(input->qhdr.queue, &input->qhdr, ARGUS_LOCK);
          ArgusAddToQueue(parser->ArgusRemoteHosts, &input->qhdr, ARGUS_LOCK);
-
       } else {
          parser->ArgusRemotes--;
       }
    }
+*/
 
    if (input->ArgusReadBuffer != NULL) {
       ArgusFree(input->ArgusReadBuffer);
       input->ArgusReadBuffer = NULL;
-   }
-
+   } 
    if (input->ArgusConvBuffer != NULL) {
      ArgusFree(input->ArgusConvBuffer);
      input->ArgusConvBuffer = NULL;
@@ -29563,12 +29565,6 @@ ArgusCloseInput(struct ArgusParserStruct *parser, struct ArgusInput *input)
       input->ArgusSaslBuffer = NULL;
    }
 #endif /* ARGUS_SASL */
-
-   if (parser->RaCloseInputFd && (input->file != NULL)) {
-      if (fclose (input->file))
-         ArgusLog (LOG_ERR, "ArgusCloseInput: close error %s", strerror(errno));
-      input->file = NULL;
-   }
 
 #if defined(ARGUS_THREADS)
    pthread_mutex_unlock(&input->lock);
@@ -29761,32 +29757,38 @@ ArgusAddFileList (struct ArgusParserStruct *parser, char *ptr, int type, long lo
 {
    int retn = 0;
    struct ArgusFileInput *file;
+   char *str = NULL;
 
    if (ptr) {
-      wordexp_t p;
+      switch(type) {
+         case ARGUS_DBASE_SOURCE:
+            str = ptr;
+            break;
 
-      if (wordexp (ptr, &p, 0) == 0) {
-         char *str = p.we_wordv[0];
-         if (str != NULL) {
-            if ((file = ArgusCalloc (1, sizeof(*file))) != NULL) {
-               if (parser->ArgusInputFileListTail != NULL) {
-                  parser->ArgusInputFileListTail->qhdr.nxt = (struct ArgusQueueHeader *)file;
-                  parser->ArgusInputFileListTail = file;
-               } else {
-                  parser->ArgusInputFileList = file;
-                  parser->ArgusInputFileListTail = file;
-               }
-
-               file->filename = strdup(str);
-               file->type = type;
-               file->ostart = ostart;
-               file->ostop = ostop;
+         default: {
+            wordexp_t p;
+            if (wordexp (ptr, &p, 0) == 0) {
+               str = p.we_wordv[0];
+               wordfree (&p);
             }
-
-            wordfree (&p);
-            file->fd = -1;
          }
+      }
 
+      if (str != NULL) {
+         if ((file = ArgusCalloc (1, sizeof(*file))) != NULL) {
+            if (parser->ArgusInputFileListTail != NULL) {
+               parser->ArgusInputFileListTail->qhdr.nxt = (struct ArgusQueueHeader *)file;
+               parser->ArgusInputFileListTail = file;
+            } else {
+               parser->ArgusInputFileList = file;
+               parser->ArgusInputFileListTail = file;
+            }
+            file->filename = strdup(str);
+            file->type = type;
+            file->ostart = ostart;
+            file->ostop = ostop;
+         }
+         file->fd = -1;
          parser->ArgusInputFileCount++;
          retn = 1;
       }

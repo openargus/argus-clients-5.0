@@ -1160,6 +1160,7 @@ ArgusProcessTerminator(WINDOW *win, int status, int ch)
                ArgusDeleteFileList(ArgusParser);
                while ((ptr = strtok(str, " ")) != NULL) {
                   int type = ARGUS_DATA_SOURCE;
+#if defined(ARGUS_MYSQL)
                   if (!(strncmp ("mysql:", ptr, 6))) {
                      if (parser->readDbstr != NULL)
                         free(parser->readDbstr);
@@ -1167,6 +1168,7 @@ ArgusProcessTerminator(WINDOW *win, int status, int ch)
                      type = ARGUS_DBASE_SOURCE;
                      ptr += 6;
                   } else
+#endif
                   if (!(strncmp ("cisco:", ptr, 6))) {
                      parser->Cflag++;
                      ptr += 6;
@@ -1293,7 +1295,9 @@ ArgusProcessTerminator(WINDOW *win, int status, int ch)
                ArgusParser->timearg = strdup(RaCommandInputStr);
 
             ArgusCheckTimeFormat (&ArgusParser->RaTmStruct, ArgusParser->timearg);
+#if defined(ARGUS_MYSQL)
             ArgusReadSQLTables (ArgusParser);
+#endif
             break;
          }
 
@@ -2708,9 +2712,11 @@ ArgusProcessCharacter(WINDOW *win, int status, int ch)
                            case ARGUS_FLOW_TOOLS_SOURCE:
                               snprintf_append(RaCommandInputStr, &len, &remain, "ftools:");
                               break;
+#if defined(ARGUS_MYSQL)
                            case ARGUS_DBASE_SOURCE:
                               snprintf_append(RaCommandInputStr, &len, &remain, "mysql:");
                               break;
+#endif
                         }
                         RaCommandIndex = snprintf_append(RaCommandInputStr,
                                                          &len, &remain, " %s",
@@ -4664,8 +4670,9 @@ argus_command_string(void)
             ArgusCheckTimeFormat (&ArgusParser->RaTmStruct, ArgusParser->timearg);
 
             ArgusDeleteFileList(ArgusParser);
+#if defined(ARGUS_MYSQL)
             ArgusReadSQLTables (ArgusParser);
-
+#endif
             ArgusParser->RaTasksToDo = RA_ACTIVE;
             ArgusParser->Sflag = 0;
 
@@ -5113,9 +5120,11 @@ argus_process_command (struct ArgusParserStruct *parser, int status)
                   case ARGUS_FLOW_TOOLS_SOURCE:
                      snprintf_append(RaCommandInputStr, &len, &remain, "ftools:");
                      break;
+#if defined(ARGUS_MYSQL)
                   case ARGUS_DBASE_SOURCE:
                      snprintf_append(RaCommandInputStr, &len, &remain, "mysql:");
                      break;
+#endif
                }
                RaCommandIndex = snprintf_append(RaCommandInputStr,
                                                 &len, &remain, "%s",
@@ -6068,9 +6077,11 @@ ArgusGenerateProgramArgs(struct ArgusParserStruct *parser)
                      case ARGUS_FLOW_TOOLS_SOURCE:
                         snprintf_append(retn, &len, &remain, "ftools:");
                         break;
+#if defined(ARGUS_MYSQL)
                      case ARGUS_DBASE_SOURCE:
                         snprintf_append(retn, &len, &remain, "mysql:");
                         break;
+#endif
                   }
                   snprintf_append(retn, &len, &remain, "%s ", file->filename);
                   file = (void *)file->qhdr.nxt;

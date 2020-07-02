@@ -36,6 +36,7 @@ use strict;
 use RRDs;
 use POSIX qw/ strftime /;
 use File::Temp qw/ :POSIX /;
+use File::Which qw/ which where /;
 
 # Global variables
 my $tmpfile = tmpnam();
@@ -43,7 +44,7 @@ my $RRD     = $tmpfile.".rrd";
 my $RRDARG  = $tmpfile.".rrdargs";
 my $PNG     = "ragraph.png";
 
-my $RABINS = "/usr/local/bin/rabins";
+my $RABINS  = which 'rabins';
 my $VERSION = "3.0.8";
 my @arglist = ();
 

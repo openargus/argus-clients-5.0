@@ -28577,6 +28577,7 @@ ArgusReadConnection (struct ArgusParserStruct *parser, struct ArgusInput *input,
                            ArgusDebug (1, "ArgusReadConnection() read %d bytes from pipe\n", cnt);
 #endif
                            input->file = input->pipe;
+                           input->pipe = NULL;
                         }
                      }
 

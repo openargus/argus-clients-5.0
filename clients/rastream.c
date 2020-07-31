@@ -684,8 +684,6 @@ RaParseComplete (int sig)
          ArgusDebug (2, "RaParseComplete(caught signal %d)\n", sig);
 #endif
 
-         agg = ArgusParser->ArgusAggregator;
-         RastreamProcessAllFileCaches(agg ? agg->queue : NULL);
          RastreamCloseAllWfiles();
 
          switch (sig) {
@@ -1781,6 +1779,9 @@ ArgusRunScript (struct ArgusParserStruct *parser, struct ArgusScriptStruct *scri
 {
    int retn = 0;
 
+   if (ArgusParser->RaParseDone)
+      return (retn);
+
    switch (status) {
       case ARGUS_SCHEDULE_SCRIPT: {
          if (ArgusScriptList == NULL)
@@ -1852,11 +1853,9 @@ ArgusScriptProcess (void *args) {
                ArgusRunScript(ArgusParser, script, ARGUS_RUN_SCRIPT);
          }
       }
-      nanosleep(ts, NULL);
+      if (!ArgusParser->RaParseDone)
+         nanosleep(ts, NULL);
    }
-
-   while ((script = (struct ArgusScriptStruct *) ArgusPopFrontList(ArgusScriptList, ARGUS_LOCK)) != NULL)
-      ArgusRunScript(ArgusParser, script, ARGUS_RUN_SCRIPT);
 
 #ifdef ARGUSDEBUG
    ArgusDebug (2, "ArgusScriptProcess() done!");

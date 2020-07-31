@@ -29764,9 +29764,10 @@ ArgusAddFileList (struct ArgusParserStruct *parser, char *ptr, int type, long lo
    int retn = 0, wexp = 0;
    struct ArgusFileInput *file;
    char *str = NULL;
-   wordexp_t p;
 
    if (ptr) {
+      wordexp_t p;
+
       switch(type) {
 #if defined(ARGUS_MYSQL)
          case ARGUS_DBASE_SOURCE:
@@ -29774,10 +29775,12 @@ ArgusAddFileList (struct ArgusParserStruct *parser, char *ptr, int type, long lo
             break;
 #endif
          default: {
+#if !defined(CYGWIN)
             if (wordexp (ptr, &p, 0) == 0) {
                str = p.we_wordv[0];
                wexp = 1;
             } else
+#endif
                str = ptr;
          }
       }

@@ -1468,9 +1468,9 @@ RaPrintAlgorithmTable[MAX_PRINT_ALG_TYPES] = {
 #define ARGUSPRINTIDLEINTFLOWSDEV       239
    { "idleintflowsdev", "", 12 , 1, 0, ARGUSPRINTIDLEINTFLOWSDEV, NULL, NULL, "double", 0},
 #define ARGUSPRINTSRCVNID		240
-   { "svnid", "", 12 , 1, 0, ARGUSPRINTSRCVNID, ArgusPrintSrcVirtualNID, ArgusPrintSrcVirtualNIDLabel, "int", 0},
+   { "svnid", "", 6 , 1, 0, ARGUSPRINTSRCVNID, ArgusPrintSrcVirtualNID, ArgusPrintSrcVirtualNIDLabel, "int", 0},
 #define ARGUSPRINTDSTVNID		241
-   { "dvnid", "", 12 , 1, 0, ARGUSPRINTDSTVNID, ArgusPrintDstVirtualNID, ArgusPrintDstVirtualNIDLabel, "int", 0},
+   { "dvnid", "", 6 , 1, 0, ARGUSPRINTDSTVNID, ArgusPrintDstVirtualNID, ArgusPrintDstVirtualNIDLabel, "int", 0},
 };
 
 

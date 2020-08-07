@@ -8080,6 +8080,7 @@ ArgusGetIndicatorString (struct ArgusParserStruct *parser, struct ArgusRecordStr
                      case ARGUS_ENCAPS_PRISM:  buf[1] = 'z'; break;
                      case ARGUS_ENCAPS_AVS:    buf[1] = 'a'; break;
                      case ARGUS_ENCAPS_TEREDO: buf[1] = 'T'; break;
+                     case ARGUS_ENCAPS_VXLAN:  buf[1] = 'x'; break;
                   }
                }
             }
@@ -16999,6 +17000,23 @@ ArgusPrintMpls (struct ArgusParserStruct *parser, char *buf, struct ArgusRecordS
 }
 */
 
+void
+ArgusPrintSrcVirtualNID (struct ArgusParserStruct *parser, char *buf, struct ArgusRecordStruct *argus, int len)
+{
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (10, "ArgusPrintSrcVNID (%p, %p, %p, %d)", parser, buf, argus, len);
+#endif
+}
+
+void
+ArgusPrintDstVirtualNID (struct ArgusParserStruct *parser, char *buf, struct ArgusRecordStruct *argus, int len)
+{
+#ifdef ARGUSDEBUG
+   ArgusDebug (10, "ArgusPrintSrcVNID (%p, %p, %p, %d)", parser, buf, argus, len);
+#endif
+}
+
 #include <netinet/igmp.h>
 
 void
@@ -18384,6 +18402,7 @@ ArgusPrintSrcEncaps (struct ArgusParserStruct *parser, char *buf, struct ArgusRe
                   case ARGUS_ENCAPS_PRISM:  ebuf[ind++] = 'z'; break;
                   case ARGUS_ENCAPS_AVS:    ebuf[ind++] = 'a'; break;
                   case ARGUS_ENCAPS_TEREDO: ebuf[ind++] = 'T'; break;
+                  case ARGUS_ENCAPS_VXLAN:  ebuf[ind++] = 'x'; break;
             }
          }
       }
@@ -18442,6 +18461,7 @@ ArgusPrintDstEncaps (struct ArgusParserStruct *parser, char *buf, struct ArgusRe
                   case ARGUS_ENCAPS_PRISM:  ebuf[ind++] = 'z'; break;
                   case ARGUS_ENCAPS_AVS:    ebuf[ind++] = 'a'; break;
                   case ARGUS_ENCAPS_TEREDO: ebuf[ind++] = 'T'; break;
+                  case ARGUS_ENCAPS_VXLAN:  ebuf[ind++] = 'x'; break;
             }
          }
       }
@@ -19917,6 +19937,18 @@ void
 ArgusPrintDstMplsLabel (struct ArgusParserStruct *parser, char *buf, int len)
 {
    sprintf (buf, "%*.*s ", len, len, "dMpls");
+}
+
+void
+ArgusPrintSrcVirtualNIDLabel (struct ArgusParserStruct *parser, char *buf, int len)
+{
+   sprintf (buf, "%*.*s ", len, len, "sVnid");
+}
+
+void
+ArgusPrintDstVirtualNIDLabel (struct ArgusParserStruct *parser, char *buf, int len)
+{
+   sprintf (buf, "%*.*s ", len, len, "dVnid");
 }
 
 void

@@ -48,8 +48,8 @@ extern "C" {
 #include <argus/cons_out.h>
 #include <argus/cflowd.h>
 
-#define ARGUS_MAX_PRINT_ALG     	232
-#define MAX_PRINT_ALG_TYPES     	232
+#define ARGUS_MAX_PRINT_ALG     	242
+#define MAX_PRINT_ALG_TYPES     	242
 
 
 #include <argus/CflowdFlowPdu.h>
@@ -719,6 +719,9 @@ void ArgusPrintDstOui (struct ArgusParserStruct *, char *, struct ArgusRecordStr
 void ArgusPrintCor (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
 void ArgusPrintProducerConsumerRatio (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
 
+void ArgusPrintSrcVirtualNID (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
+void ArgusPrintDstVirtualNID (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
+
 void ArgusPrintBssidLabel (struct ArgusParserStruct *, char *, int);
 void ArgusPrintSsidLabel (struct ArgusParserStruct *, char *, int);
 void ArgusPrintCauseLabel (struct ArgusParserStruct *, char *, int);
@@ -977,6 +980,9 @@ void ArgusPrintResponseLabel (struct ArgusParserStruct *, char *, int);
 void ArgusPrintSrcOuiLabel (struct ArgusParserStruct *, char *, int);
 void ArgusPrintDstOuiLabel (struct ArgusParserStruct *, char *, int);
 void ArgusPrintCorLabel (struct ArgusParserStruct *, char *, int);
+
+void ArgusPrintSrcVirtualNIDLabel (struct ArgusParserStruct *, char *, int);
+void ArgusPrintDstVirtualNIDLabel (struct ArgusParserStruct *, char *, int);
 
 
 struct ArgusPrintFieldStruct 
@@ -1439,12 +1445,32 @@ RaPrintAlgorithmTable[MAX_PRINT_ALG_TYPES] = {
    { "dmss", "%d", 6 , 1, 0, ARGUSPRINTDSTMAXSEG, ArgusPrintDstMaxSeg, ArgusPrintDstMaxSegLabel, "tinyint unsigned", 0},
 #define ARGUSPRINTINTFLOW		228
    { "intflow", "", 12 , 1, 0, ARGUSPRINTINTFLOW, ArgusPrintIntFlow, ArgusPrintIntFlowLabel, "double", 0},
-#define ARGUSPRINTINTFLOWMAX		229
+#define ARGUSPRINTACTINTFLOW            229
+   { "actintflow", "", 12 , 1, 0, ARGUSPRINTACTINTFLOW, NULL, NULL, "double", 0},
+#define ARGUSPRINTIDLEINTFLOW           230
+   { "idleintflow", "", 12 , 1, 0, ARGUSPRINTIDLEINTFLOW, NULL, NULL, "double", 0},
+#define ARGUSPRINTINTFLOWMAX		231
    { "intflowmax", "", 12 , 1, 0, ARGUSPRINTINTFLOWMAX, ArgusPrintIntFlowMax, ArgusPrintIntFlowMaxLabel, "double", 0},
-#define ARGUSPRINTINTFLOWMIN		230
+#define ARGUSPRINTINTFLOWMIN		232
    { "intflowmin", "", 12 , 1, 0, ARGUSPRINTINTFLOWMIN, ArgusPrintIntFlowMin, ArgusPrintIntFlowMinLabel, "double", 0},
-#define ARGUSPRINTINTFLOWSDEV		231
+#define ARGUSPRINTINTFLOWSDEV		233
    { "intflowsdev", "", 12 , 1, 0, ARGUSPRINTINTFLOWSDEV, ArgusPrintIntFlowStdDev, ArgusPrintIntFlowStdDevLabel, "double", 0},
+#define ARGUSPRINTACTINTFLOWMAX         234
+   { "actintflowmax", "", 12 , 1, 0, ARGUSPRINTACTINTFLOWMAX, NULL, NULL, "double", 0},
+#define ARGUSPRINTACTINTFLOWMIN         235
+   { "actintflowmin", "", 12 , 1, 0, ARGUSPRINTACTINTFLOWMIN, NULL, NULL, "double", 0},
+#define ARGUSPRINTACTINTFLOWSDEV        236
+   { "actintflowsdev", "", 12 , 1, 0, ARGUSPRINTACTINTFLOWSDEV, NULL, NULL, "double", 0},
+#define ARGUSPRINTIDLEINTFLOWMAX        237
+   { "idleintflowmax", "", 12 , 1, 0, ARGUSPRINTIDLEINTFLOWMAX, NULL, NULL, "double", 0},
+#define ARGUSPRINTIDLEINTFLOWMIN        238
+   { "idleintflowmin", "", 12 , 1, 0, ARGUSPRINTIDLEINTFLOWMIN, NULL, NULL, "double", 0},
+#define ARGUSPRINTIDLEINTFLOWSDEV       239
+   { "idleintflowsdev", "", 12 , 1, 0, ARGUSPRINTIDLEINTFLOWSDEV, NULL, NULL, "double", 0},
+#define ARGUSPRINTSRCVNID		240
+   { "svnid", "", 12 , 1, 0, ARGUSPRINTSRCVNID, ArgusPrintSrcVirtualNID, ArgusPrintSrcVirtualNIDLabel, "int", 0},
+#define ARGUSPRINTDSTVNID		241
+   { "dvnid", "", 12 , 1, 0, ARGUSPRINTDSTVNID, ArgusPrintDstVirtualNID, ArgusPrintDstVirtualNIDLabel, "int", 0},
 };
 
 
@@ -1909,6 +1935,8 @@ void ArgusInputFromFile(struct ArgusInput *input, struct ArgusFileInput *afi);
 #define ARGUSPRINTIDLEINTFLOWMAX	237
 #define ARGUSPRINTIDLEINTFLOWMIN	238
 #define ARGUSPRINTIDLEINTFLOWSDEV	239
+#define ARGUSPRINTSRCVNID		240
+#define ARGUSPRINTDSTVNID		241
 
 
 extern struct ArgusPrintFieldStruct RaPrintAlgorithmTable[MAX_PRINT_ALG_TYPES];
@@ -2214,6 +2242,9 @@ extern void ArgusPrintStdDeviation (struct ArgusParserStruct *, char *, struct A
 extern void ArgusPrintRunTime (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
 extern void ArgusPrintIdleTime (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
 extern void ArgusPrintLabel (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
+
+extern void ArgusPrintSrcVirtualNID (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
+extern void ArgusPrintDstVirtualNID (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
 
 extern void ArgusPrintLabelLabel (struct ArgusParserStruct *, char *, int);
 extern void ArgusPrintCauseLabel (struct ArgusParserStruct *, char *, int);

@@ -10187,6 +10187,7 @@ $as_echo "no" >&6; }
 		PKG_CONFIG=""
 	fi
 fi
+if test -n "$PKG_CONFIG"; then
 
 # Check whether --with-systemdsystemunitdir was given.
 if test "${with_systemdsystemunitdir+set}" = set; then :
@@ -10211,6 +10212,7 @@ fi
 if test "x$with_systemdsystemunitdir" != "xno"; then :
   systemdsystemunitdir=$with_systemdsystemunitdir
 
+fi
 fi
 
 

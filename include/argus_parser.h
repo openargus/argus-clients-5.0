@@ -311,6 +311,10 @@ enum ArgusLockFilesEnum {
    ARGUS_FILE_LCK_NONBLOCKING,
 };
 
+#define ARGUS_PRINT_NULL                0x01
+#define ARGUS_PRINT_EMPTY_STRING        0x02
+#define ARGUS_OMIT_EMPTY_STRING         0x04
+
 struct ArgusParserStruct {
    int status;
    uid_t uid;
@@ -414,6 +418,7 @@ struct ArgusParserStruct {
    char ArgusPrintMan, ArgusPrintEvent;
    char ArgusPrintXml, ArgusAsnFormat;
    char ArgusPrintJson, ArgusPrintNewick;
+   char ArgusPrintJsonEmptyString;
    char ArgusPrintD3;
    char ArgusSrvInit;
    char RaOutputStarted; 

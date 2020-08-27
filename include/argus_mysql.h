@@ -5,7 +5,7 @@
 #   include <stdbool.h>
 #  endif
 #  include <mysql.h>
-#  if !defined(my_bool)
+#  ifndef HAVE_MYSQL_MY_BOOL
 #   define my_bool bool
 #  endif
 # endif /* ARGUS_MYSQL*/

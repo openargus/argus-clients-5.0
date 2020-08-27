@@ -211,16 +211,29 @@ AC_QOSIENT_THREADS(V_THREADS)
 #   WRAPLIBS="$V_WRAPDEP"
 #fi
 
-AC_CHECK_FUNCS(xdrmem_create)
-if test "$ac_cv_func_xdrmem_create" = yes ; then
-   AC_DEFINE([HAVE_XDR], [], [Using system XDR library])
-else
-   case "$target_cpu" in
-      cygwin*)
-      ;;
-   esac
+saved_CPPFLAGS=$CPPFLAGS
+saved_LIBS=$LIBS
+LIB_XDR=""
 
-fi
+AC_CHECK_HEADERS([rpc/xdr.h], ,
+   [CPPFLAGS="${saved_CPPFLAGS} -I/usr/include/tirpc"
+    unset ac_cv_header_rpc_xdr_h
+    AC_CHECK_HEADERS(rpc/xdr.h,
+      [XDR_INCLS="-I/usr/include/tirpc"
+      LIB_XDR="-ltirpc"])],
+      [#include <rpc/types.h>
+       #include <rpc/xdr.h>])
+
+LIBS="$LIB_XDR $LIBS"
+
+AC_CHECK_FUNCS(xdrmem_create,
+   AC_DEFINE([HAVE_XDR], [], [Using system XDR library]),
+   LIB_XDR=""
+   XDR_INCLS=""
+   )
+
+CPPFLAGS=${saved_CPPFLAGS}
+LIBS=${saved_LIBS}
 
 
 CURSESLIB=""
@@ -423,6 +436,7 @@ V_INCLS_EXAMPLES=`echo $V_INCLS | sed -e 's/\.\./..\/../'`
 
 # from https://www.freedesktop.org/software/systemd/man/daemon.html
 PKG_PROG_PKG_CONFIG
+if test -n "$PKG_CONFIG"; then
 AC_ARG_WITH([systemdsystemunitdir],
      [AS_HELP_STRING([--with-systemdsystemunitdir=DIR], [Directory for systemd service files])],,
      [with_systemdsystemunitdir=auto])
@@ -436,6 +450,7 @@ AS_IF([test "x$with_systemdsystemunitdir" = "xyes" -o "x$with_systemdsystemunitd
    [with_systemdsystemunitdir="$def_systemdsystemunitdir"])])
 AS_IF([test "x$with_systemdsystemunitdir" != "xno"],
       [AC_SUBST([systemdsystemunitdir], [$with_systemdsystemunitdir])])
+fi
 
 LIBCURL_CHECK_CONFIG
 AC_QOSIENT_CURLEXE
@@ -469,6 +484,8 @@ AC_SUBST(COMPATLIB)
 AC_SUBST(ZLIB)
 AC_SUBST(CURSESLIB)
 AC_SUBST(CURSES_INCLS)
+AC_SUBST(LIB_XDR)
+AC_SUBST(XDR_INCLS)
 AC_SUBST(INSTALL_LIB)
 AC_SUBST(INSTALL_BIN)
 AC_SUBST(PCRE_CFLAGS)

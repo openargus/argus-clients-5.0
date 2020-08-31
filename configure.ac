@@ -495,6 +495,7 @@ AS_IF([test "$with_examples" != no],
       ./examples/Makefile
       ./examples/race/Makefile
       ./examples/racompare/Makefile
+      ./examples/racontext/Makefile
       ./examples/raconvert/Makefile
       ./examples/radbase/Makefile
       ./examples/radecode/Makefile

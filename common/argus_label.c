@@ -2171,25 +2171,27 @@ void
 RaInsertRIRTree (struct ArgusParserStruct *parser, struct ArgusLabelerStruct *labeler, char *str)
 {
    struct RaAddressStruct *saddr = NULL, *node;
-   char tstrbuf[MAXSTRLEN], *sptr = tstrbuf, *tptr;
    char *co = NULL, *type = NULL;
-// char *rir = NULL;
    char *addr = NULL;
    char *endptr = NULL;
    int tok = 0, elem = -1, ttype = 0;
 
    if (labeler != NULL) {
       struct RaAddressStruct **ArgusAddrTree = labeler->ArgusAddrTree;
+      char *tstrbuf, *tptr, *sptr = NULL;
 
-      snprintf (tstrbuf, MAXSTRLEN, "%s", str);
+      if ((tstrbuf = ArgusMalloc(MAXSTRLEN)) == NULL)
+         ArgusLog (LOG_ERR, "RaInsertRIRTree: ArgusCalloc error %s\n", strerror(errno));
+
+      snprintf (tstrbuf, MAXSTRLEN - 1, "%s", str);
+      sptr = tstrbuf;
 
       while ((tptr = strtok(sptr, "|\n")) != NULL) {
          switch (tok++) {
-            case 0:               break;
-//          case 0:  rir  = tptr; break;
-            case 1:  co   = tptr; break;
-            case 2:  type = tptr; break;
-            case 3:  addr = tptr; break;
+            case 0:                     ; break;
+            case 1:  co   = strdup(tptr); break;
+            case 2:  type = strdup(tptr); break;
+            case 3:  addr = strdup(tptr); break;
             case 4:
                if (isdigit((int)*tptr)) {
                   if ((elem = strtol(tptr, &endptr, 10)) == 0)
@@ -2200,16 +2202,15 @@ RaInsertRIRTree (struct ArgusParserStruct *parser, struct ArgusLabelerStruct *la
             case 5:  break;
             case 6:  break;
          }
-
          sptr = NULL;
       }
 
-      if (!(strcmp("ipv4", type)))
+      if (type && !(strcmp("ipv4", type)))
          ttype = ARGUS_TYPE_IPV4;
-      if (!(strcmp("ipv6", type)))
+      if (type && !(strcmp("ipv6", type)))
          ttype = ARGUS_TYPE_IPV6;
 
-      if (ttype && (strcmp ("*", co))) {
+      if (ttype && co && (strcmp ("*", co))) {
          if ((co != NULL) && (addr != NULL)) {
             struct ArgusCIDRAddr *cidr = NULL, *ncidr;
 
@@ -2236,6 +2237,10 @@ RaInsertRIRTree (struct ArgusParserStruct *parser, struct ArgusLabelerStruct *la
             }
          }
       }
+      if (co      != NULL) free(co);
+      if (type    != NULL) free(type);
+      if (addr    != NULL) free(addr);
+      if (tstrbuf != NULL) ArgusFree(tstrbuf);
    }
 }
 

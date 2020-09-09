@@ -5761,6 +5761,7 @@ ArgusPrintRecord (struct ArgusParserStruct *parser, char *buf, struct ArgusRecor
                                           ptr += tlen;
                                           *ptr++ = parser->RaFieldQuoted;
                                           *ptr++ = parser->RaFieldDelimiter;
+                                          *ptr = '\0';
                                           slen = (ptr - sptr);
 /*
                                           slen = snprintf(&buf[blen], dlen, "%c%s%c:%c%s%c%c", 
@@ -5783,6 +5784,7 @@ ArgusPrintRecord (struct ArgusParserStruct *parser, char *buf, struct ArgusRecor
 					  ptr[tlen] = '\0';
 					  ptr += tlen;
 					  *ptr++ = parser->RaFieldDelimiter;
+                                          *ptr = '\0';
 					  slen = (ptr - sptr);
 /*
                                           slen = snprintf(&buf[blen], dlen, "%c%s%c:%s%c", 
@@ -5821,6 +5823,7 @@ ArgusPrintRecord (struct ArgusParserStruct *parser, char *buf, struct ArgusRecor
                               ptr[4] = '\0';
                               ptr += 4;
                               *ptr++ = parser->RaFieldDelimiter;
+                              *ptr = '\0';
                               slen = (ptr - sptr);
 /*
                               slen = snprintf(&buf[blen], dlen, "%c%s%c:null%c", 
@@ -5844,6 +5847,7 @@ ArgusPrintRecord (struct ArgusParserStruct *parser, char *buf, struct ArgusRecor
                               *ptr++ = parser->RaFieldQuoted;
                               *ptr++ = parser->RaFieldQuoted;
                               *ptr++ = parser->RaFieldDelimiter;
+                              *ptr = '\0';
                               slen = (ptr - sptr);
 /*
                               slen = snprintf(&buf[blen], dlen, "%c%s%c:%c%c%c", 
@@ -24765,41 +24769,109 @@ ArgusPrintResponse (struct ArgusParserStruct *parser, char *buf, struct ArgusRec
 }
 
 
-void
-ArgusPrintLabel (struct ArgusParserStruct *parser, char *buf, struct ArgusRecordStruct *argus, int len)
+void 
+ArgusPrintLabel(struct ArgusParserStruct *parser, char *buf, struct ArgusRecordStruct *argus, int len)
 {
    struct ArgusLabelStruct *label;
    char *labelbuf = "";
+   char *obuf = "";
 
    if (argus->hdr.type & ARGUS_MAR) {
-      if (parser->ArgusPrintXml) {
-      } else 
-         sprintf (buf, "%*.*s ", len, len, " ");
- 
+      sprintf(buf, "%*.*s ", len, len, " ");
    } else {
-      if (((label = (void *)argus->dsrs[ARGUS_LABEL_INDEX]) != NULL))
-         labelbuf = label->l_un.label;
+      if (((label = (void *)argus->dsrs[ARGUS_LABEL_INDEX]) != NULL)) {
+         if (label->l_un.label != NULL)
+            obuf = label->l_un.label;
+         else
+            obuf = "";
+      } else
+         obuf = "";
 
-      if (parser->ArgusPrintXml) {
-         sprintf (buf, " Label = \"%s\"", labelbuf);
+      if (parser->ArgusPrintJson) {
+         // JSON (strings) mode
+            labelbuf = strdup(obuf); // Work with a copy of the string
+            int orig_len = strlen(obuf);
+            if (labelbuf == NULL) {
+               ArgusLog(LOG_ERR, "PrintLabel, Label Expansion: Unable to strdup(), malloc fail?");
+               //Will exit after logging error
+            }
+
+            // JSON Label expansion mode
+            if (labelbuf[0] != 0) {
+               // Iterate over each name=value pair, separated by colons ':'
+               char *one_label_pair = NULL;
+               char *eq = NULL;
+               int l = 0;
+               l += sprintf(buf + l, " \"label\":{ "); // label object start
+               one_label_pair = strtok(labelbuf, ":");
+
+               do {
+                  // Find the equals sign and change to JSON format '":"'
+                  eq = strchr(one_label_pair, '=');
+                  if (eq != NULL) {
+                     eq[0] = 0;          // Insert \0 to break the string in two parts
+                     char *val = eq + 1; // Point to the value part
+
+                     // Check the value portion for being a number or list of numbers
+                     int slen = strlen(val);
+                     int i = 0, digits = 0, commas = 0, periods = 0;
+                     for (i = 0; i < slen; i++) {
+                        if (isdigit(val[i]) != 0) {
+                           digits++;
+                        } else if (val[i] == '.') {
+                           periods++;
+                        } else if (val[i] == ',') {
+                           commas++;
+                        }
+                     }
+                     if (digits > 0 && (digits + periods + commas) >= slen && periods <= 1) {
+                        // The value portion looks like int, float, or comma separated list of numbers...
+                        char *comma = strstr(val, ",");
+                        if (comma != NULL) {
+                           // only output the first number in the list of numbers
+                           comma[0] = 0; // end the string before the comma.
+                        }
+                        l += sprintf(buf + l, "\"%s\":%s, ", one_label_pair, val);
+                     } else {
+                        // If its not a number it is a string and gets quotes
+                        l += sprintf(buf + l, "\"%s\":\"%s\", ", one_label_pair, val);
+                     }
+                  } else {
+                     // bad label field, had no equals sign
+                     fprintf(stderr, "WARNING: PrintLabel-Expansion: Bad label, no equals sign ");
+                     fprintf(stderr, "near char %li in string (length %d): \"%s\"\n", (one_label_pair - labelbuf), orig_len, obuf);
+                  }
+               } while ((one_label_pair = strtok(NULL, ":")) != NULL);
+
+               l -= 2; // Backtrack two chars to replace the dangling comma
+               l += sprintf(buf + l, " }");
+
+            } else {
+               // Empty object
+               sprintf(buf, " \"label\":{}");
+            }
+
+            free(labelbuf);
       } else {
          if (parser->RaFieldWidth != RA_FIXED_WIDTH)
-            len = strlen(labelbuf);
+            len = strlen(obuf);
 
          if (len != 0) {
-            if (len < strlen(labelbuf))
-               sprintf (buf, "%*.*s* ", len-1, len-1, labelbuf);
+            if (len < strlen(obuf))
+               sprintf(buf, "%*.*s* ", len - 1, len - 1, obuf);
             else
-               sprintf (buf, "%*.*s ", len, len, labelbuf);
-         } else
-            sprintf (buf, "%s ", labelbuf);
+               sprintf(buf, "%*.*s ", len, len, obuf);
+         }
+         else
+            sprintf(buf, "%s ", obuf);
       }
    }
 
 #ifdef ARGUSDEBUG
-   ArgusDebug (10, "ArgusPrintLabel (%p, %p)", buf, argus);
+   ArgusDebug(10, "ArgusPrintLabel (%p, %p)", buf, argus);
 #endif
 }
+
 
 static char ArgusStatusBuf[32];
 

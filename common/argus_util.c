@@ -22866,7 +22866,7 @@ etheraddr_oui(struct ArgusParserStruct *parser, u_char *ep)
       }
    }
 
-   return ("Unknown");
+   return (NULL);
 }
 
 char *

@@ -5762,9 +5762,9 @@ ArgusPrintRecord (struct ArgusParserStruct *parser, char *buf, struct ArgusRecor
                                           *ptr++ = parser->RaFieldQuoted;
                                           *ptr++ = ':';
                                           *ptr++ = parser->RaFieldQuoted;
-                                          bcopy(tmpbuf, ptr, tlen);
-                                          ptr[tlen] = '\0';
-                                          ptr += tlen;
+                                          bcopy(tmpbuf, ptr, slen);
+                                          ptr[slen] = '\0';
+                                          ptr += slen;
                                           *ptr++ = parser->RaFieldQuoted;
                                           *ptr++ = parser->RaFieldDelimiter;
                                           *ptr = '\0';

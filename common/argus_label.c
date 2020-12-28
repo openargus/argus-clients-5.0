@@ -1752,9 +1752,14 @@ RaDeleteAddressTree(struct ArgusLabelerStruct *labeler, struct RaAddressStruct *
       if (node->p->r == node)
          node->p->r = NULL;
    } else {
-      struct RaAddressStruct **ArgusAddrTree = labeler->ArgusAddrTree;
-      if (node == ArgusAddrTree[node->addr.type])
-         ArgusAddrTree[node->addr.type] = NULL;
+      if (labeler != NULL) {
+         struct RaAddressStruct **ArgusAddrTree = labeler->ArgusAddrTree;
+         if (node == ArgusAddrTree[node->addr.type])
+            ArgusAddrTree[node->addr.type] = NULL;
+
+         if (node->status & ARGUS_NODE)
+            labeler->count--;
+      }
    }
 
    if (node->l) RaDeleteAddressTree(labeler, node->l);
@@ -1770,9 +1775,6 @@ RaDeleteAddressTree(struct ArgusLabelerStruct *labeler, struct RaAddressStruct *
 
    if (node->asnlabel) { free(node->asnlabel); node->asnlabel = NULL;}
    if (node->ns) {ArgusDeleteRecordStruct(ArgusParser, node->ns); node->ns = NULL;}
-
-   if (node->status & ARGUS_NODE)
-      labeler->count--;
 
    ArgusFree(node);
 }
@@ -2345,7 +2347,7 @@ RaInsertAddressTree (struct ArgusParserStruct *parser, struct ArgusLabelerStruct
                   saddr->addr.str = strdup(tptr);
                }
 
-               RaInsertAddress (parser, labeler, NULL, saddr, ARGUS_VISITED);
+               node = RaInsertAddress (parser, labeler, NULL, saddr, ARGUS_VISITED);
                   
                if (label || object) {
                   char lbuf[128];
@@ -2488,7 +2490,7 @@ RaInsertAddressTree (struct ArgusParserStruct *parser, struct ArgusLabelerStruct
                      saddr->addr.str = strdup(tptr);
                   }
 
-                  RaInsertAddress (parser, labeler, NULL, saddr, ARGUS_VISITED);
+                  node = RaInsertAddress (parser, labeler, NULL, saddr, ARGUS_VISITED);
 
                   if (label || object) {
                      char lbuf[128];

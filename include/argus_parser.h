@@ -565,8 +565,10 @@ struct ArgusParserStruct {
    struct ArgusFileInput *ArgusBaselineList;	/* first element in file list */
    struct ArgusFileInput *ArgusBaselineListTail;	/* last element in file list */
 
-   struct ArgusInput *ArgusRemoteHostList;
+   struct ArgusInput *ArgusRemoteServerList;
    struct ArgusInput *ArgusCurrentFile;
+
+   struct ArgusOutput *ArgusRemoteClientList;
 
    struct ArgusListStruct *ArgusLabelerFileList;
    struct ArgusListStruct *ArgusWfileList;

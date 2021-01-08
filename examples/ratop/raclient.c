@@ -636,7 +636,7 @@ ArgusClientInit (struct ArgusParserStruct *parser)
 
    struct ArgusInput *input = NULL;
    struct ArgusModeStruct *mode;
-   int correct = -1, preserve = 1;
+   int correct = 1, preserve = 1;
    int i = 0, size = 1;
    struct timeval *tvp;
 
@@ -1375,6 +1375,8 @@ RaProcessRecord (struct ArgusParserStruct *parser, struct ArgusRecordStruct *ns)
       case ARGUS_NETFLOW:
       case ARGUS_FAR: {
          struct ArgusFlow *flow = (struct ArgusFlow *) ns->dsrs[ARGUS_FLOW_INDEX];
+
+         ArgusProcessDirection(parser, ns);
 
          if (parser->RaMonMode) {
             struct ArgusRecordStruct *tns;

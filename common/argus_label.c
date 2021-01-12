@@ -886,12 +886,16 @@ ArgusConvertLabelToJson(char *label, char *buf, int len)
                         snprintf(&buf[slen], 1024, ",");
                         slen++;
                      }
-                     snprintf(&buf[slen], 1024, "%s",llabs[i].values[x]);
+                     if (llabs[i].values[x]) {
+                        snprintf(&buf[slen], 1024, "%s",llabs[i].values[x]);
+                        free(llabs[i].values[x]);
+                     }
                   }
                   if (llabs[i].count > 1) {
                      slen = strlen(buf);
                      snprintf(&buf[slen], 1024, "]");
                   }
+                  free(obj);
                }
             }
             slen = strlen(buf);
@@ -958,6 +962,10 @@ ArgusMergeLabel(char *l1, char *l2, char *buf, int len, int type)
 
    if (l1buf != NULL) ArgusFree(l1buf);
    if (l2buf != NULL) ArgusFree(l2buf);
+
+   if (res1 != NULL) json_free_value(res1);
+   if (res2 != NULL) json_free_value(res2);
+
    return (retn);
 }
 

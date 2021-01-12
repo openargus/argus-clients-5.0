@@ -221,8 +221,7 @@ json_parse_object(const char** cursor, ArgusJsonValue *parent) {
       if (retn) {
          vector_push_back(&result.value.object, &key);
          vector_push_back(&result.value.object, &value);
-      }
-      else {
+      } else {
          json_free_value(&key);
          break;
       }
@@ -336,6 +335,8 @@ json_parse_value(const char** cursor, ArgusJsonValue *parent) {
             if (parent->type != ARGUS_JSON_KEY) {
                parent->type = ARGUS_JSON_STRING;
             }
+            if (parent->value.string != NULL)
+               free (parent->value.string);
             parent->value.string = new_string;
 
             *cursor = end + 1;

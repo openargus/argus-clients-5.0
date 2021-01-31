@@ -504,12 +504,10 @@ AS_IF([test "$with_examples" != no],
       ./examples/radump/Makefile
       ./examples/raevent/Makefile
       ./examples/rafilter/Makefile
+      ./examples/ragen/Makefile
       ./examples/ragraph/Makefile
       ./examples/ragrep/Makefile
       ./examples/rahisto/Makefile
-      ./examples/rahisto/rahisto-querysql
-      ./examples/rahisto/rahisto-updatesql
-      ./examples/rahisto/rahisto-delsql
       ./examples/ralabel/Makefile
    ])
    
@@ -517,6 +515,9 @@ AS_IF([test "$with_examples" != no],
       [AC_CONFIG_FILES([
          ./examples/ramysql/Makefile
          ./examples/rahosts/Makefile
+         ./examples/rahisto/rahisto-querysql
+         ./examples/rahisto/rahisto-updatesql
+         ./examples/rahisto/rahisto-delsql
       ])
    ])
    

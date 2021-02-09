@@ -1582,12 +1582,22 @@ ArgusParseArgs(struct ArgusParserStruct *parser, int argc, char **argv)
          case 'r': {
             int type = ARGUS_DATA_SOURCE;
 
+            if (!rcmdline++) {
+               if (parser->ArgusInputFileList != NULL)
+                  ArgusDeleteFileList(parser);
+            }
+
             ++parser->rflag; 
             parser->Sflag = 0;
 
             if (optarg == NULL)
                optarg = "-";
             else {
+
+               do {
+                  long long ostart = -1, ostop = -1;
+                  char *ptr, *eptr;
+
                if (!(strncmp ("baseline:", optarg, 9))) {
                   type |= ARGUS_BASELINE_SOURCE;
                   optarg += 9;
@@ -1622,15 +1632,6 @@ ArgusParseArgs(struct ArgusParserStruct *parser, int argc, char **argv)
                   type |= ARGUS_SFLOW_DATA_SOURCE;
                   optarg += 6;
                }
-
-               if (!rcmdline++) {
-                  if (parser->ArgusInputFileList != NULL)
-                     ArgusDeleteFileList(parser);
-               }
-
-               do {
-                  long long ostart = -1, ostop = -1;
-                  char *ptr, *eptr;
 
                   if ((ptr = strstr(optarg, "::")) != NULL) {
                      char *endptr = NULL;
@@ -1798,7 +1799,7 @@ ArgusParseArgs(struct ArgusParserStruct *parser, int argc, char **argv)
    }
 
    if (rcmdline)
-      if (parser->ArgusInputFileList == NULL) {
+      if ((parser->ArgusInputFileList == NULL) && (parser->ArgusBaselineList == NULL)) {
 #ifdef ARGUSDEBUG
          ArgusDebug (1, "%s: no input files", __func__);
 #endif
@@ -5755,7 +5756,7 @@ ArgusPrintRecord (struct ArgusParserStruct *parser, char *buf, struct ArgusRecor
                               dlen++;
                            }
 
-                           if (parser->RaFieldQuoted) {
+                        if (parser->RaFieldQuoted) {
                               int tlen, tind = 0, i;
                               tlen = slen;
 
@@ -5834,14 +5835,14 @@ ArgusPrintRecord (struct ArgusParserStruct *parser, char *buf, struct ArgusRecor
                                  }
                               }
 
-                           } else {
-                              slen = snprintf(&buf[blen], dlen, "%s%c", tmpbuf, parser->RaFieldDelimiter);
-                           }
-
                         } else {
-                           dlen = len - blen;
-                           slen = snprintf(&buf[blen], dlen, "%s", tmpbuf);
+                           slen = snprintf(&buf[blen], dlen, "%s%c", tmpbuf, parser->RaFieldDelimiter);
                         }
+
+                     } else {
+                        dlen = len - blen;
+                        slen = snprintf(&buf[blen], dlen, "%s", tmpbuf);
+                     }
 
                   } else {
                      if (parser->ArgusPrintJson) {

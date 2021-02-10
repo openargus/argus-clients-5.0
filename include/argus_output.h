@@ -198,12 +198,15 @@ void ArgusUsr1Sig (int);
 void ArgusUsr2Sig (int);
 void ArgusChildExit (int);
 
+
 void ArgusClientError(void);
 void ArgusInitClientProcess(struct ArgusClientData *, struct ArgusWfileStruct *);
 
 void setArgusOutputVersion (struct ArgusOutputStruct *, char *);
 int getArgusOutputVersion (struct ArgusOutputStruct *);
 void ArgusCloseListen(struct ArgusParserStruct *);
+
+void ArgusSendFile (struct ArgusOutputStruct *, struct ArgusClientData *, char *, int);
 
 
 #else
@@ -234,6 +237,8 @@ void setArgusBindAddr (struct ArgusParserStruct *, char *);
 
 void setParserArgusID(struct ArgusParserStruct *, void *, int, unsigned int);
 void ArgusParseSourceID (struct ArgusParserStruct *, char *);
+
+extern void ArgusSendFile (struct ArgusOutputStruct *, struct ArgusClientData *, char *, int);
 
 void setArgusZeroConf(struct ArgusParserStruct *, unsigned int);
 unsigned int getArgusZeroConf(struct ArgusParserStruct *);

@@ -674,7 +674,6 @@ RaProcessRecord (struct ArgusParserStruct *parser, struct ArgusRecordStruct *ns)
 void
 RaProcessThisRecord (struct ArgusParserStruct *parser, struct ArgusRecordStruct *argus)
 {
-
    struct ArgusAggregatorStruct *agg = parser->ArgusAggregator;
    struct ArgusHashStruct *hstruct = NULL;
    int found = 0;
@@ -682,6 +681,7 @@ RaProcessThisRecord (struct ArgusParserStruct *parser, struct ArgusRecordStruct 
    if (agg != NULL) {
       while (agg && !found) {
          int retn = 0, fretn = -1, lretn = -1;
+
          if (agg->filterstr) {
             struct nff_insn *fcode = agg->filter.bf_insns;
             fretn = ArgusFilterRecord (fcode, argus);
@@ -728,7 +728,7 @@ RaProcessThisRecord (struct ArgusParserStruct *parser, struct ArgusRecordStruct 
                            switch (flow->hdr.argus_dsrvl8.qual & 0x1F) {
                               case ARGUS_TYPE_IPV4: {
                                  switch (flow->ip_flow.ip_p) {
-                                    case IPPROTO_ESP:
+                                   case IPPROTO_ESP:
                                        tryreverse = 0;
                                        break;
                                  }
@@ -835,17 +835,15 @@ RaProcessThisRecord (struct ArgusParserStruct *parser, struct ArgusRecordStruct 
                                              if ((ntcp->status & ARGUS_SAW_SYN) && (ttcp->status & ARGUS_SAW_SYN)) {
                                                 tns = NULL;
                                              } else {
-                                                if (ntcp->status & ARGUS_SAW_SYN) {
+                                                if ((ntcp->status & ARGUS_SAW_SYN) || 
+                                                   ((ntcp->status & ARGUS_SAW_SYN_SENT) && (ntcp->status & ARGUS_CON_ESTABLISHED))) {
+                                                   struct ArgusFlow *tflow = (struct ArgusFlow *) tns->dsrs[ARGUS_FLOW_INDEX];
                                                    ArgusRemoveHashEntry(&tns->htblhdr);
                                                    ArgusReverseRecord (tns);
                                                    hstruct = ArgusGenerateHashStruct(agg, tns, (struct ArgusFlow *)&agg->fstruct);
                                                    tns->htblhdr = ArgusAddHashEntry (agg->htable, tns, hstruct);
-                                                } else
-                                                if ((ntcp->status & ARGUS_SAW_SYN_SENT) && (ntcp->status & ARGUS_CON_ESTABLISHED)) {
-                                                   ArgusRemoveHashEntry(&tns->htblhdr);
-                                                   ArgusReverseRecord (tns);
-                                                   hstruct = ArgusGenerateHashStruct(agg, tns, (struct ArgusFlow *)&agg->fstruct);
-                                                   tns->htblhdr = ArgusAddHashEntry (agg->htable, tns, hstruct);
+                                                   tflow->hdr.subtype &= ~ARGUS_REVERSE;
+                                                   tflow->hdr.argus_dsrvl8.qual &= ~ARGUS_DIRECTION;
                                                 } else
                                                    ArgusReverseRecord (ns);
                                              }

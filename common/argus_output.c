@@ -5008,12 +5008,12 @@ ArgusTcpWrapper (struct ArgusOutputStruct *output, int fd, struct sockaddr *from
       socklen_t salen;
 
       salen = sizeof(remoteaddr);
-      bzero(hbuf, sizeof(hbuf));
+      bzero(hbuf, NI_MAXHOST);
 
       if ((getpeername(fd, (struct sockaddr *)&remoteaddr, &salen) == 0) &&
                          (remoteaddr.ss_family == AF_INET || remoteaddr.ss_family == AF_INET6)) {
          if (getnameinfo((struct sockaddr *)&remoteaddr, salen, hbuf, sizeof(hbuf), NULL, 0, NI_NAMEREQD) == 0) {
-            strncpy(clienthost, hbuf, sizeof(hbuf));
+            strncpy(clienthost, hbuf, NI_MAXHOST);
          } else {
             clienthost[0] = '\0';
          }

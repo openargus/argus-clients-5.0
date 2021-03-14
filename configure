@@ -11009,7 +11009,15 @@ fi
 
 
 if test "$HAVE_SWIG" = "1" ; then
-   DIRS="$DIRS ./perllib"
+  case "$target_os" in
+  darwin*)
+   	DIRS="$DIRS ./pythonlib"
+	;;
+  *)
+   	DIRS="$DIRS ./perllib"
+   	DIRS="$DIRS ./pythonlib"
+        ;;
+  esac
 fi
 
 

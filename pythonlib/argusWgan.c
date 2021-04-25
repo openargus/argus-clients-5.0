@@ -22,7 +22,7 @@
 
 #include <Python.h>
 #include <numpy/arrayobject.h>
-#include <tensorflow/c/c_api.h>
+//#include <tensorflow/c/c_api.h>
 
 #include <dlfcn.h>
 
@@ -1234,8 +1234,8 @@ argus_match (PyObject *y_true)
 
                        for (x = 0; x < shape[1]; x++) {
                           if (retn != NULL) {
-                          if (RaComparisonAlgorithms[x] != NULL)
-                             *out = RaComparisonAlgorithms[x](argus, retn);
+                             if (RaComparisonAlgorithms[x] != NULL)
+                                *out = RaComparisonAlgorithms[x](argus, retn);
                           } else
                              *out = 0.0;
                           out++;
@@ -5107,9 +5107,9 @@ ArgusCompareDuration (struct ArgusRecordStruct *argus, struct ArgusRecordStruct 
 {
    double retn = 1.0;
    if (argus && match) {
-      double adur = ArgusFetchDuration(argus);
-      double mdur = ArgusFetchDuration(match) / ;
-      retn = (acnt - mcnt) * adur;
+      double adur = ArgusFetchDuration(argus) / ArgusFetchTransactions(argus);
+      double mdur = ArgusFetchDuration(match) / ArgusFetchTransactions(match);
+      retn = (adur - mdur);
    }
    
 #ifdef ARGUSDEBUG

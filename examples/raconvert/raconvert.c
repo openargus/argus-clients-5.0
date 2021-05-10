@@ -869,6 +869,14 @@ char *RaConvertTimeFormats[RACONVERTTIME] = {
 struct tm timebuf, *RaConvertTmPtr = NULL;
 extern char *strptime(const char *s, const char *format, struct tm *tm);
 
+void
+ArgusParseRankLabel (struct ArgusParserStruct *parser, char *buf)
+{
+/*
+   int len = RaPrintAlgorithmTable[ARGUSPRINTTCPDSTBASE].length;
+   sprintf (&buf[strlen(buf)], "%*.*s ", len, len, "DstTCPBase");
+*/
+}
 
 void
 ArgusParseStartDateLabel (struct ArgusParserStruct *parser, char *buf)
@@ -910,7 +918,6 @@ ArgusParseStartDateLabel (struct ArgusParserStruct *parser, char *buf)
 
       tvp->tv_usec = useconds;
    }
-
 
    if (RaDateFormat != NULL) {
       if ((ptr = strptime(date, RaDateFormat, RaConvertTmPtr)) != NULL) {

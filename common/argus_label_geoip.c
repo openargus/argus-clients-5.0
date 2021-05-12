@@ -18,12 +18,12 @@
  *
  */
 
+#if defined(ARGUS_GEOIP) || defined(ARGUS_GEOIP2)
 
 #ifdef HAVE_CONFIG_H
 #include "argus_config.h"
 #endif
 
-#if defined(ARGUS_GEOIP) || defined(ARGUS_GEOIP2)
 
 #ifndef ArgusLabel
 #define ArgusLabel

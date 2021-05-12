@@ -81,11 +81,11 @@
 #include <netinet/igmp.h>
 #include <netinet/tcp.h>
 
-#if defined(ARGUS_GEOIP)
+#if defined(ARGUS_GEOIP) || defined(ARGUS_GEOIP2)
 #include <GeoIPCity.h>
+#include "argus_label_geoip.h"
 #endif
 
-#include "argus_label_geoip.h"
 
 struct ArgusLabelerStruct *ArgusLabeler;
 

@@ -137,6 +137,7 @@ struct nnamemem {
    struct ArgusListStruct *cnames;
    struct ArgusListStruct *aliases;
    struct ArgusListStruct *ptrs;
+   struct ArgusListStruct *mxs;
    struct ArgusListStruct *servers;
    struct ArgusListStruct *clients;
 };

@@ -398,7 +398,7 @@ void
 RaConvertParseTitleString (char *str)
 {
    char buf[MAXSTRLEN], *ptr, *obj;
-   int i, len = 0, items = 0;
+   int i, len = 0, items = 0, delim;
 
 
    bzero ((char *)RaParseLabelAlgorithms, sizeof(RaParseLabelAlgorithms));
@@ -412,7 +412,12 @@ RaConvertParseTitleString (char *str)
    while (isspace((int)*ptr)) ptr++;
 
 // Lets determine the delimiter, if we need to.  This will make this go a bit faster
-
+   delim = *ptr;
+   if (ispunct(delim)) {
+      *RaConvertDelimiter = *ptr++;
+      RaParseLabelAlgorithmIndex++;
+      RaParseLabelAlgorithms[items++] = RaParseLabelAlgorithmTable[ARGUSPARSERANKLABEL];
+   } else 
    for (i = 0; i < MAX_PARSE_ALG_TYPES; i++) {
       len = strlen(RaParseLabelStringTable[i]);
       if (!(strncmp(RaParseLabelStringTable[i], ptr, len))) {

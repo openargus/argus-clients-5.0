@@ -1695,6 +1695,7 @@ ArgusGenerateRecordStruct (struct ArgusParserStruct *parser, struct ArgusInput *
          }
 
          case ARGUS_EVENT:
+         case ARGUS_AFLOW:
          case ARGUS_NETFLOW:
          case ARGUS_FAR: {
             struct ArgusDSRHeader *dsr = (struct ArgusDSRHeader *) (hdr + 1);
@@ -3248,6 +3249,7 @@ ArgusGenerateRecordStruct (struct ArgusParserStruct *parser, struct ArgusInput *
 
             if (retn != NULL) {
                struct ArgusFlow *flow = (struct ArgusFlow *) retn->dsrs[ARGUS_FLOW_INDEX];
+               struct ArgusMacStruct *mac = (struct ArgusMacStruct *) retn->dsrs[ARGUS_MAC_INDEX];
 
                if (!(retn->dsrindex & (0x01 << ARGUS_METRIC_INDEX))) {
                   canon->metric.src.pkts     = 0;
@@ -3433,6 +3435,38 @@ ArgusGenerateRecordStruct (struct ArgusParserStruct *parser, struct ArgusInput *
                }
 
                retn->offset   = input->offset;
+
+               if (mac != NULL) {
+                  unsigned short retn = mac->mac.mac_union.ether.ehdr.ether_type;
+                  if (retn == ETHERTYPE_8021Q) {
+                     if (flow) {
+                        switch (flow->hdr.subtype & 0x3F) {
+                           case ARGUS_FLOW_LAYER_3_MATRIX:
+                           case ARGUS_FLOW_CLASSIC5TUPLE: {
+                              switch (flow->hdr.argus_dsrvl8.qual & 0x1F) {
+                                 case ARGUS_TYPE_IPV4: {
+                                    mac->mac.mac_union.ether.ehdr.ether_type = ETHERTYPE_IP;
+                                    break;
+                                 }
+                                 case ARGUS_TYPE_IPV6: {
+                                    mac->mac.mac_union.ether.ehdr.ether_type = ETHERTYPE_IPV6;
+                                    break;
+                                 }
+                                 case ARGUS_TYPE_ARP: {
+                                    mac->mac.mac_union.ether.ehdr.ether_type = ETHERTYPE_ARP;
+                                    break;
+                                 }
+                              }
+                              break;
+                           }
+                           case ARGUS_FLOW_ARP: {
+                              mac->mac.mac_union.ether.ehdr.ether_type = ETHERTYPE_ARP;
+                              break;
+                           }
+                        }
+                     }
+                  }
+               }
 
                if (flow != NULL) {
                   switch (canon->flow.hdr.subtype & 0x3F) {
@@ -3842,6 +3876,7 @@ ArgusCopyRecordStruct (struct ArgusRecordStruct *rec)
 
             case ARGUS_EVENT:
             case ARGUS_NETFLOW:
+            case ARGUS_AFLOW:
             case ARGUS_FAR: {
                if ((retn->dsrindex = rec->dsrindex)) {
                   int i;
@@ -4017,7 +4052,7 @@ ArgusCopyRecordStruct (struct ArgusRecordStruct *rec)
             }
          }
 
-         if (retn->hdr.type & (ARGUS_FAR | ARGUS_NETFLOW))
+         if (retn->hdr.type & (ARGUS_FAR | ARGUS_NETFLOW | ARGUS_AFLOW))
             retn->rank = rec->rank;
 
          if (rec->correlates) {
@@ -4179,6 +4214,7 @@ ArgusGenerateCiscoRecord (struct ArgusRecordStruct *rec, unsigned char state, ch
          default:
             break;
 
+         case ARGUS_AFLOW:
          case ARGUS_NETFLOW:
          case ARGUS_FAR: {
             struct ArgusDSRHeader *dsr;
@@ -4707,6 +4743,7 @@ ArgusGenerateHashStruct (struct ArgusAggregatorStruct *na,  struct ArgusRecordSt
          }
 
          case ARGUS_EVENT:
+         case ARGUS_AFLOW:
          case ARGUS_NETFLOW: 
          case ARGUS_FAR: {
             struct ArgusFlow *tflow = (struct ArgusFlow *) ns->dsrs[ARGUS_FLOW_INDEX];
@@ -6365,6 +6402,7 @@ ArgusMergeRecords (const struct ArgusAggregatorStruct * const na,
             }
 
             case ARGUS_NETFLOW:
+            case ARGUS_AFLOW:
             case ARGUS_FAR: {
                struct ArgusTimeObject *ns1time = (void *)ns1->dsrs[ARGUS_TIME_INDEX];
                struct ArgusTimeObject *ns2time = (void *)ns2->dsrs[ARGUS_TIME_INDEX];
@@ -7849,10 +7887,13 @@ ArgusMergeRecords (const struct ArgusAggregatorStruct * const na,
                            if (l1->l_un.label && l2->l_un.label) {
                               if (strcmp(l1->l_un.label, l2->l_un.label)) {
                                  char *buf = calloc(1, MAXBUFFERLEN);
+                                 int len;
 
                                  if ((ArgusMergeLabel(l1->l_un.label, l2->l_un.label, buf, MAXBUFFERLEN, ARGUS_UNION)) != NULL) {
                                     free(l1->l_un.label);
                                     l1->l_un.label = strdup(buf);
+                                    len = 1 + ((strlen(buf) + 3)/4);
+                                    l1->hdr.argus_dsrvl8.len  = len;
                                  }
                                  free(buf);
                               }
@@ -9136,6 +9177,7 @@ ArgusAlignRecord(struct ArgusParserStruct *parser, struct ArgusRecordStruct *ns,
          }
 
          case ARGUS_NETFLOW:
+         case ARGUS_AFLOW:
          case ARGUS_FAR: {
             agr = (void *)ns->dsrs[ARGUS_AGR_INDEX];
 
@@ -11427,6 +11469,7 @@ ArgusFetchStartuSecTime (struct ArgusRecordStruct *ns)
       }
 
       case ARGUS_NETFLOW:
+      case ARGUS_AFLOW:
       case ARGUS_FAR: {
          struct ArgusTimeObject *dtime = (void *)ns->dsrs[ARGUS_TIME_INDEX];
 
@@ -11499,6 +11542,7 @@ ArgusFetchSrcStartTime (struct ArgusRecordStruct *ns)
 
    switch (ns->hdr.type & 0xF0) {
       case ARGUS_NETFLOW:
+      case ARGUS_AFLOW:
       case ARGUS_FAR: {
          struct ArgusTimeObject *dtime = (void *)ns->dsrs[ARGUS_TIME_INDEX];
          struct timeval stimebuf, *st = &stimebuf;
@@ -11528,6 +11572,7 @@ ArgusFetchDstStartTime (struct ArgusRecordStruct *ns)
 
    switch (ns->hdr.type & 0xF0) {
       case ARGUS_NETFLOW:
+      case ARGUS_AFLOW:
       case ARGUS_FAR: {
          struct ArgusTimeObject *dtime = (void *)ns->dsrs[ARGUS_TIME_INDEX];
          struct timeval stimebuf, *st = &stimebuf;
@@ -11896,6 +11941,7 @@ ArgusFetchSrcAddr (struct ArgusRecordStruct *argus)
       }
 
       case ARGUS_NETFLOW:
+      case ARGUS_AFLOW:
       case ARGUS_FAR: {
          if ((flow = (void *)argus->dsrs[ARGUS_FLOW_INDEX]) != NULL) {
             switch (flow->hdr.subtype & 0x3F) {
@@ -12016,6 +12062,7 @@ ArgusFetchDstAddr (struct ArgusRecordStruct *argus)
       }
 
       case ARGUS_NETFLOW:
+      case ARGUS_AFLOW:
       case ARGUS_FAR: {
          if ((flow = (void *)argus->dsrs[ARGUS_FLOW_INDEX]) != NULL) {
             switch (flow->hdr.subtype & 0x3F) {
@@ -12104,8 +12151,30 @@ ArgusFetchEtherType (struct ArgusRecordStruct *ns)
    struct ArgusMacStruct *m1 = (struct ArgusMacStruct *) ns->dsrs[ARGUS_MAC_INDEX];
    double retn = 0;
 
-   if (m1)
+   if (m1) {
       retn = m1->mac.mac_union.ether.ehdr.ether_type;
+      if (retn == ETHERTYPE_8021Q) {
+         struct ArgusFlow *f1 = (struct ArgusFlow *) ns->dsrs[ARGUS_FLOW_INDEX];
+         if (f1) {
+            switch (f1->hdr.subtype & 0x3F) {
+               case ARGUS_FLOW_CLASSIC5TUPLE: {
+                  switch (f1->hdr.argus_dsrvl8.qual & 0x1F) {
+                     case ARGUS_TYPE_IPV4:
+                        retn = ETHERTYPE_IP;
+                        break;
+                     case ARGUS_TYPE_IPV6:
+                        retn = ETHERTYPE_IPV6;
+                        break;
+                  }
+                  break;
+               }
+
+               default:
+                  break;
+            }
+         }
+      }
+   }
 
    return(retn);
 }
@@ -12739,6 +12808,7 @@ ArgusAdjustTransactions (struct ArgusRecordStruct *ns, double ptrans, double ppk
       }
 
       case ARGUS_NETFLOW:
+      case ARGUS_AFLOW:
       case ARGUS_FAR: {
          struct ArgusAgrStruct *agr = (void *)ns->dsrs[ARGUS_AGR_INDEX];
          double tpkts = ArgusFetchPktsCount(ns);

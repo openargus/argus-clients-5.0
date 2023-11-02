@@ -145,7 +145,8 @@ extern "C" {
 #define ARGUS_INDEX                             0x20   /* New Argus Index Record */
 #define ARGUS_NETFLOW                           0x30   /* Argus Cisco Netflow Originated Record */
 #define ARGUS_EVENT                             0x40   /* New Argus Event/Message Record */
-#define ARGUS_AFLOW                             0x50   /* New Argus Any Flow/Metric Record ... for things not argus flow records */
+#define ARGUS_AFLOW                             0x50   /* New Argus Any Flow/Metric Record */
+                                                       /* for converted / imported non-argus flow records */
 #define ARGUS_DATASUP                           0x60   /* New Supplemental Argus Data Record */
 #define ARGUS_ARCHIVAL                          0x70   /* New Archival Argus Data Record */
 
@@ -1622,6 +1623,10 @@ extern "C" {
 #define ARGUS_DUPLICATES		0x000C0000
 #define ARGUS_SRC_DUPLICATES    	0x00040000
 #define ARGUS_DST_DUPLICATES    	0x00080000
+
+#define ARGUS_GAP			0x00C00000
+#define ARGUS_SRC_GAP		    	0x00400000
+#define ARGUS_DST_GAP		    	0x00800000
 
 #define ARGUS_TCP_OPTIONS		0xFFF00000
 #define ARGUS_TCP_MAXSEG		0x00100000

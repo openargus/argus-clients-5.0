@@ -6221,6 +6221,7 @@ ArgusColorAddresses(struct ArgusParserStruct *parser, struct ArgusRecordStruct *
          }
 
          case ARGUS_NETFLOW:
+      case ARGUS_AFLOW:
          case ARGUS_FAR: {
             if (flow) {
                int i, done;

@@ -3124,8 +3124,9 @@ RaReadLocalityConfig (struct ArgusParserStruct *parser, struct ArgusLabelerStruc
                   }
 
                   default:
-                     if (RaInsertLocalityTree (parser, labeler, ptr))
-                        ArgusLog (LOG_ERR, "RaReadLocalityConfig: Syntax error: file %s line number %d\n", file, linenum);
+                     if (strlen(ptr))
+                        if (RaInsertLocalityTree (parser, labeler, ptr))
+                           ArgusLog (LOG_ERR, "RaReadLocalityConfig: Syntax error: file %s line number %d\n", file, linenum);
                      break;
                }
             }

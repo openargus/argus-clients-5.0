@@ -163,6 +163,8 @@ ArgusInitializeParser(struct ArgusParserStruct *parser)
 
 #if defined(ARGUS_THREADS)
    pthread_mutex_init(&parser->lock, NULL);
+   pthread_mutex_init(&parser->sync, NULL);
+   pthread_cond_init(&parser->cond, NULL);
 #endif
 
    gettimeofday(&parser->ArgusStartRealTime, 0L);
@@ -177,8 +179,8 @@ ArgusCloseParser(struct ArgusParserStruct *parser)
 #define ARGUSPERFMETRICS		1
 */
 #if defined(ARGUSPERFMETRICS)
-   extern int ArgusAllocMax, ArgusAllocBytes;
-   extern int ArgusAllocTotal, ArgusFreeTotal;
+   extern unsigned int ArgusAllocMax, ArgusAllocBytes;
+   extern unsigned int ArgusAllocTotal, ArgusFreeTotal;
 
    struct timeval timediff;
    int x = 0 , len;
@@ -296,7 +298,7 @@ ArgusCloseParser(struct ArgusParserStruct *parser)
    if (parser->MySQLDBEngine != NULL)
       free(ArgusParser->MySQLDBEngine);
 
-   parser->debugflag = -1;
+   parser->debugflag = 0;
 
    if (parser->ArgusProgramArgs != NULL)
       ArgusFree(parser->ArgusProgramArgs);

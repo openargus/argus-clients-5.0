@@ -9,7 +9,7 @@
 Summary: Gargoyle Client Software
 Name: argus-clients%{?_workstation:-workstation}
 Version: %ver
-Release: %rel%{dist}.2
+Release: %rel%{dist}.3
 License: Proprietary
 Group: Applications/Internet
 Source: %{srcname}-%{version}.%{rel}.tar%{srcext}
@@ -64,17 +64,20 @@ cp -av support $RPM_BUILD_ROOT/%{argusdocs}/
 mkdir -p /home/argus
 %systemd_post radium.service
 %systemd_post rastream.service
+%systemd_post rastatus.service
 ln -s %{argusbin}/rastream %{argusbin}/rasplit
 ln -s /etc/pam.d/system-auth /etc/pam.d/radium
 
 %preun
 %systemd_preun radium.service
 %systemd_preun rastream.service
+%systemd_preun rastatus.service
 %systemd_preun rasqlinsert@ipv4matrix
 
 %postun
 %systemd_postun_with_restart radium.service
 %systemd_postun_with_restart rastream.service
+%systemd_postun_with_restart rastatus.service
 rm -f %{argusbin}/rasplit
 rm -f /etc/pam.d/radium
 %else
@@ -100,7 +103,7 @@ rm -f %{argusbin}/rasplit
 %{argusman}/man8/radium.8.gz
 %{argusman}/man1/ranonymize.1.gz
 %{argusman}/man1/rasort.1.gz
-%{argusman}/man1/rasplit.1.gz
+%ghost %{argusman}/man1/rasplit.1.gz
 %{argusman}/man1/rastream.1.gz
 %{argusman}/man1/ramanage.1.gz
 %{argusman}/man5/ramanage.conf.5.gz
@@ -124,8 +127,10 @@ rm -f %{argusbin}/rasplit
 %config /usr/argus/ralabel.country.conf
 %ghost /etc/pam.d/radium
 %{argussbin}/radium-setup
+%{argussbin}/rastatus-setup
 %{_unitdir}/radium.service
 %{_unitdir}/rastream.service
+%{_unitdir}/rastatus.service
 %config /etc/sysconfig/radium
 %config /etc/sysconfig/rastream
 %{argussbin}/rastream-process
@@ -133,6 +138,7 @@ rm -f %{argusbin}/rasplit
 %{_unitdir}/rahosts-nightly.service
 %{_unitdir}/raports-nightly.timer
 %{_unitdir}/raports-nightly.service
+%{argussbin}/rawatcher-process
 %{perl_vendorlib}/qosient/util.pm
 %else
 %{_unitdir}/rasplit.service
@@ -355,9 +361,11 @@ Copyright 2000-2016 QoSient, LLC
 %{_sbindir}/dbaseRollup-nightly
 %{_unitdir}/dbaseRollup-nightly.timer
 %{_unitdir}/dbaseRollup-nightly.service
+%{_datarootdir}/argus-clients/rasqlinsert.ethermatrix
 %{_datarootdir}/argus-clients/rasqlinsert.ether
 %{_datarootdir}/argus-clients/rasqlinsert.ipmatrix
 %{_datarootdir}/argus-clients/rasqlinsert.l2_l3
+%{_datarootdir}/argus-clients/rasqlinsert.eflows
 %{_datarootdir}/argus-clients/rasqlinsert.ldap
 %{_datarootdir}/argus-clients/rasqlinsert.man
 %{_datarootdir}/argus-clients/rasqlinsert.ntp

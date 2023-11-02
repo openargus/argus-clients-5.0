@@ -73,11 +73,15 @@ ArgusExpandBackticks(const char * const in)
    char *res = NULL;
    char *optargstart;
    char *optarg = strdup(in);
+   char *ptr;
    FILE *fd;
 
    optargstart = optarg;
    optarg++;
-   optarg[strlen(optarg) - 1] = '\0';
+
+   if ((ptr = strrchr(optarg, '`')) != NULL) {
+       *ptr = '\0';
+   }
 
    if (!(strcmp (optarg, "hostname"))) {
       if ((fd = popen("hostname", "r")) != NULL) {

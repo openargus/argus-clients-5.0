@@ -255,7 +255,15 @@ The available fields to print are:
 .RS
 .TP 12
 .B srcid
-argus source identifier.
+Argus source identifier.  In V3 records this is a 32-bit integer, IP address, or 4byte ascii string.
+In V5 records, the srcid is composed of the 128-bit 'sid' or source id, and an optional 4-char 'inf'
+or interface identifier, separated by a '/'.  You can print out the 'sid' and 'inf' components separately.
+.TP
+.B sid
+Argus source identifier. Introduced in V5 records. The 'sid' is a maximu
+.TP
+.B inf
+Optional 4-char string interface identifier for this flow data.
 .TP
 .B rank
 Ordinal value of this output flow record i.e. sequence number.
@@ -945,7 +953,7 @@ the \fItype\fP.  The list of valid encapsulation types is:
 .nf
 .sp .5
 
- mpls, eth, 802q, llc, pppoe, isl, gre, ah, ipnip, ipnip6, chdlc
+ mpls, eth, 802q, llc, pppoe, vxlan, isl, gre, ah, ipnip, ipnip6, chdlc
 .IP "\fBdst host \fIhost\fR"
 True if the IP destination field in the Argus record is \fIhost\fP,
 which may be either an address or a name.
@@ -1289,6 +1297,7 @@ The format is:
   w       -  802.11 wireless encapsulation
   p       -  PPP over Enternet encapsulated flow
   i       -  ISL encapsulated flow
+  x       -  VXLAN encapsulation
   G       -  GRE encapsulation
   a       -  AH encapsulation
   P       -  IP tunnel encapsulation

@@ -327,8 +327,8 @@ ArgusReadStreamSocket (struct ArgusParserStruct *parser, struct ArgusInput *inpu
    int retn = 0, cnt = 0, done = 0;
    int bytes = 0, rbytes = 0;
 
-   if (!(input))
-      return (retn);
+   if (!(input) || parser->RaParseDone)
+      return (1);
 
    bytes = (input->ArgusBufferLen - input->ArgusReadSocketCnt);
    bytes = (bytes > ARGUS_MAX_BUFFER_READ) ? ARGUS_MAX_BUFFER_READ : bytes;
@@ -367,10 +367,20 @@ ArgusReadStreamSocket (struct ArgusParserStruct *parser, struct ArgusInput *inpu
                   else
                      retn = 1;
                } else {
+               if (parser->fflag) {
+                  struct timespec tsbuf = {0, 250000000}, *ts = &tsbuf;
+#ifdef ARGUSDEBUG
+                  ArgusDebug (2, "ArgusGetPackets () pcap_dispatch read 0 packets...sleeping", retn);
+#endif
+                  nanosleep(ts, NULL);
+                  gettimeofday (&parser->ArgusGlobalTime, NULL);
+               } else {
                   if ((retn = feof(input->file))) {
                      done++;
                      retn = 1;
                   }
+               }
+
                }
             }
          }
@@ -486,13 +496,12 @@ ArgusReadStreamSocket (struct ArgusParserStruct *parser, struct ArgusInput *inpu
                }
                break;
             }
-
          }
 
          if (rec && !done && !parser->RaParseDone) {
             int len = 0;
 
-            if ((len = ArgusHandleRecord (ArgusParser, input, rec, 0, &ArgusParser->ArgusFilterCode)) < 0) {
+            if ((len = ArgusHandleRecord (parser, input, rec, 0, &parser->ArgusFilterCode)) < 0) {
                switch (len) {
                   case -1: {
                      input->offset += length;
@@ -577,28 +586,24 @@ ArgusReadFileStream (struct ArgusParserStruct *parser, struct ArgusInput *input)
    parser->status &= ~(ARGUS_READING_FILES | ARGUS_READING_STDIN | ARGUS_READING_REMOTE);
    parser->status |=   ARGUS_READING_FILES;
       
-   while (input && !done) {
-      
+   while (input && !done && !parser->RaParseDone) {
       switch (input->type & ARGUS_DATA_TYPE) {
          case ARGUS_DATA_SOURCE:
          case ARGUS_V2_DATA_SOURCE:
             if ((retn = ArgusReadStreamSocket (parser, input)) > 0) {
-               ArgusCloseInput(parser, input);
                done++;
             }
             break;
 
          case ARGUS_CISCO_DATA_SOURCE:
             if ((retn = ArgusReadCiscoStreamSocket (parser, input)) > 0) {
-               ArgusCloseInput(parser, input);
                done++;
             }
             break;
 
       }
 
-      if (parser->RaClientTimeoutAbs.tv_sec > 0 &&
-               ArgusCheckTimeout(parser, input)) {
+      if (parser->RaClientTimeoutAbs.tv_sec > 0 && ArgusCheckTimeout(parser, input)) {
          ArgusClientTimeout ();
 
          if (ArgusParser->Tflag) {
@@ -793,6 +798,13 @@ ArgusReadStream (struct ArgusParserStruct *parser, struct ArgusQueueStruct *queu
             if (input->fd >= 0) {
                FD_SET (input->fd, &readmask);
                width = (width < input->fd) ? input->fd : width;
+            } else {
+               if (!(parser->RaShutDown) && (parser->ArgusReliableConnection)) {
+                  if (input->qhdr.queue != NULL) {
+                     ArgusRemoveFromQueue(input->qhdr.queue, &input->qhdr, ARGUS_NOLOCK);
+                     ArgusAddToQueue(parser->ArgusRemoteHosts, &input->qhdr, ARGUS_LOCK);
+                  }
+               }
             }
             input = (void *)input->qhdr.nxt;
          }
@@ -971,7 +983,6 @@ ArgusReadStream (struct ArgusParserStruct *parser, struct ArgusQueueStruct *queu
 #endif
 
       }
-
    }
 
 #ifdef ARGUSDEBUG
@@ -2697,6 +2708,15 @@ ArgusGenerateRecordStruct (struct ArgusParserStruct *parser, struct ArgusInput *
                         break;
                      }
 
+                     case ARGUS_VXLAN_DSR: {
+                        struct ArgusVxLanStruct *vxlan = (struct ArgusVxLanStruct *) dsr;
+
+                        bcopy((char *)vxlan, (char *)&canon->vxlan, cnt);
+                        retn->dsrs[ARGUS_VXLAN_INDEX] = (struct ArgusDSRHeader*) &canon->vxlan;
+                        retn->dsrindex |= (0x01 << ARGUS_VXLAN_INDEX);
+                        break;
+                     }
+
                      case ARGUS_MPLS_DSR: {
                         struct ArgusMplsStruct *mpls = (struct ArgusMplsStruct *) dsr;
                         unsigned int *mlabel = (unsigned int *)(dsr + 1);
@@ -2731,34 +2751,57 @@ ArgusGenerateRecordStruct (struct ArgusParserStruct *parser, struct ArgusInput *
                      }
 
                      case ARGUS_AGR_DSR: {
-                        struct ArgusOutputAgrStruct *agr = (struct ArgusOutputAgrStruct *) dsr;
-                        int agrLen = sizeof(*agr);
-                
-                        if (agrLen == sizeof(struct ArgusAgrStruct)) {
-                           bcopy (agr, &canon->agr, agrLen);
-                        } else {
-                           canon->agr.hdr = agr->hdr;
-                           canon->agr.hdr.argus_dsrvl8.len = sizeof(struct ArgusAgrStruct)/4;
+#if defined(HAVE_XDR)
+                        struct ArgusAgrStruct *agr = (struct ArgusAgrStruct *) dsr;
 
+                        if (cnt != sizeof(*agr)) {
+/* 
+   This is legacy ArgusOutputAgrStruct kind of input (V3 ?).
+                           struct ArgusOutputAgrStruct *oagr = (struct ArgusOutputAgrStruct *) dsr;
+                           struct ArgusStatsObject *tstat = (struct ArgusStatsObject *) &agr->act;
+                           int agrlen = sizeof(*oagr);
+*/
+
+                        } else {
+                           bcopy(agr, &canon->agr, sizeof(*agr));
+                          
+/* 
+                           struct ArgusStatObject *stat, *tstat;
+                           XDR xdrbuf, *xdrs = &xdrbuf;
+
+   We haven't been using XDR for this struct, but when we do ... next version ...
+
+                           canon->agr.hdr = agr->hdr;
                            canon->agr.count = agr->count;
                            canon->agr.laststartime = agr->laststartime;
                            canon->agr.lasttime = agr->lasttime;
 
-                           canon->agr.act.n       = agr->act.n;
-                           canon->agr.act.minval  = agr->act.minval;
-                           canon->agr.act.meanval = agr->act.meanval;
-                           canon->agr.act.stdev   = agr->act.stdev;
-                           canon->agr.act.maxval  = agr->act.maxval;
+                           stat  = &canon->agr.act;
+                           tstat = &agr->act;
+                           xdrmem_create(xdrs, (char *)tstat, sizeof(*stat), XDR_DECODE);
+                           xdr_int(xdrs,   &stat->n);
+                           xdr_float(xdrs, &stat->minval);
+                           xdr_float(xdrs, &stat->meanval);
+                           xdr_float(xdrs, &stat->stdev);
+                           xdr_float(xdrs, &stat->maxval);
+                           
+                           bcopy(tstat->fdist, stat->fdist, sizeof (stat->fdist));
 
-                           canon->agr.idle.n       = agr->idle.n;
-                           canon->agr.idle.minval  = agr->idle.minval;
-                           canon->agr.idle.meanval = agr->idle.meanval;
-                           canon->agr.idle.stdev   = agr->idle.stdev;
-                           canon->agr.idle.maxval  = agr->idle.maxval;
+                           stat = &canon->agr.idle;
+                           tstat = &agr->idle;
+                           xdrmem_create(xdrs, (char *)tstat, sizeof(*stat), XDR_DECODE);
+                           xdr_int(xdrs,   &stat->n);
+                           xdr_float(xdrs, &stat->minval);
+                           xdr_float(xdrs, &stat->meanval);
+                           xdr_float(xdrs, &stat->stdev);
+                           xdr_float(xdrs, &stat->maxval);
 
+                           bcopy(tstat->fdist, stat->fdist, sizeof (stat->fdist));
+*/
                            retn->dsrs[ARGUS_AGR_INDEX] = (struct ArgusDSRHeader*) &canon->agr;
                            retn->dsrindex |= (0x01 << ARGUS_AGR_INDEX);
                         }
+#endif
                         break;
                      }
 
@@ -3180,6 +3223,7 @@ ArgusGenerateRecordStruct (struct ArgusParserStruct *parser, struct ArgusInput *
                   if (!(parser->ArgusDSRFields[x])) {
                      retn->dsrs[x] = NULL;
                      retn->dsrindex &= ~(0x01 << x);
+                     retn->status |= ARGUS_RECORD_MODIFIED;
                   } else {
                      switch (x) {
                         case ARGUS_JITTER_INDEX: {
@@ -3805,152 +3849,151 @@ ArgusCopyRecordStruct (struct ArgusRecordStruct *rec)
                      struct ArgusDSRHeader *dsr;
                      if ((dsr = rec->dsrs[i]) != NULL) {
                         if (dsr->type) {
-                        int len = (((dsr->type & ARGUS_IMMEDIATE_DATA) ? 1 :
-                                   ((dsr->subtype & ARGUS_LEN_16BITS)  ? dsr->argus_dsrvl16.len :
-                                                                         dsr->argus_dsrvl8.len)));
-                        if (len == 0)
-                           ArgusLog (LOG_ERR, "ArgusCopyRecordStruct: dsr %d len is zero\n", i);
-
-                        switch (i) {
-                           case ARGUS_TRANSPORT_INDEX:
-                           case ARGUS_FLOW_HASH_INDEX:
-                           case ARGUS_TIME_INDEX:
-                           case ARGUS_METRIC_INDEX:
-                           case ARGUS_PSIZE_INDEX:
-                           case ARGUS_IPATTR_INDEX:
-                           case ARGUS_ICMP_INDEX:
-                           case ARGUS_ENCAPS_INDEX:
-                           case ARGUS_MAC_INDEX:
-                           case ARGUS_VLAN_INDEX:
-                           case ARGUS_MPLS_INDEX:
-                           case ARGUS_ASN_INDEX:
-                           case ARGUS_AGR_INDEX:
-                           case ARGUS_BEHAVIOR_INDEX:
-                           case ARGUS_SCORE_INDEX:
-                           case ARGUS_COCODE_INDEX:
-                           case ARGUS_COR_INDEX: 
-                           case ARGUS_GEO_INDEX: 
-                           case ARGUS_LOCAL_INDEX: {
-                              if ((retn->dsrs[i] = ArgusCalloc(1, len * 4)) == NULL)
-                                 ArgusLog (LOG_ERR, "ArgusCopyRecordStruct: ArgusCalloc error %s\n", strerror(errno));
-                              bcopy((char *)rec->dsrs[i], (char *)retn->dsrs[i], len * 4);
-                              break;
-                           }
-
-                           case ARGUS_FLOW_INDEX: {
-                              if ((retn->dsrs[i] = ArgusCalloc(1, sizeof(struct ArgusFlow))) == NULL)
-                                 ArgusLog (LOG_ERR, "ArgusCopyRecordStruct: ArgusCalloc error %s\n", strerror(errno));
-                              bcopy((char *)rec->dsrs[i], (char *)retn->dsrs[i], len * 4);
-                              break;
-                           }
-
-                           case ARGUS_NETWORK_INDEX: {
-                              struct ArgusNetworkStruct *net = (struct ArgusNetworkStruct *) dsr;
-                              switch (net->hdr.subtype) {
-                                 case ARGUS_TCP_INIT:
-                                 case ARGUS_TCP_STATUS:
-                                 case ARGUS_TCP_PERF: {
-                                    if ((retn->dsrs[i] = ArgusCalloc(1, sizeof(struct ArgusTCPObject) + 4)) == NULL)
-                                       ArgusLog (LOG_ERR, "ArgusCopyRecordStruct: ArgusCalloc error %s\n", strerror(errno));
-                                    break;
-                                 }
-                                 default: {
+                           int len = (((dsr->type & ARGUS_IMMEDIATE_DATA) ? 1 :
+                                      ((dsr->subtype & ARGUS_LEN_16BITS)  ? dsr->argus_dsrvl16.len :
+                                                                            dsr->argus_dsrvl8.len)));
+                           if (len > 0) {
+                              switch (i) {
+                                 case ARGUS_TRANSPORT_INDEX:
+                                 case ARGUS_FLOW_HASH_INDEX:
+                                 case ARGUS_TIME_INDEX:
+                                 case ARGUS_METRIC_INDEX:
+                                 case ARGUS_PSIZE_INDEX:
+                                 case ARGUS_IPATTR_INDEX:
+                                 case ARGUS_ICMP_INDEX:
+                                 case ARGUS_ENCAPS_INDEX:
+                                 case ARGUS_MAC_INDEX:
+                                 case ARGUS_VLAN_INDEX:
+                                 case ARGUS_MPLS_INDEX:
+                                 case ARGUS_ASN_INDEX:
+                                 case ARGUS_AGR_INDEX:
+                                 case ARGUS_BEHAVIOR_INDEX:
+                                 case ARGUS_SCORE_INDEX:
+                                 case ARGUS_COCODE_INDEX:
+                                 case ARGUS_COR_INDEX: 
+                                 case ARGUS_GEO_INDEX: 
+                                 case ARGUS_LOCAL_INDEX: {
                                     if ((retn->dsrs[i] = ArgusCalloc(1, len * 4)) == NULL)
                                        ArgusLog (LOG_ERR, "ArgusCopyRecordStruct: ArgusCalloc error %s\n", strerror(errno));
+                                    bcopy((char *)rec->dsrs[i], (char *)retn->dsrs[i], len * 4);
+                                    break;
+                                 }
+
+                                 case ARGUS_FLOW_INDEX: {
+                                    if ((retn->dsrs[i] = ArgusCalloc(1, sizeof(struct ArgusFlow))) == NULL)
+                                       ArgusLog (LOG_ERR, "ArgusCopyRecordStruct: ArgusCalloc error %s\n", strerror(errno));
+                                    bcopy((char *)rec->dsrs[i], (char *)retn->dsrs[i], len * 4);
+                                    break;
+                                 }
+
+                                 case ARGUS_NETWORK_INDEX: {
+                                    struct ArgusNetworkStruct *net = (struct ArgusNetworkStruct *) dsr;
+                                    switch (net->hdr.subtype) {
+                                       case ARGUS_TCP_INIT:
+                                       case ARGUS_TCP_STATUS:
+                                       case ARGUS_TCP_PERF: {
+                                          if ((retn->dsrs[i] = ArgusCalloc(1, sizeof(struct ArgusTCPObject) + 4)) == NULL)
+                                             ArgusLog (LOG_ERR, "ArgusCopyRecordStruct: ArgusCalloc error %s\n", strerror(errno));
+                                          break;
+                                       }
+                                       default: {
+                                          if ((retn->dsrs[i] = ArgusCalloc(1, len * 4)) == NULL)
+                                             ArgusLog (LOG_ERR, "ArgusCopyRecordStruct: ArgusCalloc error %s\n", strerror(errno));
+                                          break;
+                                       }
+                                    }
+                                    bcopy((char *)rec->dsrs[i], (char *)retn->dsrs[i], len * 4);
+                                    break;
+                                 }
+
+                                 case ARGUS_JITTER_INDEX: {
+                                    struct ArgusJitterStruct *tjit, *jitter = (void *)rec->dsrs[i];
+
+                                    if ((retn->dsrs[i] = ArgusCalloc(1, len * 4)) == NULL)
+                                       ArgusLog (LOG_ERR, "ArgusCopyRecordStruct: ArgusCalloc error %s\n", strerror(errno));
+
+                                    tjit = (void *)retn->dsrs[i];
+                                    bcopy((char *)rec->dsrs[i], (char *)tjit, len * 4);
+
+                                    if (jitter->hdr.subtype & ARGUS_HISTO_LINEAR) {
+                                       struct ArgusHistoObject *histo  = &jitter->src.act.dist_union.linear;
+                                       struct ArgusHistoObject *thisto = &tjit->src.act.dist_union.linear;
+
+                                       if (histo->hdr.type == ARGUS_HISTO_DSR)
+                                          if (histo->hdr.argus_dsrvl8.len > sizeof(histo)/4) {
+                                             int len = ((histo->hdr.argus_dsrvl8.len - sizeof(histo)/4) + 1) * 4;
+                                             thisto->data = ArgusCalloc(1, len);
+                                             bcopy((char *)histo->data, thisto->data, len);
+                                          }
+
+                                       histo  = &jitter->src.idle.dist_union.linear;
+                                       thisto = &tjit->src.idle.dist_union.linear;
+                                       if (histo->hdr.type == ARGUS_HISTO_DSR)
+                                          if (histo->hdr.argus_dsrvl8.len > sizeof(histo)/4) {
+                                             int len = ((histo->hdr.argus_dsrvl8.len - sizeof(histo)/4) + 1) * 4;
+                                             thisto->data = ArgusCalloc(1, len);
+                                             bcopy((char *)histo->data, thisto->data, len);
+                                          }
+
+                                       histo = &jitter->dst.act.dist_union.linear;
+                                       thisto = &tjit->dst.act.dist_union.linear;
+                                       if (histo->hdr.type == ARGUS_HISTO_DSR)
+                                          if (histo->hdr.argus_dsrvl8.len > sizeof(histo)/4) {
+                                             int len = ((histo->hdr.argus_dsrvl8.len - sizeof(histo)/4) + 1) * 4;
+                                             thisto->data = ArgusCalloc(1, len);
+                                             bcopy((char *)histo->data, thisto->data, len);
+                                          }
+
+                                       histo = &jitter->dst.idle.dist_union.linear;
+                                       thisto = &tjit->dst.idle.dist_union.linear;
+                                       if (histo->hdr.type == ARGUS_HISTO_DSR)
+                                          if (histo->hdr.argus_dsrvl8.len > sizeof(histo)/4) {
+                                             int len = ((histo->hdr.argus_dsrvl8.len - sizeof(histo)/4) + 1) * 4;
+                                             thisto->data = ArgusCalloc(1, len);
+                                             bcopy((char *)histo->data, thisto->data, len);
+                                          }
+                                    }
+                                    break;
+                                 }
+
+                                 case ARGUS_LABEL_INDEX: {
+                                    struct ArgusLabelStruct *label = (void *)rec->dsrs[i];
+                                    int slen;
+
+                                    if ((retn->dsrs[i] = ArgusCalloc(1, sizeof(struct ArgusLabelStruct))) == NULL)
+                                       ArgusLog (LOG_ERR, "ArgusCopyRecordStruct: ArgusCalloc error %s\n", strerror(errno));
+
+                                    bcopy((char *)rec->dsrs[i], (char *)retn->dsrs[i], sizeof(struct ArgusLabelStruct));
+
+                                    if (label->l_un.label != NULL) {
+                                       struct ArgusLabelStruct *tlabel = (void *)retn->dsrs[i];
+
+                                       if ((slen = strlen(label->l_un.label)) > 0) {
+                                          int blen = (label->hdr.argus_dsrvl8.len - 1) * 4;
+
+                                          tlabel->l_un.label = calloc(1, blen + 1);
+                                          bcopy((char *)label->l_un.label, tlabel->l_un.label, (blen > slen) ? slen : blen);
+
+                                       } else {
+                                          free(tlabel->l_un.label);
+                                          tlabel->l_un.label = NULL;
+                                       }
+                                    }
+                                    break;
+                                 }
+
+                                 case ARGUS_SRCUSERDATA_INDEX: 
+                                 case ARGUS_DSTUSERDATA_INDEX: {
+                                    struct ArgusDataStruct *user = (struct ArgusDataStruct *) rec->dsrs[i];
+                                    len = ((user->size + 8) + 3) / 4;
+                                    if ((retn->dsrs[i] = (struct ArgusDSRHeader *) ArgusCalloc(1, len * 4)) == NULL)
+                                       ArgusLog (LOG_ERR, "ArgusCopyRecordStruct: ArgusCalloc error %s\n", strerror(errno));
+
+                                    bcopy (rec->dsrs[i], retn->dsrs[i], len * 4);
                                     break;
                                  }
                               }
-                              bcopy((char *)rec->dsrs[i], (char *)retn->dsrs[i], len * 4);
-                              break;
                            }
-
-                           case ARGUS_JITTER_INDEX: {
-                              struct ArgusJitterStruct *tjit, *jitter = (void *)rec->dsrs[i];
-
-                              if ((retn->dsrs[i] = ArgusCalloc(1, len * 4)) == NULL)
-                                 ArgusLog (LOG_ERR, "ArgusCopyRecordStruct: ArgusCalloc error %s\n", strerror(errno));
-
-                              tjit = (void *)retn->dsrs[i];
-                              bcopy((char *)rec->dsrs[i], (char *)tjit, len * 4);
-
-                              if (jitter->hdr.subtype & ARGUS_HISTO_LINEAR) {
-                                 struct ArgusHistoObject *histo  = &jitter->src.act.dist_union.linear;
-                                 struct ArgusHistoObject *thisto = &tjit->src.act.dist_union.linear;
-
-                                 if (histo->hdr.type == ARGUS_HISTO_DSR)
-                                    if (histo->hdr.argus_dsrvl8.len > sizeof(histo)/4) {
-                                       int len = ((histo->hdr.argus_dsrvl8.len - sizeof(histo)/4) + 1) * 4;
-                                       thisto->data = ArgusCalloc(1, len);
-                                       bcopy((char *)histo->data, thisto->data, len);
-                                    }
-
-                                 histo  = &jitter->src.idle.dist_union.linear;
-                                 thisto = &tjit->src.idle.dist_union.linear;
-                                 if (histo->hdr.type == ARGUS_HISTO_DSR)
-                                    if (histo->hdr.argus_dsrvl8.len > sizeof(histo)/4) {
-                                       int len = ((histo->hdr.argus_dsrvl8.len - sizeof(histo)/4) + 1) * 4;
-                                       thisto->data = ArgusCalloc(1, len);
-                                       bcopy((char *)histo->data, thisto->data, len);
-                                    }
-
-                                 histo = &jitter->dst.act.dist_union.linear;
-                                 thisto = &tjit->dst.act.dist_union.linear;
-                                 if (histo->hdr.type == ARGUS_HISTO_DSR)
-                                    if (histo->hdr.argus_dsrvl8.len > sizeof(histo)/4) {
-                                       int len = ((histo->hdr.argus_dsrvl8.len - sizeof(histo)/4) + 1) * 4;
-                                       thisto->data = ArgusCalloc(1, len);
-                                       bcopy((char *)histo->data, thisto->data, len);
-                                    }
-
-                                 histo = &jitter->dst.idle.dist_union.linear;
-                                 thisto = &tjit->dst.idle.dist_union.linear;
-                                 if (histo->hdr.type == ARGUS_HISTO_DSR)
-                                    if (histo->hdr.argus_dsrvl8.len > sizeof(histo)/4) {
-                                       int len = ((histo->hdr.argus_dsrvl8.len - sizeof(histo)/4) + 1) * 4;
-                                       thisto->data = ArgusCalloc(1, len);
-                                       bcopy((char *)histo->data, thisto->data, len);
-                                    }
-                              }
-                              break;
-                           }
-
-                           case ARGUS_LABEL_INDEX: {
-                              struct ArgusLabelStruct *label = (void *)rec->dsrs[i];
-                              int slen;
-
-                              if ((retn->dsrs[i] = ArgusCalloc(1, sizeof(struct ArgusLabelStruct))) == NULL)
-                                 ArgusLog (LOG_ERR, "ArgusCopyRecordStruct: ArgusCalloc error %s\n", strerror(errno));
-
-                              bcopy((char *)rec->dsrs[i], (char *)retn->dsrs[i], sizeof(struct ArgusLabelStruct));
-
-                              if (label->l_un.label != NULL) {
-                                 struct ArgusLabelStruct *tlabel = (void *)retn->dsrs[i];
-
-                                 if ((slen = strlen(label->l_un.label)) > 0) {
-                                    int blen = (label->hdr.argus_dsrvl8.len - 1) * 4;
-
-                                    tlabel->l_un.label = calloc(1, blen + 1);
-                                    bcopy((char *)label->l_un.label, tlabel->l_un.label, (blen > slen) ? slen : blen);
-
-                                 } else {
-                                    free(tlabel->l_un.label);
-                                    tlabel->l_un.label = NULL;
-                                 }
-                              }
-                              break;
-                           }
-
-                           case ARGUS_SRCUSERDATA_INDEX: 
-                           case ARGUS_DSTUSERDATA_INDEX: {
-                              struct ArgusDataStruct *user = (struct ArgusDataStruct *) rec->dsrs[i];
-                              len = ((user->size + 8) + 3) / 4;
-                              if ((retn->dsrs[i] = (struct ArgusDSRHeader *) ArgusCalloc(1, len * 4)) == NULL)
-                                 ArgusLog (LOG_ERR, "ArgusCopyRecordStruct: ArgusCalloc error %s\n", strerror(errno));
-
-                              bcopy (rec->dsrs[i], retn->dsrs[i], len * 4);
-                              break;
-                           }
-                        }
                         }
                      }
                   }
@@ -4337,7 +4380,7 @@ RaNewBinProcess (struct ArgusParserStruct *parser, int size)
    retn->arraylen = size;
 
 #ifdef ARGUSDEBUG
-   ArgusDebug (2, "RaNewBinProcess(%p, %d) returns %p\n", parser, size, retn);
+   ArgusDebug (6, "RaNewBinProcess(%p, %d) returns %p\n", parser, size, retn);
 #endif
    return (retn);
 }
@@ -4404,7 +4447,7 @@ RaNewBin (struct ArgusParserStruct *parser, struct RaBinProcessStruct *rbps, str
    retn->size  = rbps->size;
 
 #ifdef ARGUSDEBUG
-   ArgusDebug (2, "RaNewBin(%p, %p, %p, %lld, %d) returns %p\n", parser, rbps, ns, startpt, sindex, retn);
+   ArgusDebug (6, "RaNewBin(%p, %p, %p, %lld, %d) returns %p\n", parser, rbps, ns, startpt, sindex, retn);
 #endif
    return (retn);
 }
@@ -4725,37 +4768,40 @@ ArgusGenerateHashStruct (struct ArgusAggregatorStruct *na,  struct ArgusRecordSt
                                        switch (flow->hdr.argus_dsrvl8.qual & 0x1F) {
                                           case ARGUS_TYPE_IPV4:
                                              switch (flow->ip_flow.ip_p) {
-                                                case IPPROTO_ESP: { 
+                                                case IPPROTO_ESP: {
                                                    slen   = (i == ARGUS_MASK_SPORT) ? -1 : 4;
                                                    offset = (i == ARGUS_MASK_SPORT) ? -1 : na->ArgusMaskDefs[i].offset;
                                                    break;
                                                 }
 
-//                                              case IPPROTO_ICMP: {
-//                                                 if (i == ARGUS_MASK_SPORT) {
-//                                                    slen = 1;
-//                                                    offset = na->ArgusMaskDefs[i].offset;
-//                                                 } else {
-//                                                    switch (flow->icmp_flow.type) {
-//                                                       case ICMP_MASKREQ:
-//                                                       case ICMP_ECHO:
-//                                                       case ICMP_TSTAMP:
-//                                                       case ICMP_IREQ: 
-//                                                       case ICMP_MASKREPLY:
-//                                                       case ICMP_ECHOREPLY:
-//                                                       case ICMP_TSTAMPREPLY:
-//                                                       case ICMP_IREQREPLY:
-//                                                          offset = na->ArgusMaskDefs[i].offset - 1;
-//                                                          slen = 5;
-//                                                          break;
-//
-//                                                       default:
-//                                                          offset = na->ArgusMaskDefs[i].offset - 1;
-//                                                          slen = 1;
-//                                                    }
-//                                                 }
-//                                                 break;
-//                                              }
+                                                case IPPROTO_ICMP: {
+                                                   if (i == ARGUS_MASK_SPORT) {
+                                                      slen = 1;
+                                                      offset = na->ArgusMaskDefs[i].offset;
+                                                   } else {
+                                                      switch (flow->icmp_flow.type) {
+                                                         case ICMP_ECHO:
+                                                         case ICMP_ECHOREPLY:
+                                                            slen = -1;
+                                                            break;
+
+                                                         case ICMP_MASKREQ:
+                                                         case ICMP_TSTAMP:
+                                                         case ICMP_IREQ: 
+                                                         case ICMP_MASKREPLY:
+                                                         case ICMP_TSTAMPREPLY:
+                                                         case ICMP_IREQREPLY:
+                                                            offset = na->ArgusMaskDefs[i].offset - 1;
+                                                            slen = 5;
+                                                            break;
+  
+                                                         default:
+                                                            offset = na->ArgusMaskDefs[i].offset - 1;
+                                                            slen = 1;
+                                                      }
+                                                   }
+                                                   break;
+                                                }
                                              }
                                              break;  
                                        }
@@ -6325,20 +6371,28 @@ ArgusMergeRecords (const struct ArgusAggregatorStruct * const na,
                struct ArgusMetricStruct *ns1metric = (void *)ns1->dsrs[ARGUS_METRIC_INDEX];
                struct ArgusMetricStruct *ns2metric = (void *)ns2->dsrs[ARGUS_METRIC_INDEX];
 
-               double deltaSrcTime = 0.0;
-               double deltaDstTime = 0.0;
+               double deltaSrcFlowTime = 0.0;
+               double deltaDstFlowTime = 0.0;
 
                if ((ns1time && ns2time) && (ns1metric && ns2metric)) {
-                  double snst1 = (ns1time->src.end.tv_sec * 1000000LL) + ns1time->src.end.tv_usec;
-                  double dnst1 = (ns1time->dst.end.tv_sec * 1000000LL) + ns1time->dst.end.tv_usec;
-                  double snst2 = (ns2time->src.start.tv_sec * 1000000LL) + ns2time->src.start.tv_usec;
-                  double dnst2 = (ns2time->dst.start.tv_sec * 1000000LL) + ns2time->dst.start.tv_usec;
+                  double senst1 = (ns1time->src.end.tv_sec * 1000000LL) + ns1time->src.end.tv_usec;
+                  double denst1 = (ns1time->dst.end.tv_sec * 1000000LL) + ns1time->dst.end.tv_usec;
 
-                  if (ns1metric->src.pkts && ns2metric->src.pkts)
-                     deltaSrcTime = fabs(snst1 - snst2)/1000000.0;
+                  double ssnst2 = (ns2time->src.start.tv_sec * 1000000LL) + ns2time->src.start.tv_usec;
+                  double dsnst2 = (ns2time->dst.start.tv_sec * 1000000LL) + ns2time->dst.start.tv_usec;
 
-                  if (ns1metric->dst.pkts && ns2metric->dst.pkts)
-                     deltaDstTime = fabs(dnst1 - dnst2)/1000000.0;
+                  double slstime = (ns1->lastSrcStartTime.tv_sec * 1000000LL) + ns1->lastSrcStartTime.tv_usec;
+
+                  if (ns1metric->src.pkts && ns2metric->src.pkts) {
+                     if (slstime) {
+                     } else {
+                     }
+                     deltaSrcFlowTime = fabs(ssnst2 - senst1)/1000000.0;
+                  }
+
+                  if (ns1metric->dst.pkts && ns2metric->dst.pkts) {
+                     deltaDstFlowTime = fabs(dsnst2 - denst1)/1000000.0;
+                  }
                }
 
                ns1->status &= ~ARGUS_RECORD_WRITTEN; 
@@ -6387,9 +6441,19 @@ ArgusMergeRecords (const struct ArgusAggregatorStruct * const na,
 
                         if (f1 && f2) {
                            unsigned char masklen = 0;
-                           if (f1->hdr.subtype == f2->hdr.subtype) {
+                           if ((f1->hdr.subtype & 0x3F) == (f2->hdr.subtype & 0x3F)) {
                               char f1qual = f1->hdr.argus_dsrvl8.qual & 0x1F;
                               char f2qual = f2->hdr.argus_dsrvl8.qual & 0x1F;
+
+                              if (f1->hdr.subtype != f2->hdr.subtype) {
+                                 if ((f1->hdr.subtype & ARGUS_REVERSE) || (f2->hdr.subtype & ARGUS_REVERSE)) {
+                                    long long v1 = ArgusFetchStartTime(ns1);
+                                    long long v2 = ArgusFetchStartTime(ns2);
+                                    if (v1 > v2) {
+                                       f1->hdr.subtype = f2->hdr.subtype;
+                                    }
+                                 }
+                              }
 
                               switch (f1->hdr.subtype & 0x3F) {
                                  case ARGUS_FLOW_LAYER_3_MATRIX: {
@@ -6851,12 +6915,17 @@ ArgusMergeRecords (const struct ArgusAggregatorStruct * const na,
                                  case ARGUS_TCP_PERF: {
                                     struct ArgusTCPObject *t1 = (struct ArgusTCPObject *)&n1->net_union.tcp;
                                     switch (n2->hdr.subtype) {
-                                       case ARGUS_TCP_INIT: {
-                                          break;
-                                       }
+                                       case ARGUS_TCP_INIT: 
                                        case ARGUS_TCP_STATUS: {
+                                          struct ArgusTCPObject *t2 = (struct ArgusTCPObject *)&n2->net_union.tcp;
+
+                                          t1->status    |= t2->status;
+                                          t1->options   |= t2->options;
+                                          t1->src.flags |= t2->src.flags;
+
                                           break;
                                        }
+
                                        case ARGUS_TCP_PERF: {
                                           struct ArgusTCPObject *t2 = (struct ArgusTCPObject *)&n2->net_union.tcp;
 
@@ -6921,9 +6990,9 @@ ArgusMergeRecords (const struct ArgusAggregatorStruct * const na,
                                           }
                                           break;
                                        }
-
                                        break;
                                     }
+                                    break;
                                  }
 
                                  case ARGUS_RTP_FLOW: {
@@ -7224,8 +7293,6 @@ ArgusMergeRecords (const struct ArgusAggregatorStruct * const na,
                                  } else
                                     ss1 = pow(a1->idle.meanval, 2.0);
 
-                                 ss1 += pow(deltaSrcTime, 2.0) + pow(deltaDstTime, 2.0);
-
                                  if (a2->idle.stdev != 0) {
                                     tvalstd  = pow(a2->idle.stdev, 2.0);
                                     ss2 = a2->idle.n * (tvalstd + pow(a2->idle.meanval, 2.0));
@@ -7233,12 +7300,10 @@ ArgusMergeRecords (const struct ArgusAggregatorStruct * const na,
                                  } else
                                     ss2 = pow(a2->idle.meanval, 2.0);
 
-                                 ss2 += pow(deltaSrcTime, 2.0) + pow(deltaDstTime, 2.0);
-
                                  if ((items = (a1->idle.n + a2->idle.n)) > 0) {
                                     for (n = 0; n < 8; n++) {
-                                       int value = ((a1->idle.fdist[n] * a1->idle.n) + (a2->idle.fdist[n] * a2->idle.n)) / items;
-                                       data->idle.fdist[n] = (value > 0xFF) ? 0xFF : value;
+                                       int val = ((a1->idle.fdist[n] * a1->idle.n) + (a2->idle.fdist[n] * a2->idle.n)) / items;
+                                       data->idle.fdist[n] = (val > 0xFF) ? 0xFF : val;
                                        if (data->idle.fdist[n] == 0) {
                                           if (a1->idle.fdist[n] || a2->idle.fdist[n])
                                              data->idle.fdist[n] = 1;
@@ -7247,42 +7312,41 @@ ArgusMergeRecords (const struct ArgusAggregatorStruct * const na,
                                  }
                               }
 
-                              if (deltaSrcTime || deltaDstTime) {
-                                 if (deltaSrcTime) {
-                                    value += deltaSrcTime;
-                                    if (deltaSrcTime > a1->idle.maxval)  a1->idle.maxval = deltaSrcTime;
-                                    if (deltaSrcTime < a1->idle.minval)  a1->idle.minval = deltaSrcTime;
-                                    a1->idle.n++;
-                                 }
-                                 if (deltaDstTime) {
-                                    value += deltaDstTime;
-                                    if (deltaDstTime > a1->idle.maxval)  a1->idle.maxval = deltaDstTime;
-                                    if (deltaDstTime < a1->idle.minval)  a1->idle.minval = deltaDstTime;
-                                    a1->idle.n++;
-                                 }
+                              if (deltaSrcFlowTime) {
+                                 value += deltaSrcFlowTime;
+                                 if (deltaSrcFlowTime > a1->idle.maxval)  a1->idle.maxval = deltaSrcFlowTime;
+                                 if (deltaSrcFlowTime < a1->idle.minval)  a1->idle.minval = deltaSrcFlowTime;
+                              } else 
+                              if (deltaDstFlowTime) {
+                                 value += deltaDstFlowTime;
+                                 if (deltaDstFlowTime > a1->idle.maxval)  a1->idle.maxval = deltaDstFlowTime;
+                                 if (deltaDstFlowTime < a1->idle.minval)  a1->idle.minval = deltaDstFlowTime;
+                              }
+                              a1->idle.n++;
 
-                                 sum1 += value;
+                              sum1 += value;
+                              ss1  += pow(value, 2.0);
 
-                                 data->idle.maxval  = (a1->idle.maxval > a2->idle.maxval) ? a1->idle.maxval : a2->idle.maxval;
-                                 data->idle.minval  = (a1->idle.minval < a2->idle.minval) ? a1->idle.minval : a2->idle.minval;
+                              data->idle.maxval  = (a1->idle.maxval > a2->idle.maxval) ? a1->idle.maxval : a2->idle.maxval;
+                              data->idle.minval  = (a1->idle.minval < a2->idle.minval) ? a1->idle.minval : a2->idle.minval;
 
-                                 if ((data->idle.n = a1->idle.n + a2->idle.n) > 0) {
+                              if ((data->idle.n = a1->idle.n + a2->idle.n) > 0) {
                                     data->idle.meanval = (sum1 + sum2) / data->idle.n;
 
                                     if (data->idle.n > 1)
                                        data->idle.stdev = sqrt (fabs(((ss1 + ss2)/(data->idle.n)) - pow(data->idle.meanval, 2.0)));
                                  }
 
-                                 for (n = 0, x = 10; (n < 8) && (deltaSrcTime || deltaDstTime); n++) {
-                                    if (deltaSrcTime && (deltaSrcTime < x)) {
+                                 for (n = 0, x = 10; (n < 8) && (deltaSrcFlowTime || deltaDstFlowTime); n++) {
+                                    if (deltaSrcFlowTime && (deltaSrcFlowTime < x)) {
                                        if (data->idle.fdist[n] < 0xFF)
                                           data->idle.fdist[n]++;
-                                       deltaSrcTime = 0;
+                                       deltaSrcFlowTime = 0;
                                     } 
-                                    if (deltaDstTime && (deltaDstTime < x)) {
+                                    if (deltaDstFlowTime && (deltaDstFlowTime < x)) {
                                        if (data->idle.fdist[n] < 0xFF)
                                           data->idle.fdist[n]++;
-                                       deltaDstTime = 0;
+                                       deltaDstFlowTime = 0;
                                     }
                                     x *= 10;
                                  }
@@ -7296,10 +7360,6 @@ ArgusMergeRecords (const struct ArgusAggregatorStruct * const na,
                                                       ((a1->lasttime.tv_sec == a2->lasttime.tv_sec) &&
                                                        (a1->lasttime.tv_usec > a2->lasttime.tv_usec))) ?
                                                         a1->lasttime : a2->lasttime;
-                              } else {
-// looks like we're completing the first two records, so merge into active.
-
-                              }
 
                               bcopy ((char *)data, (char *) a1, sizeof (databuf));
                            }
@@ -7927,6 +7987,19 @@ ArgusMergeRecords (const struct ArgusAggregatorStruct * const na,
 
                if (ns2->score > ns1->score)
                   ns1->score = ns2->score;
+
+               if (ns1time && ns2time) {
+                  if (ns2time->src.start.tv_sec > 0) {
+                     ns1->lastSrcStartTime.tv_sec  = ns2time->src.start.tv_sec;
+                     ns1->lastSrcStartTime.tv_usec = ns2time->src.start.tv_usec;
+                  } else {
+                  }
+                  if (ns2time->dst.start.tv_sec > 0) {
+                     ns1->lastDstStartTime.tv_sec  = ns2time->dst.start.tv_sec;
+                     ns1->lastDstStartTime.tv_usec = ns2time->dst.start.tv_usec;
+                  } else {
+                  }
+               }
 
                ns1->status |= ARGUS_RECORD_MODIFIED;
                break;
@@ -9972,158 +10045,153 @@ ArgusInsertRecord (struct ArgusParserStruct *parser, struct RaBinProcessStruct *
 
                               if (tryreverse) {
                                  if ((hstruct = ArgusGenerateReverseHashStruct(agg, ns, (struct ArgusFlow *)&agg->fstruct)) != NULL) {
+                                    if ((tns = ArgusFindRecord(agg->htable, hstruct)) == NULL) {
+                                       switch (flow->hdr.argus_dsrvl8.qual & 0x1F) {
+                                          case ARGUS_TYPE_IPV4: {
+                                             switch (flow->ip_flow.ip_p) {
+                                                case IPPROTO_ICMP: {
+                                                   struct ArgusICMPFlow *icmpFlow = &flow->flow_un.icmp;
 
-                                 if ((tns = ArgusFindRecord(agg->htable, hstruct)) == NULL) {
-                                    switch (flow->hdr.argus_dsrvl8.qual & 0x1F) {
-                                       case ARGUS_TYPE_IPV4: {
-                                          switch (flow->ip_flow.ip_p) {
-                                             case IPPROTO_ICMP: {
-                                                struct ArgusICMPFlow *icmpFlow = &flow->flow_un.icmp;
+                                                   if (ICMP_INFOTYPE(icmpFlow->type)) {
+                                                      switch (icmpFlow->type) {
+                                                         case ICMP_ECHO:
+                                                         case ICMP_ECHOREPLY:
+                                                            icmpFlow->type = (icmpFlow->type == ICMP_ECHO) ? ICMP_ECHOREPLY : ICMP_ECHO;
+                                                            if ((hstruct = ArgusGenerateReverseHashStruct(agg, ns, (struct ArgusFlow *)&agg->fstruct)) != NULL)
+                                                               tns = ArgusFindRecord(agg->htable, hstruct);
+                                                            icmpFlow->type = (icmpFlow->type == ICMP_ECHO) ? ICMP_ECHOREPLY : ICMP_ECHO;
+                                                            if (tns)
+                                                               ArgusReverseRecord (ns);
+                                                            break;
 
-                                                if (ICMP_INFOTYPE(icmpFlow->type)) {
-                                                   switch (icmpFlow->type) {
-                                                      case ICMP_ECHO:
-                                                      case ICMP_ECHOREPLY:
-                                                         icmpFlow->type = (icmpFlow->type == ICMP_ECHO) ? ICMP_ECHOREPLY : ICMP_ECHO;
-                                                         if ((hstruct = ArgusGenerateReverseHashStruct(agg, ns, (struct ArgusFlow *)&agg->fstruct)) != NULL)
-                                                            tns = ArgusFindRecord(agg->htable, hstruct);
-                                                         icmpFlow->type = (icmpFlow->type == ICMP_ECHO) ? ICMP_ECHOREPLY : ICMP_ECHO;
-                                                         if (tns)
-                                                            ArgusReverseRecord (ns);
-                                                         break;
+                                                         case ICMP_ROUTERADVERT:
+                                                         case ICMP_ROUTERSOLICIT:
+                                                            icmpFlow->type = (icmpFlow->type == ICMP_ROUTERADVERT) ? ICMP_ROUTERSOLICIT : ICMP_ROUTERADVERT;
+                                                            if ((hstruct = ArgusGenerateReverseHashStruct(agg, ns, (struct ArgusFlow *)&agg->fstruct)) != NULL)
+                                                               tns = ArgusFindRecord(agg->htable, hstruct);
+                                                            icmpFlow->type = (icmpFlow->type == ICMP_ROUTERADVERT) ? ICMP_ROUTERSOLICIT : ICMP_ROUTERADVERT;
+                                                            if (tns)
+                                                               ArgusReverseRecord (ns);
+                                                            break;
 
-                                                      case ICMP_ROUTERADVERT:
-                                                      case ICMP_ROUTERSOLICIT:
-                                                         icmpFlow->type = (icmpFlow->type == ICMP_ROUTERADVERT) ? ICMP_ROUTERSOLICIT : ICMP_ROUTERADVERT;
-                                                         if ((hstruct = ArgusGenerateReverseHashStruct(agg, ns, (struct ArgusFlow *)&agg->fstruct)) != NULL)
-                                                            tns = ArgusFindRecord(agg->htable, hstruct);
-                                                         icmpFlow->type = (icmpFlow->type == ICMP_ROUTERADVERT) ? ICMP_ROUTERSOLICIT : ICMP_ROUTERADVERT;
-                                                         if (tns)
-                                                            ArgusReverseRecord (ns);
-                                                         break;
+                                                         case ICMP_TSTAMP:
+                                                         case ICMP_TSTAMPREPLY:
+                                                            icmpFlow->type = (icmpFlow->type == ICMP_TSTAMP) ? ICMP_TSTAMPREPLY : ICMP_TSTAMP;
+                                                            if ((hstruct = ArgusGenerateReverseHashStruct(agg, ns, (struct ArgusFlow *)&agg->fstruct)) != NULL)
+                                                               tns = ArgusFindRecord(agg->htable, hstruct);
+                                                            icmpFlow->type = (icmpFlow->type == ICMP_TSTAMP) ? ICMP_TSTAMPREPLY : ICMP_TSTAMP;
+                                                            if (tns)
+                                                               ArgusReverseRecord (ns);
+                                                            break;
 
-                                                      case ICMP_TSTAMP:
-                                                      case ICMP_TSTAMPREPLY:
-                                                         icmpFlow->type = (icmpFlow->type == ICMP_TSTAMP) ? ICMP_TSTAMPREPLY : ICMP_TSTAMP;
-                                                         if ((hstruct = ArgusGenerateReverseHashStruct(agg, ns, (struct ArgusFlow *)&agg->fstruct)) != NULL)
-                                                            tns = ArgusFindRecord(agg->htable, hstruct);
-                                                         icmpFlow->type = (icmpFlow->type == ICMP_TSTAMP) ? ICMP_TSTAMPREPLY : ICMP_TSTAMP;
-                                                         if (tns)
-                                                            ArgusReverseRecord (ns);
-                                                         break;
+                                                         case ICMP_IREQ:
+                                                         case ICMP_IREQREPLY:
+                                                            icmpFlow->type = (icmpFlow->type == ICMP_IREQ) ? ICMP_IREQREPLY : ICMP_IREQ;
+                                                            if ((hstruct = ArgusGenerateReverseHashStruct(agg, ns, (struct ArgusFlow *)&agg->fstruct)) != NULL)
+                                                               tns = ArgusFindRecord(agg->htable, hstruct);
+                                                            icmpFlow->type = (icmpFlow->type == ICMP_IREQ) ? ICMP_IREQREPLY : ICMP_IREQ;
+                                                            if (tns)
+                                                               ArgusReverseRecord (ns);
+                                                            break;
 
-                                                      case ICMP_IREQ:
-                                                      case ICMP_IREQREPLY:
-                                                         icmpFlow->type = (icmpFlow->type == ICMP_IREQ) ? ICMP_IREQREPLY : ICMP_IREQ;
-                                                         if ((hstruct = ArgusGenerateReverseHashStruct(agg, ns, (struct ArgusFlow *)&agg->fstruct)) != NULL)
-                                                            tns = ArgusFindRecord(agg->htable, hstruct);
-                                                         icmpFlow->type = (icmpFlow->type == ICMP_IREQ) ? ICMP_IREQREPLY : ICMP_IREQ;
-                                                         if (tns)
-                                                            ArgusReverseRecord (ns);
-                                                         break;
-
-                                                      case ICMP_MASKREQ:
-                                                      case ICMP_MASKREPLY:
-                                                         icmpFlow->type = (icmpFlow->type == ICMP_MASKREQ) ? ICMP_MASKREPLY : ICMP_MASKREQ;
-                                                         if ((hstruct = ArgusGenerateReverseHashStruct(agg, ns, (struct ArgusFlow *)&agg->fstruct)) != NULL)
-                                                            tns = ArgusFindRecord(agg->htable, hstruct);
-                                                         icmpFlow->type = (icmpFlow->type == ICMP_MASKREQ) ? ICMP_MASKREPLY : ICMP_MASKREQ;
-                                                         if (tns)
-                                                            ArgusReverseRecord (ns);
-                                                         break;
+                                                         case ICMP_MASKREQ:
+                                                         case ICMP_MASKREPLY:
+                                                            icmpFlow->type = (icmpFlow->type == ICMP_MASKREQ) ? ICMP_MASKREPLY : ICMP_MASKREQ;
+                                                            if ((hstruct = ArgusGenerateReverseHashStruct(agg, ns, (struct ArgusFlow *)&agg->fstruct)) != NULL)
+                                                               tns = ArgusFindRecord(agg->htable, hstruct);
+                                                            icmpFlow->type = (icmpFlow->type == ICMP_MASKREQ) ? ICMP_MASKREPLY : ICMP_MASKREQ;
+                                                            if (tns)
+                                                               ArgusReverseRecord (ns);
+                                                            break;
+                                                      }
                                                    }
+                                                   break;
                                                 }
-                                                break;
                                              }
                                           }
                                        }
-                                    }
 
-                                    hstruct = ArgusGenerateHashStruct(agg, ns, (struct ArgusFlow *)&agg->fstruct);
+                                       hstruct = ArgusGenerateHashStruct(agg, ns, (struct ArgusFlow *)&agg->fstruct);
 
-                                 } else {    // OK, so we have a match (tns) that is the reverse of the current flow (ns)
-                                             // Need to decide which direction wins.
+                                    } else {    // OK, so we have a match (tns) that is the reverse of the current flow (ns)
+                                                // Need to decide which direction wins.
 
-                                    struct ArgusNetworkStruct *nnet = (struct ArgusNetworkStruct *)ns->dsrs[ARGUS_NETWORK_INDEX];
-                                    struct ArgusNetworkStruct *tnet = (struct ArgusNetworkStruct *)tns->dsrs[ARGUS_NETWORK_INDEX];
+                                       struct ArgusNetworkStruct *nnet = (struct ArgusNetworkStruct *)ns->dsrs[ARGUS_NETWORK_INDEX];
+                                       struct ArgusNetworkStruct *tnet = (struct ArgusNetworkStruct *)tns->dsrs[ARGUS_NETWORK_INDEX];
 
-                                    switch (flow->hdr.argus_dsrvl8.qual & 0x1F) {
-                                       case ARGUS_TYPE_IPV4: {
-                                          switch (flow->ip_flow.ip_p) {
-                                             case IPPROTO_TCP: {
-                                                if ((nnet != NULL) && (tnet != NULL)) {
-                                                   struct ArgusTCPObject *ntcp = &nnet->net_union.tcp;
-                                                   struct ArgusTCPObject *ttcp = &tnet->net_union.tcp;
+                                       switch (flow->hdr.argus_dsrvl8.qual & 0x1F) {
+                                          case ARGUS_TYPE_IPV4: {
+                                             switch (flow->ip_flow.ip_p) {
+                                                case IPPROTO_TCP: {
+                                                   if ((nnet != NULL) && (tnet != NULL)) {
+                                                      struct ArgusTCPObject *ntcp = &nnet->net_union.tcp;
+                                                      struct ArgusTCPObject *ttcp = &tnet->net_union.tcp;
 
 // first if both flows have syn, then don't merge;
-                                                   if ((ntcp->status & ARGUS_SAW_SYN) && (ttcp->status & ARGUS_SAW_SYN)) {
-                                                      tns = NULL;
-                                                   } else {
-                                                      if (ntcp->status & ARGUS_SAW_SYN) {
-                                                         ArgusRemoveHashEntry(&tns->htblhdr);
-                                                         ArgusReverseRecord (tns);
-                                                         hstruct = ArgusGenerateHashStruct(agg, tns, (struct ArgusFlow *)&agg->fstruct);
-                                                         tns->htblhdr = ArgusAddHashEntry (agg->htable, tns, hstruct);
-                                                      } else
-                                                      if ((ntcp->status & ARGUS_SAW_SYN_SENT) && (ntcp->status & ARGUS_CON_ESTABLISHED)) {
-                                                         ArgusRemoveHashEntry(&tns->htblhdr);
-                                                         ArgusReverseRecord (tns);
-                                                         hstruct = ArgusGenerateHashStruct(agg, tns, (struct ArgusFlow *)&agg->fstruct);
-                                                         tns->htblhdr = ArgusAddHashEntry (agg->htable, tns, hstruct);
-                                                      } else
-                                                         ArgusReverseRecord (ns);
+                                                      if ((ntcp->status & ARGUS_SAW_SYN) && (ttcp->status & ARGUS_SAW_SYN)) {
+                                                         tns = NULL;
+                                                      } else {
+                                                         if ((ntcp->status & ARGUS_SAW_SYN) ||
+                                                            ((ntcp->status & ARGUS_SAW_SYN_SENT) && (ntcp->status & ARGUS_CON_ESTABLISHED))) {
+                                                            struct ArgusFlow *tflow = (struct ArgusFlow *) tns->dsrs[ARGUS_FLOW_INDEX];
+                                                            ArgusRemoveHashEntry(&tns->htblhdr);
+                                                            ArgusReverseRecord (tns);
+                                                            hstruct = ArgusGenerateHashStruct(agg, tns, (struct ArgusFlow *)&agg->fstruct);
+                                                            tns->htblhdr = ArgusAddHashEntry (agg->htable, tns, hstruct);
+                                                            tflow->hdr.subtype &= ~ARGUS_REVERSE;
+                                                            tflow->hdr.argus_dsrvl8.qual &= ~ARGUS_DIRECTION;
+                                                         } else
+                                                            ArgusReverseRecord (ns);
+                                                      }
                                                    }
+                                                   break;
                                                 }
-                                                break;
+
+                                                default:
+                                                   ArgusReverseRecord (ns);
+                                                   break;
                                              }
-
-                                             default:
-                                                ArgusReverseRecord (ns);
-                                                break;
                                           }
-                                       }
-                                       break;
+                                          break;
 
-                                       case ARGUS_TYPE_IPV6: {
-                                          switch (flow->ipv6_flow.ip_p) {
-                                             case IPPROTO_TCP: {
-                                                if ((nnet != NULL) && (tnet != NULL)) {
-                                                   struct ArgusTCPObject *ntcp = &nnet->net_union.tcp;
-                                                   struct ArgusTCPObject *ttcp = &tnet->net_union.tcp;
+                                          case ARGUS_TYPE_IPV6: {
+                                             switch (flow->ipv6_flow.ip_p) {
+                                                case IPPROTO_TCP: {
+                                                   if ((nnet != NULL) && (tnet != NULL)) {
+                                                      struct ArgusTCPObject *ntcp = &nnet->net_union.tcp;
+                                                      struct ArgusTCPObject *ttcp = &tnet->net_union.tcp;
 
 // first if both flows have syn, then don't merge;
-                                                   if ((ntcp->status & ARGUS_SAW_SYN) && (ttcp->status & ARGUS_SAW_SYN)) {
-                                                      tns = NULL;
-                                                   } else {
-                                                      if (ntcp->status & ARGUS_SAW_SYN) {
-                                                         ArgusRemoveHashEntry(&tns->htblhdr);
-                                                         ArgusReverseRecord (tns);
-                                                         hstruct = ArgusGenerateHashStruct(agg, tns, (struct ArgusFlow *)&agg->fstruct);
-                                                         tns->htblhdr = ArgusAddHashEntry (agg->htable, tns, hstruct);
-                                                      } else
-                                                      if ((ntcp->status & ARGUS_SAW_SYN_SENT) && (ntcp->status & ARGUS_CON_ESTABLISHED)) {
-                                                         ArgusRemoveHashEntry(&tns->htblhdr);
-                                                         ArgusReverseRecord (tns);
-                                                         hstruct = ArgusGenerateHashStruct(agg, tns, (struct ArgusFlow *)&agg->fstruct);
-                                                         tns->htblhdr = ArgusAddHashEntry (agg->htable, tns, hstruct);
-                                                      } else
-                                                         ArgusReverseRecord (ns);
+                                                      if ((ntcp->status & ARGUS_SAW_SYN) && (ttcp->status & ARGUS_SAW_SYN)) {
+                                                         tns = NULL;
+                                                      } else {
+                                                         if ((ntcp->status & ARGUS_SAW_SYN) ||
+                                                            ((ntcp->status & ARGUS_SAW_SYN_SENT) && (ntcp->status & ARGUS_CON_ESTABLISHED))) {
+                                                            struct ArgusFlow *tflow = (struct ArgusFlow *) tns->dsrs[ARGUS_FLOW_INDEX];
+                                                            ArgusRemoveHashEntry(&tns->htblhdr);
+                                                            ArgusReverseRecord (tns);
+                                                            hstruct = ArgusGenerateHashStruct(agg, tns, (struct ArgusFlow *)&agg->fstruct);
+                                                            tns->htblhdr = ArgusAddHashEntry (agg->htable, tns, hstruct);
+                                                            tflow->hdr.subtype &= ~ARGUS_REVERSE;
+                                                            tflow->hdr.argus_dsrvl8.qual &= ~ARGUS_DIRECTION;
+                                                         } else
+                                                            ArgusReverseRecord (ns);
+                                                      }
                                                    }
+                                                   break;
                                                 }
-                                                break;
+
+                                                default:
+                                                   ArgusReverseRecord (ns);
+                                                   break;
                                              }
-
-                                             default:
-                                                ArgusReverseRecord (ns);
-                                                break;
                                           }
-                                       }
-                                       break;
+                                          break;
 
-                                       default:
-                                          ArgusReverseRecord (ns);
+                                          default:
+                                             ArgusReverseRecord (ns);
+                                       }
                                     }
-                                 }
                                  }
                               }
                            }
@@ -10388,7 +10456,7 @@ ArgusNewAggregator (struct ArgusParserStruct *parser, char *masklist, int type)
    if (masklist != NULL) {
       mptr = strdup(masklist);
       ptr = mptr;
-      while ((tok = strtok (ptr, " \t")) != NULL) {
+      while ((tok = strtok (ptr, " ,\t")) != NULL) {
          if ((mode = (struct ArgusModeStruct *) ArgusCalloc (1, sizeof(struct ArgusModeStruct))) != NULL) {
             if ((list = modelist) != NULL) {
                while (list->nxt)
@@ -10623,7 +10691,8 @@ ArgusNewAggregator (struct ArgusParserStruct *parser, char *masklist, int type)
 
                      case ARGUS_MASK_SPORT:
                      case ARGUS_MASK_DPORT:
-                        if (action > 0) retn->mask |= (0x01LL << ARGUS_MASK_PROTO); else retn->mask &= ~(0x01LL << ARGUS_MASK_PROTO); 
+                        if (action > 0) 
+                           retn->mask |= (0x01LL << ARGUS_MASK_PROTO); 
                         break;
                   }
                   break;
@@ -11433,7 +11502,6 @@ ArgusFetchSrcStartTime (struct ArgusRecordStruct *ns)
       case ARGUS_FAR: {
          struct ArgusTimeObject *dtime = (void *)ns->dsrs[ARGUS_TIME_INDEX];
          struct timeval stimebuf, *st = &stimebuf;
-         struct timeval *stime = NULL;
 
          if (dtime != NULL) {
             unsigned int subtype = dtime->hdr.subtype & ARGUS_TIME_SRC_START;
@@ -11441,11 +11509,10 @@ ArgusFetchSrcStartTime (struct ArgusRecordStruct *ns)
             if (subtype) {
                st->tv_sec  = dtime->src.start.tv_sec;
                st->tv_usec = dtime->src.start.tv_usec;
-               stime = st;
+               sec  = st->tv_sec;
+               usec = st->tv_usec;
             }
          }
-         sec  = stime->tv_sec;
-         usec = stime->tv_usec;
       }
    }
 
@@ -11464,16 +11531,14 @@ ArgusFetchDstStartTime (struct ArgusRecordStruct *ns)
       case ARGUS_FAR: {
          struct ArgusTimeObject *dtime = (void *)ns->dsrs[ARGUS_TIME_INDEX];
          struct timeval stimebuf, *st = &stimebuf;
-         struct timeval *stime = NULL;
 
          if (dtime != NULL) {
             unsigned int subtype = dtime->hdr.subtype & ARGUS_TIME_DST_START;
             if (subtype) {
                st->tv_sec  = dtime->dst.start.tv_sec;
                st->tv_usec = dtime->dst.start.tv_usec;
-               stime = st;
-               sec  = stime->tv_sec;
-               usec = stime->tv_usec;
+               sec  = st->tv_sec;
+               usec = st->tv_usec;
             }
          }
       }
@@ -14431,6 +14496,75 @@ ArgusFetchDstDup (struct ArgusRecordStruct *ns)
    return (retn);
 }
 
+double
+ArgusFetchIntFlow (struct ArgusRecordStruct *ns)
+{
+   double retn = 0.0;
+   struct ArgusAgrStruct *agr;
+
+   if (ns->hdr.type & ARGUS_MAR) {
+
+   } else {
+      unsigned int n;
+
+      if ((agr = (struct ArgusAgrStruct *)ns->dsrs[ARGUS_AGR_INDEX]) != NULL) {
+         if ((n = agr->idle.n) > 0) {
+            retn = agr->idle.meanval;
+         }
+      }
+   }
+   return (retn);
+}
+
+double
+ArgusFetchIntFlowStdDev (struct ArgusRecordStruct *ns)
+{
+   double retn = 0.0;
+   struct ArgusAgrStruct *agr;
+
+   if (ns->hdr.type & ARGUS_MAR) {
+
+   } else {
+      if ((agr = (struct ArgusAgrStruct *)ns->dsrs[ARGUS_AGR_INDEX]) != NULL)
+         if (agr->act.n > 0)
+            retn = agr->act.stdev;
+   }
+
+   return (retn/1000.0);
+   return (retn);
+}
+
+double
+ArgusFetchIntFlowMax (struct ArgusRecordStruct *ns)
+{
+   double retn = 0.0;
+   struct ArgusAgrStruct *agr;
+
+   if (ns->hdr.type & ARGUS_MAR) {
+
+   } else {
+      if ((agr = (struct ArgusAgrStruct *)ns->dsrs[ARGUS_AGR_INDEX]) != NULL) {
+         retn = agr->idle.maxval;
+      }
+   }
+   return (retn);
+}
+
+double
+ArgusFetchIntFlowMin (struct ArgusRecordStruct *ns)
+{
+   double retn = 0.0;
+   struct ArgusAgrStruct *agr;
+
+   if (ns->hdr.type & ARGUS_MAR) {
+
+   } else {
+      if ((agr = (struct ArgusAgrStruct *)ns->dsrs[ARGUS_AGR_INDEX]) != NULL) {
+         retn = agr->idle.minval;
+      }
+   }
+   return (retn);
+}
 
 double
 ArgusFetchSrcIntPkt (struct ArgusRecordStruct *ns)
@@ -15353,40 +15487,43 @@ ArgusSortQueue (struct ArgusSorterStruct *sorter, struct ArgusQueueStruct *queue
 {
    int i = 0, cnt;
 
+   if (ArgusSorter->ArgusSortAlgorithms[0] != NULL) {
 #if defined(ARGUS_THREADS)
-   if (type == ARGUS_LOCK)
-      pthread_mutex_lock(&queue->lock);
+      if (type == ARGUS_LOCK)
+         pthread_mutex_lock(&queue->lock);
 #endif
 
-   if (queue->array != NULL) {
-      ArgusFree(queue->array);
-      queue->array = NULL;
-      queue->arraylen = 0;
-   }
-
-   cnt = queue->count;
-
-   if ((queue->array = (struct ArgusQueueHeader **) ArgusMalloc(sizeof(struct ArgusQueueHeader *) * (cnt + 1))) != NULL) {
-      struct ArgusQueueHeader *qhdr = queue->start;
-      queue->arraylen = cnt;
-
-      for (i = 0; i < cnt; i++) {
-         queue->array[i] = qhdr;
-         qhdr = qhdr->nxt;
+      if (queue->array != NULL) {
+         ArgusFree(queue->array);
+         queue->array = NULL;
+         queue->arraylen = 0;
       }
 
-      queue->array[i] = NULL;
+      cnt = queue->count;
 
-      if (cnt > 1)
-         if (ArgusSorter->ArgusSortAlgorithms[0] != NULL)
+      if ((queue->array = (struct ArgusQueueHeader **) ArgusMalloc(sizeof(struct ArgusQueueHeader *) * (cnt + 1))) != NULL) {
+         struct ArgusQueueHeader *qhdr;
+
+         for (i = 0; i < cnt; i++)
+            if ((qhdr = ArgusPopQueue(queue, ARGUS_NOLOCK)) != NULL)
+               queue->array[i] = qhdr;
+
+         queue->array[i] = NULL;
+
+         if (cnt > 1)
             qsort ((char *) queue->array, cnt, sizeof (struct ArgusQueueHeader *), ArgusSortRoutine);
-   } else
-      ArgusLog (LOG_ERR, "ArgusSortQueue: ArgusMalloc %s\n", strerror(errno));
+
+         for (i = 0; i < cnt; i++)
+            ArgusAddToQueue(queue, queue->array[i], ARGUS_NOLOCK);
+
+      } else
+         ArgusLog (LOG_ERR, "ArgusSortQueue: ArgusMalloc %s\n", strerror(errno));
 
 #if defined(ARGUS_THREADS)
-   if (type == ARGUS_LOCK)
-      pthread_mutex_unlock(&queue->lock);
+      if (type == ARGUS_LOCK)
+         pthread_mutex_unlock(&queue->lock);
 #endif
+   }
 
 #ifdef ARGUSDEBUG
    ArgusDebug (5, "ArgusSortQueue(%p, %p, %d) returned\n", sorter, queue, type);
@@ -17444,5 +17581,33 @@ ArgusSortDstHops (struct ArgusRecordStruct *argus1, struct ArgusRecordStruct *ar
 
    retn = (value < 0) ? 1 : ((value == 0) ? 0 : -1);
    retn = ArgusReverseSortDir ? ((retn < 0) ? 1 : ((retn == 0) ? 0 : -1)) : retn;
+   return (retn);
+}
+
+int
+ArgusSortIntFlow (struct ArgusRecordStruct *argus1, struct ArgusRecordStruct *argus2)
+{
+   double intf1 = ArgusFetchIntFlow(argus1);
+   double intf2 = ArgusFetchIntFlow(argus2);
+   double value = (intf1 - intf2);
+   int retn;
+
+   retn = (value < 0) ? 1 : ((value == 0) ? 0 : -1);
+   retn = ArgusReverseSortDir ? ((retn < 0) ? 1 : ((retn == 0) ? 0 : -1)) : retn;
+
+   return (retn);
+}
+
+int
+ArgusSortIntFlowStdDev (struct ArgusRecordStruct *argus1, struct ArgusRecordStruct *argus2)
+{
+   double intf1 = ArgusFetchIntFlowStdDev(argus1);
+   double intf2 = ArgusFetchIntFlowStdDev(argus2);
+   double value = (intf1 - intf2);
+   int retn;
+
+   retn = (value < 0) ? 1 : ((value == 0) ? 0 : -1);
+   retn = ArgusReverseSortDir ? ((retn < 0) ? 1 : ((retn == 0) ? 0 : -1)) : retn;
+
    return (retn);
 }

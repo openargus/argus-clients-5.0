@@ -127,6 +127,7 @@ typedef struct _configuration_t {
    unsigned char cmd_compress;
    unsigned char cmd_upload;
    unsigned char cmd_remove;
+   unsigned int  debug_level;
 } configuration_t;
 
 typedef struct _ramanage_str_t {
@@ -167,6 +168,7 @@ enum RamanageOpts {
    RAMANAGE_CMD_COMPRESS,
    RAMANAGE_CMD_DELETE,
    RAMANAGE_CMD_UPLOAD,
+   RAMANAGE_DEBUG_LEVEL,
 };
 
 static char *RamanageResourceFileStr[] = {
@@ -194,6 +196,7 @@ static char *RamanageResourceFileStr[] = {
    "RAMANAGE_CMD_COMPRESS=",
    "RAMANAGE_CMD_DELETE=",
    "RAMANAGE_CMD_UPLOAD=",
+   "RAMANAGE_DEBUG_LEVEL=",
 };
 
 static const size_t RAMANAGE_RCITEMS =
@@ -247,6 +250,7 @@ struct {
    REG_INIT("RAMANAGE_CMD_COMPRESS", RAMANAGE_TYPE_YESNO, cmd_compress),
    REG_INIT("RAMANAGE_CMD_DELETE", RAMANAGE_TYPE_YESNO, cmd_remove),
    REG_INIT("RAMANAGE_CMD_UPLOAD", RAMANAGE_TYPE_YESNO, cmd_upload),
+   REG_INIT("RAMANAGE_DEBUG_LEVEL", RAMANAGE_TYPE_UINT, debug_level),
 };
 static const size_t RAMANAGE_REGITEMS =
    sizeof(RamanageWindowsRegistryValues)/
@@ -937,6 +941,10 @@ __upload_init(CURL **hnd, const configuration_t * const config)
    long auth = 0;
    int slen;
 
+# ifdef ARGUS_CURLEXE
+   char *authStr = "";
+#endif
+
 #ifdef HAVE_LIBCURL
    /* with libcurl we don't need to re-initialize anything */
    if (*hnd != NULL)
@@ -964,9 +972,11 @@ __upload_init(CURL **hnd, const configuration_t * const config)
    }
 
 #ifdef HAVE_LIBCURL
-   if (config->upload_auth
-       && strcasecmp(config->upload_auth, "spnego") == 0)
+   if (config->upload_auth && (strcasecmp(config->upload_auth, "spnego") == 0))
       auth = CURLAUTH_GSSNEGOTIATE;
+   else
+   if (config->upload_auth && (strcasecmp(config->upload_auth, "digest") == 0))
+      auth = CURLAUTH_DIGEST;
 
    *hnd = curl_easy_init();
    if (*hnd == NULL) {
@@ -974,22 +984,23 @@ __upload_init(CURL **hnd, const configuration_t * const config)
       return -1;
    }
 
-   curl_easy_setopt(*hnd, CURLOPT_BUFFERSIZE, 102400L);
-   curl_easy_setopt(*hnd, CURLOPT_NOPROGRESS, 1L);
-   curl_easy_setopt(*hnd, CURLOPT_UPLOAD, 1L);
-   curl_easy_setopt(*hnd, CURLOPT_USERPWD, userpwd);
+   DEBUGLOG(4, "user pass string '%s'\n", userpwd);
+
    if (auth)
       curl_easy_setopt(*hnd, CURLOPT_HTTPAUTH, auth);
-   curl_easy_setopt(*hnd, CURLOPT_USERAGENT, "ramanage");
-   curl_easy_setopt(*hnd, CURLOPT_MAXREDIRS, 0L);
+   curl_easy_setopt(*hnd, CURLOPT_USERPWD, userpwd);
+
    curl_easy_setopt(*hnd, CURLOPT_SSL_VERIFYPEER, 0L);
    curl_easy_setopt(*hnd, CURLOPT_SSL_VERIFYHOST, 0L);
    curl_easy_setopt(*hnd, CURLOPT_TCP_KEEPALIVE, 1L);
    curl_easy_setopt(*hnd, CURLOPT_WRITEFUNCTION, RamanageLibcurlWriteCallback);
+   curl_easy_setopt(*hnd, CURLOPT_UPLOAD, 1L);
+
 # ifdef ARGUSDEBUG
    curl_easy_setopt(*hnd, CURLOPT_DEBUGFUNCTION, __trace);
    curl_easy_setopt(*hnd, CURLOPT_VERBOSE, 1L);
 # endif /* ARGUSDEBUG */
+
 #else	/* HAVE_LIBCURL */
    ramanage_str_t *rstr;
    char * const curlexe =
@@ -1018,14 +1029,18 @@ __upload_init(CURL **hnd, const configuration_t * const config)
    rstr->remain = PATH_MAX;
    rstr->len = 0;
 
-   if (config->upload_auth
-       && strcasecmp(config->upload_auth, "spnego") == 0)
+   if (config->upload_auth && (strcasecmp(config->upload_auth, "spnego") == 0)) {
+      authStr = "--negotiate";
       auth = 1;
-
+   } else 
+   if (config->upload_auth && (strcasecmp(config->upload_auth, "digest") == 0)) {
+      authStr = "--digest";
+      auth = 1;
+   }
 
    slen = snprintf_append(rstr->str, &rstr->len, &rstr->remain,
                           "%s --fail --silent --show-error -k -u %s %s > /dev/null",
-                          curlexe, userpwd, auth ? "--negotiate" : "");
+                          curlexe, userpwd, auth ? authStr : "");
    free(curlexe);
    if (slen >= PATH_MAX) {
       ArgusFree(userpwd);
@@ -1186,9 +1201,8 @@ __upload(CURL *hnd, const char * const filename, off_t filesz,
    } else {
       DEBUGLOG(4, "cmd: %s\n", rstr->str);
       ret = system(rstr->str);
-      if (ret > 0) {
-         DEBUGLOG(1, "curl command failed, returned %d.  (%s)\n", ret,
-                  rstr->str);
+      if (WEXITSTATUS(ret) > 0) {
+         DEBUGLOG(1, "curl command failed, returned %d.  (%s)\n", ret, rstr->str);
          ret = -ret; /* child process failed */
       }
    }
@@ -1334,9 +1348,9 @@ RamanageConfigureParse(struct ArgusParserStruct *parser,
          break;
       case RAMANAGE_UPLOAD_AUTH:
          retn = __parse_str(optarg, &global_config.upload_auth, NAME_MAX);
-         if (retn == 0 &&
-             strcasecmp(global_config.upload_auth, "spnego") != 0) {
-            ArgusLog(LOG_WARNING, "only spnego authentication is supported\n");
+         if ((retn == 0) && ((strcasecmp(global_config.upload_auth, "spnego") != 0) &&
+                             (strcasecmp(global_config.upload_auth, "digest") != 0))) {
+            ArgusLog(LOG_WARNING, "only spnego,digest authentication are supported\n");
             retn = -1;
          }
          break;
@@ -1382,6 +1396,10 @@ RamanageConfigureParse(struct ArgusParserStruct *parser,
          break;
       case RAMANAGE_CMD_DELETE:
          retn = __parse_yesno(optarg, &global_config.cmd_remove);
+         break;
+      case RAMANAGE_DEBUG_LEVEL:
+         retn = __parse_uint(optarg, &global_config.debug_level);
+         ArgusParser->debugflag = global_config.debug_level;
          break;
    }
 
@@ -1532,7 +1550,7 @@ RamanageUpload(const struct ArgusParserStruct * const parser,
 #endif
    struct ArgusFileInput *file;
    unsigned int upload_kb = 0;
-   int res;
+   int res, done = 0;
    size_t i;
 
    if (!__should_upload(config)) {
@@ -1542,19 +1560,16 @@ RamanageUpload(const struct ArgusParserStruct * const parser,
 
    i = 0;
    hnd = NULL;
-   while (i < filcount && upload_kb <= config->upload_max_kb) {
+   while (!done && (i < filcount && upload_kb <= config->upload_max_kb)) {
       if (__upload_init(&hnd, config) < 0) {
          ArgusLog(LOG_WARNING, "unable to initialize libcurl\n");
          return -1;
       }
 
       file = filvec[i];
-      DEBUGLOG(4, "upload file %s size %u\n", file->filename,
-               file->statbuf.st_size);
+      DEBUGLOG(4, "upload file %s size %u\n", file->filename, file->statbuf.st_size);
       res = __upload(hnd, file->filename, file->statbuf.st_size, config);
       if (res == 0) {
-         upload_kb += file->statbuf.st_size / 1024;
-
          DEBUGLOG(4, "move file %s to staging area\n", file->filename);
          __upload_move_to_staging(file->filename, config);
       } else if (res > 0) {
@@ -1563,10 +1578,12 @@ RamanageUpload(const struct ArgusParserStruct * const parser,
 #else
          ArgusLog(LOG_WARNING, "error: %s", strerror(errno));
 #endif
+         done = 1;
       } else {
-         ArgusLog(LOG_WARNING, "received non-success code from server (%d)\n",
-                  -1 * res);
+         ArgusLog(LOG_WARNING, "received non-success code from server (%d)\n", -1 * res);
+         done = 1;
       }
+      upload_kb += file->statbuf.st_size / 1024;
       i++;
    }
 
@@ -1639,6 +1656,10 @@ __check_filename(const char * const filename,
 
    free(rp);
 out:
+   if (rv == -1) {
+      DEBUGLOG(4, "%s: %s: wrong directory\n", __func__,
+         filename);
+   }
    return rv;
 }
 
@@ -1960,9 +1981,8 @@ main(int argc, char **argv)
          goto out;
       }
 
-      /* used later to decide if we should also process staged files */
+//    used later to decide if we should also process staged files 
       process_archive = 1;
-
       __save_state();
    }
 

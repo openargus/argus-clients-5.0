@@ -216,10 +216,12 @@ main (int argc, char **argv)
    if (ArgusParser->pidflag)
       ArgusCreatePIDFile (ArgusParser, ArgusParser->ArgusProgramName);
  
-   if (!(ArgusParser->Sflag))
-      if (ArgusParser->ArgusInputFileList == NULL)
+   if (!(ArgusParser->Sflag)) {
+      if (ArgusParser->ArgusInputFileList == NULL) {
          if (!(ArgusAddFileList (ArgusParser, "-", ARGUS_DATA_SOURCE, -1, -1)))
             ArgusLog(LOG_ERR, "%s: error: file arg %s", *argv, optarg);
+      }
+   }
 
 /*
    OK now we're ready.  Read in all the files, for as many passes as
@@ -245,8 +247,11 @@ main (int argc, char **argv)
             if (strcmp (file->filename, "-")) {
                if (strlen(file->filename)) {
                   if (file->file == NULL) {
-                     if ((file->file = fopen(file->filename, "r")) == NULL) 
-                        ArgusLog (LOG_ALERT, "open '%s': %s", file->filename, strerror(errno));
+                     if ((file->file = fopen(file->filename, "r")) == NULL) {
+#ifdef ARGUSDEBUG
+                        ArgusDebug (1, "open '%s': %s", file->filename, strerror(errno));
+#endif
+                     }
 
                   } else {
                      fseek(file->file, 0, SEEK_SET);
@@ -273,7 +278,6 @@ main (int argc, char **argv)
 #endif
                      if (ArgusParser->RaPollMode) {
                          ArgusHandleRecord (ArgusParser, input, &input->ArgusInitCon, 0, &ArgusParser->ArgusFilterCode);
-                         ArgusCloseInput(ArgusParser, input);
                      } else {
                         if (file->ostart != -1) {
                            input->offset = file->ostart;
@@ -287,10 +291,6 @@ main (int argc, char **argv)
 
                   } else
                      file->fd = -1;
-
-                  if (input->file != NULL) {
-                     ArgusCloseInput(ArgusParser, input);
-                  }
                }
 
             } else {

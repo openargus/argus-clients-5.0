@@ -1,6 +1,6 @@
 /*
  * Gargoyle Client Software. Tools to read, analyze and manage Argus data.
- * Copyright (c) 2000-2016 QoSient, LLC
+ * Copyright (c) 2000-2020 QoSient, LLC
  * All rights reserved.
  *
  * THE ACCOMPANYING PROGRAM IS PROPRIETARY SOFTWARE OF QoSIENT, LLC,
@@ -15,12 +15,6 @@
  * IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION,
  * ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
  * THIS SOFTWARE.
- */
-
-/* 
- * $Id: //depot/gargoyle/clients/examples/radns/radns.c#24 $
- * $DateTime: 2016/11/30 00:54:11 $
- * $Change: 3245 $
  */
 
 /*
@@ -196,15 +190,17 @@ ArgusPrintAddressResponse(char *string, struct RaAddressStruct *raddr, char ***r
    if (dns != NULL) {
       struct ArgusListObjectStruct *tdns;
       struct timeval tvbuf, *tvp = &tvbuf;
-      char tbuf[128], *resbuf;
+      char tbuf[128], rbuf[128], *resbuf;
       int ind = *rind;
 
       if ((resbuf = ArgusMalloc(ARGUS_MAX_RESPONSE)) == NULL)
          ArgusLog (LOG_ERR, "ArgusPrintAddressResponse: ArgusMalloc error %s\n", strerror(errno));
 
       bzero(tbuf, sizeof(tbuf));
+      bzero(rbuf, sizeof(rbuf));
 
       ArgusPrintTime(ArgusParser, tbuf, sizeof(tbuf), &raddr->atime);
+      ArgusPrintTime(ArgusParser, rbuf, sizeof(rbuf), &raddr->rtime);
 
       RaDiffTime (&raddr->rtime, &raddr->atime, tvp);
 
@@ -212,7 +208,7 @@ ArgusPrintAddressResponse(char *string, struct RaAddressStruct *raddr, char ***r
          raddr->addr.str = strdup(ArgusGetName (ArgusParser, (unsigned char *)&raddr->addr.addr[0]));
 
       if (ArgusParser->ArgusPrintJson) {
-         sprintf (resbuf, "{ \"stime\":\"%s\", \"addr\":\"%s\"", tbuf, (raddr->addr.str != NULL) ? raddr->addr.str : string);
+         sprintf (resbuf, "{ \"stime\":\"%s\", \"rtime\":\"%s\", \"addr\":\"%s\"", tbuf, rbuf, (raddr->addr.str != NULL) ? raddr->addr.str : string);
       } else {
          sprintf (resbuf, "%s: \"%s\" ", tbuf, (raddr->addr.str != NULL) ? raddr->addr.str : string);
       }
@@ -572,7 +568,7 @@ ArgusHandleSearchCommand (struct ArgusOutputStruct *output, char *command)
                if (ArgusParser->ArgusPrintJson) {
                   snprintf(refbuf, 16, "\"ref\":\"%d\"", name->ref);
                   results[resultnum++] = strdup(refbuf);
-                  if (name->ref > 0) {
+                  if (name->stime.tv_sec > 0) {
                      snprintf(timebuf, 64, "\"stime\":\"%d\",\"ltime\":\"%d\"", (int)name->stime.tv_sec, (int)name->ltime.tv_sec);
                      results[resultnum++] = strdup(timebuf);
                   }
@@ -1232,6 +1228,7 @@ int RaProcessCRecord (struct ArgusParserStruct *, struct ArgusDomainStruct *, st
 int RaProcessSOARecord (struct ArgusParserStruct *, struct ArgusDomainStruct *, struct timeval *);
 int RaProcessNSRecord (struct ArgusParserStruct *, struct ArgusDomainStruct *, struct timeval *);
 int RaProcessPTRRecord (struct ArgusParserStruct *, struct ArgusDomainStruct *, struct timeval *);
+int RaProcessMXRecord (struct ArgusParserStruct *, struct ArgusDomainStruct *, struct timeval *);
 
 // ArgusNameEntry will take a FQDN and insert it into a hash table, as well as insert the
 // name into a namespace tree.
@@ -1936,9 +1933,24 @@ RaProcessPTRRecord (struct ArgusParserStruct *parser, struct ArgusDomainStruct *
          struct ArgusDomainResourceRecord *rr = list->list_union.obj;
 
          if ((ptr = ArgusNameEntry(ArgusDNSNameTable, rr->name, 0)) != NULL) {
+            if ((ptr->stime.tv_sec == 0) || (ptr->stime.tv_sec > dns->stime.tv_sec)) {
+               ptr->stime = dns->stime;
+            }
+            if ((ptr->ltime.tv_sec == 0) || (ptr->ltime.tv_sec < dns->ltime.tv_sec)) {
+               ptr->ltime = dns->ltime;
+            }
+
+
             if ((name = ArgusNameEntry(ArgusDNSNameTable, rr->data, 0)) != NULL) {
                char *nptr = strdup(rr->name);
                char *sptr, *tptr;
+
+               if ((name->stime.tv_sec == 0) || (name->stime.tv_sec > dns->stime.tv_sec)) {
+                  name->stime = dns->stime;
+               }
+               if ((name->ltime.tv_sec == 0) || (name->ltime.tv_sec < dns->ltime.tv_sec)) {
+                  name->ltime = dns->ltime;
+               }
 
                if ((tptr = nptr) != NULL) {
                   char addrbuf[48], *addr = addrbuf, *a[4];
@@ -2062,6 +2074,88 @@ RaProcessPTRRecord (struct ArgusParserStruct *parser, struct ArgusDomainStruct *
    return retn;
 }
 
+//
+//
+//  RaProcessMXRecord
+//
+//  This routine will process a dns MX record.  The key is to insert the responses data
+//  record, and associate it with the domain name it referenced.
+//  
+//  MX records provide mail server routing.  Amex is interested in generating alarms if
+//  these show up.
+//
+//
+
+int
+RaProcessMXRecord (struct ArgusParserStruct *parser, struct ArgusDomainStruct *dns, struct timeval *tvp)
+{
+   struct ArgusDomainQueryStruct *res = dns->response;
+   struct nnamemem *ptr = NULL, *name = NULL;
+   struct ArgusLabelerStruct *labeler;
+   int retn = 0;
+
+   if ((labeler = parser->ArgusLabeler) == NULL) {
+      parser->ArgusLabeler = ArgusNewLabeler(parser, 0L);
+      labeler = parser->ArgusLabeler;
+      if (labeler->ArgusAddrTree == NULL)
+         if ((labeler->ArgusAddrTree = ArgusCalloc(128, sizeof(void *))) == NULL)
+            ArgusLog(LOG_ERR, "RaProcessCRecord: ArgusCalloc error");
+   }
+
+   if ((res != NULL) && (res->mx != NULL)) {
+      int x, count = res->mx->count;
+      for (x = 0; x < count; x++) {
+         struct ArgusListObjectStruct *list =  (struct ArgusListObjectStruct *)ArgusPopFrontList(res->mx, ARGUS_NOLOCK);
+         struct ArgusDomainResourceRecord *rr = list->list_union.obj;
+
+         if ((ptr = ArgusNameEntry(ArgusDNSNameTable, rr->name, 0)) != NULL) {
+            char *dptr = strdup(rr->data), *tptr, *sptr, *mxsptr;
+            int ind = 0;
+
+            if ((ptr->stime.tv_sec == 0) || (ptr->stime.tv_sec > dns->stime.tv_sec)) {
+               ptr->stime = dns->stime;
+            }
+            if ((ptr->ltime.tv_sec == 0) || (ptr->ltime.tv_sec < dns->ltime.tv_sec)) {
+               ptr->ltime = dns->ltime;
+            }
+// MX record data string format is "name mx server priority".
+// Need to pass the mx server to ArgusNameEntry.
+            tptr = dptr;
+            while ((sptr = strtok(tptr, " ")) != NULL) {
+               if (ind++ == 1) {
+                  mxsptr = strdup(sptr);
+               }
+               tptr = NULL;
+            }
+            free(dptr);
+
+            if ((name = ArgusNameEntry(ArgusDNSNameTable, mxsptr, 0)) != NULL) {
+               if ((name->stime.tv_sec == 0) || (name->stime.tv_sec > dns->stime.tv_sec)) {
+                  name->stime = dns->stime;
+               }
+               if ((name->ltime.tv_sec == 0) || (name->ltime.tv_sec < dns->ltime.tv_sec)) {
+                  name->ltime = dns->ltime;
+               }
+
+               if (name->mxs == NULL)
+                  name->mxs = ArgusNewList();
+
+#if defined(ARGUS_THREADS)
+               if (pthread_mutex_lock(&name->mxs->lock) == 0) {
+#endif
+#if defined(ARGUS_THREADS)
+                  pthread_mutex_unlock(&name->mxs->lock);
+               }
+#endif
+            }
+            if (mxsptr != NULL)
+               free(mxsptr);
+         }
+         ArgusPushBackList(res->mx, (struct ArgusListRecord *)list, ARGUS_NOLOCK);
+      }
+   }
+   return retn;
+}
 
 #define ISPORT(p) (dport == (p) || sport == (p))
 

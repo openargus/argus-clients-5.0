@@ -48,8 +48,8 @@ extern "C" {
 #include <argus/cons_out.h>
 #include <argus/cflowd.h>
 
-#define ARGUS_MAX_PRINT_ALG     	228
-#define MAX_PRINT_ALG_TYPES     	228
+#define ARGUS_MAX_PRINT_ALG     	242
+#define MAX_PRINT_ALG_TYPES     	242
 
 
 #include <argus/CflowdFlowPdu.h>
@@ -129,7 +129,7 @@ struct cnamemem {
 struct nnamemem {
    struct nnamemem *n_nxt;
    unsigned int status, hashval, ref, index;
-   struct timeval stime, ltime;
+   struct timeval stime, rtime, ltime;
 
    char *n_name, *d_name, *tld_name;
    struct ArgusListStruct *refers;
@@ -137,6 +137,7 @@ struct nnamemem {
    struct ArgusListStruct *cnames;
    struct ArgusListStruct *aliases;
    struct ArgusListStruct *ptrs;
+   struct ArgusListStruct *mxs;
    struct ArgusListStruct *servers;
    struct ArgusListStruct *clients;
 };
@@ -318,6 +319,10 @@ struct ArgusRecord *ArgusParseCiscoRecord (struct ArgusParserStruct *, struct Ar
 
 #define ARGUS_BASELINE_SOURCE		0x800
 
+#if defined(ARGUS_MYSQL)
+#define ARGUS_DBASE_SOURCE		0x1000
+#endif
+
 #define ARGUS_MY_ADDRESS        	5
 #define ARGUS_MY_NETWORK        	4
 
@@ -379,7 +384,7 @@ static inline int
 snprintf_append(char *str, size_t *len, size_t *remain, const char *fmt, ...)
 {
    va_list ap;
-   int c;
+   unsigned int c;
 
    va_start(ap, fmt);
    c = vsnprintf(str+(*len), *remain, fmt, ap);
@@ -544,6 +549,13 @@ void ArgusPrintIdleSrcIntPktMax (struct ArgusParserStruct *, char *, struct Argu
 void ArgusPrintIdleSrcIntPktMin (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
 void ArgusPrintIdleDstIntPktMax (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
 void ArgusPrintIdleDstIntPktMin (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
+
+void ArgusPrintIntFlow (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
+void ArgusPrintIntFlowDist (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
+void ArgusPrintIntFlowStdDev (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
+void ArgusPrintIntFlowMax (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
+void ArgusPrintIntFlowMin (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
+
 void ArgusPrintSrcJitter (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
 void ArgusPrintDstJitter (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
 void ArgusPrintActiveSrcJitter (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
@@ -708,6 +720,9 @@ void ArgusPrintDstOui (struct ArgusParserStruct *, char *, struct ArgusRecordStr
 void ArgusPrintCor (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
 void ArgusPrintProducerConsumerRatio (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
 
+void ArgusPrintSrcVirtualNID (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
+void ArgusPrintDstVirtualNID (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
+
 void ArgusPrintBssidLabel (struct ArgusParserStruct *, char *, int);
 void ArgusPrintSsidLabel (struct ArgusParserStruct *, char *, int);
 void ArgusPrintCauseLabel (struct ArgusParserStruct *, char *, int);
@@ -774,10 +789,15 @@ void ArgusPrintSrcIntPktLabel (struct ArgusParserStruct *, char *, int);
 void ArgusPrintSrcIntPktDistLabel (struct ArgusParserStruct *, char *, int);
 void ArgusPrintDstIntPktLabel (struct ArgusParserStruct *, char *, int);
 void ArgusPrintDstIntPktDistLabel (struct ArgusParserStruct *, char *, int);
+void ArgusPrintActiveIntPktLabel (struct ArgusParserStruct *, char *, int);
+void ArgusPrintActiveIntPktLabel (struct ArgusParserStruct *, char *, int);
+void ArgusPrintActiveIntPktDistLabel (struct ArgusParserStruct *, char *, int);
 void ArgusPrintActiveSrcIntPktLabel (struct ArgusParserStruct *, char *, int);
 void ArgusPrintActiveSrcIntPktDistLabel (struct ArgusParserStruct *, char *, int);
 void ArgusPrintActiveDstIntPktLabel (struct ArgusParserStruct *, char *, int);
 void ArgusPrintActiveDstIntPktDistLabel (struct ArgusParserStruct *, char *, int);
+void ArgusPrintIdleIntPktLabel (struct ArgusParserStruct *, char *, int);
+void ArgusPrintIdleIntPktDistLabel (struct ArgusParserStruct *, char *, int);
 void ArgusPrintIdleSrcIntPktLabel (struct ArgusParserStruct *, char *, int);
 void ArgusPrintIdleSrcIntPktDistLabel (struct ArgusParserStruct *, char *, int);
 void ArgusPrintIdleDstIntPktLabel (struct ArgusParserStruct *, char *, int);
@@ -794,6 +814,13 @@ void ArgusPrintIdleSrcIntPktMaxLabel (struct ArgusParserStruct *, char *, int);
 void ArgusPrintIdleSrcIntPktMinLabel (struct ArgusParserStruct *, char *, int);
 void ArgusPrintIdleDstIntPktMaxLabel (struct ArgusParserStruct *, char *, int);
 void ArgusPrintIdleDstIntPktMinLabel (struct ArgusParserStruct *, char *, int);
+
+void ArgusPrintIntFlowLabel (struct ArgusParserStruct *, char *, int);
+void ArgusPrintIntFlowDistLabel (struct ArgusParserStruct *, char *, int);
+void ArgusPrintIntFlowStdDevLabel (struct ArgusParserStruct *, char *, int);
+void ArgusPrintIntFlowMaxLabel (struct ArgusParserStruct *, char *, int);
+void ArgusPrintIntFlowMinLabel (struct ArgusParserStruct *, char *, int);
+
 void ArgusPrintSrcJitterLabel (struct ArgusParserStruct *, char *, int);
 void ArgusPrintDstJitterLabel (struct ArgusParserStruct *, char *, int);
 void ArgusPrintActiveSrcJitterLabel (struct ArgusParserStruct *, char *, int);
@@ -955,465 +982,501 @@ void ArgusPrintSrcOuiLabel (struct ArgusParserStruct *, char *, int);
 void ArgusPrintDstOuiLabel (struct ArgusParserStruct *, char *, int);
 void ArgusPrintCorLabel (struct ArgusParserStruct *, char *, int);
 
+void ArgusPrintSrcVirtualNIDLabel (struct ArgusParserStruct *, char *, int);
+void ArgusPrintDstVirtualNIDLabel (struct ArgusParserStruct *, char *, int);
+
+#define ARGUS_PTYPE_INT         0
+#define ARGUS_PTYPE_UINT        1
+#define ARGUS_PTYPE_DOUBLE      2
+#define ARGUS_PTYPE_STRING      4
+
 
 struct ArgusPrintFieldStruct 
 RaPrintAlgorithmTable[MAX_PRINT_ALG_TYPES] = {
 #define ARGUSPRINTSTARTDATE		0
-   { "stime", "%T.%f", 15 , 1, 0, ARGUSPRINTSTARTDATE, ArgusPrintStartDate, ArgusPrintStartDateLabel, "double(18,6) unsigned not null", 0},
+   { "stime", "%T.%f", 12 , 1, ARGUS_PTYPE_STRING, ARGUSPRINTSTARTDATE, ArgusPrintStartDate, ArgusPrintStartDateLabel, "double(18,6) unsigned not null", 0},
 #define ARGUSPRINTLASTDATE		1
-   { "ltime", "%T.%f", 15 , 1, 0, ARGUSPRINTLASTDATE, ArgusPrintLastDate, ArgusPrintLastDateLabel, "double(18,6) unsigned not null", 0},
+   { "ltime", "%T.%f", 12 , 1, ARGUS_PTYPE_STRING, ARGUSPRINTLASTDATE, ArgusPrintLastDate, ArgusPrintLastDateLabel, "double(18,6) unsigned not null", 0},
 #define ARGUSPRINTTRANSACTIONS		2
-   { "trans", "", 6 , 1, 0, ARGUSPRINTTRANSACTIONS, ArgusPrintTransactions, ArgusPrintTransactionsLabel, "int unsigned", 0},
+   { "trans", "", 6 , 1, ARGUS_PTYPE_INT, ARGUSPRINTTRANSACTIONS, ArgusPrintTransactions, ArgusPrintTransactionsLabel, "int unsigned", 0},
 #define ARGUSPRINTDURATION		3
-   { "dur", "", 10 , 1, 0, ARGUSPRINTDURATION, ArgusPrintDuration, ArgusPrintDurationLabel, "double(18,6) not null", 0},
+   { "dur", "", 10 , 1, ARGUS_PTYPE_DOUBLE, ARGUSPRINTDURATION, ArgusPrintDuration, ArgusPrintDurationLabel, "double(18,6) not null", 0},
 #define ARGUSPRINTMEAN		        4
-   { "mean", "", 10 , 1, 0, ARGUSPRINTMEAN, ArgusPrintMean, ArgusPrintMeanLabel, "double", 0},
+   { "mean", "", 10 , 1, ARGUS_PTYPE_DOUBLE, ARGUSPRINTMEAN, ArgusPrintMean, ArgusPrintMeanLabel, "double", 0},
 #define ARGUSPRINTMIN			5
-   { "min", "", 10 , 1, 0, ARGUSPRINTMIN, ArgusPrintMin, ArgusPrintMinLabel, "double", 0},
+   { "min", "", 10 , 1, ARGUS_PTYPE_DOUBLE, ARGUSPRINTMIN, ArgusPrintMin, ArgusPrintMinLabel, "double", 0},
 #define ARGUSPRINTMAX			6
-   { "max", "", 10 , 1, 0, ARGUSPRINTMAX, ArgusPrintMax, ArgusPrintMaxLabel, "double", 0},
+   { "max", "", 10 , 1, ARGUS_PTYPE_DOUBLE, ARGUSPRINTMAX, ArgusPrintMax, ArgusPrintMaxLabel, "double", 0},
 #define ARGUSPRINTSRCADDR		7
-   { "saddr", "", 18 , 1, 0, ARGUSPRINTSRCADDR, ArgusPrintSrcAddr, ArgusPrintSrcAddrLabel, "varchar(64) not null", 0},
+   { "saddr", "", 18 , 1, ARGUS_PTYPE_STRING, ARGUSPRINTSRCADDR, ArgusPrintSrcAddr, ArgusPrintSrcAddrLabel, "varchar(64) not null", 0},
 #define ARGUSPRINTDSTADDR		8
-   { "daddr", "", 18 , 1, 0, ARGUSPRINTDSTADDR, ArgusPrintDstAddr, ArgusPrintDstAddrLabel, "varchar(64) not null", 0},
+   { "daddr", "", 18 , 1, ARGUS_PTYPE_STRING, ARGUSPRINTDSTADDR, ArgusPrintDstAddr, ArgusPrintDstAddrLabel, "varchar(64) not null", 0},
 #define ARGUSPRINTPROTO			9
-   { "proto", "", 6 , 1, 0, ARGUSPRINTPROTO, ArgusPrintProto, ArgusPrintProtoLabel, "varchar(16) not null", 0},
+   { "proto", "", 6 , 1, ARGUS_PTYPE_STRING, ARGUSPRINTPROTO, ArgusPrintProto, ArgusPrintProtoLabel, "varchar(16) not null", 0},
 #define ARGUSPRINTSRCPORT		10
-   { "sport", "", 6 , 1, 0, ARGUSPRINTSRCPORT, ArgusPrintSrcPort, ArgusPrintSrcPortLabel, "varchar(10) not null", 0},
+   { "sport", "", 6 , 1, ARGUS_PTYPE_STRING, ARGUSPRINTSRCPORT, ArgusPrintSrcPort, ArgusPrintSrcPortLabel, "varchar(10) not null", 0},
 #define ARGUSPRINTDSTPORT		11
-   { "dport", "", 6 , 1, 0, ARGUSPRINTDSTPORT, ArgusPrintDstPort, ArgusPrintDstPortLabel, "varchar(10) not null", 0},
+   { "dport", "", 6 , 1, ARGUS_PTYPE_STRING, ARGUSPRINTDSTPORT, ArgusPrintDstPort, ArgusPrintDstPortLabel, "varchar(10) not null", 0},
 #define ARGUSPRINTSRCTOS		12
-   { "stos", "", 5 , 1, 0, ARGUSPRINTSRCTOS, ArgusPrintSrcTos, ArgusPrintSrcTosLabel, "tinyint unsigned", 0},
+   { "stos", "", 5 , 1, ARGUS_PTYPE_INT, ARGUSPRINTSRCTOS, ArgusPrintSrcTos, ArgusPrintSrcTosLabel, "tinyint unsigned", 0},
 #define ARGUSPRINTDSTTOS		13
-   { "dtos", "", 5 , 1, 0, ARGUSPRINTDSTTOS, ArgusPrintDstTos, ArgusPrintDstTosLabel, "tinyint unsigned", 0},
+   { "dtos", "", 5 , 1, ARGUS_PTYPE_INT, ARGUSPRINTDSTTOS, ArgusPrintDstTos, ArgusPrintDstTosLabel, "tinyint unsigned", 0},
 #define ARGUSPRINTSRCDSBYTE		14
-   { "sdsb", "", 5 , 1, 0, ARGUSPRINTSRCDSBYTE, ArgusPrintSrcDSByte, ArgusPrintSrcDSByteLabel, "varchar(4) not null", 0},
+   { "sdsb", "", 5 , 1, ARGUS_PTYPE_STRING, ARGUSPRINTSRCDSBYTE, ArgusPrintSrcDSByte, ArgusPrintSrcDSByteLabel, "varchar(4) not null", 0},
 #define ARGUSPRINTDSTDSBYTE		15
-   { "ddsb", "", 5 , 1, 0, ARGUSPRINTDSTDSBYTE, ArgusPrintDstDSByte, ArgusPrintDstDSByteLabel, "varchar(4) not null", 0},
+   { "ddsb", "", 5 , 1, ARGUS_PTYPE_STRING, ARGUSPRINTDSTDSBYTE, ArgusPrintDstDSByte, ArgusPrintDstDSByteLabel, "varchar(4) not null", 0},
 #define ARGUSPRINTSRCTTL		16
-   { "sttl", "", 4 , 1, 0, ARGUSPRINTSRCTTL, ArgusPrintSrcTtl, ArgusPrintSrcTtlLabel, "tinyint unsigned", 0},
+   { "sttl", "", 4 , 1, ARGUS_PTYPE_INT, ARGUSPRINTSRCTTL, ArgusPrintSrcTtl, ArgusPrintSrcTtlLabel, "tinyint unsigned", 0},
 #define ARGUSPRINTDSTTTL		17
-   { "dttl", "", 4 , 1, 0, ARGUSPRINTDSTTTL, ArgusPrintDstTtl, ArgusPrintDstTtlLabel, "tinyint unsigned", 0},
+   { "dttl", "", 4 , 1, ARGUS_PTYPE_INT, ARGUSPRINTDSTTTL, ArgusPrintDstTtl, ArgusPrintDstTtlLabel, "tinyint unsigned", 0},
 #define ARGUSPRINTBYTES			18
-   { "bytes", "", 10 , 1, 0, ARGUSPRINTBYTES, ArgusPrintBytes, ArgusPrintBytesLabel, "bigint", 0},
+   { "bytes", "", 10 , 1, ARGUS_PTYPE_INT, ARGUSPRINTBYTES, ArgusPrintBytes, ArgusPrintBytesLabel, "bigint", 0},
 #define ARGUSPRINTSRCBYTES		19
-   { "sbytes", "", 12 , 1, 0, ARGUSPRINTSRCBYTES, ArgusPrintSrcBytes, ArgusPrintSrcBytesLabel, "bigint", 0},
+   { "sbytes", "", 12 , 1, ARGUS_PTYPE_INT, ARGUSPRINTSRCBYTES, ArgusPrintSrcBytes, ArgusPrintSrcBytesLabel, "bigint", 0},
 #define ARGUSPRINTDSTBYTES		20
-   { "dbytes", "", 12 , 1, 0, ARGUSPRINTDSTBYTES, ArgusPrintDstBytes, ArgusPrintDstBytesLabel, "bigint", 0},
+   { "dbytes", "", 12 , 1, ARGUS_PTYPE_INT, ARGUSPRINTDSTBYTES, ArgusPrintDstBytes, ArgusPrintDstBytesLabel, "bigint", 0},
 #define ARGUSPRINTAPPBYTES              21
-   { "appbytes", "", 10 , 1, 0, ARGUSPRINTAPPBYTES, ArgusPrintAppBytes, ArgusPrintAppBytesLabel, "bigint", 0},
+   { "appbytes", "", 10 , 1, ARGUS_PTYPE_INT, ARGUSPRINTAPPBYTES, ArgusPrintAppBytes, ArgusPrintAppBytesLabel, "bigint", 0},
 #define ARGUSPRINTSRCAPPBYTES           22
-   { "sappbytes", "", 12 , 1, 0, ARGUSPRINTSRCAPPBYTES, ArgusPrintSrcAppBytes, ArgusPrintSrcAppBytesLabel, "bigint", 0},
+   { "sappbytes", "", 12 , 1, ARGUS_PTYPE_INT, ARGUSPRINTSRCAPPBYTES, ArgusPrintSrcAppBytes, ArgusPrintSrcAppBytesLabel, "bigint", 0},
 #define ARGUSPRINTDSTAPPBYTES           23
-   { "dappbytes", "", 12 , 1, 0, ARGUSPRINTDSTAPPBYTES, ArgusPrintDstAppBytes, ArgusPrintDstAppBytesLabel, "bigint", 0},
+   { "dappbytes", "", 12 , 1, ARGUS_PTYPE_INT, ARGUSPRINTDSTAPPBYTES, ArgusPrintDstAppBytes, ArgusPrintDstAppBytesLabel, "bigint", 0},
 #define ARGUSPRINTPACKETS		24
-   { "pkts", "", 8 , 1, 0, ARGUSPRINTPACKETS, ArgusPrintPackets, ArgusPrintPacketsLabel, "bigint", 0},
+   { "pkts", "", 8 , 1, ARGUS_PTYPE_INT, ARGUSPRINTPACKETS, ArgusPrintPackets, ArgusPrintPacketsLabel, "bigint", 0},
 #define ARGUSPRINTSRCPACKETS		25
-   { "spkts", "", 8 , 1, 0, ARGUSPRINTSRCPACKETS, ArgusPrintSrcPackets, ArgusPrintSrcPacketsLabel, "bigint", 0},
+   { "spkts", "", 8 , 1, ARGUS_PTYPE_INT, ARGUSPRINTSRCPACKETS, ArgusPrintSrcPackets, ArgusPrintSrcPacketsLabel, "bigint", 0},
 #define ARGUSPRINTDSTPACKETS		26
-   { "dpkts", "", 8 , 1, 0, ARGUSPRINTDSTPACKETS, ArgusPrintDstPackets, ArgusPrintDstPacketsLabel, "bigint", 0},
+   { "dpkts", "", 8 , 1, ARGUS_PTYPE_INT, ARGUSPRINTDSTPACKETS, ArgusPrintDstPackets, ArgusPrintDstPacketsLabel, "bigint", 0},
 #define ARGUSPRINTLOAD			27
-   { "load", "", 8 , 1, 0, ARGUSPRINTLOAD, ArgusPrintLoad, ArgusPrintLoadLabel, "double", 0},
+   { "load", "", 8 , 1, ARGUS_PTYPE_DOUBLE, ARGUSPRINTLOAD, ArgusPrintLoad, ArgusPrintLoadLabel, "double", 0},
 #define ARGUSPRINTSRCLOAD		28
-   { "sload", "", 8 , 1, 0, ARGUSPRINTSRCLOAD, ArgusPrintSrcLoad, ArgusPrintSrcLoadLabel, "double", 0},
+   { "sload", "", 8 , 1, ARGUS_PTYPE_DOUBLE, ARGUSPRINTSRCLOAD, ArgusPrintSrcLoad, ArgusPrintSrcLoadLabel, "double", 0},
 #define ARGUSPRINTDSTLOAD		29
-   { "dload", "", 8 , 1, 0, ARGUSPRINTDSTLOAD, ArgusPrintDstLoad, ArgusPrintDstLoadLabel, "double", 0},
+   { "dload", "", 8 , 1, ARGUS_PTYPE_DOUBLE, ARGUSPRINTDSTLOAD, ArgusPrintDstLoad, ArgusPrintDstLoadLabel, "double", 0},
 #define ARGUSPRINTLOSS			30
-   { "loss", "", 10 , 1, 0, ARGUSPRINTLOSS, ArgusPrintLoss, ArgusPrintLossLabel, "int", 0},
+   { "loss", "", 10 , 1, ARGUS_PTYPE_INT, ARGUSPRINTLOSS, ArgusPrintLoss, ArgusPrintLossLabel, "int", 0},
 #define ARGUSPRINTSRCLOSS		31
-   { "sloss", "", 10 , 1, 0, ARGUSPRINTSRCLOSS, ArgusPrintSrcLoss, ArgusPrintSrcLossLabel, "int", 0},
+   { "sloss", "", 10 , 1, ARGUS_PTYPE_INT, ARGUSPRINTSRCLOSS, ArgusPrintSrcLoss, ArgusPrintSrcLossLabel, "int", 0},
 #define ARGUSPRINTDSTLOSS		32
-   { "dloss", "", 10 , 1, 0, ARGUSPRINTDSTLOSS, ArgusPrintDstLoss, ArgusPrintDstLossLabel, "int", 0},
+   { "dloss", "", 10 , 1, ARGUS_PTYPE_INT, ARGUSPRINTDSTLOSS, ArgusPrintDstLoss, ArgusPrintDstLossLabel, "int", 0},
 #define ARGUSPRINTPERCENTLOSS		33
-   { "ploss", "", 8 , 1, 0, ARGUSPRINTPERCENTLOSS, ArgusPrintPercentLoss, ArgusPrintPercentLossLabel, "double", 0},
+   { "ploss", "", 8 , 1, ARGUS_PTYPE_DOUBLE, ARGUSPRINTPERCENTLOSS, ArgusPrintPercentLoss, ArgusPrintPercentLossLabel, "double", 0},
 #define ARGUSPRINTSRCPERCENTLOSS	34
-   { "sploss", "", 10 , 1, 0, ARGUSPRINTSRCPERCENTLOSS, ArgusPrintPercentSrcLoss, ArgusPrintPercentSrcLossLabel, "double", 0},
+   { "sploss", "", 10 , 1, ARGUS_PTYPE_DOUBLE, ARGUSPRINTSRCPERCENTLOSS, ArgusPrintPercentSrcLoss, ArgusPrintPercentSrcLossLabel, "double", 0},
 #define ARGUSPRINTDSTPERCENTLOSS	35
-   { "dploss", "", 10 , 1, 0, ARGUSPRINTDSTPERCENTLOSS, ArgusPrintPercentDstLoss, ArgusPrintPercentDstLossLabel, "double", 0},
+   { "dploss", "", 10 , 1, ARGUS_PTYPE_DOUBLE, ARGUSPRINTDSTPERCENTLOSS, ArgusPrintPercentDstLoss, ArgusPrintPercentDstLossLabel, "double", 0},
 #define ARGUSPRINTRATE			36
-   { "rate", "", 12 , 1, 0, ARGUSPRINTRATE, ArgusPrintRate, ArgusPrintRateLabel, "double", 0},
+   { "rate", "", 12 , 1, ARGUS_PTYPE_DOUBLE, ARGUSPRINTRATE, ArgusPrintRate, ArgusPrintRateLabel, "double", 0},
 #define ARGUSPRINTSRCRATE		37
-   { "srate", "", 12 , 1, 0, ARGUSPRINTSRCRATE, ArgusPrintSrcRate, ArgusPrintSrcRateLabel, "double", 0},
+   { "srate", "", 12 , 1, ARGUS_PTYPE_DOUBLE, ARGUSPRINTSRCRATE, ArgusPrintSrcRate, ArgusPrintSrcRateLabel, "double", 0},
 #define ARGUSPRINTDSTRATE		38
-   { "drate", "", 12 , 1, 0, ARGUSPRINTDSTRATE, ArgusPrintDstRate, ArgusPrintDstRateLabel, "double", 0},
+   { "drate", "", 12 , 1, ARGUS_PTYPE_DOUBLE, ARGUSPRINTDSTRATE, ArgusPrintDstRate, ArgusPrintDstRateLabel, "double", 0},
 #define ARGUSPRINTSOURCEID		39
-   { "srcid", "", 18 , 1, 0, ARGUSPRINTSOURCEID, ArgusPrintSourceID, ArgusPrintSourceIDLabel, "varchar(256)", 0},
+   { "srcid", "", 18 , 1, ARGUS_PTYPE_STRING, ARGUSPRINTSOURCEID, ArgusPrintSourceID, ArgusPrintSourceIDLabel, "varchar(64)", 0},
 #define ARGUSPRINTFLAGS			40
-   { "flgs", "", 9 , 1, 0, ARGUSPRINTFLAGS, ArgusPrintFlags, ArgusPrintFlagsLabel, "varchar(32)", 0},
+   { "flgs", "", 9 , 1, ARGUS_PTYPE_STRING, ARGUSPRINTFLAGS, ArgusPrintFlags, ArgusPrintFlagsLabel, "varchar(32)", 0},
 #define ARGUSPRINTSRCMACADDRESS		41
-   { "smac", "", 18 , 1, 0, ARGUSPRINTSRCMACADDRESS, ArgusPrintSrcMacAddress, ArgusPrintSrcMacAddressLabel, "varchar(24)", 0},
+   { "smac", "", 18 , 1, ARGUS_PTYPE_STRING, ARGUSPRINTSRCMACADDRESS, ArgusPrintSrcMacAddress, ArgusPrintSrcMacAddressLabel, "varchar(24)", 0},
 #define ARGUSPRINTDSTMACADDRESS		42
-   { "dmac", "", 18 , 1, 0, ARGUSPRINTDSTMACADDRESS, ArgusPrintDstMacAddress, ArgusPrintDstMacAddressLabel, "varchar(24)", 0},
+   { "dmac", "", 18 , 1, ARGUS_PTYPE_STRING, ARGUSPRINTDSTMACADDRESS, ArgusPrintDstMacAddress, ArgusPrintDstMacAddressLabel, "varchar(24)", 0},
 #define ARGUSPRINTDIR			43
-   { "dir", "", 5 , 1, 0, ARGUSPRINTDIR, ArgusPrintDirection, ArgusPrintDirectionLabel, "varchar(3)", 0},
+   { "dir", "", 5 , 1, ARGUS_PTYPE_STRING, ARGUSPRINTDIR, ArgusPrintDirection, ArgusPrintDirectionLabel, "varchar(3)", 0},
 #define ARGUSPRINTSRCINTPKT		44
-   { "sintpkt", "", 12 , 1, 0, ARGUSPRINTSRCINTPKT, ArgusPrintSrcIntPkt, ArgusPrintSrcIntPktLabel, "double", 0},
+   { "sintpkt", "", 12 , 1, ARGUS_PTYPE_DOUBLE, ARGUSPRINTSRCINTPKT, ArgusPrintSrcIntPkt, ArgusPrintSrcIntPktLabel, "double", 0},
 #define ARGUSPRINTDSTINTPKT		45
-   { "dintpkt", "", 12 , 1, 0, ARGUSPRINTDSTINTPKT, ArgusPrintDstIntPkt, ArgusPrintDstIntPktLabel, "double", 0},
+   { "dintpkt", "", 12 , 1, ARGUS_PTYPE_DOUBLE, ARGUSPRINTDSTINTPKT, ArgusPrintDstIntPkt, ArgusPrintDstIntPktLabel, "double", 0},
 #define ARGUSPRINTACTSRCINTPKT		46
-   { "sintpktact", "", 12 , 1, 0, ARGUSPRINTACTSRCINTPKT, ArgusPrintActiveSrcIntPkt, ArgusPrintActiveSrcIntPktLabel, "double", 0},
+   { "sintpktact", "", 12 , 1, ARGUS_PTYPE_DOUBLE, ARGUSPRINTACTSRCINTPKT, ArgusPrintActiveSrcIntPkt, ArgusPrintActiveSrcIntPktLabel, "double", 0},
 #define ARGUSPRINTACTDSTINTPKT		47
-   { "dintpktact", "", 12 , 1, 0, ARGUSPRINTACTDSTINTPKT, ArgusPrintActiveDstIntPkt, ArgusPrintActiveDstIntPktLabel, "double", 0},
+   { "dintpktact", "", 12 , 1, ARGUS_PTYPE_DOUBLE, ARGUSPRINTACTDSTINTPKT, ArgusPrintActiveDstIntPkt, ArgusPrintActiveDstIntPktLabel, "double", 0},
 #define ARGUSPRINTIDLESRCINTPKT		48
-   { "sintpktidl", "", 12 , 1, 0, ARGUSPRINTIDLESRCINTPKT, ArgusPrintIdleSrcIntPkt, ArgusPrintIdleSrcIntPktLabel, "double", 0},
+   { "sintpktidl", "", 12 , 1, ARGUS_PTYPE_DOUBLE, ARGUSPRINTIDLESRCINTPKT, ArgusPrintIdleSrcIntPkt, ArgusPrintIdleSrcIntPktLabel, "double", 0},
 #define ARGUSPRINTIDLEDSTINTPKT		49
-   { "dintpktidl", "", 12 , 1, 0, ARGUSPRINTIDLEDSTINTPKT, ArgusPrintIdleDstIntPkt, ArgusPrintIdleDstIntPktLabel, "double", 0},
+   { "dintpktidl", "", 12 , 1, ARGUS_PTYPE_DOUBLE, ARGUSPRINTIDLEDSTINTPKT, ArgusPrintIdleDstIntPkt, ArgusPrintIdleDstIntPktLabel, "double", 0},
 #define ARGUSPRINTSRCINTPKTMAX		50
-   { "sintpktmax", "", 12 , 1, 0, ARGUSPRINTSRCINTPKTMAX, ArgusPrintSrcIntPktMax, ArgusPrintSrcIntPktMaxLabel, "double", 0},
+   { "sintpktmax", "", 12 , 1, ARGUS_PTYPE_DOUBLE, ARGUSPRINTSRCINTPKTMAX, ArgusPrintSrcIntPktMax, ArgusPrintSrcIntPktMaxLabel, "double", 0},
 #define ARGUSPRINTSRCINTPKTMIN		51
-   { "sintpktmin", "", 12 , 1, 0, ARGUSPRINTSRCINTPKTMIN, ArgusPrintSrcIntPktMin, ArgusPrintSrcIntPktMinLabel, "double", 0},
+   { "sintpktmin", "", 12 , 1, ARGUS_PTYPE_DOUBLE, ARGUSPRINTSRCINTPKTMIN, ArgusPrintSrcIntPktMin, ArgusPrintSrcIntPktMinLabel, "double", 0},
 #define ARGUSPRINTDSTINTPKTMAX		52
-   { "dintpktmax", "", 12 , 1, 0, ARGUSPRINTDSTINTPKTMAX, ArgusPrintDstIntPktMax, ArgusPrintDstIntPktMaxLabel, "double", 0},
+   { "dintpktmax", "", 12 , 1, ARGUS_PTYPE_DOUBLE, ARGUSPRINTDSTINTPKTMAX, ArgusPrintDstIntPktMax, ArgusPrintDstIntPktMaxLabel, "double", 0},
 #define ARGUSPRINTDSTINTPKTMIN		53
-   { "dintpktmin", "", 12 , 1, 0, ARGUSPRINTDSTINTPKTMIN, ArgusPrintDstIntPktMin, ArgusPrintDstIntPktMinLabel, "double", 0},
+   { "dintpktmin", "", 12 , 1, ARGUS_PTYPE_DOUBLE, ARGUSPRINTDSTINTPKTMIN, ArgusPrintDstIntPktMin, ArgusPrintDstIntPktMinLabel, "double", 0},
 #define ARGUSPRINTACTSRCINTPKTMAX	54
-   { "sintpktactmax", "", 12 , 1, 0, ARGUSPRINTACTSRCINTPKTMAX, ArgusPrintActiveSrcIntPktMax, ArgusPrintActiveSrcIntPktMaxLabel, "double", 0},
+   { "sintpktactmax", "", 12 , 1, ARGUS_PTYPE_DOUBLE, ARGUSPRINTACTSRCINTPKTMAX, ArgusPrintActiveSrcIntPktMax, ArgusPrintActiveSrcIntPktMaxLabel, "double", 0},
 #define ARGUSPRINTACTSRCINTPKTMIN	55
-   { "sintpktactmin", "", 12 , 1, 0, ARGUSPRINTACTSRCINTPKTMIN, ArgusPrintActiveSrcIntPktMin, ArgusPrintActiveSrcIntPktMinLabel, "double", 0},
+   { "sintpktactmin", "", 12 , 1, ARGUS_PTYPE_DOUBLE, ARGUSPRINTACTSRCINTPKTMIN, ArgusPrintActiveSrcIntPktMin, ArgusPrintActiveSrcIntPktMinLabel, "double", 0},
 #define ARGUSPRINTACTDSTINTPKTMAX	56
-   { "dintpktactmax", "", 12 , 1, 0, ARGUSPRINTACTDSTINTPKTMAX, ArgusPrintActiveDstIntPktMax, ArgusPrintActiveDstIntPktMaxLabel, "double", 0},
+   { "dintpktactmax", "", 12 , 1, ARGUS_PTYPE_DOUBLE, ARGUSPRINTACTDSTINTPKTMAX, ArgusPrintActiveDstIntPktMax, ArgusPrintActiveDstIntPktMaxLabel, "double", 0},
 #define ARGUSPRINTACTDSTINTPKTMIN	57
-   { "dintpktactmin", "", 12 , 1, 0, ARGUSPRINTACTDSTINTPKTMIN, ArgusPrintActiveDstIntPktMin, ArgusPrintActiveDstIntPktMinLabel, "double", 0},
+   { "dintpktactmin", "", 12 , 1, ARGUS_PTYPE_DOUBLE, ARGUSPRINTACTDSTINTPKTMIN, ArgusPrintActiveDstIntPktMin, ArgusPrintActiveDstIntPktMinLabel, "double", 0},
 #define ARGUSPRINTIDLESRCINTPKTMAX	58
-   { "sintpktidlmax", "", 12 , 1, 0, ARGUSPRINTIDLESRCINTPKTMAX, ArgusPrintIdleSrcIntPktMax, ArgusPrintIdleSrcIntPktMaxLabel, "double", 0},
+   { "sintpktidlmax", "", 12 , 1, ARGUS_PTYPE_DOUBLE, ARGUSPRINTIDLESRCINTPKTMAX, ArgusPrintIdleSrcIntPktMax, ArgusPrintIdleSrcIntPktMaxLabel, "double", 0},
 #define ARGUSPRINTIDLESRCINTPKTMIN	59
-   { "sintpktidlmin", "", 12 , 1, 0, ARGUSPRINTIDLESRCINTPKTMIN, ArgusPrintIdleSrcIntPktMin, ArgusPrintIdleSrcIntPktMinLabel, "double", 0},
+   { "sintpktidlmin", "", 12 , 1, ARGUS_PTYPE_DOUBLE, ARGUSPRINTIDLESRCINTPKTMIN, ArgusPrintIdleSrcIntPktMin, ArgusPrintIdleSrcIntPktMinLabel, "double", 0},
 #define ARGUSPRINTIDLEDSTINTPKTMAX	60
-   { "dintpktidlmax", "", 12 , 1, 0, ARGUSPRINTIDLEDSTINTPKTMAX, ArgusPrintIdleDstIntPktMax, ArgusPrintIdleDstIntPktMaxLabel, "double", 0},
+   { "dintpktidlmax", "", 12 , 1, ARGUS_PTYPE_DOUBLE, ARGUSPRINTIDLEDSTINTPKTMAX, ArgusPrintIdleDstIntPktMax, ArgusPrintIdleDstIntPktMaxLabel, "double", 0},
 #define ARGUSPRINTIDLEDSTINTPKTMIN	61
-   { "dintpktidlmin", "", 12 , 1, 0, ARGUSPRINTIDLEDSTINTPKTMIN, ArgusPrintIdleDstIntPktMin, ArgusPrintIdleDstIntPktMinLabel, "double", 0},
+   { "dintpktidlmin", "", 12 , 1, ARGUS_PTYPE_DOUBLE, ARGUSPRINTIDLEDSTINTPKTMIN, ArgusPrintIdleDstIntPktMin, ArgusPrintIdleDstIntPktMinLabel, "double", 0},
 #define ARGUSPRINTSPACER		62
-   { "xxx", "", 12 , 1, 0, ARGUSPRINTSPACER, NULL, NULL, "varchar(3)", 0},
+   { "xxx", "", 12 , 1, ARGUS_PTYPE_STRING, ARGUSPRINTSPACER, NULL, NULL, "varchar(3)", 0},
 #define ARGUSPRINTSRCJITTER		63
-   { "sjit", "", 12 , 1, 0, ARGUSPRINTSRCJITTER, ArgusPrintSrcJitter, ArgusPrintSrcJitterLabel, "double", 0},
+   { "sjit", "", 12 , 1, ARGUS_PTYPE_DOUBLE, ARGUSPRINTSRCJITTER, ArgusPrintSrcJitter, ArgusPrintSrcJitterLabel, "double", 0},
 #define ARGUSPRINTDSTJITTER		64
-   { "djit", "", 12 , 1, 0, ARGUSPRINTDSTJITTER, ArgusPrintDstJitter, ArgusPrintDstJitterLabel, "double", 0},
+   { "djit", "", 12 , 1, ARGUS_PTYPE_DOUBLE, ARGUSPRINTDSTJITTER, ArgusPrintDstJitter, ArgusPrintDstJitterLabel, "double", 0},
 #define ARGUSPRINTACTSRCJITTER		65
-   { "sjitact", "", 12 , 1, 0, ARGUSPRINTACTSRCJITTER, ArgusPrintActiveSrcJitter, ArgusPrintActiveSrcJitterLabel, "double", 0},
+   { "sjitact", "", 12 , 1, ARGUS_PTYPE_DOUBLE, ARGUSPRINTACTSRCJITTER, ArgusPrintActiveSrcJitter, ArgusPrintActiveSrcJitterLabel, "double", 0},
 #define ARGUSPRINTACTDSTJITTER		66
-   { "djitact", "", 12 , 1, 0, ARGUSPRINTACTDSTJITTER, ArgusPrintActiveDstJitter, ArgusPrintActiveDstJitterLabel, "double", 0},
+   { "djitact", "", 12 , 1, ARGUS_PTYPE_DOUBLE, ARGUSPRINTACTDSTJITTER, ArgusPrintActiveDstJitter, ArgusPrintActiveDstJitterLabel, "double", 0},
 #define ARGUSPRINTIDLESRCJITTER		67
-   { "sjitidl", "", 12 , 1, 0, ARGUSPRINTIDLESRCJITTER, ArgusPrintIdleSrcJitter, ArgusPrintIdleSrcJitterLabel, "double", 0},
+   { "sjitidl", "", 12 , 1, ARGUS_PTYPE_DOUBLE, ARGUSPRINTIDLESRCJITTER, ArgusPrintIdleSrcJitter, ArgusPrintIdleSrcJitterLabel, "double", 0},
 #define ARGUSPRINTIDLEDSTJITTER		68
-   { "djitidl", "", 12 , 1, 0, ARGUSPRINTIDLEDSTJITTER, ArgusPrintIdleDstJitter, ArgusPrintIdleDstJitterLabel, "double", 0},
+   { "djitidl", "", 12 , 1, ARGUS_PTYPE_DOUBLE, ARGUSPRINTIDLEDSTJITTER, ArgusPrintIdleDstJitter, ArgusPrintIdleDstJitterLabel, "double", 0},
 #define ARGUSPRINTSTATE			69
-   { "state", "", 5 , 1, 0, ARGUSPRINTSTATE, ArgusPrintState, ArgusPrintStateLabel, "varchar(32)", 0},
+   { "state", "", 5 , 1, ARGUS_PTYPE_STRING, ARGUSPRINTSTATE, ArgusPrintState, ArgusPrintStateLabel, "varchar(32)", 0},
 #define ARGUSPRINTDELTADURATION		70
-   { "dldur", "", 12 , 1, 0, ARGUSPRINTDELTADURATION, ArgusPrintDeltaDuration, ArgusPrintDeltaDurationLabel, "double", 0},
+   { "dldur", "", 12 , 1, ARGUS_PTYPE_DOUBLE, ARGUSPRINTDELTADURATION, ArgusPrintDeltaDuration, ArgusPrintDeltaDurationLabel, "double", 0},
 #define ARGUSPRINTDELTASTARTTIME	71
-   { "dlstime", "", 12 , 1, 0, ARGUSPRINTDELTASTARTTIME, ArgusPrintDeltaStartTime, ArgusPrintDeltaStartTimeLabel, "double(18,6)", 0},
+   { "dlstime", "", 12 , 1, ARGUS_PTYPE_DOUBLE, ARGUSPRINTDELTASTARTTIME, ArgusPrintDeltaStartTime, ArgusPrintDeltaStartTimeLabel, "double(18,6)", 0},
 #define ARGUSPRINTDELTALASTTIME		72
-   { "dlltime", "", 12 , 1, 0, ARGUSPRINTDELTALASTTIME, ArgusPrintDeltaLastTime, ArgusPrintDeltaLastTimeLabel, "double(18,6)", 0},
+   { "dlltime", "", 12 , 1, ARGUS_PTYPE_DOUBLE, ARGUSPRINTDELTALASTTIME, ArgusPrintDeltaLastTime, ArgusPrintDeltaLastTimeLabel, "double(18,6)", 0},
 #define ARGUSPRINTDELTASPKTS		73
-   { "dlspkt", "", 6 , 1, 0, ARGUSPRINTDELTASPKTS, ArgusPrintDeltaSrcPkts, ArgusPrintDeltaSrcPktsLabel, "int", 0},
+   { "dlspkt", "", 6 , 1, ARGUS_PTYPE_INT, ARGUSPRINTDELTASPKTS, ArgusPrintDeltaSrcPkts, ArgusPrintDeltaSrcPktsLabel, "int", 0},
 #define ARGUSPRINTDELTADPKTS		74
-   { "dldpkt", "", 6 , 1, 0, ARGUSPRINTDELTADPKTS, ArgusPrintDeltaDstPkts, ArgusPrintDeltaDstPktsLabel, "int", 0},
+   { "dldpkt", "", 6 , 1, ARGUS_PTYPE_INT, ARGUSPRINTDELTADPKTS, ArgusPrintDeltaDstPkts, ArgusPrintDeltaDstPktsLabel, "int", 0},
 #define ARGUSPRINTDELTASRCPKTS		75
-   { "dspkts", "", 12 , 1, 0, ARGUSPRINTDELTASRCPKTS, ArgusPrintDeltaSrcPkts, ArgusPrintDeltaSrcPktsLabel, "int", 0},
+   { "dspkts", "", 12 , 1, ARGUS_PTYPE_INT, ARGUSPRINTDELTASRCPKTS, ArgusPrintDeltaSrcPkts, ArgusPrintDeltaSrcPktsLabel, "int", 0},
 #define ARGUSPRINTDELTADSTPKTS		76
-   { "ddpkts", "", 12 , 1, 0, ARGUSPRINTDELTADSTPKTS, ArgusPrintDeltaDstPkts, ArgusPrintDeltaDstPktsLabel, "int", 0},
+   { "ddpkts", "", 12 , 1, ARGUS_PTYPE_INT, ARGUSPRINTDELTADSTPKTS, ArgusPrintDeltaDstPkts, ArgusPrintDeltaDstPktsLabel, "int", 0},
 #define ARGUSPRINTDELTASRCBYTES		77
-   { "dsbytes", "", 12 , 1, 0, ARGUSPRINTDELTASRCBYTES, ArgusPrintDeltaSrcBytes, ArgusPrintDeltaSrcBytesLabel, "int", 0},
+   { "dsbytes", "", 12 , 1, ARGUS_PTYPE_INT, ARGUSPRINTDELTASRCBYTES, ArgusPrintDeltaSrcBytes, ArgusPrintDeltaSrcBytesLabel, "int", 0},
 #define ARGUSPRINTDELTADSTBYTES		78
-   { "ddbytes", "", 12 , 1, 0, ARGUSPRINTDELTADSTBYTES, ArgusPrintDeltaDstBytes, ArgusPrintDeltaDstBytesLabel, "int", 0},
+   { "ddbytes", "", 12 , 1, ARGUS_PTYPE_INT, ARGUSPRINTDELTADSTBYTES, ArgusPrintDeltaDstBytes, ArgusPrintDeltaDstBytesLabel, "int", 0},
 #define ARGUSPRINTPERCENTDELTASRCPKTS	79
-   { "pdspkts", "", 12 , 1, 0, ARGUSPRINTPERCENTDELTASRCPKTS, ArgusPrintPercentDeltaSrcPkts, ArgusPrintPercentDeltaSrcPktsLabel, "double", 0},
+   { "pdspkts", "", 12 , 1, ARGUS_PTYPE_DOUBLE, ARGUSPRINTPERCENTDELTASRCPKTS, ArgusPrintPercentDeltaSrcPkts, ArgusPrintPercentDeltaSrcPktsLabel, "double", 0},
 #define ARGUSPRINTPERCENTDELTADSTPKTS	80
-   { "pddpkts", "", 12 , 1, 0, ARGUSPRINTPERCENTDELTADSTPKTS, ArgusPrintPercentDeltaDstPkts, ArgusPrintPercentDeltaDstPktsLabel, "double", 0},
+   { "pddpkts", "", 12 , 1, ARGUS_PTYPE_DOUBLE, ARGUSPRINTPERCENTDELTADSTPKTS, ArgusPrintPercentDeltaDstPkts, ArgusPrintPercentDeltaDstPktsLabel, "double", 0},
 #define ARGUSPRINTPERCENTDELTASRCBYTES	81
-   { "pdsbytes", "", 12 , 1, 0, ARGUSPRINTPERCENTDELTASRCBYTES, ArgusPrintPercentDeltaSrcBytes, ArgusPrintPercentDeltaSrcBytesLabel, "double", 0},
+   { "pdsbytes", "", 12 , 1, ARGUS_PTYPE_DOUBLE, ARGUSPRINTPERCENTDELTASRCBYTES, ArgusPrintPercentDeltaSrcBytes, ArgusPrintPercentDeltaSrcBytesLabel, "double", 0},
 #define ARGUSPRINTPERCENTDELTADSTBYTES	82
-   { "pddbytes", "", 12 , 1, 0, ARGUSPRINTPERCENTDELTADSTBYTES, ArgusPrintPercentDeltaDstBytes, ArgusPrintPercentDeltaDstBytesLabel, "double", 0},
+   { "pddbytes", "", 12 , 1, ARGUS_PTYPE_DOUBLE, ARGUSPRINTPERCENTDELTADSTBYTES, ArgusPrintPercentDeltaDstBytes, ArgusPrintPercentDeltaDstBytesLabel, "double", 0},
 #define ARGUSPRINTSRCUSERDATA		83
-   { "suser", "", 16 , 1, 0, ARGUSPRINTSRCUSERDATA, ArgusPrintSrcUserData, ArgusPrintSrcUserDataLabel, "varbinary(2048)", 0},
+   { "suser", "", 16 , 1, ARGUS_PTYPE_STRING, ARGUSPRINTSRCUSERDATA, ArgusPrintSrcUserData, ArgusPrintSrcUserDataLabel, "varbinary(2048)", 0},
 #define ARGUSPRINTDSTUSERDATA		84
-   { "duser", "", 16 , 1, 0, ARGUSPRINTDSTUSERDATA, ArgusPrintDstUserData, ArgusPrintDstUserDataLabel, "varbinary(2048)", 0},
+   { "duser", "", 16 , 1, ARGUS_PTYPE_STRING, ARGUSPRINTDSTUSERDATA, ArgusPrintDstUserData, ArgusPrintDstUserDataLabel, "varbinary(2048)", 0},
 #define ARGUSPRINTTCPEXTENSIONS		85
-   { "tcpext", "", 12 , 1, 0, ARGUSPRINTTCPEXTENSIONS, ArgusPrintTCPExtensions, ArgusPrintTCPExtensionsLabel, "varchar(64)", 0},
+   { "tcpext", "", 12 , 1, ARGUS_PTYPE_STRING, ARGUSPRINTTCPEXTENSIONS, ArgusPrintTCPExtensions, ArgusPrintTCPExtensionsLabel, "varchar(64)", 0},
 #define ARGUSPRINTSRCWINDOW		86
-   { "swin", "", 6 , 1, 0, ARGUSPRINTSRCWINDOW, ArgusPrintSrcWindow, ArgusPrintSrcWindowLabel, "tinyint unsigned", 0},
+   { "swin", "", 6 , 1, ARGUS_PTYPE_INT, ARGUSPRINTSRCWINDOW, ArgusPrintSrcWindow, ArgusPrintSrcWindowLabel, "tinyint unsigned", 0},
 #define ARGUSPRINTDSTWINDOW		87
-   { "dwin", "", 6 , 1, 0, ARGUSPRINTDSTWINDOW, ArgusPrintDstWindow, ArgusPrintDstWindowLabel, "tinyint unsigned", 0},
+   { "dwin", "", 6 , 1, ARGUS_PTYPE_INT, ARGUSPRINTDSTWINDOW, ArgusPrintDstWindow, ArgusPrintDstWindowLabel, "tinyint unsigned", 0},
 #define ARGUSPRINTJOINDELAY		88
-   { "jdelay", "", 12 , 1, 0, ARGUSPRINTJOINDELAY, ArgusPrintJoinDelay, ArgusPrintJoinDelayLabel, "double", 0},
+   { "jdelay", "", 12 , 1, ARGUS_PTYPE_DOUBLE, ARGUSPRINTJOINDELAY, ArgusPrintJoinDelay, ArgusPrintJoinDelayLabel, "double", 0},
 #define ARGUSPRINTLEAVEDELAY		89
-   { "ldelay", "", 12 , 1, 0, ARGUSPRINTLEAVEDELAY, ArgusPrintLeaveDelay, ArgusPrintLeaveDelayLabel, "double", 0},
+   { "ldelay", "", 12 , 1, ARGUS_PTYPE_DOUBLE, ARGUSPRINTLEAVEDELAY, ArgusPrintLeaveDelay, ArgusPrintLeaveDelayLabel, "double", 0},
 #define ARGUSPRINTSEQUENCENUMBER	90
-   { "seq", "", 12 , 1, 0, ARGUSPRINTSEQUENCENUMBER, ArgusPrintSequenceNumber, ArgusPrintSequenceNumberLabel, "int unsigned", 0},
+   { "seq", "", 12 , 1, ARGUS_PTYPE_INT, ARGUSPRINTSEQUENCENUMBER, ArgusPrintSequenceNumber, ArgusPrintSequenceNumberLabel, "int unsigned", 0},
 #define ARGUSPRINTBINS			91
-   { "bins", "", 6 , 1, 0, ARGUSPRINTBINS, ArgusPrintBins, ArgusPrintBinsLabel, "int unsigned", 0},
+   { "bins", "", 6 , 1, ARGUS_PTYPE_INT, ARGUSPRINTBINS, ArgusPrintBins, ArgusPrintBinsLabel, "int unsigned", 0},
 #define ARGUSPRINTBINNUMBER		92
-   { "binnum", "", 6 , 1, 0, ARGUSPRINTBINNUMBER, ArgusPrintBinNumber, ArgusPrintBinNumberLabel, "int unsigned", 0},
+   { "binnum", "", 6 , 1, ARGUS_PTYPE_INT, ARGUSPRINTBINNUMBER, ArgusPrintBinNumber, ArgusPrintBinNumberLabel, "int unsigned", 0},
 #define ARGUSPRINTSRCMPLS		93
-   { "smpls", "", 8 , 1, 0, ARGUSPRINTSRCMPLS, ArgusPrintSrcMpls, ArgusPrintSrcMplsLabel, "int unsigned", 0},
+   { "smpls", "", 8 , 1, ARGUS_PTYPE_INT, ARGUSPRINTSRCMPLS, ArgusPrintSrcMpls, ArgusPrintSrcMplsLabel, "int unsigned", 0},
 #define ARGUSPRINTDSTMPLS		94
-   { "dmpls", "", 8 , 1, 0, ARGUSPRINTDSTMPLS, ArgusPrintDstMpls, ArgusPrintDstMplsLabel, "int unsigned", 0},
+   { "dmpls", "", 8 , 1, ARGUS_PTYPE_INT, ARGUSPRINTDSTMPLS, ArgusPrintDstMpls, ArgusPrintDstMplsLabel, "int unsigned", 0},
 #define ARGUSPRINTSRCVLAN		95
-   { "svlan", "", 8 , 1, 0, ARGUSPRINTSRCVLAN, ArgusPrintSrcVlan, ArgusPrintSrcVlanLabel, "smallint unsigned", 0},
+   { "svlan", "", 8 , 1, ARGUS_PTYPE_INT, ARGUSPRINTSRCVLAN, ArgusPrintSrcVlan, ArgusPrintSrcVlanLabel, "smallint unsigned", 0},
 #define ARGUSPRINTDSTVLAN		96
-   { "dvlan", "", 8 , 1, 0, ARGUSPRINTDSTVLAN, ArgusPrintDstVlan, ArgusPrintDstVlanLabel, "smallint unsigned", 0},
+   { "dvlan", "", 8 , 1, ARGUS_PTYPE_INT, ARGUSPRINTDSTVLAN, ArgusPrintDstVlan, ArgusPrintDstVlanLabel, "smallint unsigned", 0},
 #define ARGUSPRINTSRCVID		97
-   { "svid", "", 6 , 1, 0, ARGUSPRINTSRCVID, ArgusPrintSrcVID, ArgusPrintSrcVIDLabel, "smallint unsigned", 0},
+   { "svid", "", 6 , 1, ARGUS_PTYPE_INT, ARGUSPRINTSRCVID, ArgusPrintSrcVID, ArgusPrintSrcVIDLabel, "smallint unsigned", 0},
 #define ARGUSPRINTDSTVID		98
-   { "dvid", "", 6 , 1, 0, ARGUSPRINTDSTVID, ArgusPrintDstVID, ArgusPrintDstVIDLabel, "smallint unsigned", 0},
+   { "dvid", "", 6 , 1, ARGUS_PTYPE_INT, ARGUSPRINTDSTVID, ArgusPrintDstVID, ArgusPrintDstVIDLabel, "smallint unsigned", 0},
 #define ARGUSPRINTSRCVPRI		99
-   { "svpri", "", 6 , 1, 0, ARGUSPRINTSRCVPRI, ArgusPrintSrcVPRI, ArgusPrintSrcVPRILabel, "smallint unsigned", 0},
+   { "svpri", "", 6 , 1, ARGUS_PTYPE_INT, ARGUSPRINTSRCVPRI, ArgusPrintSrcVPRI, ArgusPrintSrcVPRILabel, "smallint unsigned", 0},
 #define ARGUSPRINTDSTVPRI		100
-   { "dvpri", "", 6 , 1, 0, ARGUSPRINTDSTVPRI, ArgusPrintDstVPRI, ArgusPrintDstVPRILabel, "smallint unsigned", 0},
+   { "dvpri", "", 6 , 1, ARGUS_PTYPE_INT, ARGUSPRINTDSTVPRI, ArgusPrintDstVPRI, ArgusPrintDstVPRILabel, "smallint unsigned", 0},
 #define ARGUSPRINTSRCIPID		101
-   { "sipid", "", 7 , 1, 0, ARGUSPRINTSRCIPID, ArgusPrintSrcIpId, ArgusPrintSrcIpIdLabel, "smallint unsigned", 0},
+   { "sipid", "", 7 , 1, ARGUS_PTYPE_INT, ARGUSPRINTSRCIPID, ArgusPrintSrcIpId, ArgusPrintSrcIpIdLabel, "smallint unsigned", 0},
 #define ARGUSPRINTDSTIPID		102
-   { "dipid", "", 7 , 1, 0, ARGUSPRINTDSTIPID, ArgusPrintDstIpId, ArgusPrintDstIpIdLabel, "smallint unsigned", 0},
+   { "dipid", "", 7 , 1, ARGUS_PTYPE_INT, ARGUSPRINTDSTIPID, ArgusPrintDstIpId, ArgusPrintDstIpIdLabel, "smallint unsigned", 0},
 #define ARGUSPRINTSTARTRANGE		103
-   { "srng", "", 6 , 1, 0, ARGUSPRINTSTARTRANGE, ArgusPrintStartRange, ArgusPrintStartRangeLabel, "int unsigned", 0},
+   { "srng", "", 6 , 1, ARGUS_PTYPE_INT, ARGUSPRINTSTARTRANGE, ArgusPrintStartRange, ArgusPrintStartRangeLabel, "int unsigned", 0},
 #define ARGUSPRINTENDRANGE		104
-   { "erng", "", 6 , 1, 0, ARGUSPRINTENDRANGE, ArgusPrintEndRange, ArgusPrintEndRangeLabel, "int unsigned", 0},
+   { "erng", "", 6 , 1, ARGUS_PTYPE_INT, ARGUSPRINTENDRANGE, ArgusPrintEndRange, ArgusPrintEndRangeLabel, "int unsigned", 0},
 #define ARGUSPRINTTCPSRCBASE		105
-   { "stcpb", "", 12 , 1, 0, ARGUSPRINTTCPSRCBASE, ArgusPrintTCPSrcBase, ArgusPrintTCPSrcBaseLabel, "int unsigned", 0},
+   { "stcpb", "", 12 , 1, ARGUS_PTYPE_INT, ARGUSPRINTTCPSRCBASE, ArgusPrintTCPSrcBase, ArgusPrintTCPSrcBaseLabel, "int unsigned", 0},
 #define ARGUSPRINTTCPDSTBASE		106
-   { "dtcpb", "", 12 , 1, 0, ARGUSPRINTTCPDSTBASE, ArgusPrintTCPDstBase, ArgusPrintTCPDstBaseLabel, "int unsigned", 0},
+   { "dtcpb", "", 12 , 1, ARGUS_PTYPE_INT, ARGUSPRINTTCPDSTBASE, ArgusPrintTCPDstBase, ArgusPrintTCPDstBaseLabel, "int unsigned", 0},
 #define ARGUSPRINTTCPRTT		107
-   { "tcprtt", "", 12 , 1, 0, ARGUSPRINTTCPRTT, ArgusPrintTCPRTT, ArgusPrintTCPRTTLabel, "double", 0},
+   { "tcprtt", "", 12 , 1, ARGUS_PTYPE_DOUBLE, ARGUSPRINTTCPRTT, ArgusPrintTCPRTT, ArgusPrintTCPRTTLabel, "double", 0},
 #define ARGUSPRINTINODE   		108
-   { "inode", "", 18, 1, 0, ARGUSPRINTINODE, ArgusPrintInode, ArgusPrintInodeLabel, "varchar(64)", 0},
+   { "inode", "", 18, 1, ARGUS_PTYPE_STRING, ARGUSPRINTINODE, ArgusPrintInode, ArgusPrintInodeLabel, "varchar(64)", 0},
 #define ARGUSPRINTSTDDEV  		109
-   { "stddev", "", 10 , 1, 0, ARGUSPRINTSTDDEV, ArgusPrintStdDeviation, ArgusPrintStdDeviationLabel, "double unsigned", 0},
+   { "stddev", "", 10 , 1, ARGUS_PTYPE_DOUBLE, ARGUSPRINTSTDDEV, ArgusPrintStdDeviation, ArgusPrintStdDeviationLabel, "double unsigned", 0},
 #define ARGUSPRINTRELDATE		110
-   { "rtime", "", 12 , 1, 0, ARGUSPRINTRELDATE, ArgusPrintRelativeDate, ArgusPrintRelativeDateLabel, "double(18,6)", 0},
+   { "rtime", "", 12 , 1, ARGUS_PTYPE_DOUBLE, ARGUSPRINTRELDATE, ArgusPrintRelativeDate, ArgusPrintRelativeDateLabel, "double(18,6)", 0},
 #define ARGUSPRINTBYTEOFFSET		111
-   { "offset", "", 12 , 1, 0, ARGUSPRINTBYTEOFFSET, ArgusPrintByteOffset, ArgusPrintByteOffsetLabel, "bigint", 0},
+   { "offset", "", 12 , 1, ARGUS_PTYPE_INT, ARGUSPRINTBYTEOFFSET, ArgusPrintByteOffset, ArgusPrintByteOffsetLabel, "bigint", 0},
 #define ARGUSPRINTSRCNET		112
-   { "snet", "", 18 , 1, 0, ARGUSPRINTSRCNET, ArgusPrintSrcNet, ArgusPrintSrcNetLabel, "varchar(64)", 0},
+   { "snet", "", 18 , 1, ARGUS_PTYPE_STRING, ARGUSPRINTSRCNET, ArgusPrintSrcNet, ArgusPrintSrcNetLabel, "varchar(64)", 0},
 #define ARGUSPRINTDSTNET		113
-   { "dnet", "", 18 , 1, 0, ARGUSPRINTDSTNET, ArgusPrintDstNet, ArgusPrintDstNetLabel, "varchar(64)", 0},
+   { "dnet", "", 18 , 1, ARGUS_PTYPE_STRING, ARGUSPRINTDSTNET, ArgusPrintDstNet, ArgusPrintDstNetLabel, "varchar(64)", 0},
 #define ARGUSPRINTSRCDURATION		114
-   { "sdur", "", 10 , 1, 0, ARGUSPRINTSRCDURATION, ArgusPrintSrcDuration, ArgusPrintSrcDurationLabel, "double", 0},
+   { "sdur", "", 10 , 1, ARGUS_PTYPE_DOUBLE, ARGUSPRINTSRCDURATION, ArgusPrintSrcDuration, ArgusPrintSrcDurationLabel, "double", 0},
 #define ARGUSPRINTDSTDURATION		115
-   { "ddur", "", 10 , 1, 0, ARGUSPRINTDSTDURATION, ArgusPrintDstDuration, ArgusPrintDstDurationLabel, "double", 0},
+   { "ddur", "", 10 , 1, ARGUS_PTYPE_DOUBLE, ARGUSPRINTDSTDURATION, ArgusPrintDstDuration, ArgusPrintDstDurationLabel, "double", 0},
 #define ARGUSPRINTTCPSRCMAX		116
-   { "stcpmax", "", 10 , 1, 0, ARGUSPRINTTCPSRCMAX, ArgusPrintTCPSrcMax, ArgusPrintTCPSrcMaxLabel, "double", 0},
+   { "stcpmax", "", 10 , 1, ARGUS_PTYPE_DOUBLE, ARGUSPRINTTCPSRCMAX, ArgusPrintTCPSrcMax, ArgusPrintTCPSrcMaxLabel, "double", 0},
 #define ARGUSPRINTTCPDSTMAX		117
-   { "dtcpmax", "", 10 , 1, 0, ARGUSPRINTTCPDSTMAX, ArgusPrintTCPDstMax, ArgusPrintTCPDstMaxLabel, "double", 0},
+   { "dtcpmax", "", 10 , 1, ARGUS_PTYPE_DOUBLE, ARGUSPRINTTCPDSTMAX, ArgusPrintTCPDstMax, ArgusPrintTCPDstMaxLabel, "double", 0},
 #define ARGUSPRINTTCPSYNACK		118
-   { "synack", "", 12 , 1, 0, ARGUSPRINTTCPSYNACK, ArgusPrintTCPSynAck, ArgusPrintTCPSynAckLabel, "double", 0},
+   { "synack", "", 12 , 1, ARGUS_PTYPE_DOUBLE, ARGUSPRINTTCPSYNACK, ArgusPrintTCPSynAck, ArgusPrintTCPSynAckLabel, "double", 0},
 #define ARGUSPRINTTCPACKDAT		119
-   { "ackdat", "", 12 , 1, 0, ARGUSPRINTTCPACKDAT, ArgusPrintTCPAckDat, ArgusPrintTCPAckDatLabel, "double", 0},
+   { "ackdat", "", 12 , 1, ARGUS_PTYPE_DOUBLE, ARGUSPRINTTCPACKDAT, ArgusPrintTCPAckDat, ArgusPrintTCPAckDatLabel, "double", 0},
 #define ARGUSPRINTSRCSTARTDATE		120
-   { "sstime", "%T.%f", 15 , 1, 0, ARGUSPRINTSRCSTARTDATE, ArgusPrintSrcStartDate, ArgusPrintSrcStartDateLabel, "double(18,6) unsigned not null", 0},
+   { "sstime", "%T.%f", 12 , 1, ARGUS_PTYPE_STRING, ARGUSPRINTSRCSTARTDATE, ArgusPrintSrcStartDate, ArgusPrintSrcStartDateLabel, "double(18,6) unsigned not null", 0},
 #define ARGUSPRINTSRCLASTDATE		121
-   { "sltime", "%T.%f", 15 , 1, 0, ARGUSPRINTSRCLASTDATE, ArgusPrintSrcLastDate, ArgusPrintSrcLastDateLabel, "double(18,6) unsigned not null", 0},
+   { "sltime", "%T.%f", 12 , 1, ARGUS_PTYPE_STRING, ARGUSPRINTSRCLASTDATE, ArgusPrintSrcLastDate, ArgusPrintSrcLastDateLabel, "double(18,6) unsigned not null", 0},
 #define ARGUSPRINTDSTSTARTDATE		122
-   { "dstime", "%T.%f", 15 , 1, 0, ARGUSPRINTDSTSTARTDATE, ArgusPrintDstStartDate, ArgusPrintDstStartDateLabel, "double(18,6) unsigned not null", 0},
+   { "dstime", "%T.%f", 12 , 1, ARGUS_PTYPE_STRING, ARGUSPRINTDSTSTARTDATE, ArgusPrintDstStartDate, ArgusPrintDstStartDateLabel, "double(18,6) unsigned not null", 0},
 #define ARGUSPRINTDSTLASTDATE		123
-   { "dltime", "%T.%f", 15 , 1, 0, ARGUSPRINTDSTLASTDATE, ArgusPrintDstLastDate, ArgusPrintDstLastDateLabel, "double(18,6) unsigned not null", 0},
+   { "dltime", "%T.%f", 12 , 1, ARGUS_PTYPE_STRING, ARGUSPRINTDSTLASTDATE, ArgusPrintDstLastDate, ArgusPrintDstLastDateLabel, "double(18,6) unsigned not null", 0},
 #define ARGUSPRINTSRCENCAPS		124
-   { "senc", "", 12 , 1, 0, ARGUSPRINTSRCENCAPS, ArgusPrintSrcEncaps, ArgusPrintSrcEncapsLabel, "varchar(32)", 0},
+   { "senc", "", 12 , 1, ARGUS_PTYPE_STRING, ARGUSPRINTSRCENCAPS, ArgusPrintSrcEncaps, ArgusPrintSrcEncapsLabel, "varchar(32)", 0},
 #define ARGUSPRINTDSTENCAPS		125
-   { "denc", "", 12 , 1, 0, ARGUSPRINTDSTENCAPS, ArgusPrintDstEncaps, ArgusPrintDstEncapsLabel, "varchar(32)", 0},
+   { "denc", "", 12 , 1, ARGUS_PTYPE_STRING, ARGUSPRINTDSTENCAPS, ArgusPrintDstEncaps, ArgusPrintDstEncapsLabel, "varchar(32)", 0},
 #define ARGUSPRINTSRCPKTSIZE		126
-   { "spktsz", "", 12 , 1, 0, ARGUSPRINTSRCPKTSIZE, ArgusPrintSrcPktSize, ArgusPrintSrcPktSizeLabel, "varchar(32)", 0},
+   { "spktsz", "", 12 , 1, ARGUS_PTYPE_STRING, ARGUSPRINTSRCPKTSIZE, ArgusPrintSrcPktSize, ArgusPrintSrcPktSizeLabel, "varchar(32)", 0},
 #define ARGUSPRINTSRCMAXPKTSIZE		127
-   { "smaxsz", "", 12 , 1, 0, ARGUSPRINTSRCMAXPKTSIZE, ArgusPrintSrcMaxPktSize, ArgusPrintSrcMaxPktSizeLabel, "smallint unsigned", 0},
+   { "smaxsz", "", 12 , 1, ARGUS_PTYPE_INT, ARGUSPRINTSRCMAXPKTSIZE, ArgusPrintSrcMaxPktSize, ArgusPrintSrcMaxPktSizeLabel, "smallint unsigned", 0},
 #define ARGUSPRINTSRCMINPKTSIZE		128
-   { "sminsz", "", 12 , 1, 0, ARGUSPRINTSRCMINPKTSIZE, ArgusPrintSrcMinPktSize, ArgusPrintSrcMinPktSizeLabel, "smallint unsigned", 0},
+   { "sminsz", "", 12 , 1, ARGUS_PTYPE_STRING, ARGUSPRINTSRCMINPKTSIZE, ArgusPrintSrcMinPktSize, ArgusPrintSrcMinPktSizeLabel, "smallint unsigned", 0},
 #define ARGUSPRINTDSTPKTSIZE		129
-   { "dpktsz", "", 12 , 1, 0, ARGUSPRINTDSTPKTSIZE, ArgusPrintDstPktSize, ArgusPrintDstPktSizeLabel, "varchar(32)", 0},
+   { "dpktsz", "", 12 , 1, ARGUS_PTYPE_STRING, ARGUSPRINTDSTPKTSIZE, ArgusPrintDstPktSize, ArgusPrintDstPktSizeLabel, "varchar(32)", 0},
 #define ARGUSPRINTDSTMAXPKTSIZE		130
-   { "dmaxsz", "", 12 , 1, 0, ARGUSPRINTDSTMAXPKTSIZE, ArgusPrintDstMaxPktSize, ArgusPrintDstMaxPktSizeLabel, "smallint unsigned", 0},
+   { "dmaxsz", "", 12 , 1, ARGUS_PTYPE_INT, ARGUSPRINTDSTMAXPKTSIZE, ArgusPrintDstMaxPktSize, ArgusPrintDstMaxPktSizeLabel, "smallint unsigned", 0},
 #define ARGUSPRINTDSTMINPKTSIZE		131
-   { "dminsz", "", 12 , 1, 0, ARGUSPRINTDSTMINPKTSIZE, ArgusPrintDstMinPktSize, ArgusPrintDstMinPktSizeLabel, "smallint unsigned", 0},
+   { "dminsz", "", 12 , 1, ARGUS_PTYPE_INT, ARGUSPRINTDSTMINPKTSIZE, ArgusPrintDstMinPktSize, ArgusPrintDstMinPktSizeLabel, "smallint unsigned", 0},
 #define ARGUSPRINTSRCCOUNTRYCODE	132
-   { "sco", "", 3 , 1, 0, ARGUSPRINTSRCCOUNTRYCODE, ArgusPrintSrcCountryCode, ArgusPrintSrcCountryCodeLabel, "varchar(2)", 0},
+   { "sco", "", 3 , 1, ARGUS_PTYPE_STRING, ARGUSPRINTSRCCOUNTRYCODE, ArgusPrintSrcCountryCode, ArgusPrintSrcCountryCodeLabel, "varchar(2)", 0},
 #define ARGUSPRINTDSTCOUNTRYCODE	133
-   { "dco", "", 3 , 1, 0, ARGUSPRINTDSTCOUNTRYCODE, ArgusPrintDstCountryCode, ArgusPrintDstCountryCodeLabel, "varchar(2)", 0},
+   { "dco", "", 3 , 1, ARGUS_PTYPE_STRING, ARGUSPRINTDSTCOUNTRYCODE, ArgusPrintDstCountryCode, ArgusPrintDstCountryCodeLabel, "varchar(2)", 0},
 #define ARGUSPRINTSRCHOPCOUNT		134
-   { "shops", "", 5 , 1, 0, ARGUSPRINTSRCHOPCOUNT, ArgusPrintSrcHopCount, ArgusPrintSrcHopCountLabel, "smallint", 0},
+   { "shops", "", 5 , 1, ARGUS_PTYPE_INT, ARGUSPRINTSRCHOPCOUNT, ArgusPrintSrcHopCount, ArgusPrintSrcHopCountLabel, "smallint", 0},
 #define ARGUSPRINTDSTHOPCOUNT		135
-   { "dhops", "", 5 , 1, 0, ARGUSPRINTDSTHOPCOUNT, ArgusPrintDstHopCount, ArgusPrintDstHopCountLabel, "smallint", 0},
+   { "dhops", "", 5 , 1, ARGUS_PTYPE_INT, ARGUSPRINTDSTHOPCOUNT, ArgusPrintDstHopCount, ArgusPrintDstHopCountLabel, "smallint", 0},
 #define ARGUSPRINTICMPID		136
-   { "icmpid", "", 6 , 1, 0, ARGUSPRINTICMPID, ArgusPrintIcmpId, ArgusPrintIcmpIdLabel, "smallint unsigned", 0},
+   { "icmpid", "", 6 , 1, ARGUS_PTYPE_INT, ARGUSPRINTICMPID, ArgusPrintIcmpId, ArgusPrintIcmpIdLabel, "smallint unsigned", 0},
 #define ARGUSPRINTLABEL			137
-   { "label", "", 5 , 1, 0, ARGUSPRINTLABEL, ArgusPrintLabel, ArgusPrintLabelLabel, "varchar(4098)", 0},
+   { "label", "", 5 , 1, ARGUS_PTYPE_STRING, ARGUSPRINTLABEL, ArgusPrintLabel, ArgusPrintLabelLabel, "varchar(4098)", 0},
 #define ARGUSPRINTSRCINTPKTDIST		138
-   { "sintdist", "", 8, 1, 0, ARGUSPRINTSRCINTPKTDIST, ArgusPrintSrcIntPktDist, ArgusPrintSrcIntPktDistLabel, "varchar(8)", 0},
+   { "sintdist", "", 8, 1, ARGUS_PTYPE_STRING, ARGUSPRINTSRCINTPKTDIST, ArgusPrintSrcIntPktDist, ArgusPrintSrcIntPktDistLabel, "varchar(8)", 0},
 #define ARGUSPRINTDSTINTPKTDIST		139
-   { "dintdist", "", 8, 1, 0, ARGUSPRINTDSTINTPKTDIST, ArgusPrintDstIntPktDist, ArgusPrintDstIntPktDistLabel, "varchar(8)", 0},
+   { "dintdist", "", 8, 1, ARGUS_PTYPE_STRING, ARGUSPRINTDSTINTPKTDIST, ArgusPrintDstIntPktDist, ArgusPrintDstIntPktDistLabel, "varchar(8)", 0},
 #define ARGUSPRINTACTSRCINTPKTDIST	140
-   { "sintdistact", "", 11, 1, 0, ARGUSPRINTACTSRCINTPKTDIST, ArgusPrintActiveSrcIntPktDist, ArgusPrintActiveSrcIntPktDistLabel, "varchar(8)", 0},
+   { "sintdistact", "", 11, 1, ARGUS_PTYPE_STRING, ARGUSPRINTACTSRCINTPKTDIST, ArgusPrintActiveSrcIntPktDist, ArgusPrintActiveSrcIntPktDistLabel, "varchar(8)", 0},
 #define ARGUSPRINTACTDSTINTPKTDIST	141
-   { "dintdistact", "", 11, 1, 0, ARGUSPRINTACTDSTINTPKTDIST, ArgusPrintActiveDstIntPktDist, ArgusPrintActiveDstIntPktDistLabel, "varchar(8)", 0},
+   { "dintdistact", "", 11, 1, ARGUS_PTYPE_STRING, ARGUSPRINTACTDSTINTPKTDIST, ArgusPrintActiveDstIntPktDist, ArgusPrintActiveDstIntPktDistLabel, "varchar(8)", 0},
 #define ARGUSPRINTIDLESRCINTPKTDIST	142
-   { "sintdistidl", "", 11, 1, 0, ARGUSPRINTIDLESRCINTPKTDIST, ArgusPrintIdleSrcIntPktDist, ArgusPrintIdleSrcIntPktDistLabel, "varchar(8)", 0},
+   { "sintdistidl", "", 11, 1, ARGUS_PTYPE_STRING, ARGUSPRINTIDLESRCINTPKTDIST, ArgusPrintIdleSrcIntPktDist, ArgusPrintIdleSrcIntPktDistLabel, "varchar(8)", 0},
 #define ARGUSPRINTIDLEDSTINTPKTDIST	143
-   { "dintdistidl", "", 11, 1, 0, ARGUSPRINTIDLEDSTINTPKTDIST, ArgusPrintIdleDstIntPktDist, ArgusPrintIdleDstIntPktDistLabel, "varchar(8)", 0},
+   { "dintdistidl", "", 11, 1, ARGUS_PTYPE_STRING, ARGUSPRINTIDLEDSTINTPKTDIST, ArgusPrintIdleDstIntPktDist, ArgusPrintIdleDstIntPktDistLabel, "varchar(8)", 0},
 #define ARGUSPRINTRETRANS          	144
-   { "retrans", "", 7, 1, 0, ARGUSPRINTRETRANS, ArgusPrintRetrans, ArgusPrintRetransLabel, "int", 0},
+   { "retrans", "", 7, 1, ARGUS_PTYPE_INT, ARGUSPRINTRETRANS, ArgusPrintRetrans, ArgusPrintRetransLabel, "int", 0},
 #define ARGUSPRINTSRCRETRANS          	145
-   { "sretrans", "", 8, 1, 0, ARGUSPRINTSRCRETRANS, ArgusPrintSrcRetrans, ArgusPrintSrcRetransLabel, "int", 0},
+   { "sretrans", "", 8, 1, ARGUS_PTYPE_INT, ARGUSPRINTSRCRETRANS, ArgusPrintSrcRetrans, ArgusPrintSrcRetransLabel, "int", 0},
 #define ARGUSPRINTDSTRETRANS          	146
-   { "dretrans", "", 8, 1, 0, ARGUSPRINTDSTRETRANS, ArgusPrintDstRetrans, ArgusPrintDstRetransLabel, "int", 0},
+   { "dretrans", "", 8, 1, ARGUS_PTYPE_INT, ARGUSPRINTDSTRETRANS, ArgusPrintDstRetrans, ArgusPrintDstRetransLabel, "int", 0},
 #define ARGUSPRINTPERCENTRETRANS        147
-   { "pretrans", "", 7, 1, 0, ARGUSPRINTPERCENTRETRANS, ArgusPrintPercentRetrans, ArgusPrintPercentRetransLabel, "double", 0},
+   { "pretrans", "", 7, 1, ARGUS_PTYPE_DOUBLE, ARGUSPRINTPERCENTRETRANS, ArgusPrintPercentRetrans, ArgusPrintPercentRetransLabel, "double", 0},
 #define ARGUSPRINTPERCENTSRCRETRANS     148
-   { "spretrans", "", 8, 1, 0, ARGUSPRINTPERCENTSRCRETRANS, ArgusPrintPercentSrcRetrans, ArgusPrintPercentSrcRetransLabel, "double", 0},
+   { "spretrans", "", 8, 1, ARGUS_PTYPE_DOUBLE, ARGUSPRINTPERCENTSRCRETRANS, ArgusPrintPercentSrcRetrans, ArgusPrintPercentSrcRetransLabel, "double", 0},
 #define ARGUSPRINTPERCENTDSTRETRANS     149
-   { "dpretrans", "", 8, 1, 0, ARGUSPRINTPERCENTDSTRETRANS, ArgusPrintPercentDstRetrans, ArgusPrintPercentDstRetransLabel, "double", 0},
+   { "dpretrans", "", 8, 1, ARGUS_PTYPE_DOUBLE, ARGUSPRINTPERCENTDSTRETRANS, ArgusPrintPercentDstRetrans, ArgusPrintPercentDstRetransLabel, "double", 0},
 #define ARGUSPRINTNACKS          	150
-   { "nacks", "", 7, 1, 0, ARGUSPRINTNACKS, ArgusPrintNacks, ArgusPrintNacksLabel, "int", 0},
+   { "nacks", "", 7, 1, ARGUS_PTYPE_INT, ARGUSPRINTNACKS, ArgusPrintNacks, ArgusPrintNacksLabel, "int", 0},
 #define ARGUSPRINTSRCNACKS          	151
-   { "snacks", "", 8, 1, 0, ARGUSPRINTSRCNACKS, ArgusPrintSrcNacks, ArgusPrintSrcNacksLabel, "int", 0},
+   { "snacks", "", 8, 1, ARGUS_PTYPE_INT, ARGUSPRINTSRCNACKS, ArgusPrintSrcNacks, ArgusPrintSrcNacksLabel, "int", 0},
 #define ARGUSPRINTDSTNACKS          	152
-   { "dnacks", "", 8, 1, 0, ARGUSPRINTDSTNACKS, ArgusPrintDstNacks, ArgusPrintDstNacksLabel, "int", 0},
+   { "dnacks", "", 8, 1, ARGUS_PTYPE_INT, ARGUSPRINTDSTNACKS, ArgusPrintDstNacks, ArgusPrintDstNacksLabel, "int", 0},
 #define ARGUSPRINTPERCENTNACKS		153
-   { "pnacks", "", 7, 1, 0, ARGUSPRINTPERCENTNACKS, ArgusPrintPercentNacks, ArgusPrintPercentNacksLabel, "double", 0},
+   { "pnacks", "", 7, 1, ARGUS_PTYPE_INT, ARGUSPRINTPERCENTNACKS, ArgusPrintPercentNacks, ArgusPrintPercentNacksLabel, "double", 0},
 #define ARGUSPRINTPERCENTSRCNACKS	154
-   { "spnacks", "", 8, 1, 0, ARGUSPRINTPERCENTSRCNACKS, ArgusPrintPercentSrcNacks, ArgusPrintPercentSrcNacksLabel, "double", 0},
+   { "spnacks", "", 8, 1, ARGUS_PTYPE_DOUBLE, ARGUSPRINTPERCENTSRCNACKS, ArgusPrintPercentSrcNacks, ArgusPrintPercentSrcNacksLabel, "double", 0},
 #define ARGUSPRINTPERCENTDSTNACKS	155
-   { "dpnacks", "", 8, 1, 0, ARGUSPRINTPERCENTDSTNACKS, ArgusPrintPercentDstNacks, ArgusPrintPercentDstNacksLabel, "double", 0},
+   { "dpnacks", "", 8, 1, ARGUS_PTYPE_DOUBLE, ARGUSPRINTPERCENTDSTNACKS, ArgusPrintPercentDstNacks, ArgusPrintPercentDstNacksLabel, "double", 0},
 #define ARGUSPRINTSOLO          	156
-   { "solo", "", 7, 1, 0, ARGUSPRINTSOLO, ArgusPrintSolo, ArgusPrintSoloLabel, "int", 0},
+   { "solo", "", 7, 1, ARGUS_PTYPE_INT, ARGUSPRINTSOLO, ArgusPrintSolo, ArgusPrintSoloLabel, "int", 0},
 #define ARGUSPRINTSRCSOLO          	157
-   { "ssolo", "", 8, 1, 0, ARGUSPRINTSRCSOLO, ArgusPrintSrcSolo, ArgusPrintSrcSoloLabel, "int", 0},
+   { "ssolo", "", 8, 1, ARGUS_PTYPE_INT, ARGUSPRINTSRCSOLO, ArgusPrintSrcSolo, ArgusPrintSrcSoloLabel, "int", 0},
 #define ARGUSPRINTDSTSOLO          	158
-   { "dsolo", "", 8, 1, 0, ARGUSPRINTDSTSOLO, ArgusPrintDstSolo, ArgusPrintDstSoloLabel, "int", 0},
+   { "dsolo", "", 8, 1, ARGUS_PTYPE_INT, ARGUSPRINTDSTSOLO, ArgusPrintDstSolo, ArgusPrintDstSoloLabel, "int", 0},
 #define ARGUSPRINTPERCENTSOLO		159
-   { "psolo", "", 7, 1, 0, ARGUSPRINTPERCENTSOLO, ArgusPrintPercentSolo, ArgusPrintPercentSoloLabel, "double", 0},
+   { "psolo", "", 7, 1, ARGUS_PTYPE_DOUBLE, ARGUSPRINTPERCENTSOLO, ArgusPrintPercentSolo, ArgusPrintPercentSoloLabel, "double", 0},
 #define ARGUSPRINTPERCENTSRCSOLO	160
-   { "spsolo", "", 8, 1, 0, ARGUSPRINTPERCENTSRCSOLO, ArgusPrintPercentSrcSolo, ArgusPrintPercentSrcSoloLabel, "double", 0},
+   { "spsolo", "", 8, 1, ARGUS_PTYPE_DOUBLE, ARGUSPRINTPERCENTSRCSOLO, ArgusPrintPercentSrcSolo, ArgusPrintPercentSrcSoloLabel, "double", 0},
 #define ARGUSPRINTPERCENTDSTSOLO	161
-   { "dpsolo", "", 8, 1, 0, ARGUSPRINTPERCENTDSTSOLO, ArgusPrintPercentDstSolo, ArgusPrintPercentDstSoloLabel, "double", 0},
+   { "dpsolo", "", 8, 1, ARGUS_PTYPE_DOUBLE, ARGUSPRINTPERCENTDSTSOLO, ArgusPrintPercentDstSolo, ArgusPrintPercentDstSoloLabel, "double", 0},
 #define ARGUSPRINTFIRST          	162
-   { "first", "", 7, 1, 0, ARGUSPRINTFIRST, ArgusPrintFirst, ArgusPrintFirstLabel, "int", 0},
+   { "first", "", 7, 1, ARGUS_PTYPE_INT, ARGUSPRINTFIRST, ArgusPrintFirst, ArgusPrintFirstLabel, "int", 0},
 #define ARGUSPRINTSRCFIRST          	163
-   { "sfirst", "", 8, 1, 0, ARGUSPRINTSRCFIRST, ArgusPrintSrcFirst, ArgusPrintSrcFirstLabel, "int", 0},
+   { "sfirst", "", 8, 1, ARGUS_PTYPE_INT, ARGUSPRINTSRCFIRST, ArgusPrintSrcFirst, ArgusPrintSrcFirstLabel, "int", 0},
 #define ARGUSPRINTDSTFIRST          	164
-   { "dfirst", "", 8, 1, 0, ARGUSPRINTDSTFIRST, ArgusPrintDstFirst, ArgusPrintDstFirstLabel, "int", 0},
+   { "dfirst", "", 8, 1, ARGUS_PTYPE_INT, ARGUSPRINTDSTFIRST, ArgusPrintDstFirst, ArgusPrintDstFirstLabel, "int", 0},
 #define ARGUSPRINTPERCENTFIRST		165
-   { "pfirst", "", 7, 1, 0, ARGUSPRINTPERCENTFIRST, ArgusPrintPercentFirst, ArgusPrintPercentFirstLabel, "double", 0},
+   { "pfirst", "", 7, 1, ARGUS_PTYPE_DOUBLE, ARGUSPRINTPERCENTFIRST, ArgusPrintPercentFirst, ArgusPrintPercentFirstLabel, "double", 0},
 #define ARGUSPRINTPERCENTSRCFIRST	166
-   { "spfirst", "", 8, 1, 0, ARGUSPRINTPERCENTSRCFIRST, ArgusPrintPercentSrcFirst, ArgusPrintPercentSrcFirstLabel, "double", 0},
+   { "spfirst", "", 8, 1, ARGUS_PTYPE_DOUBLE, ARGUSPRINTPERCENTSRCFIRST, ArgusPrintPercentSrcFirst, ArgusPrintPercentSrcFirstLabel, "double", 0},
 #define ARGUSPRINTPERCENTDSTFIRST	167
-   { "dpfirst", "", 8, 1, 0, ARGUSPRINTPERCENTDSTFIRST, ArgusPrintPercentDstFirst, ArgusPrintPercentDstFirstLabel, "double", 0},
+   { "dpfirst", "", 8, 1, ARGUS_PTYPE_DOUBLE, ARGUSPRINTPERCENTDSTFIRST, ArgusPrintPercentDstFirst, ArgusPrintPercentDstFirstLabel, "double", 0},
 #define ARGUSPRINTAUTOID		168
-   { "autoid", "", 6, 1, 0, ARGUSPRINTAUTOID, ArgusPrintAutoId, ArgusPrintAutoIdLabel, "int not null auto_increment", 0},
+   { "autoid", "", 6, 1, ARGUS_PTYPE_INT, ARGUSPRINTAUTOID, ArgusPrintAutoId, ArgusPrintAutoIdLabel, "int not null auto_increment", 0},
 #define ARGUSPRINTSRCASN		169
-   { "sas", "", 6 , 1, 0, ARGUSPRINTSRCASN, ArgusPrintSrcAsn, ArgusPrintSrcAsnLabel, "int unsigned", 0},
+   { "sas", "", 6 , 1, ARGUS_PTYPE_INT, ARGUSPRINTSRCASN, ArgusPrintSrcAsn, ArgusPrintSrcAsnLabel, "int unsigned", 0},
 #define ARGUSPRINTDSTASN		170
-   { "das", "", 6 , 1, 0, ARGUSPRINTDSTASN, ArgusPrintDstAsn, ArgusPrintDstAsnLabel, "int unsigned", 0},
+   { "das", "", 6 , 1, ARGUS_PTYPE_INT, ARGUSPRINTDSTASN, ArgusPrintDstAsn, ArgusPrintDstAsnLabel, "int unsigned", 0},
 #define ARGUSPRINTINODEASN		171
-   { "ias", "", 5 , 1, 0, ARGUSPRINTINODEASN, ArgusPrintInodeAsn, ArgusPrintInodeAsnLabel, "int unsigned", 0},
+   { "ias", "", 5 , 1, ARGUS_PTYPE_INT, ARGUSPRINTINODEASN, ArgusPrintInodeAsn, ArgusPrintInodeAsnLabel, "int unsigned", 0},
 #define ARGUSPRINTCAUSE			172
-   { "cause", "", 7 , 1, 0, ARGUSPRINTCAUSE, ArgusPrintCause, ArgusPrintCauseLabel, "varchar(8)", 0},
+   { "cause", "", 7 , 1, ARGUS_PTYPE_STRING, ARGUSPRINTCAUSE, ArgusPrintCause, ArgusPrintCauseLabel, "varchar(8)", 0},
 #define ARGUSPRINTBSSID			173
-   { "bssid", "", 18 , 1, 0, ARGUSPRINTBSSID, ArgusPrintBssid, ArgusPrintBssidLabel, "varchar(24)", 0},
+   { "bssid", "", 18 , 1, ARGUS_PTYPE_STRING, ARGUSPRINTBSSID, ArgusPrintBssid, ArgusPrintBssidLabel, "varchar(24)", 0},
 #define ARGUSPRINTSSID			174
-   { "ssid", "", 9 , 1, 0, ARGUSPRINTSSID, ArgusPrintSsid, ArgusPrintSsidLabel, "varchar(32)", 0},
+   { "ssid", "", 9 , 1, ARGUS_PTYPE_STRING, ARGUSPRINTSSID, ArgusPrintSsid, ArgusPrintSsidLabel, "varchar(32)", 0},
 #define ARGUSPRINTKEYSTROKENSTROKE      175
-   { "nstroke", "", 9 , 1, 0, ARGUSPRINTKEYSTROKENSTROKE, ArgusPrintKeyStrokeNStroke, ArgusPrintKeyStrokeNStrokeLabel, "int unsigned", 0},
+   { "nstroke", "", 9 , 1, ARGUS_PTYPE_INT, ARGUSPRINTKEYSTROKENSTROKE, ArgusPrintKeyStrokeNStroke, ArgusPrintKeyStrokeNStrokeLabel, "int unsigned", 0},
 #define ARGUSPRINTKEYSTROKESRCNSTROKE   176
-   { "snstroke", "", 9 , 1, 0, ARGUSPRINTKEYSTROKESRCNSTROKE, ArgusPrintKeyStrokeSrcNStroke, ArgusPrintKeyStrokeSrcNStrokeLabel, "int unsigned", 0},
+   { "snstroke", "", 9 , 1, ARGUS_PTYPE_INT, ARGUSPRINTKEYSTROKESRCNSTROKE, ArgusPrintKeyStrokeSrcNStroke, ArgusPrintKeyStrokeSrcNStrokeLabel, "int unsigned", 0},
 #define ARGUSPRINTKEYSTROKEDSTNSTROKE   177
-   { "dnstroke", "", 9 , 1, 0, ARGUSPRINTKEYSTROKEDSTNSTROKE, ArgusPrintKeyStrokeDstNStroke, ArgusPrintKeyStrokeDstNStrokeLabel, "int unsigned", 0},
+   { "dnstroke", "", 9 , 1, ARGUS_PTYPE_INT, ARGUSPRINTKEYSTROKEDSTNSTROKE, ArgusPrintKeyStrokeDstNStroke, ArgusPrintKeyStrokeDstNStrokeLabel, "int unsigned", 0},
 #define ARGUSPRINTSRCMEANPKTSIZE        178
-   { "smeansz", "", 12 , 1, 0, ARGUSPRINTSRCMEANPKTSIZE, ArgusPrintSrcMeanPktSize, ArgusPrintSrcMeanPktSizeLabel, "smallint unsigned", 0},
+   { "smeansz", "", 12 , 1, ARGUS_PTYPE_INT, ARGUSPRINTSRCMEANPKTSIZE, ArgusPrintSrcMeanPktSize, ArgusPrintSrcMeanPktSizeLabel, "smallint unsigned", 0},
 #define ARGUSPRINTDSTMEANPKTSIZE        179
-   { "dmeansz", "", 12 , 1, 0, ARGUSPRINTDSTMEANPKTSIZE, ArgusPrintDstMeanPktSize, ArgusPrintDstMeanPktSizeLabel, "smallint unsigned", 0},
+   { "dmeansz", "", 12 , 1, ARGUS_PTYPE_INT, ARGUSPRINTDSTMEANPKTSIZE, ArgusPrintDstMeanPktSize, ArgusPrintDstMeanPktSizeLabel, "smallint unsigned", 0},
 #define ARGUSPRINTRANK			180
-   { "rank", "", 6 , 1, 0, ARGUSPRINTRANK, ArgusPrintRank, ArgusPrintRankLabel, "int unsigned", 0},
+   { "rank", "", 6 , 1, ARGUS_PTYPE_INT, ARGUSPRINTRANK, ArgusPrintRank, ArgusPrintRankLabel, "int unsigned", 0},
 #define ARGUSPRINTSUM                   181
-   { "sum", "", 10 , 1, 0, ARGUSPRINTSUM, ArgusPrintSum, ArgusPrintSumLabel, "double", 0},
+   { "sum", "", 10 , 1, ARGUS_PTYPE_DOUBLE, ARGUSPRINTSUM, ArgusPrintSum, ArgusPrintSumLabel, "double", 0},
 #define ARGUSPRINTRUN                   182
-   { "runtime", "", 10 , 1, 0, ARGUSPRINTRUN, ArgusPrintRunTime, ArgusPrintRunTimeLabel, "double", 0},
+   { "runtime", "", 10 , 1, ARGUS_PTYPE_DOUBLE, ARGUSPRINTRUN, ArgusPrintRunTime, ArgusPrintRunTimeLabel, "double", 0},
 #define ARGUSPRINTIDLETIME              183
-   { "idle", "", 10 , 1, 0, ARGUSPRINTIDLETIME, ArgusPrintIdleTime, ArgusPrintIdleTimeLabel, "double", 0},
+   { "idle", "", 10 , 1, ARGUS_PTYPE_DOUBLE, ARGUSPRINTIDLETIME, ArgusPrintIdleTime, ArgusPrintIdleTimeLabel, "double", 0},
 #define ARGUSPRINTTCPOPTIONS            184
-   { "tcpopt", "", 12 , 1, 0, ARGUSPRINTTCPOPTIONS, ArgusPrintTCPOptions, ArgusPrintTCPOptionsLabel, "varchar(12)", 0},
+   { "tcpopt", "", 12 , 1, ARGUS_PTYPE_STRING, ARGUSPRINTTCPOPTIONS, ArgusPrintTCPOptions, ArgusPrintTCPOptionsLabel, "varchar(12)", 0},
 #define ARGUSPRINTRESPONSE              185
-   { "resp", "", 12 , 1, 0, ARGUSPRINTRESPONSE, ArgusPrintResponse, ArgusPrintResponseLabel, "varchar(12)", 0},
+   { "resp", "", 12 , 1, ARGUS_PTYPE_STRING, ARGUSPRINTRESPONSE, ArgusPrintResponse, ArgusPrintResponseLabel, "varchar(12)", 0},
 #define ARGUSPRINTTCPSRCGAP		186
-   { "sgap", "", 8 , 1, 0, ARGUSPRINTTCPSRCGAP, ArgusPrintSrcGap, ArgusPrintSrcGapLabel, "int unsigned", 0},
+   { "sgap", "", 8 , 1, ARGUS_PTYPE_INT, ARGUSPRINTTCPSRCGAP, ArgusPrintSrcGap, ArgusPrintSrcGapLabel, "int unsigned", 0},
 #define ARGUSPRINTTCPDSTGAP		187
-   { "dgap", "", 8 , 1, 0, ARGUSPRINTTCPDSTGAP, ArgusPrintDstGap, ArgusPrintDstGapLabel, "int unsigned", 0},
+   { "dgap", "", 8 , 1, ARGUS_PTYPE_INT, ARGUSPRINTTCPDSTGAP, ArgusPrintDstGap, ArgusPrintDstGapLabel, "int unsigned", 0},
 #define ARGUSPRINTSRCOUI   		188
-   { "soui", "", 9 , 1, 0, ARGUSPRINTSRCOUI, ArgusPrintSrcOui, ArgusPrintSrcOuiLabel, "varchar(9)", 0},
+   { "soui", "", 9 , 1, ARGUS_PTYPE_STRING, ARGUSPRINTSRCOUI, ArgusPrintSrcOui, ArgusPrintSrcOuiLabel, "varchar(9)", 0},
 #define ARGUSPRINTDSTOUI   		189
-   { "doui", "", 9 , 1, 0, ARGUSPRINTDSTOUI, ArgusPrintDstOui, ArgusPrintDstOuiLabel, "varchar(9)", 0},
+   { "doui", "", 9 , 1, ARGUS_PTYPE_STRING, ARGUSPRINTDSTOUI, ArgusPrintDstOui, ArgusPrintDstOuiLabel, "varchar(9)", 0},
 #define ARGUSPRINTCOR   		190
-   { "cor", "", 12 , 1, 0, ARGUSPRINTCOR, ArgusPrintCor, ArgusPrintCorLabel, "varchar(12)", 0},
+   { "cor", "", 12 , 1, ARGUS_PTYPE_STRING, ARGUSPRINTCOR, ArgusPrintCor, ArgusPrintCorLabel, "varchar(12)", 0},
 #define ARGUSPRINTLOCALADDR             191
-   { "laddr", "", 18 , 1, 0, ARGUSPRINTLOCALADDR, ArgusPrintLocalAddr, ArgusPrintLocalAddrLabel, "varchar(64) not null", 0},
+   { "laddr", "", 18 , 1, ARGUS_PTYPE_STRING, ARGUSPRINTLOCALADDR, ArgusPrintLocalAddr, ArgusPrintLocalAddrLabel, "varchar(64) not null", 0},
 #define ARGUSPRINTREMOTEADDR            192
-   { "raddr", "", 18 , 1, 0, ARGUSPRINTREMOTEADDR, ArgusPrintRemoteAddr, ArgusPrintRemoteAddrLabel, "varchar(64) not null", 0},
+   { "raddr", "", 18 , 1, ARGUS_PTYPE_STRING, ARGUSPRINTREMOTEADDR, ArgusPrintRemoteAddr, ArgusPrintRemoteAddrLabel, "varchar(64) not null", 0},
 #define ARGUSPRINTLOCALNET              193
-   { "lnet", "", 18 , 1, 0, ARGUSPRINTLOCALADDR, ArgusPrintLocalNet, ArgusPrintLocalNetLabel, "varchar(64) not null", 0},
+   { "lnet", "", 18 , 1, ARGUS_PTYPE_STRING, ARGUSPRINTLOCALADDR, ArgusPrintLocalNet, ArgusPrintLocalNetLabel, "varchar(64) not null", 0},
 #define ARGUSPRINTREMOTENET             194
-   { "rnet", "", 18 , 1, 0, ARGUSPRINTREMOTEADDR, ArgusPrintRemoteNet, ArgusPrintRemoteNetLabel, "varchar(64) not null", 0},
+   { "rnet", "", 18 , 1, ARGUS_PTYPE_STRING, ARGUSPRINTREMOTEADDR, ArgusPrintRemoteNet, ArgusPrintRemoteNetLabel, "varchar(64) not null", 0},
 #define ARGUSPRINTAPPBYTERATIO          195
-   { "abr", "", 10 , 1, 0, ARGUSPRINTAPPBYTERATIO, ArgusPrintAppByteRatio, ArgusPrintAppByteRatioLabel, "double", 0},
+   { "abr", "", 10 , 1, ARGUS_PTYPE_DOUBLE, ARGUSPRINTAPPBYTERATIO, ArgusPrintAppByteRatio, ArgusPrintAppByteRatioLabel, "double", 0},
 #define ARGUSPRINTPRODUCERCONSUMERRATIO 196
-   { "pcr", "", 10 , 1, 0, ARGUSPRINTPRODUCERCONSUMERRATIO, ArgusPrintProducerConsumerRatio, ArgusPrintProducerConsumerRatioLabel, "double", 0},
+   { "pcr", "", 10 , 1, ARGUS_PTYPE_DOUBLE, ARGUSPRINTPRODUCERCONSUMERRATIO, ArgusPrintProducerConsumerRatio, ArgusPrintProducerConsumerRatioLabel, "double", 0},
 #define ARGUSPRINTTRANSEFFICIENCY       197
-   { "tf", "", 12 , 1, 0, ARGUSPRINTTRANSEFFICIENCY, ArgusPrintTransEfficiency, ArgusPrintTransEfficiencyLabel, "double", 0},
+   { "tf", "", 12 , 1, ARGUS_PTYPE_DOUBLE, ARGUSPRINTTRANSEFFICIENCY, ArgusPrintTransEfficiency, ArgusPrintTransEfficiencyLabel, "double", 0},
 #define ARGUSPRINTSRCTRANSEFFICIENCY    198
-   { "stf", "", 12 , 1, 0, ARGUSPRINTSRCTRANSEFFICIENCY, ArgusPrintSrcTransEfficiency, ArgusPrintSrcTransEfficiencyLabel, "double", 0},
+   { "stf", "", 12 , 1, ARGUS_PTYPE_DOUBLE, ARGUSPRINTSRCTRANSEFFICIENCY, ArgusPrintSrcTransEfficiency, ArgusPrintSrcTransEfficiencyLabel, "double", 0},
 #define ARGUSPRINTDSTTRANSEFFICIENCY    199
-   { "dtf", "", 12 , 1, 0, ARGUSPRINTDSTTRANSEFFICIENCY, ArgusPrintDstTransEfficiency, ArgusPrintDstTransEfficiencyLabel, "double", 0},
+   { "dtf", "", 12 , 1, ARGUS_PTYPE_DOUBLE, ARGUSPRINTDSTTRANSEFFICIENCY, ArgusPrintDstTransEfficiency, ArgusPrintDstTransEfficiencyLabel, "double", 0},
 #define ARGUSPRINTINODECOUNTRYCODE	200
-   { "ico", "", 3 , 1, 0, ARGUSPRINTINODECOUNTRYCODE, ArgusPrintInodeCountryCode, ArgusPrintInodeCountryCodeLabel, "varchar(2)", 0},
+   { "ico", "", 3 , 1, ARGUS_PTYPE_STRING, ARGUSPRINTINODECOUNTRYCODE, ArgusPrintInodeCountryCode, ArgusPrintInodeCountryCodeLabel, "varchar(2)", 0},
 #define ARGUSPRINTSRCLATITUDE		201
-   { "slat", "", 3 , 1, 0, ARGUSPRINTSRCLATITUDE, ArgusPrintSrcLatitude, ArgusPrintSrcLatitudeLabel, "double", 0},
+   { "slat", "", 3 , 1, ARGUS_PTYPE_DOUBLE, ARGUSPRINTSRCLATITUDE, ArgusPrintSrcLatitude, ArgusPrintSrcLatitudeLabel, "double", 0},
 #define ARGUSPRINTSRCLONGITUDE		202
-   { "slon", "", 3 , 1, 0, ARGUSPRINTSRCLONGITUDE, ArgusPrintSrcLongitude, ArgusPrintSrcLongitudeLabel, "double", 0},
+   { "slon", "", 3 , 1, ARGUS_PTYPE_DOUBLE, ARGUSPRINTSRCLONGITUDE, ArgusPrintSrcLongitude, ArgusPrintSrcLongitudeLabel, "double", 0},
 #define ARGUSPRINTDSTLATITUDE		203
-   { "dlat", "", 3 , 1, 0, ARGUSPRINTDSTLATITUDE, ArgusPrintDstLatitude, ArgusPrintDstLatitudeLabel, "double", 0},
+   { "dlat", "", 3 , 1, ARGUS_PTYPE_DOUBLE, ARGUSPRINTDSTLATITUDE, ArgusPrintDstLatitude, ArgusPrintDstLatitudeLabel, "double", 0},
 #define ARGUSPRINTDSTLONGITUDE		204
-   { "dlon", "", 3 , 1, 0, ARGUSPRINTDSTLONGITUDE, ArgusPrintDstLongitude, ArgusPrintDstLongitudeLabel, "double", 0},
+   { "dlon", "", 3 , 1, ARGUS_PTYPE_DOUBLE, ARGUSPRINTDSTLONGITUDE, ArgusPrintDstLongitude, ArgusPrintDstLongitudeLabel, "double", 0},
 #define ARGUSPRINTINODELATITUDE		205
-   { "ilat", "", 3 , 1, 0, ARGUSPRINTINODELATITUDE, ArgusPrintInodeLatitude, ArgusPrintInodeLatitudeLabel, "double", 0},
+   { "ilat", "", 3 , 1, ARGUS_PTYPE_DOUBLE, ARGUSPRINTINODELATITUDE, ArgusPrintInodeLatitude, ArgusPrintInodeLatitudeLabel, "double", 0},
 #define ARGUSPRINTINODELONGITUDE	206
-   { "ilon", "", 3 , 1, 0, ARGUSPRINTINODELONGITUDE, ArgusPrintInodeLongitude, ArgusPrintInodeLongitudeLabel, "double", 0},
+   { "ilon", "", 3 , 1, ARGUS_PTYPE_DOUBLE, ARGUSPRINTINODELONGITUDE, ArgusPrintInodeLongitude, ArgusPrintInodeLongitudeLabel, "double", 0},
 #define ARGUSPRINTSRCLOCAL		207
-   { "sloc", "", 3 , 1, 0, ARGUSPRINTSRCLOCAL, ArgusPrintSrcLocal, ArgusPrintSrcLocalLabel, "tinyint unsigned", 0},
+   { "sloc", "", 3 , 1, ARGUS_PTYPE_INT, ARGUSPRINTSRCLOCAL, ArgusPrintSrcLocal, ArgusPrintSrcLocalLabel, "tinyint unsigned", 0},
 #define ARGUSPRINTDSTLOCAL		208
-   { "dloc", "", 3 , 1, 0, ARGUSPRINTDSTLOCAL, ArgusPrintDstLocal, ArgusPrintDstLocalLabel, "tinyint unsigned", 0},
+   { "dloc", "", 3 , 1, ARGUS_PTYPE_INT, ARGUSPRINTDSTLOCAL, ArgusPrintDstLocal, ArgusPrintDstLocalLabel, "tinyint unsigned", 0},
 #define ARGUSPRINTLOCAL			209
-   { "loc", "", 3 , 1, 0, ARGUSPRINTLOCAL, ArgusPrintLocal, ArgusPrintLocalLabel, "tinyint unsigned", 0},
+   { "loc", "", 3 , 1, ARGUS_PTYPE_INT, ARGUSPRINTLOCAL, ArgusPrintLocal, ArgusPrintLocalLabel, "tinyint unsigned", 0},
 #define ARGUSPRINTSID			210
-   { "sid", "", 18 , 1, 0, ARGUSPRINTSID, ArgusPrintSID, ArgusPrintSIDLabel, "varchar(64)", 0},
+   { "sid", "", 18 , 1, ARGUS_PTYPE_STRING, ARGUSPRINTSID, ArgusPrintSID, ArgusPrintSIDLabel, "varchar(64)", 0},
 #define ARGUSPRINTNODE			211
-   { "node", "", 8 , 1, 0, ARGUSPRINTNODE, ArgusPrintNode, ArgusPrintNodeLabel, "varchar(64)", 0},
+   { "node", "", 8 , 1, ARGUS_PTYPE_STRING, ARGUSPRINTNODE, ArgusPrintNode, ArgusPrintNodeLabel, "varchar(64)", 0},
 #define ARGUSPRINTINF			212
-   { "inf", "", 4 , 1, 0, ARGUSPRINTINF, ArgusPrintInf, ArgusPrintInfLabel, "varchar(4)", 0},
+   { "inf", "", 4 , 1, ARGUS_PTYPE_STRING, ARGUSPRINTINF, ArgusPrintInf, ArgusPrintInfLabel, "varchar(4)", 0},
 #define ARGUSPRINTSTATUS		213
-   { "status", "", 4 , 1, 0, ARGUSPRINTSTATUS, ArgusPrintStatus, ArgusPrintStatusLabel, "varchar(8)", 0},
+   { "status", "", 4 , 1, ARGUS_PTYPE_STRING, ARGUSPRINTSTATUS, ArgusPrintStatus, ArgusPrintStatusLabel, "varchar(8)", 0},
 #define ARGUSPRINTSRCGROUP		214
-   { "sgrp", "", 4 , 1, 0, ARGUSPRINTSRCGROUP, ArgusPrintSrcGroup, ArgusPrintSrcGroupLabel, "varchar(64)", 0},
+   { "sgrp", "", 4 , 1, ARGUS_PTYPE_STRING, ARGUSPRINTSRCGROUP, ArgusPrintSrcGroup, ArgusPrintSrcGroupLabel, "varchar(64)", 0},
 #define ARGUSPRINTDSTGROUP		215
-   { "dgrp", "", 4 , 1, 0, ARGUSPRINTDSTGROUP, ArgusPrintDstGroup, ArgusPrintDstGroupLabel, "varchar(64)", 0},
+   { "dgrp", "", 4 , 1, ARGUS_PTYPE_STRING, ARGUSPRINTDSTGROUP, ArgusPrintDstGroup, ArgusPrintDstGroupLabel, "varchar(64)", 0},
 #define ARGUSPRINTHASHREF		216
-   { "hash", "", 4 , 1, 0, ARGUSPRINTHASHREF, ArgusPrintHashRef, ArgusPrintHashRefLabel, "int unsigned", 0},
+   { "hash", "", 4 , 1, ARGUS_PTYPE_UINT, ARGUSPRINTHASHREF, ArgusPrintHashRef, ArgusPrintHashRefLabel, "int unsigned", 0},
 #define ARGUSPRINTHASHINDEX		217
-   { "ind", "", 4 , 1, 0, ARGUSPRINTHASHINDEX, ArgusPrintHashIndex, ArgusPrintHashIndexLabel, "int unsigned", 0},
+   { "ind", "", 4 , 1, ARGUS_PTYPE_UINT, ARGUSPRINTHASHINDEX, ArgusPrintHashIndex, ArgusPrintHashIndexLabel, "int unsigned", 0},
 #define ARGUSPRINTSCORE			218
-   { "score", "%d", 5 , 1, 0, ARGUSPRINTSCORE, ArgusPrintScore, ArgusPrintScoreLabel, "tinyint", 0},
+   { "score", "%d", 5 , 1, ARGUS_PTYPE_INT, ARGUSPRINTSCORE, ArgusPrintScore, ArgusPrintScoreLabel, "tinyint", 0},
 #define ARGUSPRINTSRCNAME		219
-   { "sname", "%s", 16 , 1, 0, ARGUSPRINTSRCNAME, ArgusPrintSrcName, ArgusPrintSrcNameLabel, "varchar(64)", 0},
+   { "sname", "%s", 16 , 1, ARGUS_PTYPE_STRING, ARGUSPRINTSRCNAME, ArgusPrintSrcName, ArgusPrintSrcNameLabel, "varchar(64)", 0},
 #define ARGUSPRINTDSTNAME		220
-   { "dname", "%s", 16 , 1, 0, ARGUSPRINTDSTNAME, ArgusPrintDstName, ArgusPrintDstNameLabel, "varchar(64)", 0},
+   { "dname", "%s", 16 , 1, ARGUS_PTYPE_STRING, ARGUSPRINTDSTNAME, ArgusPrintDstName, ArgusPrintDstNameLabel, "varchar(64)", 0},
 #define ARGUSPRINTETHERTYPE		221
-   { "etype", "%u", 8 , 1, 0, ARGUSPRINTETHERTYPE, ArgusPrintEtherType, ArgusPrintEtherTypeLabel, "varchar(32)", 0},
+   { "etype", "%u", 8 , 1, ARGUS_PTYPE_STRING, ARGUSPRINTETHERTYPE, ArgusPrintEtherType, ArgusPrintEtherTypeLabel, "varchar(32)", 0},
 #define ARGUSPRINTMEANIDLE		222
-   { "idlemean", "%u", 8 , 1, 0, ARGUSPRINTMEANIDLE, ArgusPrintIdleMean, ArgusPrintIdleMeanLabel, "double unsigned", 0},
+   { "idlemean", "%u", 8 , 1, ARGUS_PTYPE_DOUBLE, ARGUSPRINTMEANIDLE, ArgusPrintIdleMean, ArgusPrintIdleMeanLabel, "double unsigned", 0},
 #define ARGUSPRINTMINIDLE		223
-   { "idlemin", "%u", 8 , 1, 0, ARGUSPRINTMINIDLE, ArgusPrintIdleMin, ArgusPrintIdleMinLabel, "double unsigned", 0},
+   { "idlemin", "%u", 8 , 1, ARGUS_PTYPE_DOUBLE, ARGUSPRINTMINIDLE, ArgusPrintIdleMin, ArgusPrintIdleMinLabel, "double unsigned", 0},
 #define ARGUSPRINTMAXIDLE		224
-   { "idlemax", "%u", 8 , 1, 0, ARGUSPRINTMAXIDLE, ArgusPrintIdleMax, ArgusPrintIdleMaxLabel, "double unsigned", 0},
+   { "idlemax", "%u", 8 , 1, ARGUS_PTYPE_DOUBLE, ARGUSPRINTMAXIDLE, ArgusPrintIdleMax, ArgusPrintIdleMaxLabel, "double unsigned", 0},
 #define ARGUSPRINTSTDDEVIDLE  		225
-   { "idlestddev", "%u", 8 , 1, 0, ARGUSPRINTSTDDEVIDLE, ArgusPrintIdleStdDeviation, ArgusPrintIdleStdDeviationLabel, "double unsigned", 0},
+   { "idlestddev", "%u", 8 , 1, ARGUS_PTYPE_DOUBLE, ARGUSPRINTSTDDEVIDLE, ArgusPrintIdleStdDeviation, ArgusPrintIdleStdDeviationLabel, "double unsigned", 0},
 #define ARGUSPRINTSRCMAXSEG  		226
-   { "smss", "%d", 6 , 1, 0, ARGUSPRINTSRCMAXSEG, ArgusPrintSrcMaxSeg, ArgusPrintSrcMaxSegLabel, "tinyint unsigned", 0},
+   { "smss", "%d", 6 , 1, ARGUS_PTYPE_INT, ARGUSPRINTSRCMAXSEG, ArgusPrintSrcMaxSeg, ArgusPrintSrcMaxSegLabel, "tinyint unsigned", 0},
 #define ARGUSPRINTDSTMAXSEG  		227
-   { "dmss", "%d", 6 , 1, 0, ARGUSPRINTDSTMAXSEG, ArgusPrintDstMaxSeg, ArgusPrintDstMaxSegLabel, "tinyint unsigned", 0},
+   { "dmss", "%d", 6 , 1, ARGUS_PTYPE_INT, ARGUSPRINTDSTMAXSEG, ArgusPrintDstMaxSeg, ArgusPrintDstMaxSegLabel, "tinyint unsigned", 0},
+#define ARGUSPRINTINTFLOW		228
+   { "intflow", "", 12 , 1, ARGUS_PTYPE_DOUBLE, ARGUSPRINTINTFLOW, ArgusPrintIntFlow, ArgusPrintIntFlowLabel, "double", 0},
+#define ARGUSPRINTACTINTFLOW            229
+   { "actintflow", "", 12 , 1, ARGUS_PTYPE_DOUBLE, ARGUSPRINTACTINTFLOW, NULL, NULL, "double", 0},
+#define ARGUSPRINTIDLEINTFLOW           230
+   { "idleintflow", "", 12 , 1, ARGUS_PTYPE_DOUBLE, ARGUSPRINTIDLEINTFLOW, NULL, NULL, "double", 0},
+#define ARGUSPRINTINTFLOWMAX		231
+   { "intflowmax", "", 12 , 1, ARGUS_PTYPE_DOUBLE, ARGUSPRINTINTFLOWMAX, ArgusPrintIntFlowMax, ArgusPrintIntFlowMaxLabel, "double", 0},
+#define ARGUSPRINTINTFLOWMIN		232
+   { "intflowmin", "", 12 , 1, ARGUS_PTYPE_DOUBLE, ARGUSPRINTINTFLOWMIN, ArgusPrintIntFlowMin, ArgusPrintIntFlowMinLabel, "double", 0},
+#define ARGUSPRINTINTFLOWSDEV		233
+   { "intflowsdev", "", 12 , 1, ARGUS_PTYPE_DOUBLE, ARGUSPRINTINTFLOWSDEV, ArgusPrintIntFlowStdDev, ArgusPrintIntFlowStdDevLabel, "double", 0},
+#define ARGUSPRINTACTINTFLOWMAX         234
+   { "actintflowmax", "", 12 , 1, ARGUS_PTYPE_DOUBLE, ARGUSPRINTACTINTFLOWMAX, NULL, NULL, "double", 0},
+#define ARGUSPRINTACTINTFLOWMIN         235
+   { "actintflowmin", "", 12 , 1, ARGUS_PTYPE_DOUBLE, ARGUSPRINTACTINTFLOWMIN, NULL, NULL, "double", 0},
+#define ARGUSPRINTACTINTFLOWSDEV        236
+   { "actintflowsdev", "", 12 , 1, ARGUS_PTYPE_DOUBLE, ARGUSPRINTACTINTFLOWSDEV, NULL, NULL, "double", 0},
+#define ARGUSPRINTIDLEINTFLOWMAX        237
+   { "idleintflowmax", "", 12 , 1, ARGUS_PTYPE_DOUBLE, ARGUSPRINTIDLEINTFLOWMAX, NULL, NULL, "double", 0},
+#define ARGUSPRINTIDLEINTFLOWMIN        238
+   { "idleintflowmin", "", 12 , 1, ARGUS_PTYPE_DOUBLE, ARGUSPRINTIDLEINTFLOWMIN, NULL, NULL, "double", 0},
+#define ARGUSPRINTIDLEINTFLOWSDEV       239
+   { "idleintflowsdev", "", 12 , 1, ARGUS_PTYPE_DOUBLE, ARGUSPRINTIDLEINTFLOWSDEV, NULL, NULL, "double", 0},
+#define ARGUSPRINTSRCVNID		240
+   { "svnid", "", 6 , 1, ARGUS_PTYPE_INT, ARGUSPRINTSRCVNID, ArgusPrintSrcVirtualNID, ArgusPrintSrcVirtualNIDLabel, "int", 0},
+#define ARGUSPRINTDSTVNID		241
+   { "dvnid", "", 6 , 1, ARGUS_PTYPE_INT, ARGUSPRINTDSTVNID, ArgusPrintDstVirtualNID, ArgusPrintDstVirtualNIDLabel, "int", 0},
 };
 
 
@@ -1834,12 +1897,12 @@ void ArgusInputFromFile(struct ArgusInput *input, struct ArgusFileInput *afi);
 #define ARGUSPRINTLOCALNET              193
 #define ARGUSPRINTREMOTENET             194
 #define ARGUSPRINTAPPBYTERATIO          195
-#define ARGUSPRINTTRANSEFFICIENCY       196
-#define ARGUSPRINTSRCTRANSEFFICIENCY    197
-#define ARGUSPRINTDSTTRANSEFFICIENCY    198
-#define ARGUSPRINTINODECOUNTRYCODE      199
-#define ARGUSPRINTSRCDUP                200
-#define ARGUSPRINTDSTDUP                201
+#define ARGUSPRINTPRODUCERCONSUMERRATIO 196
+#define ARGUSPRINTTRANSEFFICIENCY       197
+#define ARGUSPRINTSRCTRANSEFFICIENCY    198
+#define ARGUSPRINTDSTTRANSEFFICIENCY    199
+#define ARGUSPRINTINODECOUNTRYCODE	200
+#define ARGUSPRINTSRCLATITUDE		201
 #define ARGUSPRINTSRCLONGITUDE		202
 #define ARGUSPRINTDSTLATITUDE		203
 #define ARGUSPRINTDSTLONGITUDE		204
@@ -1860,8 +1923,27 @@ void ArgusInputFromFile(struct ArgusInput *input, struct ArgusFileInput *afi);
 #define ARGUSPRINTSRCNAME		219
 #define ARGUSPRINTDSTNAME		220
 #define ARGUSPRINTETHERTYPE		221
-#define ARGUSPRINTSRCMAXSEG		222
-#define ARGUSPRINTDSTMAXSEG		223
+#define ARGUSPRINTMEANIDLE		222
+#define ARGUSPRINTMINIDLE		223
+#define ARGUSPRINTMAXIDLE		224
+#define ARGUSPRINTSTDDEVIDLE  		225
+#define ARGUSPRINTSRCMAXSEG  		226
+#define ARGUSPRINTDSTMAXSEG  		227
+#define ARGUSPRINTINTFLOW		228
+#define ARGUSPRINTACTINTFLOW		229
+#define ARGUSPRINTIDLEINTFLOW		230
+#define ARGUSPRINTINTFLOWMAX		231
+#define ARGUSPRINTINTFLOWMIN		232
+#define ARGUSPRINTINTFLOWSDEV		233
+#define ARGUSPRINTACTINTFLOWMAX		234
+#define ARGUSPRINTACTINTFLOWMIN		235
+#define ARGUSPRINTACTINTFLOWSDEV	236
+#define ARGUSPRINTIDLEINTFLOWMAX	237
+#define ARGUSPRINTIDLEINTFLOWMIN	238
+#define ARGUSPRINTIDLEINTFLOWSDEV	239
+#define ARGUSPRINTSRCVNID		240
+#define ARGUSPRINTDSTVNID		241
+
 
 extern struct ArgusPrintFieldStruct RaPrintAlgorithmTable[MAX_PRINT_ALG_TYPES];
 extern void (*RaPrintAlgorithms[ARGUS_MAX_PRINT_ALG])(struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
@@ -2039,10 +2121,24 @@ extern void ArgusPrintDstBytes (struct ArgusParserStruct *, char *, struct Argus
 extern void ArgusPrintAppBytes (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
 extern void ArgusPrintSrcAppBytes (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
 extern void ArgusPrintDstAppBytes (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
+
 extern void ArgusPrintSrcIntPkt (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
 extern void ArgusPrintSrcIntPktDist (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
 extern void ArgusPrintDstIntPkt (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
 extern void ArgusPrintDstIntPktDist (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
+extern void ArgusPrintActiveIntPkt (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
+extern void ArgusPrintActiveIntPkt (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
+extern void ArgusPrintActiveIntPktDist (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
+extern void ArgusPrintActiveSrcIntPkt (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
+extern void ArgusPrintActiveSrcIntPktDist (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
+extern void ArgusPrintActiveDstIntPkt (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
+extern void ArgusPrintActiveDstIntPktDist (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
+extern void ArgusPrintIdleIntPkt (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
+extern void ArgusPrintIdleIntPktDist (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
+extern void ArgusPrintIdleSrcIntPkt (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
+extern void ArgusPrintIdleSrcIntPktDist (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
+extern void ArgusPrintIdleDstIntPkt (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
+extern void ArgusPrintIdleDstIntPktDist (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
 extern void ArgusPrintSrcIntPktMax (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
 extern void ArgusPrintSrcIntPktMin (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
 extern void ArgusPrintDstIntPktMax (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
@@ -2051,12 +2147,27 @@ extern void ArgusPrintActiveSrcIntPktMax (struct ArgusParserStruct *, char *, st
 extern void ArgusPrintActiveSrcIntPktMin (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
 extern void ArgusPrintActiveDstIntPktMax (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
 extern void ArgusPrintActiveDstIntPktMin (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
-extern void ArgusPrintIdleSrcIntPkt (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
 extern void ArgusPrintIdleSrcIntPktMax (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
 extern void ArgusPrintIdleSrcIntPktMin (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
-extern void ArgusPrintIdleDstIntPkt (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
 extern void ArgusPrintIdleDstIntPktMax (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
 extern void ArgusPrintIdleDstIntPktMin (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
+
+extern void ArgusPrintIntFlow (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
+extern void ArgusPrintIntFlowDist (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
+extern void ArgusPrintActiveIntFlow (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
+extern void ArgusPrintActiveIntFlowDist (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
+extern void ArgusPrintIdleIntFlow (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
+extern void ArgusPrintIdleIntFlowDist (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
+extern void ArgusPrintIntFlowStdDev (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
+extern void ArgusPrintIntFlowMax (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
+extern void ArgusPrintIntFlowMin (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
+extern void ArgusPrintActiveIntFlowStdDev (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
+extern void ArgusPrintActiveIntFlowMax (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
+extern void ArgusPrintActiveIntFlowMin (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
+extern void ArgusPrintIdleIntFlowStdDev (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
+extern void ArgusPrintIdleIntFlowMax (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
+extern void ArgusPrintIdleIntFlowMin (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
+
 extern void ArgusPrintJitter (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
 extern void ArgusPrintSrcJitter (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
 extern void ArgusPrintDstJitter (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
@@ -2138,6 +2249,9 @@ extern void ArgusPrintRunTime (struct ArgusParserStruct *, char *, struct ArgusR
 extern void ArgusPrintIdleTime (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
 extern void ArgusPrintLabel (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
 
+extern void ArgusPrintSrcVirtualNID (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
+extern void ArgusPrintDstVirtualNID (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
+
 extern void ArgusPrintLabelLabel (struct ArgusParserStruct *, char *, int);
 extern void ArgusPrintCauseLabel (struct ArgusParserStruct *, char *, int);
 extern void ArgusPrintDateLabel (struct ArgusParserStruct *, char *, int);
@@ -2177,26 +2291,53 @@ extern void ArgusPrintDstBytesLabel (struct ArgusParserStruct *, char *, int);
 extern void ArgusPrintAppBytesLabel (struct ArgusParserStruct *, char *, int);
 extern void ArgusPrintSrcAppBytesLabel (struct ArgusParserStruct *, char *, int);
 extern void ArgusPrintDstAppBytesLabel (struct ArgusParserStruct *, char *, int);
+
 extern void ArgusPrintSrcIntPktLabel (struct ArgusParserStruct *, char *, int);
 extern void ArgusPrintSrcIntPktDistLabel (struct ArgusParserStruct *, char *, int);
 extern void ArgusPrintDstIntPktLabel (struct ArgusParserStruct *, char *, int);
 extern void ArgusPrintDstIntPktDistLabel (struct ArgusParserStruct *, char *, int);
+extern void ArgusPrintActiveIntPktLabel (struct ArgusParserStruct *, char *, int);
+extern void ArgusPrintActiveIntPktLabel (struct ArgusParserStruct *, char *, int);
+extern void ArgusPrintActiveIntPktDistLabel (struct ArgusParserStruct *, char *, int);
+extern void ArgusPrintActiveSrcIntPktLabel (struct ArgusParserStruct *, char *, int);
+extern void ArgusPrintActiveSrcIntPktDistLabel (struct ArgusParserStruct *, char *, int);
+extern void ArgusPrintActiveDstIntPktLabel (struct ArgusParserStruct *, char *, int);
+extern void ArgusPrintActiveDstIntPktDistLabel (struct ArgusParserStruct *, char *, int);
+extern void ArgusPrintIdleIntPktLabel (struct ArgusParserStruct *, char *, int);
+extern void ArgusPrintIdleIntPktDistLabel (struct ArgusParserStruct *, char *, int);
+extern void ArgusPrintIdleSrcIntPktLabel (struct ArgusParserStruct *, char *, int);
+extern void ArgusPrintIdleSrcIntPktDistLabel (struct ArgusParserStruct *, char *, int);
+extern void ArgusPrintIdleDstIntPktLabel (struct ArgusParserStruct *, char *, int);
+extern void ArgusPrintIdleDstIntPktDistLabel (struct ArgusParserStruct *, char *, int);
 extern void ArgusPrintSrcIntPktMaxLabel (struct ArgusParserStruct *, char *, int);
 extern void ArgusPrintSrcIntPktMinLabel (struct ArgusParserStruct *, char *, int);
 extern void ArgusPrintDstIntPktMaxLabel (struct ArgusParserStruct *, char *, int);
 extern void ArgusPrintDstIntPktMinLabel (struct ArgusParserStruct *, char *, int);
-extern void ArgusPrintActiveSrcIntPktLabel (struct ArgusParserStruct *, char *, int);
-extern void ArgusPrintActiveSrcIntPktDistLabel (struct ArgusParserStruct *, char *, int);
 extern void ArgusPrintActiveSrcIntPktMaxLabel (struct ArgusParserStruct *, char *, int);
 extern void ArgusPrintActiveSrcIntPktMinLabel (struct ArgusParserStruct *, char *, int);
 extern void ArgusPrintActiveDstIntPktMaxLabel (struct ArgusParserStruct *, char *, int);
 extern void ArgusPrintActiveDstIntPktMinLabel (struct ArgusParserStruct *, char *, int);
-extern void ArgusPrintIdleSrcIntPktLabel (struct ArgusParserStruct *, char *, int);
-extern void ArgusPrintIdleSrcIntPktDistLabel (struct ArgusParserStruct *, char *, int);
 extern void ArgusPrintIdleSrcIntPktMaxLabel (struct ArgusParserStruct *, char *, int);
 extern void ArgusPrintIdleSrcIntPktMinLabel (struct ArgusParserStruct *, char *, int);
 extern void ArgusPrintIdleDstIntPktMaxLabel (struct ArgusParserStruct *, char *, int);
 extern void ArgusPrintIdleDstIntPktMinLabel (struct ArgusParserStruct *, char *, int);
+
+extern void ArgusPrintIntFlowLabel (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
+extern void ArgusPrintIntFlowDistLabel (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
+extern void ArgusPrintActiveIntFlowLabel (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
+extern void ArgusPrintActiveIntFlowDistLabel (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
+extern void ArgusPrintIdleIntFlowLabel (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
+extern void ArgusPrintIdleIntFlowDistLabel (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
+extern void ArgusPrintIntFlowStdDevLabel (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
+extern void ArgusPrintIntFlowMaxLabel (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
+extern void ArgusPrintIntFlowMinLabel (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
+extern void ArgusPrintActiveIntFlowStdDevLabel (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
+extern void ArgusPrintActiveIntFlowMaxLabel (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
+extern void ArgusPrintActiveIntFlowMinLabel (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
+extern void ArgusPrintIdleIntFlowStdDevLabel (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
+extern void ArgusPrintIdleIntFlowMaxLabel (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
+extern void ArgusPrintIdleIntFlowMinLabel (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
+
 extern void ArgusPrintJitterLabel (struct ArgusParserStruct *, char *, int);
 extern void ArgusPrintSrcJitterLabel (struct ArgusParserStruct *, char *, int);
 extern void ArgusPrintDstJitterLabel (struct ArgusParserStruct *, char *, int);
@@ -2228,6 +2369,7 @@ extern void ArgusPrintPercentLossLabel (struct ArgusParserStruct *, char *, int)
 extern void ArgusPrintSrcRateLabel (struct ArgusParserStruct *, char *, int);
 extern void ArgusPrintDstRateLabel (struct ArgusParserStruct *, char *, int);
 extern void ArgusPrintRateLabel (struct ArgusParserStruct *, char *, int);
+
 
 extern void ArgusPrintSrcTosLabel (struct ArgusParserStruct *, char *, int);
 extern void ArgusPrintDstTosLabel (struct ArgusParserStruct *, char *, int);

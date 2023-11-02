@@ -48,7 +48,7 @@ my $debug   = 0;
 my $quiet   = 0;
 my $uri     = 0;
 my $time    = "-1d";
-my $mtbl    = "";
+my $fstime  = "";
 
 my $mode    = 0;
 my $node    = "";
@@ -109,10 +109,6 @@ if ((not defined $time) || ($time eq "-1d") || ($time eq "Today")) {
    $time = RaTodaysDate();
 }
 
-if ((not defined $time) || ($time eq "-1d") || ($time eq "Today")) {
-   $time = RaTodaysDate();
-}
-
 if ($uri) {
    my $url = URI::URL->new($uri);
 
@@ -149,13 +145,17 @@ if ($uri) {
 
    switch ($db) {
       case /^dnsNames/ {
-         $options = "-f /usr/argus/radns.conf -qM json search:0.0.0.0/0";
-         $Program = "$rasql -t $time -r mysql://root\@localhost/$flows/dns_%Y_%m_%d -M time 1d -w - | $radns $options";
+         $options = "-u -f /usr/argus/radns.conf -qM json search:0.0.0.0/0";
       }
       case /^dnsAddrs/ {
-         $options = "-f /usr/argus/radns.conf -qM json search:'.'";
-         $Program = "$rasql -t $time -r mysql://root\@localhost/$flows/dns_%Y_%m_%d -M time 1d -w - | $radns $options";
+         $options = "-u -f /usr/argus/radns.conf -qM json search:'.'";
       }
+   }
+
+   if (grep -d, glob "/home/dns/*/*/$time") {
+      $Program = "$rasql -t $time -r mysql://root\@localhost/$flows -w - | $radns $options";
+   } else {
+      $Program = "$rasql -t $time -r mysql://root\@localhost/$flows/dns_%Y_%m_%d -M time 1d -w - | $radns $options";
    }
 
    print "DEBUG: RaDNSDb: calling Program $Program\n" if $debug;
@@ -246,7 +246,6 @@ if ($uri) {
                $dbh->do($str);
                print "DEBUG: sql '$str'\n" if $debug;
             }
-
             foreach my $n (@$results_ref) {
                my ($name,$tld,$nld,$stime,$ltime,$ref,$addrs,$client,$server,$cname,$ptr,$ns);
                my ($tind,$nind);

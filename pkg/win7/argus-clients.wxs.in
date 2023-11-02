@@ -21,10 +21,10 @@
     <Directory Id='TARGETDIR' Name='SourceDir'>
       <Component Id="REG_MACHINE" Guid="*">
         <RegistryKey Id="srvc1" Root="HKLM"
-        Key="SYSTEM\CurrentControlSet\Services\QoSient:Rasplit\Parameters"
+        Key="SYSTEM\CurrentControlSet\Services\QoSient:RaStream\Parameters"
         Action="create">
           <RegistryValue Type="expandable" Name="AppPath"
-          Value="/bin/rasplit.exe" />
+          Value="/bin/rastream.exe" />
           <RegistryValue Type="string" Name="AppArgs"
           Value='-S localhost:562 -B 10 -M time 5m -w /argus/$srcid/%Y/%m/%d/argus.%Y.%m.%d.%H.%M.%S -f /bin/ramanage'/>
           <RegistryValue Type="integer" Name="NeverExits"
@@ -87,11 +87,6 @@
               Source="BUILDROOT/usr/bin/rasort.exe" KeyPath='yes'>
               </File>
             </Component>
-            <Component Id='rasplit.exe' Guid="*">
-              <File Id='rasplit.exe' Name='rasplit.exe' DiskId='1'
-              Source="BUILDROOT/usr/bin/rastream.exe" KeyPath='yes'>
-              </File>
-            </Component>
             <Component Id='rastream.exe' Guid="*">
               <File Id='rastream.exe' Name='rastream.exe' DiskId='1'
               Source="BUILDROOT/usr/bin/rastream.exe" KeyPath='yes'>
@@ -112,13 +107,13 @@
               Source="c:\cygwin\bin\cygrunsrv.exe"
               Name="cygrunsrv.exe" KeyPath="yes" Checksum="yes" />
               <ServiceInstall Id="cygrunsrv.exe" Type="ownProcess"
-              Vital="yes" Name="QoSient:RaSplit"
-              DisplayName="QoSient:RaSplit"
+              Vital="yes" Name="QoSient:RaStream"
+              DisplayName="QoSient:RaStream"
               Description="QoSient Argus Clients Version @PACKAGE_VERSION@"
               Start="auto" Account="LocalSystem"
               ErrorControl="ignore" Interactive="no" />
               <ServiceControl Id="cygrunsrv.exe" Start="install"
-              Stop="both" Remove="uninstall" Name="QoSient:RaSplit"
+              Stop="both" Remove="uninstall" Name="QoSient:RaStream"
               Wait="no" />
               <util:ServiceConfig
                FirstFailureActionType="restart"
@@ -126,7 +121,7 @@
                ThirdFailureActionType="restart"
                ResetPeriodInDays="1"
                RestartServiceDelayInSeconds="5"
-               ServiceName="QoSient:RaSplit"/>
+               ServiceName="QoSient:RaStream"/>
             </Component>
             <Component Id='LibGCC' Guid="*">
               <File Id='LibGCC' Name='cyggcc_s-1.dll' DiskId='1'
@@ -225,7 +220,6 @@
     <Feature Id='Complete' Level='1'>
       <ComponentRef Id='ra.exe' />
       <ComponentRef Id='rabins.exe' />
-      <ComponentRef Id='rasplit.exe' />
       <ComponentRef Id='rastream.exe' />
       <ComponentRef Id='racluster.exe' />
       <ComponentRef Id='radium.exe' />

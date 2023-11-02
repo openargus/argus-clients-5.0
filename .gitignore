@@ -19,6 +19,7 @@ argus-clients.xcodeproj/xcuserdata/
 .devel
 .nfs*
 
+*.a
 *.o
 *.swp
 Makefile
@@ -34,7 +35,6 @@ include/argus_config.h
 /common/scanner.c
 /common/tokdefs.h
 /common/version.c
-/lib/*.a
 /autom4te.cache
 /argus-clients-*.tar.gz
 /lib/argus-clients.spec
@@ -52,3 +52,24 @@ include/argus_config.h
 /perllib/swig_ArgusParseTime_wrap.c
 /perllib/util.so
 /perllib/util.dylib
+
+# rasql_udf_ intermediates
+/examples/rasql_udf_cidr/.libs/
+/examples/rasql_udf_cidr/.deps/
+/examples/rasql_udf_cidr/autom4te.cache
+/examples/rasql_udf_cidr/libtool
+/examples/rasql_udf_cidr/config.log
+/examples/rasql_udf_cidr/config.status
+/examples/rasql_udf_cidr/config.h
+/examples/rasql_udf_cidr/rasql_udf_cidr.la
+/examples/rasql_udf_cidr/rasql_udf_cidr_la-rasql_udf_cidr.lo
+
+# radhcp intermediates
+/examples/radhcp/example-libargus_dhcp
+
+# pythonlib
+/pythonlib/argusWgan.py
+/pythonlib/argusWgan_wrap.c
+/pythonlib/build/
+/pythonlib/swig.stamp
+

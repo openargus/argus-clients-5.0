@@ -48,10 +48,10 @@ my $drop  = 1;
 my $racluster = which 'racluster';
 chomp $racluster;
 
-my $Options = " -nc , ";   # Default Options
 my $VERSION = "5.0";
+my $Options = " -nc , -M rmon";   # Default Options
 my $format  = 'addr';
-my $fields  = '-M rmon -s sid inf saddr proto sport';
+my $fields  = '-s sid inf saddr proto sport';
 my $model   = '-m sid inf saddr proto sport';
 my $uri     = 0;
 my $quiet   = 0;
@@ -67,7 +67,7 @@ ARG: while (my $arg = shift(@ARGV)) {
    for ($arg) {
       s/^-q//             && do { $quiet++; next ARG; };
       s/^-debug//         && do { $debug++; next ARG; };
-      s/^-drop//          && do { $drop = 1; next ARG; };
+      s/^-drop//          && do { $drop = 0; next ARG; };
       s/^-w//             && do {
          $uri = shift (@ARGV);
          next ARG;
@@ -84,8 +84,8 @@ ARG: while (my $arg = shift(@ARGV)) {
 
             /dst/  && do {
                $format = 'dst';
-               $fields = '-s sid:42 inf daddr:15 proto dport:15';
-               $model  = '-m sid inf daddr proto dport';
+               $fields = '-s sid:42 inf saddr:15 proto dport:15';
+               $model  = '-m sid inf saddr proto dport';
                shift (@ARGV);
                next ARG;
             };
@@ -102,7 +102,6 @@ ARG: while (my $arg = shift(@ARGV)) {
 
    $arglist[@arglist + 0] = $arg;
 }
-
 
 if ($uri) {
    my $url = URI::URL->new($uri);
@@ -139,7 +138,7 @@ if ($uri) {
  
    # Create a new table 'foo'. This must not fail, thus we don't catch errors.
  
-   $dbh->do("CREATE TABLE IF NOT EXISTS $table (sid VARCHAR(64), inf VARCHAR(4), addr VARCHAR(64) NOT NULL, tcp INTEGER, udp INTEGER, tcpports TEXT, udpports TEXT, PRIMARY KEY ( addr, sid, inf ))");
+   $dbh->do("CREATE TABLE IF NOT EXISTS $table (sid VARCHAR(64), inf VARCHAR(4), addr VARCHAR(64) NOT NULL, tcp INTEGER, udp INTEGER, tcpports MEDIUMTEXT, udpports MEDIUMTEXT, PRIMARY KEY ( addr, sid, inf ))");
 }
 
 

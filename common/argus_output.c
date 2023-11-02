@@ -56,7 +56,6 @@
 #include "argus_threads.h"
 #include "ring.h"
 
-void ArgusSendFile (struct ArgusOutputStruct *, struct ArgusClientData *, char *, int);
 static void *ArgusControlChannelProcess(void *);
 
 struct ArgusRecord *ArgusGenerateRecord (struct ArgusRecordStruct *, unsigned char, char *, int);
@@ -1102,24 +1101,32 @@ ArgusGenerateV3Record (struct ArgusRecordStruct *rec, unsigned char state, char 
                struct ArgusMarStruct *man = (struct ArgusMarStruct *) &((struct ArgusRecord *) rec->dsrs[0])->ar_un.mar;
 
                if (man->major_version > ARGUS_VERSION_3) {
-                  if (((man->status & ARGUS_IDIS_UUID) == ARGUS_IDIS_UUID)  || ((man->status & ARGUS_IDIS_IPV6) == ARGUS_IDIS_IPV6)) {
-                     if (cp != NULL) {
-                        man->status &= ~(ARGUS_ID_INC_INF | ARGUS_IDIS_UUID | ARGUS_IDIS_IPV6 | ARGUS_IDIS_STRING | ARGUS_IDIS_INT | ARGUS_IDIS_IPV4);
-                        man->status |= cp->type;
-                        man->argusid = cp->addr.a_un.value;
-                     } else {
-                        man->argusid = man->value;
-                     }
-                  } else {
-                     man->status &= ~ARGUS_ID_INC_INF;
+                  switch (retn->hdr.cause & 0xF0) {
+                     case ARGUS_START:
+                        man->argusid = ARGUS_V3_COOKIE;
+                        break;
+
+                     default:
+                        if (((man->status & ARGUS_IDIS_UUID) == ARGUS_IDIS_UUID)  || ((man->status & ARGUS_IDIS_IPV6) == ARGUS_IDIS_IPV6)) {
+                           if (cp != NULL) {
+                              man->status &= ~(ARGUS_ID_INC_INF | ARGUS_IDIS_UUID | ARGUS_IDIS_IPV6 | ARGUS_IDIS_STRING | ARGUS_IDIS_INT | ARGUS_IDIS_IPV4);
+                              man->status |= cp->type;
+                              man->argusid = cp->addr.a_un.value;
+                           } else {
+                              man->argusid = man->value;
+                           }
+                        } else {
+                           man->status &= ~ARGUS_ID_INC_INF;
+                        }
+                        break;
                   }
                   bzero(&man->pad, sizeof(man->pad));
                   man->thisid = 0;
                   man->major_version = ARGUS_VERSION_3;
-
-                  retn->hdr.type   = ARGUS_MAR | ARGUS_VERSION_3;
-                  retn->hdr.cause &= ~ARGUS_SRC_RADIUM;
                }
+
+               retn->hdr.type   = ARGUS_MAR | ARGUS_VERSION_3;
+               retn->hdr.cause &= ~ARGUS_SRC_RADIUM;
 
                bcopy ((char *)rec->dsrs[0], (char *) retn, rec->hdr.len * 4);
                retn->hdr = rec->hdr;
@@ -2289,15 +2296,17 @@ ArgusGenerateV5Record (struct ArgusRecordStruct *rec, unsigned char state, char 
                               tcpinit.win = tcp->src.win;
                               tcpinit.flags = tcp->src.flags;
                               tcpinit.winshift = tcp->src.winshift;
+                              tcpinit.maxseg = tcp->src.maxseg;
 
-                              net->hdr.argus_dsrvl8.len = 5;
+                              net->hdr.argus_dsrvl8.len = 6;
 
                               *dsrptr++ = *(unsigned int *)&net->hdr;
                               *dsrptr++ = ((unsigned int *)&tcpinit)[0];
                               *dsrptr++ = ((unsigned int *)&tcpinit)[1];
                               *dsrptr++ = ((unsigned int *)&tcpinit)[2];
                               *dsrptr++ = ((unsigned int *)&tcpinit)[3];
-                              len = 5;
+                              *dsrptr++ = ((unsigned int *)&tcpinit)[4];
+                              len = 6;
                               break;
                            }
                            case ARGUS_TCP_STATUS: {
@@ -3855,7 +3864,8 @@ __ArgusOutputProcess(struct ArgusOutputStruct *output,
                if (client->delete) {
                   ArgusRemoveFromQueue(output->ArgusClients, &client->qhdr, ARGUS_NOLOCK);
 #ifdef ARGUSDEBUG
-                  ArgusDebug(1, "%s/%s: client %s %s removed", caller, __func__,
+                  ArgusDebug(1, "%s/%s: client %p %s %s removed", caller, __func__,
+                             client,
                              client->hostname ? client->hostname : "(unknown)",
                              client->clientid ? client->clientid : "(unknown)");
 #endif
@@ -4240,8 +4250,9 @@ char *ArgusClientCommands[ARGUSMAXCLIENTCOMMANDS] =
 int
 ArgusCheckClientMessage (struct ArgusOutputStruct *output, struct ArgusClientData *client)
 {
-   int retn = 0, cnt = 0, i, found, fd = client->fd;
+   int retn = 0, cnt = 0, found = 0;
    char buf[MAXSTRLEN], *ptr = buf;
+   int i,  fd = client->fd;
    unsigned int value = 0;
     
 #ifdef ARGUS_SASL
@@ -4324,90 +4335,89 @@ ArgusCheckClientMessage (struct ArgusOutputStruct *output, struct ArgusClientDat
    ArgusDebug (3, "ArgusCheckClientMessage (0x%x, %d) read '%s' from remote\n", client, fd, ptr);
 #endif
 
-   for (i = 0, found = 0; i < ARGUSMAXCLIENTCOMMANDS; i++) {
-      if (!(strncmp (ptr, ArgusClientCommands[i], strlen(ArgusClientCommands[i])))) {
+   if (ArgusParser->ArgusParseClientMessage != NULL) {
+      if (ArgusParser->ArgusParseClientMessage(ArgusParser, output, client, ptr))
          found++;
-         switch (i) {
-            case RADIUM_START: {
-               int slen = strlen(ArgusClientCommands[i]);
-               char *sptr;
+   } else {
+      for (i = 0, found = 0; (i < ARGUSMAXCLIENTCOMMANDS) && !found; i++) {
+         if (ArgusClientCommands[i] != NULL) {
+            if (!(strncmp (ptr, ArgusClientCommands[i], strlen(ArgusClientCommands[i])))) {
+               found++;
+               switch (i) {
+                  case RADIUM_START: {
+                     int slen = strlen(ArgusClientCommands[i]);
+                     char *sptr;
 
-               if (strlen(ptr) > slen) {
-                  if ((sptr = strstr(ptr, "user=")) != NULL) {
-                     if (client->clientid != NULL)
-                        free(client->clientid);
-                     client->clientid = strdup(sptr);
+                     if (strlen(ptr) > slen) {
+                        if ((sptr = strstr(ptr, "user=")) != NULL) {
+                           if (client->clientid != NULL)
+                              free(client->clientid);
+                           client->clientid = strdup(sptr);
 
+                        }
+                     }
+                     client->ArgusClientStart++;
+                     retn = 0; break;
+                  }
+                  case RADIUM_DONE:  {
+                     if (client->hostname != NULL)
+                        ArgusLog (LOG_INFO, "ArgusCheckClientMessage: client %s sent DONE", client->hostname);
+                     else
+                        ArgusLog (LOG_INFO, "ArgusCheckClientMessage: received DONE");
+                     retn = -4;
+                     break; 
+                  }
+                  case RADIUM_FILTER: {
+                     if (ArgusFilterCompile (&client->ArgusNFFcode, &ptr[7], 1) < 0) {
+                        retn = -2;
+#ifdef ARGUSDEBUG
+                        ArgusDebug (3, "ArgusCheckClientMessage: ArgusFilter syntax error: %s\n", &ptr[7]);
+#endif
+                     } else {
+#ifdef ARGUSDEBUG
+                        ArgusDebug (3, "ArgusCheckClientMessage: ArgusFilter %s\n", &ptr[7]);
+#endif
+                        client->ArgusFilterInitialized++;
+                        if ((cnt = send (fd, "OK", 2, 0)) != 2) {
+                           retn = -3;
+#ifdef ARGUSDEBUG
+                           ArgusDebug (3, "ArgusCheckClientMessage: send error %s\n", strerror(errno));
+#endif
+                        } else {
+                           retn = 0;
+#ifdef ARGUSDEBUG
+                           ArgusDebug (3, "ArgusCheckClientMessage: ArgusFilter %s initialized.\n", &ptr[7]);
+#endif
+                        }
+                     }
+                     break;
+                  }
+
+                  case RADIUM_PROJECT: 
+                  case RADIUM_MODEL: 
+                     break;
+
+                  case RADIUM_FILE: {
+                     char *file = &ptr[6];
+#ifdef ARGUSDEBUG
+                     ArgusDebug (3, "ArgusCheckClientMessage: ArgusFile %s requested.\n", file);
+#endif
+                     ArgusSendFile (output, client, file, 0);
+                     retn = 5;
+                     break;
                   }
                }
-               client->ArgusClientStart++;
-               retn = 0; break;
-            }
-            case RADIUM_DONE:  {
-               if (client->hostname != NULL)
-                  ArgusLog (LOG_INFO, "ArgusCheckClientMessage: client %s sent DONE", client->hostname);
-               else
-                  ArgusLog (LOG_INFO, "ArgusCheckClientMessage: received DONE");
-               retn = -4;
-               break; 
-            }
-            case RADIUM_FILTER: {
-               if (ArgusFilterCompile (&client->ArgusNFFcode, &ptr[7], 1) < 0) {
-                  retn = -2;
-#ifdef ARGUSDEBUG
-                  ArgusDebug (3, "ArgusCheckClientMessage: ArgusFilter syntax error: %s\n", &ptr[7]);
-#endif
-               } else {
-#ifdef ARGUSDEBUG
-                  ArgusDebug (3, "ArgusCheckClientMessage: ArgusFilter %s\n", &ptr[7]);
-#endif
-                  client->ArgusFilterInitialized++;
-                  if ((cnt = send (fd, "OK", 2, 0)) != 2) {
-                     retn = -3;
-#ifdef ARGUSDEBUG
-                     ArgusDebug (3, "ArgusCheckClientMessage: send error %s\n", strerror(errno));
-#endif
-                  } else {
-                     retn = 0;
-#ifdef ARGUSDEBUG
-                     ArgusDebug (3, "ArgusCheckClientMessage: ArgusFilter %s initialized.\n", &ptr[7]);
-#endif
-                  }
-               }
                break;
             }
-
-            case RADIUM_PROJECT: 
-            case RADIUM_MODEL: 
-               break;
-
-            case RADIUM_FILE: {
-               char *file = &ptr[6];
-#ifdef ARGUSDEBUG
-               ArgusDebug (3, "ArgusCheckClientMessage: ArgusFile %s requested.\n", file);
-#endif
-               ArgusSendFile (output, client, file, 0);
-               retn = 5;
-               break;
-            }
-
-            default:
-               if (client->hostname)
-                  ArgusLog (LOG_INFO, "ArgusCheckClientMessage: client %s sent %s",  client->hostname, ptr);
-               else
-                  ArgusLog (LOG_INFO, "ArgusCheckClientMessage: received %s",  ptr);
-               break;
          }
-
-         break;
       }
-   }
 
-   if (!found) {
-      if (client->hostname)
-         ArgusLog (LOG_INFO, "ArgusCheckClientMessage: client %s sent %s",  client->hostname, ptr);
-      else
-         ArgusLog (LOG_INFO, "ArgusCheckClientMessage: received %s",  ptr);
+      if (!found) {
+         if (client->hostname)
+            ArgusLog (LOG_INFO, "ArgusCheckClientMessage: client %s sent %s\n",  client->hostname, ptr);
+         else
+            ArgusLog (LOG_INFO, "ArgusCheckClientMessage: received %s\n",  ptr);
+      }
    }
 
 #ifdef ARGUSDEBUG
@@ -4763,7 +4773,7 @@ struct ArgusRecordStruct *
 ArgusGenerateStatusMarRecord(struct ArgusOutputStruct *output,
                              unsigned char status, char version)
 {
-   extern int ArgusAllocTotal, ArgusFreeTotal, ArgusAllocBytes;
+   extern unsigned int ArgusAllocTotal, ArgusFreeTotal, ArgusAllocBytes;
    struct ArgusAddrStruct asbuf, *asptr = &asbuf;
    struct ArgusRecordStruct *retn;
    struct ArgusRecord *rec;
@@ -4998,12 +5008,12 @@ ArgusTcpWrapper (struct ArgusOutputStruct *output, int fd, struct sockaddr *from
       socklen_t salen;
 
       salen = sizeof(remoteaddr);
-      bzero(hbuf, sizeof(hbuf));
+      bzero(hbuf, NI_MAXHOST);
 
       if ((getpeername(fd, (struct sockaddr *)&remoteaddr, &salen) == 0) &&
                          (remoteaddr.ss_family == AF_INET || remoteaddr.ss_family == AF_INET6)) {
          if (getnameinfo((struct sockaddr *)&remoteaddr, salen, hbuf, sizeof(hbuf), NULL, 0, NI_NAMEREQD) == 0) {
-            strncpy(clienthost, hbuf, sizeof(hbuf));
+            strncpy(clienthost, hbuf, NI_MAXHOST);
          } else {
             clienthost[0] = '\0';
          }

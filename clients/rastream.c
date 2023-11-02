@@ -78,6 +78,8 @@ struct RastreamFileMap {
    int nodelete;
 };
 
+void *ArgusScriptProcess (void *);
+
 #ifdef HAVE_FCNTL_H
 # include <limits.h>
 static struct RastreamFileMap *RastreamRetryListHead;
@@ -98,6 +100,7 @@ static int ArgusInitNewFilename(struct ArgusParserStruct *,
                                 struct ArgusWfileStruct *, char *);
 static struct ArgusFileCacheStruct *
    ArgusFindFileCache(struct ArgusHashTable *, struct ArgusHashStruct *);
+
 static void ArgusProcessFileCache(struct ArgusFileCacheStruct *);
 static struct ArgusFileCacheStruct *ArgusNewFileCache(void);
 static void ArgusDeleteFileCache(struct ArgusFileCacheStruct *);
@@ -127,7 +130,6 @@ static int ArgusRunScript(struct ArgusParserStruct *,
 static struct ArgusHashTable ArgusFileTable;
 
 static struct ArgusListStruct *ArgusScriptList = NULL;
-static struct ArgusScriptStruct *ArgusCurrentScript = NULL;
 
 static struct ArgusWfileStruct *ArgusFindFilename(struct ArgusParserStruct *,
                                                   struct ArgusFileCacheStruct *,
@@ -200,7 +202,7 @@ RastreamProcessFileRetryList(void)
 {
    FILE *pipe;
    struct RastreamFileMap *file = RastreamRetryListHead;
-   char *cmd;
+   char *cmd, path[PATH_MAX];
    static const char * const fmt = "ra -X -Mlock -r %s -w %s";
    int rv = 1;
 
@@ -230,6 +232,12 @@ RastreamProcessFileRetryList(void)
          ArgusLog(LOG_WARNING, "%s unable to run command: %s\n", __func__, cmd);
          goto next;
       }
+
+#ifdef ARGUSDEBUG
+      while (fgets(path, PATH_MAX, pipe) != NULL)
+          ArgusDebug(1, "cmd returns: %s", path);
+#endif
+
       pres = pclose(pipe);
       if (pres == 0) {
          /* we are done with the temporary file.  clean up. */
@@ -256,6 +264,10 @@ ArgusClientInit (struct ArgusParserStruct *parser)
    char outputfile[MAXSTRLEN];
    char *outputfilter = NULL;
    int i = 0, ind = 0, count = 0;
+
+#if defined(ARGUS_THREADS)
+   pthread_attr_t attr;
+#endif
 
    parser->RaWriteOut = 0;
    bzero(outputfile,   sizeof(outputfile));
@@ -645,6 +657,15 @@ ArgusClientInit (struct ArgusParserStruct *parser)
       parser->RaClientTimeout.tv_sec  = 0;
       parser->RaClientTimeout.tv_usec = 330000;
       parser->RaInitialized++;
+
+#if defined(ARGUS_THREADS)
+extern void * ArgusScriptProcess (void *);
+
+      if (pthread_attr_init(&attr) != 0)
+         ArgusLog (LOG_ERR, "pthreads init error");
+      if ((pthread_create(&ArgusParser->script, &attr, ArgusScriptProcess, ArgusParser)) != 0)
+         ArgusLog (LOG_ERR, "ArgusSciptProcessor() pthread_create error %s\n", strerror(errno));
+#endif
    }
 
 #ifdef ARGUSDEBUG
@@ -654,94 +675,34 @@ ArgusClientInit (struct ArgusParserStruct *parser)
 
 
 void RaArgusInputComplete (struct ArgusInput *input) { return; }
-void ArgusProcessScripts (void);
-
-void
-ArgusProcessScripts (void)
-{
-   if (ArgusScriptList) {
-      struct ArgusScriptStruct *script = NULL;
-      int retn = 0, status;
-
-      if ((script = ArgusCurrentScript) != NULL) {
-         if (script->pid > 0) {
-            if ((retn = waitpid(script->pid, &status, 0)) == script->pid) {
-#ifdef ARGUSDEBUG
-               ArgusDebug (1, "ArgusProcessScripts(): waitpid(%d) returned for %d", script->pid, retn);
-#endif
-               if (WIFEXITED(status)) {
-#ifdef ARGUSDEBUG
-                  ArgusDebug (1, "ArgusProcessScripts(%d): task %s completed", script->pid, script->cmd);
-#endif
-               } else {
-#ifdef ARGUSDEBUG
-                  ArgusDebug (1, "ArgusProcessScripts(%d): task %s completed with problems", script->pid, script->cmd);
-#endif
-               }
-
-               if (script->filename)
-                  free(script->filename);
-               if (script->script)
-                  free(script->script);
-               if (script->cmd)
-                  free(script->cmd);
-               ArgusFree(script);
-               ArgusCurrentScript = NULL;
-            } else {
-               if (retn == -1) {
-                  switch (errno) {
-                     case ECHILD: {
-                        if (script->filename)
-                           free(script->filename);
-                        if (script->script)
-                           free(script->script);
-                        if (script->cmd)
-                           free(script->cmd);
-                        ArgusFree(script);
-                        ArgusCurrentScript = NULL;
-                        break;
-                     }
-                  }
-               }
-            }
-         }
-      }
-
-      if (ArgusCurrentScript == NULL) {
-         while ((script = (struct ArgusScriptStruct *) ArgusPopFrontList(ArgusScriptList, ARGUS_NOLOCK)) != NULL)
-            ArgusRunScript(ArgusParser, script, ARGUS_RUN_SCRIPT);
-      }
-   }
-}
 
 void
 RaParseComplete (int sig)
 {
    if (sig >= 0) {
       if (!ArgusParser->RaParseCompleting++) {
-         struct ArgusAggregatorStruct *agg;
+         struct ArgusAggregatorStruct *agg = ArgusParser->ArgusAggregator;
 
          RastreamProcessFileRetryList();
          RastreamFreeFileRetryList();
 
-         ArgusProcessScripts();
-
 #ifdef ARGUSDEBUG
          ArgusDebug (2, "RaParseComplete(caught signal %d)\n", sig);
 #endif
-
-         agg = ArgusParser->ArgusAggregator;
          RastreamProcessAllFileCaches(agg ? agg->queue : NULL);
          RastreamCloseAllWfiles();
+         ArgusParser->RaParseDone = 1;
+         if (ArgusParser->script != (pthread_t) 0) {
+            pthread_join(ArgusParser->script, NULL);
+            ArgusParser->script = (pthread_t) 0;
+         }
 
          switch (sig) {
             case SIGHUP:
             case SIGINT:
             case SIGTERM:
             case SIGQUIT: {
-
                ArgusShutDown(sig);
-               exit(0);
                break;
             }
          }
@@ -760,77 +721,6 @@ void
 ArgusClientTimeout ()
 {
    struct ArgusAggregatorStruct *agg;
-
-   if (ArgusScriptList) {
-      struct ArgusScriptStruct *script = NULL;
-      int retn = 0, status;
- 
-      if ((script = ArgusCurrentScript) != NULL) {
-         if (script->pid > 0) {
-            if ((retn = waitpid(script->pid, &status, WNOHANG)) == script->pid) {
-#ifdef ARGUSDEBUG
-               ArgusDebug (1, "ArgusClientTimeout(): waitpid(%d) returned for %d", script->pid, retn);
-#endif
-               if (WIFEXITED(status)) {
-#ifdef ARGUSDEBUG
-                  ArgusDebug (1, "ArgusTask(%d): task %s completed", script->pid, script->cmd);
-#endif
-               } else {
-#ifdef ARGUSDEBUG
-                  ArgusDebug (1, "ArgusTask(%d): task %s completed with problems", script->pid, script->cmd);
-#endif
-               }
- 
-               if (script->filename)
-                  free(script->filename);
-               if (script->script)
-                  free(script->script);
-               if (script->cmd)
-                  free(script->cmd);
-               ArgusFree(script);
-               ArgusCurrentScript = NULL;
-            } else {
-               if (retn == -1) {
-                  switch (errno) {
-                     case ECHILD: {
-                        if (script->filename)
-                           free(script->filename);
-                        if (script->script)
-                           free(script->script);
-                        if (script->cmd)
-                           free(script->cmd);
-                        ArgusFree(script);
-                        ArgusCurrentScript = NULL;
-                        break;
-                     }
-                  }
-               }
-            }
-         }
-      }
- 
-      if (ArgusCurrentScript == NULL) {
-         if ((script = (struct ArgusScriptStruct *) ArgusFrontList(ArgusScriptList)) != NULL) {
-            ArgusPopFrontList(ArgusScriptList, ARGUS_NOLOCK);
- 
-            if ((script->pid = fork()) < 0)
-               ArgusLog (LOG_ERR, "ArgusRunScript (%s) fork() error %s\n", script->cmd, strerror(errno));
- 
-            if (script->pid > 0) {
-               ArgusCurrentScript = script;
-            } else {
-#ifdef ARGUSDEBUG
-               ArgusDebug (1, "ArgusRunScript calling %s", script->cmd);
-#endif
-               execv(script->script, script->args);
-               /* If execv() returned, it failed.  Make sure we
-                * exit __without__ flushing open (FILE *)s.
-                */
-               kill(getpid(), SIGKILL);
-            }
-         }
-      }
-   }
 
    if (ArgusParser->Bflag > 0) {
       struct ArgusFileCacheStruct *fcache = NULL;
@@ -1761,7 +1651,8 @@ ArgusProcessFileCache(struct ArgusFileCacheStruct *fcache)
          tfile->fd = NULL;
       }
 
-      ArgusRunFileScript(ArgusParser, tfile, ARGUS_RUN_SCRIPT);
+      if (!(ArgusParser->Sflag)) 
+         ArgusRunFileScript(ArgusParser, tfile, ARGUS_SCHEDULE_SCRIPT);
 
       if (tfile->filename)
          free(tfile->filename);
@@ -1895,6 +1786,11 @@ ArgusRunScript (struct ArgusParserStruct *parser, struct ArgusScriptStruct *scri
 {
    int retn = 0;
 
+   if (ArgusParser->RaParseDone) {
+      if (parser->Sflag)
+         return (retn);
+   }
+
    switch (status) {
       case ARGUS_SCHEDULE_SCRIPT: {
          if (ArgusScriptList == NULL)
@@ -1904,30 +1800,18 @@ ArgusRunScript (struct ArgusParserStruct *parser, struct ArgusScriptStruct *scri
 #ifdef ARGUSDEBUG
          ArgusDebug (1, "ArgusRunScript(%p, %p) scheduling %s", parser, script, script->cmd);
 #endif
-         ArgusPushBackList(ArgusScriptList, (struct ArgusListRecord *) script, ARGUS_NOLOCK);
+         ArgusPushBackList(ArgusScriptList, (struct ArgusListRecord *) script, ARGUS_LOCK);
 
          break;
       }
 
       case ARGUS_RUN_SCRIPT: {
-         if ((script->pid = fork()) < 0)
-            ArgusLog (LOG_ERR, "ArgusRunScript (%s) fork() error %s\n", script->cmd, strerror(errno));
+         if ((retn = system(script->cmd)) < 0)
+            ArgusLog(LOG_WARNING, "'%s' command failed\n", script->cmd);
 
-         if (script->pid > 0) {
-            int retn;
-
-            if ((retn = waitpid(script->pid, &status, 0)) == script->pid) {
-               if (script->cmd != NULL) free (script->cmd);
-               if (script->script != NULL) free (script->script);
-               if (script->filename != NULL) free (script->filename);
-            }
-            
-         } else {
-#ifdef ARGUSDEBUG
-            ArgusDebug (1, "ArgusRunScript: running %s", script->cmd);
-#endif
-            exit(execv(script->script, script->args));
-         }
+         if (script->cmd != NULL) free (script->cmd);
+         if (script->script != NULL) free (script->script);
+         if (script->filename != NULL) free (script->filename);
          break;
       }
    }
@@ -1960,3 +1844,39 @@ RastreamCloseAllWfiles(void) {
       }
    }
 }
+
+#if defined(ARGUS_THREADS)
+void *
+ArgusScriptProcess (void *args) {
+   struct timespec tsbuf = {1, 0}, *ts = &tsbuf;
+   struct ArgusScriptStruct *script;
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (2, "ArgusScriptProcess() starting");
+#endif
+
+   while (!(ArgusParser->RaParseDone)) {
+      if (ArgusScriptList != NULL) {
+         if (!ArgusListEmpty(ArgusScriptList)) {
+            while ((script = (struct ArgusScriptStruct *) ArgusPopFrontList(ArgusScriptList, ARGUS_LOCK)) != NULL)
+               ArgusRunScript(ArgusParser, script, ARGUS_RUN_SCRIPT);
+         }
+      }
+      if (!ArgusParser->RaParseDone)
+         nanosleep(ts, NULL);
+   }
+
+   if (ArgusScriptList != NULL) {
+      if (!ArgusListEmpty(ArgusScriptList)) {
+         while ((script = (struct ArgusScriptStruct *) ArgusPopFrontList(ArgusScriptList, ARGUS_LOCK)) != NULL)
+            ArgusRunScript(ArgusParser, script, ARGUS_RUN_SCRIPT);
+      }
+   }
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (2, "ArgusScriptProcess() done!");
+#endif
+
+   pthread_exit (NULL);
+}
+#endif

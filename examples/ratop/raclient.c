@@ -354,6 +354,10 @@ ArgusProcessData (void *arg)
       parser = ArgusParser;
    }
 
+   pthread_mutex_lock(&parser->sync);
+   pthread_cond_wait(&parser->cond, &parser->sync);
+   pthread_mutex_unlock(&parser->sync);
+
 #ifdef ARGUSDEBUG
    ArgusDebug (2, "ArgusProcessData() starting");
 #endif
@@ -1367,6 +1371,7 @@ RaProcessRecord (struct ArgusParserStruct *parser, struct ArgusRecordStruct *ns)
          break;
 
       case ARGUS_NETFLOW:
+      case ARGUS_AFLOW:
       case ARGUS_FAR: {
          struct ArgusFlow *flow = (struct ArgusFlow *) ns->dsrs[ARGUS_FLOW_INDEX];
 

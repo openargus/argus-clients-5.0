@@ -124,6 +124,7 @@ struct cnamemem {
    char *name;
    unsigned int type;
    struct ArgusAddrStruct addr;
+   struct RaAddressStruct *node;
 };
 
 struct nnamemem {
@@ -137,6 +138,7 @@ struct nnamemem {
    struct ArgusListStruct *cnames;
    struct ArgusListStruct *aliases;
    struct ArgusListStruct *ptrs;
+   struct ArgusListStruct *mxs;
    struct ArgusListStruct *servers;
    struct ArgusListStruct *clients;
 };
@@ -145,7 +147,7 @@ struct nnamemem {
 
 struct enamemem {
    struct enamemem *e_nxt;
-   int category, rank;
+   int category, rank, loc;
 
    u_int16_t e_addr[3];
    u_int16_t masklen;

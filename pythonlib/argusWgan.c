@@ -22,6 +22,9 @@
 
 #include <Python.h>
 #include <numpy/arrayobject.h>
+//#include <tensorflow/c/c_api.h>
+
+#include <dlfcn.h>
 
 #ifdef HAVE_CONFIG_H
 #include "argus_config.h"
@@ -35,10 +38,30 @@
 #include <argus_compat.h>
 #include <argus_util.h>
 #include <argus_main.h>
+#include <argus_client.h>
+#include <argus_metric.h>
 #include <argus_filter.h>
 #include <argus_threads.h>
 
 #include "argusWgan.h"
+
+
+void RaArgusInputComplete (struct ArgusInput *input) { return; }
+void RaParseComplete (int sig) { }
+void ArgusClientTimeout () { }
+void parse_arg (int argc, char**argv) {}
+void usage () { }
+int RaSendArgusRecord(struct ArgusRecordStruct *argus) {return 0;}
+void ArgusWindowClose(void) {}
+
+struct ArgusRecordStruct *ArgusFindRecordInBaseline (struct ArgusParserStruct *, struct ArgusRecordStruct *);
+int ArgusLoadBaselineFiles (struct ArgusParserStruct *);
+
+struct ArgusAggregatorStruct *ArgusBaselineAggregator = NULL;
+struct ArgusAggregatorStruct *ArgusSampleAggregator = NULL;
+
+struct RaCursesProcessStruct *RaBaselineProcess = NULL;
+struct RaCursesProcessStruct *RaSampleProcess = NULL;
 
 extern struct ArgusTokenStruct llcsap_db[];
 extern void ArgusLog (int, char *, ...);
@@ -54,6 +77,9 @@ int RaFlagsIndicationStatus[64];
 int RaConvertParseDirLabel = 0;
 int RaConvertParseStateLabel = 0;
 
+int ArgusProcessingBaseline   = 0;
+int ArgusProcessingSample     = 0;
+int ArgusProcessingComplete   = 0;
 
 unsigned int ArgusSourceId = 0;
 unsigned int ArgusIdType = 0;
@@ -66,19 +92,56 @@ unsigned int ArgusIdType = 0;
 #define RASCII_MAXMODES		1
 #define RASCIIDEBUG		0
 
+const char *sopath = "/usr/local/lib/libtensorflow.so";
+
+static struct PyModuleDef argusWganmodule = {
+    PyModuleDef_HEAD_INIT,
+    "argusWgan",   /* name of module */
+};
+
+typedef char *(*func_ptr_t)(void);
+
+PyMODINIT_FUNC
+PyInit_argusWgan(void) {
+   PyObject *m = PyModule_Create(&argusWganmodule);
+/*
+   void *lib = dlopen(sopath, RTLD_LAZY);
+   const char *func_name = "TF_Version";
+   func_ptr_t func = dlsym(lib, func_name);
+
+   if (m == NULL) {
+      return NULL;
+   }
+*/
+
+   if (PyArray_API == NULL) {
+      import_array(); 
+   }
+
+/*
+   // Open the shared library containing the functions.
+   // Get a reference to the function we call.
+   // Call the function and print out the result.
+
+   printf("PyInit_argusWgan() TF_Version %s\n", func());
+   dlclose(lib);
+*/
+
+   return m;
+}
+
 char *RaConvertDaemonModes[RASCII_MAXMODES] = {
    "debug",
 };
 
 int ArgusDebugMode = 0;
 
-
 #define RASCII_MAXDEBUG		2
-
 #define RASCII_DEBUGDUMMY	0
 #define RASCII_DEBUGTASKS	1
-
 #define RASCII_DEBUGTASKMASK	1
+
+#define RA_DIRTYBINS            0x20
 
 char *ArgusDebugModes[RASCII_MAXDEBUG] = {
    " ",
@@ -88,17 +151,172 @@ char *ArgusDebugModes[RASCII_MAXDEBUG] = {
 static int argus_version = ARGUS_VERSION;
 
 void
+RaProcessRecord (struct ArgusParserStruct *parser, struct ArgusRecordStruct *ns)
+{
+   struct RaCursesProcessStruct *RaProcess = NULL;
+
+   struct ArgusRecordStruct *pns = NULL, *cns = NULL;
+   struct ArgusAggregatorStruct *tagg, *agg = parser->ArgusAggregator;
+   struct ArgusHashStruct *hstruct = NULL;
+   struct ArgusFlow *flow = NULL;
+   int found = 0;
+
+   /* terminal aggregator -- The aggregators form a singly-linked list
+    * so we have to find this value along the way.  Initialize to the
+    * first element for the case where there is only one.
+    */
+
+   RaProcess = RaBaselineProcess;
+   agg = ArgusBaselineAggregator;
+   tagg = ArgusBaselineAggregator;
+
+   if (agg != NULL) {
+#if defined(ARGUS_THREADS)
+      pthread_mutex_lock(&RaProcess->queue->lock);
+#endif
+
+      while (agg && !found) {                     // lets find this flow in the cache with this aggregation
+         int retn = 0, fretn = -1, lretn = -1;
+
+         if (agg->filterstr) {
+            struct nff_insn *fcode = agg->filter.bf_insns;
+            fretn = ArgusFilterRecord (fcode, ns);
+         }
+
+         if (agg->grepstr) {
+            struct ArgusLabelStruct *label;
+            if (((label = (void *)ns->dsrs[ARGUS_LABEL_INDEX]) != NULL)) {
+               if (regexec(&agg->lpreg, label->l_un.label, 0, NULL, 0))
+                  lretn = 0;
+               else
+                  lretn = 1;
+            } else
+               lretn = 0;
+         }
+
+         retn = (lretn < 0) ? ((fretn < 0) ? 1 : fretn) : ((fretn < 0) ? lretn : (lretn && fretn));
+
+         if (retn != 0) {
+            cns = ArgusCopyRecordStruct(ns);
+
+            if (agg->mask) {
+               if ((agg->rap = RaFlowModelOverRides(agg, cns)) == NULL)
+                  agg->rap = agg->drap;
+
+               ArgusGenerateNewFlow(agg, cns);
+               agg->ArgusMaskDefs = NULL;
+
+               if ((hstruct = ArgusGenerateHashStruct(agg, cns, (struct ArgusFlow *)&agg->fstruct)) != NULL) {
+                  if ((pns = ArgusFindRecord(RaProcess->htable, hstruct)) != NULL) {
+                     if (pns->qhdr.queue) {
+                        if (pns->qhdr.queue != RaProcess->queue)
+                           ArgusRemoveFromQueue (pns->qhdr.queue, &pns->qhdr, ARGUS_LOCK);
+                        else
+                           ArgusRemoveFromQueue (pns->qhdr.queue, &pns->qhdr, ARGUS_NOLOCK);
+                     }
+                     pns->status |= ARGUS_RECORD_MODIFIED;
+                     found++;
+
+                  } else {
+                     tagg = agg;
+                     agg = agg->nxt;
+                  }
+               }
+            }
+
+         } else
+            agg = agg->nxt;
+      }
+
+      if (agg == NULL)                 // if didn't find the aggregation model, 
+         agg = tagg;                   // then use the terminal agg (tagg)
+
+//
+//     ns - original ns record
+//
+//    cns - copy of original ns record, this is what we'll work with in this routine
+//          If we're chopping this record up, we'll do it with the cns
+//
+//    pns - cached ns record matching the working cns.  this is what we'll merge into
+
+
+      if (cns) {        // OK we're processing something from the ns, and we've got a copy
+                        // if we found the flow in a cache, there is a pns and found is set.
+         if (pns) {
+            ArgusMergeRecords (agg, pns, cns);
+            ArgusDeleteRecordStruct(ArgusParser, cns);
+
+         } else {
+            pns = cns;
+    
+            if (!found) {   // If we didn't find a pns, we'll need to setup to insert the cns
+               if ((hstruct = ArgusGenerateHashStruct(agg, pns, flow)) == NULL)
+                  ArgusLog (LOG_ERR, "RaProcessThisRecord: ArgusGenerateHashStruct error %s", strerror(errno));
+    
+               pns->htblhdr = ArgusAddHashEntry (RaProcess->htable, pns, hstruct);
+               pns->status |= ARGUS_RECORD_NEW | ARGUS_RECORD_MODIFIED;
+            }
+         }
+         pns->status |= ARGUS_RECORD_MODIFIED;
+         ArgusAddToQueue (RaProcess->queue, &pns->qhdr, ARGUS_NOLOCK);
+      }
+
+#if defined(ARGUS_THREADS)
+      pthread_mutex_unlock(&RaProcess->queue->lock);
+#endif
+   }
+
+   if (RaProcess != NULL) 
+      RaProcess->queue->status |= RA_MODIFIED;
+
+#if defined(ARGUSDEBUG)
+   ArgusDebug (9, "ArgusProcessRecord () returning\n"); 
+#endif
+}
+
+
+struct RaCursesProcessStruct *
+RaCursesNewProcess(struct ArgusParserStruct *parser)
+{
+   struct RaCursesProcessStruct *retn = NULL;
+
+   if ((retn = (struct RaCursesProcessStruct *) ArgusCalloc (1, sizeof(*retn))) != NULL) {
+      if ((retn->queue = ArgusNewQueue()) == NULL)
+         ArgusLog (LOG_ERR, "RaCursesNewProcess: ArgusNewQueue error %s\n", strerror(errno));
+
+      if ((retn->delqueue = ArgusNewQueue()) == NULL)
+         ArgusLog (LOG_ERR, "RaCursesNewProcess: ArgusNewQueue error %s\n", strerror(errno));
+
+      if ((retn->htable = ArgusNewHashTable(0x100000)) == NULL)
+         ArgusLog (LOG_ERR, "RaCursesNewProcess: ArgusCalloc error %s\n", strerror(errno));
+
+   } else
+      ArgusLog (LOG_ERR, "RaCursesNewProcess: ArgusCalloc error %s\n", strerror(errno));
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (5, "RaCursesNewProcess(0x%x) returns 0x%x\n", parser, retn);
+#endif
+   return (retn);
+}
+
+void
 ArgusClientInit(struct ArgusParserStruct *parser)
 {
    struct ArgusModeStruct *mode = NULL;
    int i, x, ind;
 
+   parser->debugflag = 4;
+
 #ifdef ARGUSDEBUG
-   ArgusDebug (1, "RaConvertInit()");
+   ArgusDebug (0, "ArgusWganClientInit()");
 #endif
+// parser->debugflag = 3; 
 
    if (parser->ver3flag)
       argus_version = ARGUS_VERSION_3;
+
+   if (parser->RaTimeFormat == NULL)
+      parser->RaTimeFormat = strdup("%Y-%m-%dT%H:%M:%S.%f");
 
    if ((mode = ArgusParser->ArgusModeList) != NULL) {
       while (mode) {
@@ -135,6 +353,30 @@ ArgusClientInit(struct ArgusParserStruct *parser)
       }
    }
 
+   parser->nflag = 3;
+
+   while (parser->RaPrintOptionIndex > 0) {
+      if (parser->RaPrintOptionStrings[parser->RaPrintOptionIndex-1]) {
+         parser->RaPrintOptionIndex--;
+         free(parser->RaPrintOptionStrings[parser->RaPrintOptionIndex]);
+         parser->RaPrintOptionStrings[parser->RaPrintOptionIndex] = NULL;
+      }
+   }
+
+   parser->RaPrintOptionStrings[parser->RaPrintOptionIndex++] = strdup("stime");
+   parser->RaPrintOptionStrings[parser->RaPrintOptionIndex++] = strdup("dur");
+   parser->RaPrintOptionStrings[parser->RaPrintOptionIndex++] = strdup("proto:5");
+   parser->RaPrintOptionStrings[parser->RaPrintOptionIndex++] = strdup("saddr");
+   parser->RaPrintOptionStrings[parser->RaPrintOptionIndex++] = strdup("sport");
+   parser->RaPrintOptionStrings[parser->RaPrintOptionIndex++] = strdup("dir");
+   parser->RaPrintOptionStrings[parser->RaPrintOptionIndex++] = strdup("daddr");
+   parser->RaPrintOptionStrings[parser->RaPrintOptionIndex++] = strdup("dport");
+   parser->RaPrintOptionStrings[parser->RaPrintOptionIndex++] = strdup("pkts");
+   parser->RaPrintOptionStrings[parser->RaPrintOptionIndex++] = strdup("bytes");
+   parser->RaPrintOptionStrings[parser->RaPrintOptionIndex++] = strdup("state");
+
+   ArgusProcessSOptions(parser);
+
    ArgusParser->ArgusInitCon.hdr.type                    = (ARGUS_MAR | argus_version);
    ArgusParser->ArgusInitCon.hdr.cause                   = ARGUS_START;
    ArgusParser->ArgusInitCon.hdr.len                     = (unsigned short) (sizeof(struct ArgusRecord) + 3)/4;
@@ -155,24 +397,54 @@ ArgusClientInit(struct ArgusParserStruct *parser)
    ArgusParser->ArgusInitCon.argus_mar.record_len                = -1;
 
    ArgusHtoN(&ArgusParser->ArgusInitCon);
+
+   if ((RaBaselineProcess = RaCursesNewProcess(parser)) == NULL)
+      ArgusLog (LOG_ERR, "ArgusClientInit: RaCursesNewProcess error");
+
+   if ((RaSampleProcess = RaCursesNewProcess(parser)) == NULL)
+      ArgusLog (LOG_ERR, "ArgusClientInit: RaCursesNewProcess error");
+
+   if (parser->ArgusFlowModelFile) {
+      parser->ArgusAggregator = ArgusParseAggregator(parser, parser->ArgusFlowModelFile, NULL);
+      ArgusBaselineAggregator = ArgusParseAggregator(parser, parser->ArgusFlowModelFile, NULL);
+      ArgusSampleAggregator   = ArgusParseAggregator(parser, parser->ArgusFlowModelFile, NULL);
+
+   } else {
+      char *mask = NULL;
+      if (parser->ArgusMaskList == NULL) mask = "sid saddr daddr proto sport dport";
+      parser->ArgusAggregator = ArgusNewAggregator(parser, mask, ARGUS_RECORD_AGGREGATOR);
+
+      if ((mask = parser->ArgusBaseLineMask) == NULL) mask = "saddr daddr proto dport";
+      ArgusBaselineAggregator = ArgusNewAggregator(parser, mask, ARGUS_RECORD_AGGREGATOR);
+
+      if ((mask = parser->ArgusSampleMask) == NULL) mask = "sid saddr daddr proto sport dport";
+      ArgusSampleAggregator   = ArgusNewAggregator(parser, mask, ARGUS_RECORD_AGGREGATOR);
+   }
+
 }
 
 #define ARGUS_MAX_PRINT_FIELDS		512
 
 void (*RaParseLabelAlgorithms[ARGUS_MAX_PRINT_FIELDS])(struct ArgusParserStruct *, char *);
+double (*RaComparisonAlgorithms[ARGUS_MAX_PRINT_FIELDS])(struct ArgusRecordStruct *, struct ArgusRecordStruct *);
+
 int RaParseLabelAlgorithmIndex = 0;
+int RaComparisonAlgorithmIndex = 0;
+
 char RaConvertDelimiter[2] = {'\0', '\0'};
 
 
 void
 RaConvertParseTitleString (char *str)
 {
-   char buf[MAXSTRLEN], *ptr, *obj;
+   char *buf, *ptr, *obj;
    int i, len = 0, items = 0;
 
+   if ((buf = ArgusCalloc(1, MAXSTRLEN)) == NULL)
+      ArgusLog(LOG_ERR, "RaConvertParseTitleString ArgusCalloc error %s", strerror(errno));
 
    bzero ((char *)RaParseLabelAlgorithms, sizeof(RaParseLabelAlgorithms));
-   bzero ((char *)buf, sizeof(buf));
+   bzero ((char *)RaComparisonAlgorithms, sizeof(RaComparisonAlgorithms));
 
    if ((ptr = strchr(str, '\n')) != NULL)
       *ptr = '\0';
@@ -200,24 +472,37 @@ RaConvertParseTitleString (char *str)
    ptr = buf;
 
    while ((obj = strtok(ptr, RaConvertDelimiter)) != NULL) {
+      int found = 0;
       len = strlen(obj);
       if (len > 0) {
-         for (i = 0; i < MAX_PARSE_ALG_TYPES; i++) {
+         for (i = 0; (i < MAX_PARSE_ALG_TYPES) && !found; i++) {
             if (!(strncmp(RaParseLabelStringTable[i], obj, len))) {
                RaParseLabelAlgorithmIndex++;
+               RaComparisonAlgorithmIndex++;
+
                RaParseLabelAlgorithms[items] = RaParseLabelAlgorithmTable[i];
+               RaComparisonAlgorithms[items] = RaComparisonAlgorithmTable[i];
+
                if (i == ARGUSPARSEDIRLABEL)
                   RaConvertParseDirLabel++;
                if (i == ARGUSPARSESTATELABEL)
                   RaConvertParseStateLabel++;
+               found++;
                break;
             }
+         }
+         if (!found) {
+#ifdef ARGUSDEBUG
+            ArgusDebug (0, "RaConvertParseTitleString() column %s not found", obj);
+#endif
          }
       }
 
       items++;
       ptr = NULL;
    }
+
+   ArgusFree (buf);
 
 #ifdef ARGUSDEBUG
    ArgusDebug (9, "RaConvertParseTitleString('%s') done", str);
@@ -229,16 +514,25 @@ int
 RaConvertParseRecordString (struct ArgusParserStruct *parser, char *str)
 {
    struct ArgusRecordStruct *argus = &parser->argus;
-   char buf[MAXSTRLEN], delim[16], *ptr, *tptr;
-   char **ap, *argv[ARGUS_MAX_PRINT_FIELDS];
+   char *buf, delim[16], *ptr, *tptr;
+   char **ap, **argv;
    int retn = 1, numfields, i;
+
+   if ((buf = ArgusCalloc(1, MAXSTRLEN)) == NULL)
+      ArgusLog(LOG_ERR, "RaConvertParseTitleString ArgusCalloc error %s", strerror(errno));
+
+   if ((argv = ArgusCalloc(sizeof(char *), ARGUS_MAX_PRINT_FIELDS)) == NULL)
+      ArgusLog(LOG_ERR, "RaConvertParseTitleString ArgusCalloc error %s", strerror(errno));
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "RaConvertParseRecordString('%s')", str);
+#endif
 
    if ((ptr = strchr(str, '\n')) != NULL)
       *ptr = '\0';
 
    ptr = buf;
 
-   bzero (argv, sizeof(argv));
    bzero ((char *)argus, sizeof(*argus));
    bcopy (str, buf, strlen(str) + 1);
    bzero (delim, sizeof(delim));
@@ -259,6 +553,9 @@ RaConvertParseRecordString (struct ArgusParserStruct *parser, char *str)
    numfields = ((char *)ap - (char *)argv)/sizeof(ap);
 
    for (i = 0; i < numfields; i++) {
+      if ((strcasecmp(argv[i], "-nan") == 0) || (strcasecmp(argv[i], "nan") == 0)) {
+         return(0);
+      } else
       if (RaParseLabelAlgorithms[i] != NULL) {
          if (argv[i] != NULL) {
             RaParseLabelAlgorithms[i](ArgusParser, argv[i]);
@@ -386,13 +683,15 @@ RaConvertParseRecordString (struct ArgusParserStruct *parser, char *str)
       }
    }
 
+   ArgusFree (argv);
+   ArgusFree (buf);
+
 #ifdef ARGUSDEBUG
-   ArgusDebug (9, "RaConvertParseRecordString('%s') returning %d", str, retn);
+   ArgusDebug (1, "RaConvertParseRecordString('%s') returning %d", str, retn);
 #endif
 
    return (retn);
 }
-
 
 int
 setSchema (char *str)
@@ -413,37 +712,260 @@ setSchema (char *str)
       retn = 1;
    }
 
+#ifdef ARGUSDEBUG
+   ArgusDebug (0, "ArgusWgan: setSchema('%s') done", str);
+#endif
+
    return (retn);
 }
 
-TF_Tensor *
-argus_critic (TF_Tensor *y_pred, TF_Tensor *y_true)
+int
+setBaseline (char *optarg)
 {
 /*
    struct ArgusParserStruct *parser = NULL;
-   TF_Tensor *y_vals = NULL;
+   int type = ARGUS_DATA_SOURCE | ARGUS_BASELINE_SOURCE;
+   long long ostart = -1, ostop = -1;
+   int retn = 1;
+   char *ptr, *eptr;
 
    if ((parser = ArgusParser) != NULL) {
+#if defined(ARGUS_MYSQL)
+      if (!(strncmp ("mysql:", optarg, 6))) {
+         if (parser->readDbstr != NULL)
+            free(parser->readDbstr);
+         parser->readDbstr = strdup(optarg);
+         type &= ~ARGUS_DATA_SOURCE;
+         type |= ARGUS_DBASE_SOURCE;
+         optarg += 6;
+      }
+#endif
+      if (!(strncmp ("cisco:", optarg, 6))) {
+         parser->Cflag++;
+         type |= ARGUS_CISCO_DATA_SOURCE;
+         optarg += 6;
+      } else
+      if (!(strncmp ("jflow:", optarg, 6))) {
+         parser->Cflag++;
+         type |= ARGUS_JFLOW_DATA_SOURCE;
+         optarg += 6;
+      } else
+      if (!(strncmp ("ft:", optarg, 3))) {
+         type |= ARGUS_FLOW_TOOLS_SOURCE;
+         optarg += 3;
+      } else
+      if (!(strncmp ("sflow:", optarg, 6))) {
+         type |= ARGUS_SFLOW_DATA_SOURCE;
+         optarg += 6;
+      }
 
-      if ((y_pred != NULL) && (y_true != NULL)) {
-         int ndims = 1;
-         int64_t dims[] = {1};
-         int ndata = sizeof(int32_t);
-         int32_t data[] = {4};
-         y_vals = TF_NewTensor(TF_INT32, dims, ndims, data, ndata, NULL, NULL);
-      
-//       RaConvertParseRecordString (parser, str);
+
+      if ((ptr = strstr(optarg, "::")) != NULL) {
+         char *endptr = NULL;
+
+         *ptr++ = '\0';
+         ptr++;
+
+         ostart = strtol(ptr, (char **)&endptr, 10);
+         if (endptr == optarg)
+            usage ();
+
+         if ((eptr = strstr(ptr, ":")) != NULL) {
+            ostop = strtol((eptr + 1), (char **)&endptr, 10);
+            if (endptr == optarg)
+               usage ();
+         }
+      }
+
+      if (type & ARGUS_BASELINE_SOURCE) {
+         if (!(ArgusAddBaselineList (parser, optarg, type, ostart, ostop)))
+            ArgusLog(LOG_ERR, "%s: error: file arg %s", "ArgusWgan: setBaseline", optarg);
+         stat(optarg, &((struct ArgusFileInput *) ArgusParser->ArgusBaselineListTail)->statbuf);
+      }
+
+      ArgusLoadBaselineFiles(parser);
+
+   }
+
+#ifdef ARGUSDEBUG 
+   ArgusDebug (0, "ArgusWgan: setBaseline('%s') done ... read %d records", optarg, parser->ArgusTotalRecords);
+#endif
+   return (retn);
+}
+
+int
+ArgusLoadBaselineFiles (struct ArgusParserStruct *parser)
+{
+   struct ArgusInput *input = NULL, *current;
+   struct ArgusFileInput *file = NULL;
+   char sbuf[1024];
+   int retn = 1;
+
+   current = parser->ArgusCurrentInput;
+
+   if ((file = parser->ArgusBaselineList) != NULL) {
+      ArgusProcessingSample = 0;
+
+      input = ArgusMalloc(sizeof(*input));
+      if (input == NULL)
+         ArgusLog(LOG_ERR, "unable to allocate input structure\n");
+
+      while (file && parser->eNflag) {
+         ArgusProcessingBaseline = 1;
+         switch (file->type & 0x17FF) {
+#if defined(ARGUS_MYSQL)
+/*
+            case ARGUS_DBASE_SOURCE: {
+               if (RaTables == NULL)
+                  if ((RaTables = ArgusCalloc(sizeof(void *), 2)) == NULL)
+                     ArgusLog(LOG_ERR, "mysql_init error %s", strerror(errno));
+
+               RaTables[0] = strdup(file->filename);
+               ArgusReadSQLTables (parser);
+               ArgusFree(RaTables);
+               RaTables = NULL;
+               break;
+            }
+*/
+#endif
+            case ARGUS_DATA_SOURCE:
+            case ARGUS_V2_DATA_SOURCE:
+            case ARGUS_NAMED_PIPE_SOURCE:
+            case ARGUS_DOMAIN_SOURCE:
+            case ARGUS_BASELINE_SOURCE:
+            case ARGUS_DATAGRAM_SOURCE:
+            case ARGUS_SFLOW_DATA_SOURCE:
+            case ARGUS_JFLOW_DATA_SOURCE:
+            case ARGUS_CISCO_DATA_SOURCE:
+            case ARGUS_IPFIX_DATA_SOURCE:
+            case ARGUS_FLOW_TOOLS_SOURCE: {
+               ArgusInputFromFile(input, file);
+               parser->ArgusCurrentInput = input;
+
+
+               if (strcmp (input->filename, "-")) {
+                  if (input->fd < 0) {
+                     if ((input->file = fopen(input->filename, "r")) != NULL) {
+                     }
+                  } else {
+                     fseek(input->file, 0, SEEK_SET);
+                  }
+
+                  if ((input->file != NULL) && ((ArgusReadConnection (parser, input, ARGUS_FILE)) >= 0)) {
+                     parser->ArgusTotalMarRecords++;
+                     parser->ArgusTotalRecords++;
+                     if (parser->RaPollMode) {
+                         ArgusHandleRecord (parser, input, &input->ArgusInitCon, 0, &parser->ArgusFilterCode);
+                     } else {
+                        if (input->ostart != -1) {
+                           input->offset = input->ostart;
+                           if (fseek(input->file, input->offset, SEEK_SET) >= 0)
+                              ArgusReadFileStream(parser, input);
+                        } else
+                           ArgusReadFileStream(parser, input);
+                     }
+
+                  } else {
+                     input->fd = -1;
+                     sprintf (sbuf, "ArgusReadConnection '%s': %s", input->filename, strerror(errno));
+                     // ArgusSetDebugString (sbuf, LOG_ERR, ARGUS_LOCK);
+                  }
+
+               } else {
+                  input->file = stdin;
+                  input->ostart = -1;
+                  input->ostop = -1;
+
+                  if (((ArgusReadConnection (parser, input, ARGUS_FILE)) >= 0)) {
+                     parser->ArgusTotalMarRecords++;
+                     parser->ArgusTotalRecords++;
+                     fcntl(fileno(stdin), F_SETFL, O_NONBLOCK);
+                     ArgusReadFileStream(parser, input);
+                  }
+               }
+               break;
+            }
+         }
+         RaArgusInputComplete(input);
+         ArgusParser->ArgusCurrentInput = NULL;
+         ArgusCloseInput(ArgusParser, input);
+
+         file = (struct ArgusFileInput *)file->qhdr.nxt;
+      }
+      parser->ArgusCurrentInput = NULL;
+      parser->status |= ARGUS_BASELINE_LIST_PROCESSED;
+
+   } else {
+#ifdef ARGUSDEBUG
+      ArgusDebug (1, "ArgusLoadBaselineFiles (%p) no list to process", parser);
+#endif
+      parser->status |= ARGUS_BASELINE_LIST_PROCESSED;
+   }
+
+   ArgusProcessingBaseline = 0;
+   parser->ArgusCurrentInput = current;
+   return (retn);
+}
+
+struct ArgusRecordStruct *
+ArgusFindRecordInBaseline (struct ArgusParserStruct *parser, struct ArgusRecordStruct *ns)
+{
+   int tretn = 0, fretn = -1, lretn = -1;
+
+   struct ArgusRecordStruct *retn = NULL;
+   struct ArgusAggregatorStruct *agg = NULL;
+   struct ArgusHashStruct *hstruct = NULL;
+
+   if ((agg = ArgusBaselineAggregator) != NULL) {
+      if (agg->filterstr) {
+         struct nff_insn *fcode = agg->filter.bf_insns;
+         fretn = ArgusFilterRecord (fcode, ns);
+      }
+
+      if (agg->grepstr) {
+         struct ArgusLabelStruct *label;
+         if (((label = (void *)ns->dsrs[ARGUS_LABEL_INDEX]) != NULL)) {
+            if (regexec(&agg->lpreg, label->l_un.label, 0, NULL, 0))
+               lretn = 0;
+            else
+               lretn = 1;
+         } else
+            lretn = 0;
+      }
+
+      tretn = (lretn < 0) ? ((fretn < 0) ? 1 : fretn) : ((fretn < 0) ? lretn : (lretn && fretn));
+
+      if (tretn != 0) {
+         if (agg->mask) {
+            if ((agg->rap = RaFlowModelOverRides(agg, ns)) == NULL)
+               agg->rap = agg->drap;
+
+            ArgusGenerateNewFlow(agg, ns);
+            agg->ArgusMaskDefs = NULL;
+
+            if ((hstruct = ArgusGenerateHashStruct(agg, ns, (struct ArgusFlow *)&agg->fstruct)) != NULL) {
+               retn = ArgusFindRecord(RaBaselineProcess->htable, hstruct);
+            }
+         }
       }
    }
-   return (y_vals);
-*/
+   return (retn);
+}
 
+char ArgusConBuf[2][MAXARGUSRECORD];
+char ArgusOutBuf[2][MAXSTRLEN];
+
+
+PyObject *
+argus_critic (PyObject *y_true, PyObject *y_pred)
+{
    struct ArgusParserStruct *parser = NULL;
-   TF_Tensor *retn = NULL;
-   int yt_dims, yp_dims, yt_size, yp_size;
+   PyObject *retn = NULL;
+   int yt_dims, yt_size, yp_size;
    int py_equal;
 
    PyArrayObject *arrays[3];  /* holds input and output array */
+   PyArrayObject *results;    /* holds results array */
    npy_uint32 op_flags[3];
    npy_uint32 iterator_flags;
    PyArray_Descr *op_dtypes[3];
@@ -451,16 +973,25 @@ argus_critic (TF_Tensor *y_pred, TF_Tensor *y_true)
    NpyIter_IterNextFunc *iternext;
    NpyIter *iter;
 
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "argus_critic(%p, %p) called\n", y_true, y_pred);
+#endif
+
    arrays[0] = (PyArrayObject *) y_true;
    arrays[1] = (PyArrayObject *) y_pred;
 
    if (PyArray_API == NULL) {
-      import_array(); 
+      import_array();
    }
 
-   if ((yt_dims = PyArray_NDIM(arrays[0])) == 0)
-      return NULL;
-   if ((yp_dims = PyArray_NDIM(arrays[1])) == 0)
+   if (!(PyArray_Check(arrays[0]) && PyArray_Check(arrays[1]))) {
+      PyObject_Print(y_true, stdout, 0);
+      printf("\n");
+      fflush(stdout);
+      Py_RETURN_NONE;
+   }
+
+   if ((yt_dims = PyArray_NDIM(arrays[1])) == 0)
       return NULL;
    if ((yt_size = PyArray_Size(y_true)) == 0)
       return NULL;
@@ -511,8 +1042,8 @@ argus_critic (TF_Tensor *y_pred, TF_Tensor *y_true)
     }
 
 /* Fetch the output array which was allocated by the iterator: */
-    retn = (PyObject *)NpyIter_GetOperandArray(iter)[2];
-    Py_INCREF(retn);
+    results = NpyIter_GetOperandArray(iter)[2];
+    Py_INCREF(results);
 
     if (NpyIter_GetIterSize(iter) == 0) {
         /*
@@ -520,23 +1051,36 @@ argus_critic (TF_Tensor *y_pred, TF_Tensor *y_true)
          * This check is necessary with NPY_ITER_ZEROSIZE_OK.
          */
         NpyIter_Deallocate(iter);
+        retn = (PyObject *)results;
         return retn;
     }
 
     /* The location of the data pointer which the iterator may update */
     char **dataptr = NpyIter_GetDataPtrArray(iter);
+
     /* The location of the stride which the iterator may update */
     npy_intp *strideptr = NpyIter_GetInnerStrideArray(iter);
+
     /* The location of the inner loop size which the iterator may update */
     npy_intp *innersizeptr = NpyIter_GetInnerLoopSizePtr(iter);
+
+    npy_intp *shape = PyArray_SHAPE(arrays[0]);
+
 
     /* iterate over the arrays */
     do {
         npy_intp stride = strideptr[0];
         npy_intp count = *innersizeptr;
+
+#ifdef ARGUSDEBUG
+        ArgusDebug (1, "ArgusWgan: numpyParse: stride:%d count:%d\n", stride, count);
+#endif
+
         /* out is always contiguous, so use double */
         double *out = (double *)dataptr[2];
-        char *in = dataptr[0];
+        char *in0 = dataptr[0];
+        char *in1 = dataptr[1];
+        int i = 0, slen0 = 0, slen1 = 0;
 
         /* The output is allocated and guaranteed contiguous (out++ works): */
         assert(strideptr[2] == sizeof(double));
@@ -545,26 +1089,307 @@ argus_critic (TF_Tensor *y_pred, TF_Tensor *y_true)
          * For optimization it can make sense to add a check for
          * stride == sizeof(double) to allow the compiler to optimize for that.
          */
+
+        bzero (ArgusConBuf[0], sizeof(ArgusConBuf[0]));
+
         while (count--) {
-            *out = cos(*(double *)in);
-            out++;
-            in += stride;
+           if ((i++ % shape[1]) == 0) {
+              if (slen0 > 0) {
+                 if ((parser = ArgusParser) != NULL) {
+                    if (RaConvertParseRecordString (parser, ArgusConBuf[0])) {
+                       struct ArgusRecordStruct *argus = &parser->argus;
+                       ArgusPrintRecord(parser, ArgusOutBuf[0], argus, MAXSTRLEN);
+#ifdef ARGUSDEBUG
+                       ArgusDebug (1, "ArgusWgan: record:'%s'\n", ArgusOutBuf[0]);
+#endif
+                    }
+                    if (RaConvertParseRecordString (parser, ArgusConBuf[1])) {
+                       struct ArgusRecordStruct *argus = &parser->argus;
+                       ArgusPrintRecord(parser, ArgusOutBuf[1], argus, MAXSTRLEN);
+#ifdef ARGUSDEBUG
+                       ArgusDebug (1, "ArgusWgan: record:'%s'\n", ArgusOutBuf[1]);
+#endif
+                    }
+                 }
+
+                 bzero (ArgusConBuf[0], sizeof(ArgusConBuf[0]));
+                 bzero (ArgusConBuf[1], sizeof(ArgusConBuf[1]));
+                 slen0 = 0;
+                 slen1 = 0;
+                 i = 1;
+              }
+           }
+           if (i > 1) {
+              slen0 += snprintf (&ArgusConBuf[0][slen0], sizeof(ArgusConBuf[0]) - slen0, ",");
+              slen1 += snprintf (&ArgusConBuf[1][slen1], sizeof(ArgusConBuf[1]) - slen1, ",");
+           }
+           slen0 += snprintf (&ArgusConBuf[0][slen0], sizeof(ArgusConBuf[0]) - slen0, "%f", *(double *)in0);
+           slen1 += snprintf (&ArgusConBuf[1][slen1], sizeof(ArgusConBuf[1]) - slen1, "%f", *(double *)in1);
+           *out = cos(*(double *)in0 + *(double *)in1);
+           out++;
+           in0 += stride;
+           in1 += stride;
         }
     } while (iternext(iter));
 
     /* Clean up and return the result */
     NpyIter_Deallocate(iter);
 
-   if ((parser = ArgusParser) != NULL) {
-//    RaConvertParseRecordString (parser, str);
+   if (results == NULL)
+      Py_RETURN_NONE;
+   else {
+      retn = (PyObject *)results;
+      return (retn);
+   }
+}
+
+// This matching function is passed an N x M array and
+// returns an N x 1 array with binary scores ...
+
+PyObject *
+argus_match (PyObject *y_true)
+{
+   struct ArgusParserStruct *parser = NULL;
+   PyObject *retn = NULL;
+
+   PyArrayObject *arrays[2];  // holds input and results array 
+   PyObject *output = NULL;          // holds output array 
+   double *out = NULL;
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "argus_match(%p): called\n", y_true);
+#endif
+
+   arrays[0] = (PyArrayObject *) y_true;
+
+   if (PyArray_API == NULL) {
+      import_array();
    }
 
-   if (retn == NULL)
+   if (!(PyArray_Check(arrays[0]))) {
+#ifdef ARGUSDEBUG
+      ArgusDebug (1, "argus_match(%p): array doesn't checkout\n", y_true);
+#endif
+      PyObject_Print(y_true, stdout, 0);
+      printf("\n");
+      fflush(stdout);
       Py_RETURN_NONE;
-   else
+   }
+
+   npy_intp *shape = PyArray_SHAPE(arrays[0]);
+   output = PyArray_SimpleNew(1, shape, NPY_FLOAT64);
+   out = (double *) PyArray_DATA((PyArrayObject *) output);
+
+   int i, x, cnt = 0;
+
+   for (i = 0; i < shape[0]; i++) {
+      int slen = 0;
+      void *value;
+
+      bzero (ArgusConBuf[0], sizeof(ArgusConBuf[0]));
+      bzero (ArgusOutBuf[0], sizeof(ArgusOutBuf[0]));
+
+      for (x = 0; x < shape[1]; x++) {
+         if ((value = PyArray_GETPTR2(arrays[0], i, x)) != NULL) {
+            if (x > 0) {
+               slen += snprintf (&ArgusConBuf[0][slen], sizeof(ArgusConBuf[0]) - slen, ",");
+            }
+            slen += snprintf (&ArgusConBuf[0][slen], sizeof(ArgusConBuf[0]) - slen, "%f", *(double *)value);
+         }
+      }
+
+      if (slen > 0) {
+         struct ArgusRecordStruct *ns = NULL;
+
+         if ((parser = ArgusParser) != NULL) {
+            cnt++;
+            if (RaConvertParseRecordString (parser, ArgusConBuf[0])) {
+               struct ArgusRecordStruct *argus = &parser->argus;
+
+               argus = &parser->argus;
+               ns = ArgusFindRecordInBaseline(parser, argus);
+               ArgusPrintRecord(parser, ArgusOutBuf[0], argus, MAXSTRLEN);
+#ifdef ARGUSDEBUG
+               ArgusDebug (1, "argus_match(%2.2d): retn: %d :: '%s'\n", cnt, retn, ArgusOutBuf[0]);
+#endif
+            }
+         }
+         *out++ = (ns != NULL) ? 2 : -2;
+         bzero (ArgusConBuf[0], sizeof(ArgusConBuf[0]));
+      }
+   }
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "argus_match(%p): done\n", y_true);
+#endif
+
+   if (output != NULL) {
+      retn = (PyObject *)output;
       return (retn);
+   }
+   Py_RETURN_NONE;
 }
+
+/*
+
+This matching function scores individual cells in the N x M matrix passed...
+
+PyObject *
+argus_match (PyObject *y_true)
+{
+   struct ArgusParserStruct *parser = NULL;
+   PyObject *retn = NULL;
+   int yt_dims, yt_size;
+
+   PyArrayObject *arrays[2];  // holds input and results array 
+   PyArrayObject *results;    // holds results array 
+   npy_uint32 op_flags[2];
+   npy_uint32 iterator_flags;
+   PyArray_Descr *op_dtypes[2];
+
+   NpyIter_IterNextFunc *iternext;
+   NpyIter *iter;
+
+   arrays[0] = (PyArrayObject *) y_true;
+
+   if (PyArray_API == NULL) {
+      import_array();
+   }
+
+   if (!(PyArray_Check(arrays[0]))) {
+      PyObject_Print(y_true, stdout, 0);
+      printf("\n");
+      fflush(stdout);
+      Py_RETURN_NONE;
+   }
+
+   if ((yt_dims = PyArray_NDIM(arrays[0])) == 0)
+      return NULL;
+   if ((yt_size = PyArray_Size(y_true)) == 0)
+      return NULL;
+
+   arrays[1] = NULL;
+
+   iterator_flags = (NPY_ITER_ZEROSIZE_OK |
+                     NPY_ITER_BUFFERED |
+                     NPY_ITER_GROWINNER);
+
+   op_flags[0] = (NPY_ITER_READONLY |
+                  NPY_ITER_NBO |
+                  NPY_ITER_ALIGNED);
+   op_flags[1] = op_flags[0];
+
+   op_flags[1] = NPY_ITER_WRITEONLY | NPY_ITER_ALLOCATE;
+
+   op_dtypes[0] = PyArray_DescrFromType(NPY_FLOAT64);
+   op_dtypes[1] = op_dtypes[0];
+
+   iter = NpyIter_MultiNew(2, arrays, iterator_flags,
+                            NPY_KEEPORDER,
+                            NPY_EQUIV_CASTING, op_flags, op_dtypes);
+    Py_DECREF(op_dtypes[0]);
+
+    if (iter == NULL)
+        return NULL;
+
+    iternext = NpyIter_GetIterNext(iter, NULL);
+    if (iternext == NULL) {
+        NpyIter_Deallocate(iter);
+        return NULL;
+    }
+
+    results = NpyIter_GetOperandArray(iter)[1];
+    Py_INCREF(results);
+
+    if (NpyIter_GetIterSize(iter) == 0) {
+        NpyIter_Deallocate(iter);
+        retn = (PyObject *)results;
+        return retn;
+    }
+
+    // The location of the data pointer which the iterator may update 
+    char **dataptr = NpyIter_GetDataPtrArray(iter);
+
+    // The location of the stride which the iterator may update 
+    npy_intp *strideptr = NpyIter_GetInnerStrideArray(iter);
+
+    // The location of the inner loop size which the iterator may update 
+    npy_intp *innersizeptr = NpyIter_GetInnerLoopSizePtr(iter);
+
+    npy_intp *shape = PyArray_SHAPE(arrays[0]);
+
+    // output = PyArray_SimpleNew(1, shape, NPY_FLOAT64);
+
+    // iterate over the arrays
+    do {
+        npy_intp stride = strideptr[0];
+        npy_intp count = *innersizeptr;
+        // out is always contiguous, so use double 
+
+        double *out = (double *)dataptr[1];
+        char *in0 = dataptr[0];
+        int i = 0, slen0 = 0, cnt = 0;
+
+        // The output is allocated and guaranteed contiguous (out++ works):
+        assert(strideptr[1] == sizeof(double));
+
+        //
+        // For optimization it can make sense to add a check for
+        // stride == sizeof(double) to allow the compiler to optimize for that.
+        //
+
+        bzero (ArgusConBuf[0], sizeof(ArgusConBuf[0]));
+        bzero (ArgusOutBuf[0], sizeof(ArgusOutBuf[0]));
+
+        while (count-- >= 0) {
+           if ((i++ % shape[1]) == 0) {
+              if (slen0 > 0) {
+                 if ((parser = ArgusParser) != NULL) {
+                    cnt++;
+                    if (RaConvertParseRecordString (parser, ArgusConBuf[0])) {
+                       struct ArgusRecordStruct *argus = &parser->argus, *retn;
+                       int x;
+                       retn = ArgusFindRecordInBaseline(parser, argus);
+
+                       for (x = 0; x < shape[1]; x++) {
+                          if (retn != NULL) {
+                             if (RaComparisonAlgorithms[x] != NULL)
+                                *out = RaComparisonAlgorithms[x](argus, retn);
+                          } else
+                             *out = 0.0;
+                          out++;
+                       }
+
+                       ArgusPrintRecord(parser, ArgusOutBuf[0], argus, MAXSTRLEN);
+#ifdef ARGUSDEBUG
+                       ArgusDebug (1, "argus_match(%2.2d): retn: %d :: '%s'\n", cnt, (retn != NULL) ? 1 : 0, ArgusOutBuf[0]);
+#endif
+                    }
+                 }
+                 bzero (ArgusConBuf[0], sizeof(ArgusConBuf[0]));
+                 slen0 = 0;
+                 i = 1;
+              }
+           }
+           if (i > 1) {
+              slen0 += snprintf (&ArgusConBuf[0][slen0], sizeof(ArgusConBuf[0]) - slen0, ",");
+           }
+           slen0 += snprintf (&ArgusConBuf[0][slen0], sizeof(ArgusConBuf[0]) - slen0, "%f", *(double *)in0);
+           in0 += stride;
+        }
+    } while (iternext(iter));
+
+    // Clean up and generate the output 
+    NpyIter_Deallocate(iter);
+
+   if (results == NULL)
+      Py_RETURN_NONE;
+   else {
+      retn = (PyObject *)results;
+      return (retn);
+   }
 }
+*/
 
 
 int
@@ -640,16 +1465,6 @@ out:
 
 
 
-void RaArgusInputComplete (struct ArgusInput *input) { return; }
-void RaParseComplete (int sig) { }
-void ArgusClientTimeout () { }
-void parse_arg (int argc, char**argv) {}
-void usage () { }
-void RaProcessRecord (struct ArgusParserStruct *parser, struct ArgusRecordStruct *argus) { }
-int RaSendArgusRecord(struct ArgusRecordStruct *argus) {return 0;}
-void ArgusWindowClose(void) {}
-
-
 char ArgusRecordBuffer[ARGUS_MAXRECORDSIZE];
 extern struct ArgusCIDRAddr *RaParseCIDRAddr (struct ArgusParserStruct *, char *);
 
@@ -712,7 +1527,6 @@ ArgusParseStartDateLabel (struct ArgusParserStruct *parser, char *buf)
       tvp->tv_usec = useconds;
    }
 
-
    if (RaDateFormat != NULL) {
       if ((ptr = strptime(date, RaDateFormat, RaConvertTmPtr)) != NULL) {
          if (*ptr == '\0') {
@@ -739,9 +1553,11 @@ ArgusParseStartDateLabel (struct ArgusParserStruct *parser, char *buf)
       } else {
          if (RaConvertTimeFormats[0] == NULL) {
             char *sptr;
-            RaConvertTimeFormats[0] = strdup(parser->RaTimeFormat);
-            if ((sptr = strstr(RaConvertTimeFormats[0], ".%f")) != NULL)
-               *sptr = '\0';
+            if (parser->RaTimeFormat) {
+               RaConvertTimeFormats[0] = strdup(parser->RaTimeFormat);
+               if ((sptr = strstr(RaConvertTimeFormats[0], ".%f")) != NULL)
+                  *sptr = '\0';
+            }
          }
 
          for (i = 0; (i < RACONVERTTIME) && (!done); i++) {
@@ -759,11 +1575,12 @@ ArgusParseStartDateLabel (struct ArgusParserStruct *parser, char *buf)
          if (done) {
             tvp->tv_sec = mktime(RaConvertTmPtr);
          } else {
-            ArgusLog (LOG_ERR, "ArgusParseStartTime(0x%xs, %s) time format not defined\n", parser, buf);
+            tvp->tv_sec  = 0;
+            tvp->tv_usec = 0;
+            done++;
          }
       }
    }
-
 
    if (parser->canon.time.hdr.type == 0) {
       parser->canon.time.hdr.type    = ARGUS_TIME_DSR;	
@@ -783,6 +1600,10 @@ ArgusParseStartDateLabel (struct ArgusParserStruct *parser, char *buf)
 
    parser->canon.time.dst.start.tv_sec  = tvp->tv_sec;
    parser->canon.time.dst.start.tv_usec = tvp->tv_usec;
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (9, "ArgusParseStartDateLabel (%p, '%s')\n", parser, buf); 
+#endif
 }
 
 
@@ -1060,7 +1881,8 @@ void
 ArgusParseProtoLabel (struct ArgusParserStruct *parser, char *buf)
 {
    struct ArgusRecordStruct *argus = &parser->argus;
-   if (isdigit((int)*buf)) {
+
+   if (isdigit((int)*buf) || (*buf == '-')) {
       ArgusThisProto = atoi(buf);
       parser->canon.flow.hdr.type     = ARGUS_FLOW_DSR;
       parser->canon.flow.hdr.subtype  = ARGUS_FLOW_CLASSIC5TUPLE;
@@ -1241,6 +2063,9 @@ ArgusParseSrcAddrLabel (struct ArgusParserStruct *parser, char *buf)
          }
       }
    }
+#ifdef ARGUSDEBUG
+   ArgusDebug (9, "ArgusParseSrcAddrLabel (%p, '%s')\n", parser, buf); 
+#endif
 }
 
 void
@@ -2147,15 +2972,6 @@ ArgusParseStateLabel (struct ArgusParserStruct *parser, char *buf)
 }
 
 void
-ArgusParseTCPBaseLabel (struct ArgusParserStruct *parser, char *buf)
-{
-/*
-   ArgusParseTCPSrcBaseLabel (parser, buf);
-   ArgusParseTCPDstBaseLabel (parser, buf);
-*/
-}
-
-void
 ArgusParseTCPSrcBaseLabel (struct ArgusParserStruct *parser, char *buf)
 {
 /*
@@ -2896,5 +3712,1640 @@ ArgusParseBinsLabel (struct ArgusParserStruct *parser, char *buf)
    sprintf (&buf[strlen(buf)], "%*sBins%*s ", (len - 4)/2, " ", (len - 4)/2, " ");
    if (!(len & 0x01)) sprintf (&buf[strlen(buf)], " ");
 */
+}
+
+
+double
+ArgusCompareStartDate (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+  if (argus && match) 
+     retn = ArgusFetchStartTime(argus) - ArgusFetchStartTime(match);
+   
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusCompareLastDate (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+  if (argus && match) 
+     retn = ArgusFetchLastTime(argus) - ArgusFetchLastTime(match);
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusCompareSourceID (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusCompareFlags (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusCompareSrcMacAddress (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusCompareDstMacAddress (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusCompareMacAddress (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusCompareProto (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusCompareAddr (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusCompareSrcNet (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusCompareSrcAddr (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusCompareDstNet (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusCompareDstAddr (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusCompareSrcPort (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusCompareDstPort (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusCompareSrcIpId (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusCompareDstIpId (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusCompareIpId (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusCompareSrcTtl (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusCompareDstTtl (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusCompareTtl (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusCompareDir (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusComparePackets (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusCompareSrcPackets (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+   if (argus && match) {
+      double adur = ArgusFetchDuration(argus);
+      double acnt = ArgusFetchSrcRate(argus);
+      double mcnt = ArgusFetchSrcRate(match);
+      retn = (acnt - mcnt) * adur;
+   }
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusCompareDstPackets (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+  if (argus && match) {
+     double adur = ArgusFetchDuration(argus);
+     double acnt = ArgusFetchDstRate(argus);
+     double mcnt = ArgusFetchDstRate(match);
+     retn = (acnt - mcnt) * adur;
+  }
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusCompareBytes (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusCompareSrcBytes (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+  if (argus && match) {
+     double adur = ArgusFetchDuration(argus);
+     double asld = ArgusFetchSrcLoad(argus);
+     double msld = ArgusFetchSrcLoad(match);
+     retn = (asld - msld) * adur;
+  }
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusCompareDstBytes (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+
+  if (argus && match) {
+     double adur = ArgusFetchDuration(argus);
+     double asld = ArgusFetchDstLoad(argus);
+     double msld = ArgusFetchDstLoad(match);
+     retn = (asld - msld) * adur;
+  }
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusCompareAppBytes (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusCompareSrcAppBytes (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+  if (argus && match) {
+     double adur = ArgusFetchDuration(argus);
+     double mdur = ArgusFetchDuration(match);
+     double asab = ArgusFetchSrcAppByteCount(argus);
+     double msab = ArgusFetchSrcAppByteCount(match);
+     if ((mdur > 0) && (adur > 0))
+        retn = asab - (msab * adur) / mdur;
+     else {
+        retn = adur ? asab : -msab;
+     }
+  }
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusCompareDstAppBytes (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+
+  if (argus && match) {
+     double adur = ArgusFetchDuration(argus);
+     double mdur = ArgusFetchDuration(match);
+     double asab = ArgusFetchSrcAppByteCount(argus);
+     double msab = ArgusFetchSrcAppByteCount(match);
+     if ((mdur > 0) && (adur > 0))
+        retn = asab - (msab * adur) / mdur;
+     else {
+        retn = adur ? asab : -msab;
+     }
+  }
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusCompareSrcPktSize (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusCompareDstPktSize (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusCompareSrcPktSizeMax (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusCompareSrcPktSizeMin (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusCompareDstPktSizeMax (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusCompareDstPktSizeMin (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusCompareSrcIntPkt (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+
+   if (argus && match) {
+      double asip = ArgusFetchSrcIntPkt(argus);
+      double msip = ArgusFetchSrcIntPkt(match);
+      retn = asip - msip;
+   }
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusCompareDstIntPkt (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+
+   if (argus && match) {
+      double asip = ArgusFetchDstIntPkt(argus);
+      double msip = ArgusFetchDstIntPkt(match);
+      retn = asip - msip;
+   }
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusCompareSrcIntPktMax (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+
+   if (argus && match) {
+      double asip = ArgusFetchSrcIntPkt(argus);
+      double msip = ArgusFetchSrcIntPkt(match);
+      retn = asip - msip;
+   }
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusCompareSrcIntPktMin (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusCompareDstIntPktMax (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusCompareDstIntPktMin (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusCompareSrcIntPktActive (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusCompareSrcIntPktActiveMax (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusCompareSrcIntPktActiveMin (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusCompareDstIntPktActive (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusCompareDstIntPktActiveMax (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusCompareDstIntPktActiveMin (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusCompareSrcIntPktIdle (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusCompareSrcIntPktIdleMax (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusCompareSrcIntPktIdleMin (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusCompareDstIntPktIdle (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusCompareDstIntPktIdleMax (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusCompareDstIntPktIdleMin (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusCompareJitter (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusCompareSrcJitter (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusCompareDstJitter (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusCompareActiveJitter (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusCompareActiveSrcJitter (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusCompareActiveDstJitter (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusCompareIdleJitter (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusCompareIdleSrcJitter (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusCompareIdleDstJitter (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusCompareState (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusCompareDeltaDuration (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusCompareDeltaStartTime (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusCompareDeltaLastTime (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusCompareDeltaSrcPkts (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusCompareDeltaDstPkts (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusCompareDeltaSrcBytes (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusCompareDeltaDstBytes (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusComparePercentDeltaSrcPkts (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusComparePercentDeltaDstPkts (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusComparePercentDeltaSrcBytes (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusComparePercentDeltaDstBytes (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusCompareSrcUserData (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusCompareDstUserData (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusCompareUserData (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusCompareTCPExtensions (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusCompareSrcLoad (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusCompareDstLoad (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusCompareLoad (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusCompareSrcLoss (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusCompareDstLoss (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusCompareLoss (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusCompareSrcPercentLoss (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusCompareDstPercentLoss (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusComparePercentLoss (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusCompareSrcRate (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusCompareDstRate (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusCompareRate (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusCompareTos (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusCompareSrcTos (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusCompareDstTos (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusCompareDSByte (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusCompareSrcDSByte (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusCompareDstDSByte (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusCompareSrcVLAN (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusCompareDstVLAN (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusCompareVLAN (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusCompareSrcVID (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusCompareDstVID (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusCompareVID (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusCompareSrcVPRI (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusCompareDstVPRI (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusCompareVPRI (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusCompareSrcMpls (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusCompareDstMpls (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusCompareMpls (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusCompareWindow (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusCompareSrcWindow (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusCompareDstWindow (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusCompareJoinDelay (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusCompareLeaveDelay (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusCompareMean (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusCompareMax (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusCompareMin (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusCompareStartRange (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusCompareEndRange (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusCompareDuration (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+   if (argus && match) {
+      double adur = ArgusFetchDuration(argus) / ArgusFetchTransactions(argus);
+      double mdur = ArgusFetchDuration(match) / ArgusFetchTransactions(match);
+      retn = (adur - mdur);
+   }
+   
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusCompareTransactions (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusCompareSequenceNumber (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusCompareBinNumber (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusCompareBins (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusCompareService (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusCompareTCPBase (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusCompareTCPSrcBase (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusCompareTCPDstBase (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
+}
+
+
+double
+ArgusCompareTCPRTT (struct ArgusRecordStruct *argus, struct ArgusRecordStruct *match)
+{
+   double retn = 1.0;
+
+#ifdef ARGUSDEBUG
+   ArgusDebug (1, "%s (%p, %p)", __func__, argus, match);
+#endif
+   return retn;
 }
 

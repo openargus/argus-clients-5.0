@@ -18,7 +18,6 @@
  *
  */
 
-
 #ifdef HAVE_CONFIG_H
 #include "argus_config.h"
 #endif
@@ -72,9 +71,9 @@
 #define ARGUS_GEOIP_NETMASK             13
 #define ARGUS_GEOIP_ASN			14
 
-# if defined(ARGUS_GEOIP) && !defined(ARGUS_GEOIP2)
-#  include <GeoIPCity.h>
-#  include "argus_label_geoip.h"
+#if defined(ARGUS_GEOIP) && !defined(ARGUS_GEOIP2)
+#include <GeoIPCity.h>
+#include "argus_label_geoip.h"
 
 struct ArgusGeoIPCityObject ArgusGeoIPCityObjects[] = {
    { "", "%s", 0, 0, 0, 0},
@@ -416,9 +415,10 @@ ArgusLabelRecordGeoIP(struct ArgusParserStruct *parser,
    *found = _found;
    return 1;
 }
-# elif !defined(ARGUS_GEOIP) && defined(ARGUS_GEOIP2)
-#  include <maxminddb.h>
-#  include "maxminddb-compat-util.h"
+
+#elif !defined(ARGUS_GEOIP) && defined(ARGUS_GEOIP2)
+#include <maxminddb.h>
+#include "maxminddb-compat-util.h"
 
 typedef int (*geoip2_fmt_dsr_func)(struct ArgusParserStruct *,
                                    struct ArgusRecordStruct *,

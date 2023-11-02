@@ -722,6 +722,7 @@ setSchema (char *str)
 int
 setBaseline (char *optarg)
 {
+/*
    struct ArgusParserStruct *parser = NULL;
    int type = ARGUS_DATA_SOURCE | ARGUS_BASELINE_SOURCE;
    long long ostart = -1, ostop = -1;

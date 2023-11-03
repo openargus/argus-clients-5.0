@@ -2020,7 +2020,6 @@ RaProcessThisLsOfEventRecord (struct ArgusParserStruct *parser, struct ArgusReco
                ArgusRemoveFromQueue (pns->qhdr.queue, &pns->qhdr, ARGUS_NOLOCK);
 
             ArgusAddToQueue (RaEventProcess->queue, &pns->qhdr, ARGUS_NOLOCK);
-            pns->status |= ARGUS_RECORD_MODIFIED;
          }
          found++;
 

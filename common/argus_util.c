@@ -5792,7 +5792,7 @@ ArgusPrintRecord (struct ArgusParserStruct *parser, char *buf, struct ArgusRecor
                      }
 
                      if ((parser->RaFieldDelimiter != ' ') && (parser->RaFieldDelimiter != '\0')) {
-                        if (parser->RaPrintAlgorithm->print != ArgusPrintFlags)
+                        if (parser->RaPrintAlgorithm->print != ArgusPrintFlags) 
                            while ((slen > 0) && isspace((int)(tmpbuf[slen - 1]))) {
                               tmpbuf[slen - 1] = '\0';  // remove trailing space
                               slen--;
@@ -5804,52 +5804,52 @@ ArgusPrintRecord (struct ArgusParserStruct *parser, char *buf, struct ArgusRecor
                               tlen = slen;
 
 			      if (tlen > 0) {
-                                 if (thistype == ARGUS_PTYPE_STRING) {
-                                    if (strchr(tmpbuf, parser->RaFieldQuoted)) {
-                                       for (i = 0; i < tlen; i++) {
-                                          if (tmpbuf[i] == parser->RaFieldQuoted)
-                                             ArgusTempBuffer[tind++] = '\\';
-                                          ArgusTempBuffer[tind++] = tmpbuf[i];
-                                       }
-                                       bcopy(ArgusTempBuffer, tmpbuf, tind);
-                                       tmpbuf[tind] = '\0';
-				       slen = tind;
-                                       dlen = ARGUS_PRINT_TEMP_BUF_SIZE - tind;
+                              if (thistype == ARGUS_PTYPE_STRING) {
+                                 if (strchr(tmpbuf, parser->RaFieldQuoted)) {
+                                    for (i = 0; i < tlen; i++) {
+                                       if (tmpbuf[i] == parser->RaFieldQuoted)
+                                          ArgusTempBuffer[tind++] = '\\';
+                                       ArgusTempBuffer[tind++] = tmpbuf[i];
                                     }
+                                    bcopy(ArgusTempBuffer, tmpbuf, tind);
+                                    tmpbuf[tind] = '\0';
+				       slen = tind;
+                                    dlen = ARGUS_PRINT_TEMP_BUF_SIZE - tind;
                                  }
-                                 
-                                 if (parser->ArgusPrintJson) {
-                                    if (parser->ArgusPrintD3 && ((parser->RaPrintAlgorithm->print == ArgusPrintStartDate ) ||
-                                                              (parser->RaPrintAlgorithm->print == ArgusPrintLastDate ))) {
-                                       slen = snprintf(&buf[blen], dlen, "%c%s%c:%s%c", 
-                                          parser->RaFieldQuoted, parser->RaPrintAlgorithm->field, parser->RaFieldQuoted,
-                                          tmpbuf, parser->RaFieldDelimiter);
+                              }
+                              
+                              if (parser->ArgusPrintJson) {
+                                 if (parser->ArgusPrintD3 && ((parser->RaPrintAlgorithm->print == ArgusPrintStartDate ) ||
+                                                           (parser->RaPrintAlgorithm->print == ArgusPrintLastDate ))) {
+                                    slen = snprintf(&buf[blen], dlen, "%c%s%c:%s%c", 
+                                       parser->RaFieldQuoted, parser->RaPrintAlgorithm->field, parser->RaFieldQuoted,
+                                       tmpbuf, parser->RaFieldDelimiter);
 				    
-                                    } else {
-                                       if (thistype == ARGUS_PTYPE_STRING) {
-                                          char *ptr = &buf[blen];
-                                          char *sptr = ptr;
-                                          int flen = strlen(parser->RaPrintAlgorithm->field);
+                                 } else {
+                                    if (thistype == ARGUS_PTYPE_STRING) {
+                                       char *ptr = &buf[blen];
+                                       char *sptr = ptr;
+                                       int flen = strlen(parser->RaPrintAlgorithm->field);
 
-                                          *ptr++ = parser->RaFieldQuoted;
-                                          bcopy(parser->RaPrintAlgorithm->field, ptr, flen);
-                                          ptr[flen] = '\0';
-                                          ptr += flen;
-                                          *ptr++ = parser->RaFieldQuoted;
-                                          *ptr++ = ':';
-                                          *ptr++ = parser->RaFieldQuoted;
-                                          bcopy(tmpbuf, ptr, slen);
-                                          ptr[slen] = '\0';
-                                          ptr += slen;
-                                          *ptr++ = parser->RaFieldQuoted;
-                                          *ptr++ = parser->RaFieldDelimiter;
-                                          *ptr = '\0';
-                                          slen = (ptr - sptr);
+                                       *ptr++ = parser->RaFieldQuoted;
+                                       bcopy(parser->RaPrintAlgorithm->field, ptr, flen);
+                                       ptr[flen] = '\0';
+                                       ptr += flen;
+                                       *ptr++ = parser->RaFieldQuoted;
+                                       *ptr++ = ':';
+                                       *ptr++ = parser->RaFieldQuoted;
+                                       bcopy(tmpbuf, ptr, slen);
+                                       ptr[slen] = '\0';
+                                       ptr += slen;
+                                       *ptr++ = parser->RaFieldQuoted;
+                                       *ptr++ = parser->RaFieldDelimiter;
+                                       *ptr = '\0';
+                                       slen = (ptr - sptr);
 /*
-                                          slen = snprintf(&buf[blen], dlen, "%c%s%c:%c%s%c%c", 
-                                             parser->RaFieldQuoted, parser->RaPrintAlgorithm->field, parser->RaFieldQuoted,
-                                             parser->RaFieldQuoted, tmpbuf, parser->RaFieldQuoted,
-                                             parser->RaFieldDelimiter);
+                                       slen = snprintf(&buf[blen], dlen, "%c%s%c:%c%s%c%c", 
+                                          parser->RaFieldQuoted, parser->RaPrintAlgorithm->field, parser->RaFieldQuoted,
+                                          parser->RaFieldQuoted, tmpbuf, parser->RaFieldQuoted,
+                                          parser->RaFieldDelimiter);
 */
 				       } else {
 					  char *ptr = &buf[blen];
@@ -5866,17 +5866,17 @@ ArgusPrintRecord (struct ArgusParserStruct *parser, char *buf, struct ArgusRecor
 					  ptr[tlen] = '\0';
 					  ptr += tlen;
 					  *ptr++ = parser->RaFieldDelimiter;
-                                          *ptr = '\0';
+                                       *ptr = '\0';
 					  slen = (ptr - sptr);
 /*
-                                          slen = snprintf(&buf[blen], dlen, "%c%s%c:%s%c", 
-                                             parser->RaFieldQuoted, parser->RaPrintAlgorithm->field, parser->RaFieldQuoted,
-                                             tmpbuf, parser->RaFieldDelimiter);
+                                       slen = snprintf(&buf[blen], dlen, "%c%s%c:%s%c", 
+                                          parser->RaFieldQuoted, parser->RaPrintAlgorithm->field, parser->RaFieldQuoted,
+                                          tmpbuf, parser->RaFieldDelimiter);
 */
 				       }
-                                    }
                                  }
                               }
+                           }
 
                         } else {
                            slen = snprintf(&buf[blen], dlen, "%s%c", tmpbuf, parser->RaFieldDelimiter);
@@ -22688,12 +22688,14 @@ unsigned int
 getnamehash(const u_char *np)
 {
    unsigned int retn = 0;
-   if (np != NULL) {
+   unsigned char *ptr = np;
+   if (ptr != NULL) {
       retn = 5381;
       int c;
 
-      while ((c = tolower(*np++)) != '\0')
-         retn = ((retn << 5) + retn) ^ c;  // (retn * 33) ^ c 
+      while ((c = tolower(*ptr++)) != '\0') {
+         retn = ((retn << 5) + retn) ^ c;
+      }
    }
    return retn;
 }

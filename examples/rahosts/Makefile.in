@@ -129,6 +129,6 @@ distclean:
 tags: $(TAGFILES)
 	ctags -wtd $(TAGFILES)
 
-force:	/tmp
-depend:	$(GENSRC) force
-	$(NOECHO) $(NOOP)
+force:  /tmp
+depend: $(GENSRC) force
+        ../../bin/mkdep -c $(CC) $(DEFS) $(INCLS) $(SRC)

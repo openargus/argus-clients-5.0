@@ -639,17 +639,27 @@ V_PCRE
 V_FTDEP
 V_THREADS
 V_PERL
+V_PYTHON_INCLS
 V_INCLS_EXAMPLES
 V_INCLS
 V_CCOPT
 INCLS
 DIRS
 PACKAGE_RELEASE
+HAVE_SWIG
+pkgpyexecdir
+pyexecdir
+pkgpythondir
+pythondir
+PYTHON_PLATFORM
+PYTHON_EXEC_PREFIX
+PYTHON_PREFIX
+PYTHON_VERSION
+PYTHON
 LIBCARES_LIBS
 LIBCARES_CFLAGS
 LIBMAXMINDDB_LIBS
 LIBMAXMINDDB_CFLAGS
-HAVE_SWIG
 UUID_LIBS
 ARGUS_CURLEXE
 LIBCURL
@@ -686,6 +696,13 @@ LEXLIB
 LEX_OUTPUT_ROOT
 LEX
 LN_S
+PERL_EXT_DLEXT
+PERL_EXT_LDFLAGS
+PERL_EXT_CPPFLAGS
+PERL_EXT_LIB
+PERL_EXT_INC
+PERL_EXT_PREFIX
+PERL
 OBJEXT
 EXEEXT
 ac_ct_CC
@@ -695,13 +712,6 @@ CFLAGS
 CC
 SHLICC2
 CLANG
-PERL_EXT_DLEXT
-PERL_EXT_LDFLAGS
-PERL_EXT_CPPFLAGS
-PERL_EXT_LIB
-PERL_EXT_INC
-PERL_EXT_PREFIX
-PERL
 target_os
 target_vendor
 target_cpu
@@ -777,17 +787,17 @@ with_c_ares
       ac_precious_vars='build_alias
 host_alias
 target_alias
+CC
+CFLAGS
+LDFLAGS
+LIBS
+CPPFLAGS
 PERL_EXT_PREFIX
 PERL_EXT_INC
 PERL_EXT_LIB
 PERL_EXT_CPPFLAGS
 PERL_EXT_LDFLAGS
 PERL_EXT_DLEXT
-CC
-CFLAGS
-LDFLAGS
-LIBS
-CPPFLAGS
 YACC
 YFLAGS
 CPP
@@ -797,7 +807,8 @@ PKG_CONFIG_LIBDIR
 LIBMAXMINDDB_CFLAGS
 LIBMAXMINDDB_LIBS
 LIBCARES_CFLAGS
-LIBCARES_LIBS'
+LIBCARES_LIBS
+PYTHON'
 
 
 # Initialize some variables set by options.
@@ -1438,6 +1449,13 @@ Optional Packages:
   --with-c-ares           Build with c-ares for name resolution
 
 Some influential environment variables:
+  CC          C compiler command
+  CFLAGS      C compiler flags
+  LDFLAGS     linker flags, e.g. -L<lib dir> if you have libraries in a
+              nonstandard directory <lib dir>
+  LIBS        libraries to pass to the linker, e.g. -l<library>
+  CPPFLAGS    (Objective) C/C++ preprocessor flags, e.g. -I<include dir> if
+              you have headers in a nonstandard directory <include dir>
   PERL_EXT_PREFIX
               Perl PREFIX
   PERL_EXT_INC
@@ -1450,13 +1468,6 @@ Some influential environment variables:
               LDFLAGS to build perl extensions
   PERL_EXT_DLEXT
               Perl dynamic library extension
-  CC          C compiler command
-  CFLAGS      C compiler flags
-  LDFLAGS     linker flags, e.g. -L<lib dir> if you have libraries in a
-              nonstandard directory <lib dir>
-  LIBS        libraries to pass to the linker, e.g. -l<library>
-  CPPFLAGS    (Objective) C/C++ preprocessor flags, e.g. -I<include dir> if
-              you have headers in a nonstandard directory <include dir>
   YACC        The `Yet Another Compiler Compiler' implementation to use.
               Defaults to the first program found out of: `bison -y', `byacc',
               `yacc'.
@@ -1477,6 +1488,7 @@ Some influential environment variables:
               C compiler flags for LIBCARES, overriding pkg-config
   LIBCARES_LIBS
               linker flags for LIBCARES, overriding pkg-config
+  PYTHON      the Python interpreter
 
 Use these variables to override the choices made by `configure' or to help
 it to find libraries and programs with nonstandard names/locations.
@@ -2652,152 +2664,6 @@ test -n "$target_alias" &&
 
 
 
-        #
-        # Check if perl executable exists.
-        #
-        for ac_prog in "${PERL-perl}"
-do
-  # Extract the first word of "$ac_prog", so it can be a program name with args.
-set dummy $ac_prog; ac_word=$2
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
-$as_echo_n "checking for $ac_word... " >&6; }
-if ${ac_cv_path_PERL+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  case $PERL in
-  [\\/]* | ?:[\\/]*)
-  ac_cv_path_PERL="$PERL" # Let the user override the test with a path.
-  ;;
-  *)
-  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-    for ac_exec_ext in '' $ac_executable_extensions; do
-  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_path_PERL="$as_dir/$ac_word$ac_exec_ext"
-    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-  done
-IFS=$as_save_IFS
-
-  ;;
-esac
-fi
-PERL=$ac_cv_path_PERL
-if test -n "$PERL"; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $PERL" >&5
-$as_echo "$PERL" >&6; }
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-fi
-
-
-  test -n "$PERL" && break
-done
-
-
-        if test -n "$PERL" ; then
-
-                #
-                # Check for Perl prefix.
-                #
-
-                { $as_echo "$as_me:${as_lineno-$LINENO}: checking for Perl prefix" >&5
-$as_echo_n "checking for Perl prefix... " >&6; }
-                if test -z "$PERL_EXT_PREFIX" ; then
-                        PERL_EXT_PREFIX=`$PERL -MConfig -e 'print $Config{prefix};'`;
-                fi
-                { $as_echo "$as_me:${as_lineno-$LINENO}: result: $PERL_EXT_PREFIX" >&5
-$as_echo "$PERL_EXT_PREFIX" >&6; }
-
-
-                #
-                # Check for Perl extensions include path.
-                #
-
-                { $as_echo "$as_me:${as_lineno-$LINENO}: checking for Perl extension include path" >&5
-$as_echo_n "checking for Perl extension include path... " >&6; }
-                if test -z "$PERL_EXT_INC" ; then
-                        PERL_EXT_INC=`$PERL -MConfig -e 'print $Config{archlibexp}, "/CORE";'`;
-                fi
-                { $as_echo "$as_me:${as_lineno-$LINENO}: result: $PERL_EXT_INC" >&5
-$as_echo "$PERL_EXT_INC" >&6; }
-
-
-                #
-                # Check for the extensions target directory.
-                #
-
-                { $as_echo "$as_me:${as_lineno-$LINENO}: checking for Perl extension target directory" >&5
-$as_echo_n "checking for Perl extension target directory... " >&6; }
-                if test -z "$PERL_EXT_LIB" ; then
-                        PERL_EXT_LIB=`$PERL -MConfig -e 'print $Config{sitearch};'`;
-                fi
-                { $as_echo "$as_me:${as_lineno-$LINENO}: result: $PERL_EXT_LIB" >&5
-$as_echo "$PERL_EXT_LIB" >&6; }
-
-
-                #
-                # Check for Perl CPP flags.
-                #
-
-                { $as_echo "$as_me:${as_lineno-$LINENO}: checking for Perl extensions C preprocessor flags" >&5
-$as_echo_n "checking for Perl extensions C preprocessor flags... " >&6; }
-                if test -z "$PERL_EXT_CPPFLAGS" ; then
-                        PERL_EXT_CPPFLAGS=`$PERL -MConfig -e 'print $Config{cppflags};'`;
-                fi
-                { $as_echo "$as_me:${as_lineno-$LINENO}: result: $PERL_EXT_CPPFLAGS" >&5
-$as_echo "$PERL_EXT_CPPFLAGS" >&6; }
-
-
-                #
-                # Check for Perl extension link flags.
-                #
-
-                { $as_echo "$as_me:${as_lineno-$LINENO}: checking for Perl extensions linker flags" >&5
-$as_echo_n "checking for Perl extensions linker flags... " >&6; }
-                if test -z "$PERL_EXT_LDFLAGS" ; then
-                        PERL_EXT_LDFLAGS=`$PERL -MConfig -e 'print $Config{lddlflags};'`;
-                fi
-                # Fix LDFLAGS for OS X.  We don't want any -arch flags here, otherwise
-                # linking will fail.  Also, OS X Perl LDFLAGS contains "-arch ppc" which
-                # is not supported by XCode anymore.
-                case "${host}" in
-                *darwin*)
-                        PERL_EXT_LDFLAGS=`echo ${PERL_EXT_LDFLAGS} | sed -e "s,-arch [^ ]*,,g"`
-                        ;;
-                esac
-                { $as_echo "$as_me:${as_lineno-$LINENO}: result: $PERL_EXT_LDFLAGS" >&5
-$as_echo "$PERL_EXT_LDFLAGS" >&6; }
-
-
-                #
-                # Check for Perl dynamic library extension.
-                #
-
-                { $as_echo "$as_me:${as_lineno-$LINENO}: checking for Perl dynamic library extension" >&5
-$as_echo_n "checking for Perl dynamic library extension... " >&6; }
-                if test -z "$PERL_EXT_DLEXT" ; then
-                        PERL_EXT_DLEXT=`$PERL -MConfig -e 'print ".", $Config{'dlext'};'`;
-                fi
-                { $as_echo "$as_me:${as_lineno-$LINENO}: result: $PERL_EXT_DLEXT" >&5
-$as_echo "$PERL_EXT_DLEXT" >&6; }
-
-        fi
-
-if test x"$PERL" = x; then
-    as_fn_error $? "\"cannot find Perl\"" "$LINENO" 5
-fi
-V_PERL=$PERL
-
-# Checks for programs.
-
-
 
 
 
@@ -3866,6 +3732,153 @@ $as_echo "#define const /**/" >>confdefs.h
        esac
     fi
 
+
+
+
+        #
+        # Check if perl executable exists.
+        #
+        for ac_prog in "${PERL-perl}"
+do
+  # Extract the first word of "$ac_prog", so it can be a program name with args.
+set dummy $ac_prog; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_path_PERL+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  case $PERL in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_PERL="$PERL" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_PERL="$as_dir/$ac_word$ac_exec_ext"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+  ;;
+esac
+fi
+PERL=$ac_cv_path_PERL
+if test -n "$PERL"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $PERL" >&5
+$as_echo "$PERL" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+  test -n "$PERL" && break
+done
+
+
+        if test -n "$PERL" ; then
+
+                #
+                # Check for Perl prefix.
+                #
+
+                { $as_echo "$as_me:${as_lineno-$LINENO}: checking for Perl prefix" >&5
+$as_echo_n "checking for Perl prefix... " >&6; }
+                if test -z "$PERL_EXT_PREFIX" ; then
+                        PERL_EXT_PREFIX=`$PERL -MConfig -e 'print $Config{prefix};'`;
+                fi
+                { $as_echo "$as_me:${as_lineno-$LINENO}: result: $PERL_EXT_PREFIX" >&5
+$as_echo "$PERL_EXT_PREFIX" >&6; }
+
+
+                #
+                # Check for Perl extensions include path.
+                #
+
+                { $as_echo "$as_me:${as_lineno-$LINENO}: checking for Perl extension include path" >&5
+$as_echo_n "checking for Perl extension include path... " >&6; }
+                if test -z "$PERL_EXT_INC" ; then
+                        PERL_EXT_INC=`$PERL -MConfig -e 'print $Config{archlibexp}, "/CORE";'`;
+                fi
+                { $as_echo "$as_me:${as_lineno-$LINENO}: result: $PERL_EXT_INC" >&5
+$as_echo "$PERL_EXT_INC" >&6; }
+
+
+                #
+                # Check for the extensions target directory.
+                #
+
+                { $as_echo "$as_me:${as_lineno-$LINENO}: checking for Perl extension target directory" >&5
+$as_echo_n "checking for Perl extension target directory... " >&6; }
+                if test -z "$PERL_EXT_LIB" ; then
+                        PERL_EXT_LIB=`$PERL -MConfig -e 'print $Config{sitearch};'`;
+                fi
+                { $as_echo "$as_me:${as_lineno-$LINENO}: result: $PERL_EXT_LIB" >&5
+$as_echo "$PERL_EXT_LIB" >&6; }
+
+
+                #
+                # Check for Perl CPP flags.
+                #
+
+                { $as_echo "$as_me:${as_lineno-$LINENO}: checking for Perl extensions C preprocessor flags" >&5
+$as_echo_n "checking for Perl extensions C preprocessor flags... " >&6; }
+                if test -z "$PERL_EXT_CPPFLAGS" ; then
+                        PERL_EXT_CPPFLAGS=`$PERL -MConfig -e 'print $Config{cppflags};'`;
+                fi
+                { $as_echo "$as_me:${as_lineno-$LINENO}: result: $PERL_EXT_CPPFLAGS" >&5
+$as_echo "$PERL_EXT_CPPFLAGS" >&6; }
+
+
+                #
+                # Check for Perl extension link flags.
+                #
+
+                { $as_echo "$as_me:${as_lineno-$LINENO}: checking for Perl extensions linker flags" >&5
+$as_echo_n "checking for Perl extensions linker flags... " >&6; }
+                if test -z "$PERL_EXT_LDFLAGS" ; then
+                        PERL_EXT_LDFLAGS=`$PERL -MConfig -e 'print $Config{lddlflags};'`;
+                fi
+                # Fix LDFLAGS for OS X.  We don't want any -arch flags here, otherwise
+                # linking will fail.  Also, OS X Perl LDFLAGS contains "-arch ppc" which
+                # is not supported by XCode anymore.
+                case "${host}" in
+                *darwin*)
+                        PERL_EXT_LDFLAGS=`echo ${PERL_EXT_LDFLAGS} | sed -e "s,-arch [^ ]*,,g"`
+                        ;;
+                esac
+                { $as_echo "$as_me:${as_lineno-$LINENO}: result: $PERL_EXT_LDFLAGS" >&5
+$as_echo "$PERL_EXT_LDFLAGS" >&6; }
+
+
+                #
+                # Check for Perl dynamic library extension.
+                #
+
+                { $as_echo "$as_me:${as_lineno-$LINENO}: checking for Perl dynamic library extension" >&5
+$as_echo_n "checking for Perl dynamic library extension... " >&6; }
+                if test -z "$PERL_EXT_DLEXT" ; then
+                        PERL_EXT_DLEXT=`$PERL -MConfig -e 'print ".", $Config{'dlext'};'`;
+                fi
+                { $as_echo "$as_me:${as_lineno-$LINENO}: result: $PERL_EXT_DLEXT" >&5
+$as_echo "$PERL_EXT_DLEXT" >&6; }
+
+        fi
+
+if test x"$PERL" = x; then
+    as_fn_error $? "\"cannot find Perl\"" "$LINENO" 5
+fi
+V_PERL=$PERL
+
+# Checks for programs.
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether ln -s works" >&5
 $as_echo_n "checking whether ln -s works... " >&6; }
 LN_S=$as_ln_s
@@ -6585,6 +6598,33 @@ fi
 
 done
 
+
+saved_CPPFLAGS=$CPPFLAGS
+
+case "$target_os" in
+darwin*)
+	am_cv_python_inc="/Library/Frameworks/Python.framework/Versions/"$PYTHON_VERSION"/include/python"$PYTHON_VERSION
+	;;
+*)
+	am_cv_python_inc="/usr/include/python"$PYTHON_VERSION
+        ;;
+esac
+
+V_PYTHON_INCLS="-I"$am_cv_python_inc
+CPPFLAGS="${saved_CPPFLAGS} ${V_PYTHON_INCLS}"
+for ac_header in Python.h
+do :
+  ac_fn_c_check_header_mongrel "$LINENO" "Python.h" "ac_cv_header_Python_h" "$ac_includes_default"
+if test "x$ac_cv_header_Python_h" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_PYTHON_H 1
+_ACEOF
+
+fi
+
+done
+
+CPPFLAGS="${saved_CPPFLAGS}"
 
 # Checks for typedefs, structures, and compiler characteristics.
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for an ANSI C-conforming const" >&5
@@ -10669,47 +10709,7 @@ if test "x$ac_cv_lib_uuid_uuid_parse" = xyes; then :
 fi
 
 
-# Extract the first word of "swig", so it can be a program name with args.
-set dummy swig; ac_word=$2
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
-$as_echo_n "checking for $ac_word... " >&6; }
-if ${ac_cv_prog_HAVE_SWIG+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  if test -n "$HAVE_SWIG"; then
-  ac_cv_prog_HAVE_SWIG="$HAVE_SWIG" # Let the user override the test.
-else
-as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-    for ac_exec_ext in '' $ac_executable_extensions; do
-  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_prog_HAVE_SWIG="1"
-    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-  done
-IFS=$as_save_IFS
 
-  test -z "$ac_cv_prog_HAVE_SWIG" && ac_cv_prog_HAVE_SWIG="0"
-fi
-fi
-HAVE_SWIG=$ac_cv_prog_HAVE_SWIG
-if test -n "$HAVE_SWIG"; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $HAVE_SWIG" >&5
-$as_echo "$HAVE_SWIG" >&6; }
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-fi
-
-
-if test "$HAVE_SWIG" = "1" ; then
-   DIRS="$DIRS ./perllib"
-fi
 
 
 # Check whether --with-libmaxminddb was given.
@@ -10934,6 +10934,313 @@ fi
 
 
 
+        if test -n "$PYTHON"; then
+      # If the user set $PYTHON, use it and don't search something else.
+      { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether $PYTHON version is >= 3" >&5
+$as_echo_n "checking whether $PYTHON version is >= 3... " >&6; }
+      prog="import sys
+# split strings by '.' and convert to numeric.  Append some zeros
+# because we need at least 4 digits for the hex conversion.
+# map returns an iterator in Python 3.0 and a list in 2.x
+minver = list(map(int, '3'.split('.'))) + [0, 0, 0]
+minverhex = 0
+# xrange is not present in Python 3.0 and range returns an iterator
+for i in list(range(0, 4)): minverhex = (minverhex << 8) + minver[i]
+sys.exit(sys.hexversion < minverhex)"
+  if { echo "$as_me:$LINENO: $PYTHON -c "$prog"" >&5
+   ($PYTHON -c "$prog") >&5 2>&5
+   ac_status=$?
+   echo "$as_me:$LINENO: \$? = $ac_status" >&5
+   (exit $ac_status); }; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+			       as_fn_error $? "Python interpreter is too old" "$LINENO" 5
+fi
+      am_display_PYTHON=$PYTHON
+    else
+      # Otherwise, try each interpreter until we find one that satisfies
+      # VERSION.
+      { $as_echo "$as_me:${as_lineno-$LINENO}: checking for a Python interpreter with version >= 3" >&5
+$as_echo_n "checking for a Python interpreter with version >= 3... " >&6; }
+if ${am_cv_pathless_PYTHON+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+
+	for am_cv_pathless_PYTHON in python python2 python3 python3.3 python3.2 python3.1 python3.0 python2.7  python2.6 python2.5 python2.4 python2.3 python2.2 python2.1 python2.0 none; do
+	  test "$am_cv_pathless_PYTHON" = none && break
+	  prog="import sys
+# split strings by '.' and convert to numeric.  Append some zeros
+# because we need at least 4 digits for the hex conversion.
+# map returns an iterator in Python 3.0 and a list in 2.x
+minver = list(map(int, '3'.split('.'))) + [0, 0, 0]
+minverhex = 0
+# xrange is not present in Python 3.0 and range returns an iterator
+for i in list(range(0, 4)): minverhex = (minverhex << 8) + minver[i]
+sys.exit(sys.hexversion < minverhex)"
+  if { echo "$as_me:$LINENO: $am_cv_pathless_PYTHON -c "$prog"" >&5
+   ($am_cv_pathless_PYTHON -c "$prog") >&5 2>&5
+   ac_status=$?
+   echo "$as_me:$LINENO: \$? = $ac_status" >&5
+   (exit $ac_status); }; then :
+  break
+fi
+	done
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $am_cv_pathless_PYTHON" >&5
+$as_echo "$am_cv_pathless_PYTHON" >&6; }
+      # Set $PYTHON to the absolute path of $am_cv_pathless_PYTHON.
+      if test "$am_cv_pathless_PYTHON" = none; then
+	PYTHON=:
+      else
+        # Extract the first word of "$am_cv_pathless_PYTHON", so it can be a program name with args.
+set dummy $am_cv_pathless_PYTHON; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_path_PYTHON+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  case $PYTHON in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_PYTHON="$PYTHON" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_PYTHON="$as_dir/$ac_word$ac_exec_ext"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+  ;;
+esac
+fi
+PYTHON=$ac_cv_path_PYTHON
+if test -n "$PYTHON"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $PYTHON" >&5
+$as_echo "$PYTHON" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+      fi
+      am_display_PYTHON=$am_cv_pathless_PYTHON
+    fi
+
+
+  if test "$PYTHON" = :; then
+      :
+  else
+
+
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $am_display_PYTHON version" >&5
+$as_echo_n "checking for $am_display_PYTHON version... " >&6; }
+if ${am_cv_python_version+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  am_cv_python_version=`$PYTHON -c "import sys; sys.stdout.write(sys.version[:3])"`
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $am_cv_python_version" >&5
+$as_echo "$am_cv_python_version" >&6; }
+  PYTHON_VERSION=$am_cv_python_version
+
+
+
+  PYTHON_PREFIX='${prefix}'
+
+  PYTHON_EXEC_PREFIX='${exec_prefix}'
+
+
+
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $am_display_PYTHON platform" >&5
+$as_echo_n "checking for $am_display_PYTHON platform... " >&6; }
+if ${am_cv_python_platform+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  am_cv_python_platform=`$PYTHON -c "import sys; sys.stdout.write(sys.platform)"`
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $am_cv_python_platform" >&5
+$as_echo "$am_cv_python_platform" >&6; }
+  PYTHON_PLATFORM=$am_cv_python_platform
+
+
+  # Just factor out some code duplication.
+  am_python_setup_sysconfig="\
+import sys
+# Prefer sysconfig over distutils.sysconfig, for better compatibility
+# with python 3.x.  See automake bug#10227.
+try:
+    import sysconfig
+except ImportError:
+    can_use_sysconfig = 0
+else:
+    can_use_sysconfig = 1
+# Can't use sysconfig in CPython 2.7, since it's broken in virtualenvs:
+# <https://github.com/pypa/virtualenv/issues/118>
+try:
+    from platform import python_implementation
+    if python_implementation() == 'CPython' and sys.version[:3] == '2.7':
+        can_use_sysconfig = 0
+except ImportError:
+    pass"
+
+
+            { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $am_display_PYTHON script directory" >&5
+$as_echo_n "checking for $am_display_PYTHON script directory... " >&6; }
+if ${am_cv_python_pythondir+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test "x$prefix" = xNONE
+     then
+       am_py_prefix=$ac_default_prefix
+     else
+       am_py_prefix=$prefix
+     fi
+     am_cv_python_pythondir=`$PYTHON -c "
+$am_python_setup_sysconfig
+if can_use_sysconfig:
+    sitedir = sysconfig.get_path('purelib', vars={'base':'$am_py_prefix'})
+else:
+    from distutils import sysconfig
+    sitedir = sysconfig.get_python_lib(0, 0, prefix='$am_py_prefix')
+sys.stdout.write(sitedir)"`
+     case $am_cv_python_pythondir in
+     $am_py_prefix*)
+       am__strip_prefix=`echo "$am_py_prefix" | sed 's|.|.|g'`
+       am_cv_python_pythondir=`echo "$am_cv_python_pythondir" | sed "s,^$am__strip_prefix,$PYTHON_PREFIX,"`
+       ;;
+     *)
+       case $am_py_prefix in
+         /usr|/System*) ;;
+         *)
+	  am_cv_python_pythondir=$PYTHON_PREFIX/lib/python$PYTHON_VERSION/site-packages
+	  ;;
+       esac
+       ;;
+     esac
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $am_cv_python_pythondir" >&5
+$as_echo "$am_cv_python_pythondir" >&6; }
+  pythondir=$am_cv_python_pythondir
+
+
+
+  pkgpythondir=\${pythondir}/$PACKAGE
+
+
+        { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $am_display_PYTHON extension module directory" >&5
+$as_echo_n "checking for $am_display_PYTHON extension module directory... " >&6; }
+if ${am_cv_python_pyexecdir+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test "x$exec_prefix" = xNONE
+     then
+       am_py_exec_prefix=$am_py_prefix
+     else
+       am_py_exec_prefix=$exec_prefix
+     fi
+     am_cv_python_pyexecdir=`$PYTHON -c "
+$am_python_setup_sysconfig
+if can_use_sysconfig:
+    sitedir = sysconfig.get_path('platlib', vars={'platbase':'$am_py_prefix'})
+else:
+    from distutils import sysconfig
+    sitedir = sysconfig.get_python_lib(1, 0, prefix='$am_py_prefix')
+sys.stdout.write(sitedir)"`
+     case $am_cv_python_pyexecdir in
+     $am_py_exec_prefix*)
+       am__strip_prefix=`echo "$am_py_exec_prefix" | sed 's|.|.|g'`
+       am_cv_python_pyexecdir=`echo "$am_cv_python_pyexecdir" | sed "s,^$am__strip_prefix,$PYTHON_EXEC_PREFIX,"`
+       ;;
+     *)
+       case $am_py_exec_prefix in
+         /usr|/System*) ;;
+         *)
+	   am_cv_python_pyexecdir=$PYTHON_EXEC_PREFIX/lib/python$PYTHON_VERSION/site-packages
+	   ;;
+       esac
+       ;;
+     esac
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $am_cv_python_pyexecdir" >&5
+$as_echo "$am_cv_python_pyexecdir" >&6; }
+  pyexecdir=$am_cv_python_pyexecdir
+
+
+
+  pkgpyexecdir=\${pyexecdir}/$PACKAGE
+
+
+
+  fi
+
+
+
+if test "$PYTHON_VERSION" = "3"; then
+# Extract the first word of "swig", so it can be a program name with args.
+set dummy swig; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_prog_HAVE_SWIG+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test -n "$HAVE_SWIG"; then
+  ac_cv_prog_HAVE_SWIG="$HAVE_SWIG" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_HAVE_SWIG="1"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+  test -z "$ac_cv_prog_HAVE_SWIG" && ac_cv_prog_HAVE_SWIG="0"
+fi
+fi
+HAVE_SWIG=$ac_cv_prog_HAVE_SWIG
+if test -n "$HAVE_SWIG"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $HAVE_SWIG" >&5
+$as_echo "$HAVE_SWIG" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+if test "$HAVE_SWIG" = "1" ; then
+  case "$target_os" in
+  darwin*)
+   	DIRS="$DIRS ./pythonlib"
+	;;
+  *)
+   	DIRS="$DIRS ./perllib"
+   	DIRS="$DIRS ./pythonlib"
+        ;;
+  esac
+fi
+fi
 
 
 
@@ -10954,15 +11261,23 @@ fi
 
 
 
-ac_config_files="$ac_config_files Makefile ./common/Makefile ./include/Makefile ./clients/Makefile ./lib/argus-clients.pc ./pkg/rhel/systemd/rasqlinsert-setup ./pkg/win7/argus-clients.wxs ./pkg/win7/Makefile ./pkg/Makefile ./lib/argus-clients.spec ./perllib/Makefile man/man5/ramanage.conf.5"
+
+
+
+
+
+
+
+
+ac_config_files="$ac_config_files Makefile ./common/Makefile ./include/Makefile ./clients/Makefile ./lib/argus-clients.pc ./pkg/rhel/systemd/rasqlinsert-setup ./pkg/win7/argus-clients.wxs ./pkg/win7/Makefile ./pkg/Makefile ./lib/argus-clients.spec ./perllib/Makefile ./pythonlib/Makefile man/man5/ramanage.conf.5"
 
 
 if test "$with_examples" != no; then :
-  ac_config_files="$ac_config_files ./examples/Makefile ./examples/race/Makefile ./examples/racompare/Makefile ./examples/raconvert/Makefile ./examples/radbase/Makefile ./examples/radecode/Makefile ./examples/radns/Makefile ./examples/radhcp/Makefile ./examples/radhcp/radhcp-query ./examples/radump/Makefile ./examples/raevent/Makefile ./examples/rafilter/Makefile ./examples/ragraph/Makefile ./examples/ragrep/Makefile ./examples/rahisto/Makefile ./examples/rahisto/rahisto-querysql ./examples/rahisto/rahisto-updatesql ./examples/rahisto/rahisto-delsql ./examples/ralabel/Makefile"
+  ac_config_files="$ac_config_files ./examples/Makefile ./examples/race/Makefile ./examples/racompare/Makefile ./examples/raconvert/Makefile ./examples/radbase/Makefile ./examples/radecode/Makefile ./examples/radns/Makefile ./examples/radhcp/Makefile ./examples/radhcp/radhcp-query ./examples/radump/Makefile ./examples/raevent/Makefile ./examples/rafilter/Makefile ./examples/ragen/Makefile ./examples/ragraph/Makefile ./examples/ragrep/Makefile ./examples/rahisto/Makefile ./examples/ralabel/Makefile"
 
 
    if test "$ARGUS_MYSQL_MAKEFILE" != no; then :
-  ac_config_files="$ac_config_files ./examples/ramysql/Makefile ./examples/rahosts/Makefile"
+  ac_config_files="$ac_config_files ./examples/ramysql/Makefile ./examples/rahosts/Makefile ./examples/rahisto/rahisto-querysql ./examples/rahisto/rahisto-updatesql ./examples/rahisto/rahisto-delsql"
 
 
 fi
@@ -11676,6 +11991,7 @@ do
     "./pkg/Makefile") CONFIG_FILES="$CONFIG_FILES ./pkg/Makefile" ;;
     "./lib/argus-clients.spec") CONFIG_FILES="$CONFIG_FILES ./lib/argus-clients.spec" ;;
     "./perllib/Makefile") CONFIG_FILES="$CONFIG_FILES ./perllib/Makefile" ;;
+    "./pythonlib/Makefile") CONFIG_FILES="$CONFIG_FILES ./pythonlib/Makefile" ;;
     "man/man5/ramanage.conf.5") CONFIG_FILES="$CONFIG_FILES man/man5/ramanage.conf.5" ;;
     "./examples/Makefile") CONFIG_FILES="$CONFIG_FILES ./examples/Makefile" ;;
     "./examples/race/Makefile") CONFIG_FILES="$CONFIG_FILES ./examples/race/Makefile" ;;
@@ -11689,15 +12005,16 @@ do
     "./examples/radump/Makefile") CONFIG_FILES="$CONFIG_FILES ./examples/radump/Makefile" ;;
     "./examples/raevent/Makefile") CONFIG_FILES="$CONFIG_FILES ./examples/raevent/Makefile" ;;
     "./examples/rafilter/Makefile") CONFIG_FILES="$CONFIG_FILES ./examples/rafilter/Makefile" ;;
+    "./examples/ragen/Makefile") CONFIG_FILES="$CONFIG_FILES ./examples/ragen/Makefile" ;;
     "./examples/ragraph/Makefile") CONFIG_FILES="$CONFIG_FILES ./examples/ragraph/Makefile" ;;
     "./examples/ragrep/Makefile") CONFIG_FILES="$CONFIG_FILES ./examples/ragrep/Makefile" ;;
     "./examples/rahisto/Makefile") CONFIG_FILES="$CONFIG_FILES ./examples/rahisto/Makefile" ;;
-    "./examples/rahisto/rahisto-querysql") CONFIG_FILES="$CONFIG_FILES ./examples/rahisto/rahisto-querysql" ;;
-    "./examples/rahisto/rahisto-updatesql") CONFIG_FILES="$CONFIG_FILES ./examples/rahisto/rahisto-updatesql" ;;
-    "./examples/rahisto/rahisto-delsql") CONFIG_FILES="$CONFIG_FILES ./examples/rahisto/rahisto-delsql" ;;
     "./examples/ralabel/Makefile") CONFIG_FILES="$CONFIG_FILES ./examples/ralabel/Makefile" ;;
     "./examples/ramysql/Makefile") CONFIG_FILES="$CONFIG_FILES ./examples/ramysql/Makefile" ;;
     "./examples/rahosts/Makefile") CONFIG_FILES="$CONFIG_FILES ./examples/rahosts/Makefile" ;;
+    "./examples/rahisto/rahisto-querysql") CONFIG_FILES="$CONFIG_FILES ./examples/rahisto/rahisto-querysql" ;;
+    "./examples/rahisto/rahisto-updatesql") CONFIG_FILES="$CONFIG_FILES ./examples/rahisto/rahisto-updatesql" ;;
+    "./examples/rahisto/rahisto-delsql") CONFIG_FILES="$CONFIG_FILES ./examples/rahisto/rahisto-delsql" ;;
     "./examples/ramatrix/Makefile") CONFIG_FILES="$CONFIG_FILES ./examples/ramatrix/Makefile" ;;
     "./examples/rampc/Makefile") CONFIG_FILES="$CONFIG_FILES ./examples/rampc/Makefile" ;;
     "./examples/rap/Makefile") CONFIG_FILES="$CONFIG_FILES ./examples/rap/Makefile" ;;

@@ -40,7 +40,7 @@ VPATH = @srcdir@
 #
 
 CC = @CC@
-CCOPT = @V_CCOPT@
+CCOPT = @V_CCOPT@ -fPIC
 INCLS = -I. -I../include @V_INCLS@ @MYSQL_INCLS@
 DEFS = @DEFS@ -DARGUS_SYSLOG
 

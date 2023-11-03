@@ -31,6 +31,8 @@ AC_CONFIG_AUX_DIR([config])
 AC_CONFIG_HEADER([include/argus_config.h])
 AC_CANONICAL_TARGET
 
+AC_LBL_C_INIT(V_CCOPT, V_INCLS)
+
 AX_PERL_EXT
 if test x"$PERL" = x; then
     AC_ERROR(["cannot find Perl"])
@@ -38,7 +40,6 @@ fi
 V_PERL=$PERL
 
 # Checks for programs.
-AC_LBL_C_INIT(V_CCOPT, V_INCLS)
 AC_PROG_LN_S
 AC_PROG_LEX
 AC_PROG_INSTALL
@@ -100,6 +101,22 @@ AC_CHECK_HEADERS([sys/systm.h])
 AC_CHECK_HEADERS([arpa/nameser.h])
 AC_CHECK_HEADERS([arpa/nameser_compat.h])
 AC_CHECK_HEADERS([stdbool.h])
+
+saved_CPPFLAGS=$CPPFLAGS
+
+case "$target_os" in
+darwin*)
+	am_cv_python_inc="/Library/Frameworks/Python.framework/Versions/"$PYTHON_VERSION"/include/python"$PYTHON_VERSION
+	;;
+*)
+	am_cv_python_inc="/usr/include/python"$PYTHON_VERSION
+        ;;
+esac
+
+V_PYTHON_INCLS="-I"$am_cv_python_inc
+CPPFLAGS="${saved_CPPFLAGS} ${V_PYTHON_INCLS}"
+AC_CHECK_HEADERS(Python.h)
+CPPFLAGS="${saved_CPPFLAGS}"
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
@@ -442,12 +459,26 @@ fi
 LIBCURL_CHECK_CONFIG
 AC_QOSIENT_CURLEXE
 AC_QOSIENT_LIBUUID
-AC_CHECK_PROG([HAVE_SWIG], [swig], [1], [0])
-if test "$HAVE_SWIG" = "1" ; then
-   DIRS="$DIRS ./perllib"
-fi
+
 AC_QOSIENT_LIBMAXMINDDB
 AC_QOSIENT_LIBCARES
+
+AM_PATH_PYTHON([3],, [:])
+
+if test "$PYTHON_VERSION" = "3"; then
+AC_CHECK_PROG([HAVE_SWIG], [swig], [1], [0])
+if test "$HAVE_SWIG" = "1" ; then
+  case "$target_os" in
+  darwin*)
+   	DIRS="$DIRS ./pythonlib"
+	;;
+  *)
+   	DIRS="$DIRS ./perllib"
+   	DIRS="$DIRS ./pythonlib"
+        ;;
+  esac
+fi
+fi
 
 AC_SUBST(PACKAGE_VERSION)
 AC_SUBST(PACKAGE_RELEASE)
@@ -457,6 +488,7 @@ AC_SUBST(INCLS)
 AC_SUBST(V_CCOPT)
 AC_SUBST(V_INCLS)
 AC_SUBST(V_INCLS_EXAMPLES)
+AC_SUBST(V_PYTHON_INCLS)
 AC_SUBST(V_RANLIB)
 AC_SUBST(V_YACC)
 AC_SUBST(V_LEX)
@@ -487,6 +519,7 @@ AC_CONFIG_FILES([
    ./pkg/Makefile
    ./lib/argus-clients.spec
    ./perllib/Makefile
+   ./pythonlib/Makefile
    man/man5/ramanage.conf.5
 ])
 
@@ -504,12 +537,10 @@ AS_IF([test "$with_examples" != no],
       ./examples/radump/Makefile
       ./examples/raevent/Makefile
       ./examples/rafilter/Makefile
+      ./examples/ragen/Makefile
       ./examples/ragraph/Makefile
       ./examples/ragrep/Makefile
       ./examples/rahisto/Makefile
-      ./examples/rahisto/rahisto-querysql
-      ./examples/rahisto/rahisto-updatesql
-      ./examples/rahisto/rahisto-delsql
       ./examples/ralabel/Makefile
    ])
    
@@ -517,6 +548,9 @@ AS_IF([test "$with_examples" != no],
       [AC_CONFIG_FILES([
          ./examples/ramysql/Makefile
          ./examples/rahosts/Makefile
+         ./examples/rahisto/rahisto-querysql
+         ./examples/rahisto/rahisto-updatesql
+         ./examples/rahisto/rahisto-delsql
       ])
    ])
    

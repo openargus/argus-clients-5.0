@@ -503,11 +503,9 @@ ArgusClientInit (struct ArgusParserStruct *parser)
          }
       }
 
-      parser->ArgusReverse = 0;
-      if ((parser->ArgusMaskList) == NULL)
-         if (parser->ArgusAggregator->correct != NULL) 
-            parser->ArgusReverse = 1;
-
+      parser->ArgusReverse = 1;
+      if (parser->ArgusAggregator->correct == NULL) 
+            parser->ArgusReverse = 0;
 
       if (parser->dflag) {
          int pid;
@@ -723,32 +721,36 @@ ArgusClientTimeout ()
                }
 
                while (agg) {
-                  if (agg->queue->count) {
-                     int cnt = 0;
-
+                  int cnt = 0;
+                  if ((cnt = agg->queue->count) > 0) {
                      ArgusSortQueue(ArgusSorter, agg->queue, ARGUS_LOCK);
-                     argus = ArgusCopyRecordStruct((struct ArgusRecordStruct *) agg->queue->array[0]);
 
-                     if (nflag == 0)
-                        cnt = agg->queue->arraylen;
-                     else
-                        cnt = nflag > agg->queue->arraylen ? agg->queue->arraylen : nflag;
-
-                     for (i = 1; i < cnt; i++)
-                        ArgusMergeRecords (agg, argus, (struct ArgusRecordStruct *)agg->queue->array[i]);
+                     for (i = 0; i < cnt; i++) {
+                        if ((ns = (struct ArgusRecordStruct *)ArgusPopQueue(agg->queue, ARGUS_LOCK)) != NULL) {
+                           if (i == 0) {
+                              argus = ArgusCopyRecordStruct(ns);
+			   } else {
+                              ArgusMergeRecords (agg, argus, ns);
+			   }
+                           ArgusAddToQueue (agg->queue, &ns->qhdr, ARGUS_LOCK);
+                        }
+                     }
 
                      ArgusParser->ns = argus;
 
+                     if (nflag != 0)
+                        cnt = nflag > agg->queue->count ? agg->queue->count : nflag;
+
                      for (i = 0; i < cnt; i++) {
-                        if (agg->queue->array[i] != NULL)
-                           ((struct ArgusRecordStruct *)agg->queue->array[i])->rank = i;
-                        RaSendArgusRecord ((struct ArgusRecordStruct *) agg->queue->array[i]);
+                        if ((ns = (struct ArgusRecordStruct *)ArgusPopQueue(agg->queue, ARGUS_LOCK)) != NULL) {
+                           ns->rank = i;
+                           RaSendArgusRecord ((struct ArgusRecordStruct *) ns);
+                        }
+                        ArgusDeleteRecordStruct(ArgusParser, ns);
                      }
+
                      ArgusDeleteRecordStruct(ArgusParser, ArgusParser->ns);
-
-                     while((argus = (struct ArgusRecordStruct *)ArgusPopQueue(agg->queue, ARGUS_LOCK)) != NULL)
-                        ArgusDeleteRecordStruct(ArgusParser, argus);
-
+                     ArgusParser->ns = NULL;
                      tcnt += cnt;
                   }
                   agg = agg->nxt;
@@ -876,6 +878,7 @@ RaProcessRecord (struct ArgusParserStruct *parser, struct ArgusRecordStruct *ns)
          break;
 
       case ARGUS_NETFLOW:
+      case ARGUS_AFLOW:
       case ARGUS_FAR: {
 
          if (parser->Vflag || parser->Aflag) {
@@ -1019,6 +1022,7 @@ RaProcessThisRecord (struct ArgusParserStruct *parser, struct ArgusRecordStruct 
          case ARGUS_EVENT:
          case ARGUS_MAR:
          case ARGUS_NETFLOW:
+         case ARGUS_AFLOW:
          case ARGUS_FAR: {
             if (agg->grepstr) {
                struct ArgusLabelStruct *label;
@@ -1063,6 +1067,7 @@ RaProcessThisRecord (struct ArgusParserStruct *parser, struct ArgusRecordStruct 
                      break;
 
                   case ARGUS_NETFLOW:
+                  case ARGUS_AFLOW:
                   case ARGUS_FAR: {
                      struct ArgusMetricStruct *metric = (void *)tns->dsrs[ARGUS_METRIC_INDEX];
 

@@ -410,9 +410,10 @@ void clearArgusWfile(struct ArgusParserStruct *);
 #define RAGETTINGUSTR      "Specify Playback rate (sec/sec): "
 #define RAGETTINGwSTR      "Write display to file: "
 #define RAGETTINGpSTR      "Set Precision: "
+#define RAGETTINGbSTR      "Read baseline(s): "
 
-char RaCommandInputStr[MAXSTRLEN];
-char RaCommandError[MAXSTRLEN];
+char RaCommandInputStr[1024];
+char RaCommandError[1024];
 
 strproc *RaCommandValueArray = NULL;
 char **RaCommandArray        = NULL;

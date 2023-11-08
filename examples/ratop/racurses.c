@@ -824,12 +824,12 @@ ArgusProcessTerminator(WINDOW *win, int status, int ch)
          }
 
          case RAGETTINGM: {
-            char strbuf[MAXSTRLEN], *str = strbuf, *tok = NULL, sbuf[2048];
+            char strbuf[1024], *str = strbuf, *tok = NULL, sbuf[1024];
             struct ArgusModeStruct *mode = NULL;
             int mretn = 0;
             char *tzptr;
 
-            strncpy(strbuf, RaCommandInputStr, MAXSTRLEN);
+            strncpy(strbuf, RaCommandInputStr, 1024);
 
             if ((tzptr = strstr(str, "TZ=")) != NULL) {
                if (ArgusParser->RaTimeZone)
@@ -3351,8 +3351,6 @@ RaInitCurses ()
 #endif
 #endif
 
-   rl_outstream = NULL;
-
 #if defined(HAVE_DECL_RL_CATCH_SIGNALS) && HAVE_DECL_RL_CATCH_SIGNALS
    rl_catch_signals = 0;
    rl_catch_sigwinch = 0;
@@ -3793,7 +3791,7 @@ argus_command_string(void)
 
    ArgusReadlinePoint = 0;
 
-   if ((line = readline(NULL)) != NULL) {
+   if ((line = readline("")) != NULL) {
       if (strlen(line) > 0) {
          strcpy (RaCommandInputStr, line);
          free(line);
@@ -5976,7 +5974,7 @@ RaOutputModifyScreen ()
    int i = 0;
    werase(RaCurrentWindow->window);
    for (i = RaMinCommandLines; i < (RaMaxCommandLines + 1); i++) {
-      mvwprintw (RaCurrentWindow->window, i, 1, RaCommandArray[i - RaMinCommandLines]);
+      mvwprintw (RaCurrentWindow->window, i, 1, "%s", RaCommandArray[i - RaMinCommandLines]);
       if (i == RaMinCommandLines)
          wstandout(RaCurrentWindow->window);
       wprintw (RaCurrentWindow->window, "%s", RaCommandValueArray[i - RaMinCommandLines]());

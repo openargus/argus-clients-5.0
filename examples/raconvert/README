@@ -21,6 +21,14 @@
  * Author: Carter Bullard carter@qosient.com
  */
 
+Tue 16 Jun 10:37:53 EDT 2020
+Add support for zeek conversions ala the ARGUS_AFLOW record type ...
+Add conversion map to be provided with the '-f' option.
+Create conversion for zeek json data.
+
+
+Wed Oct 10 16:45:56 EDT 2018
+
 raconvert.1 will convert an ascii flow record file/stream into binary record format.
 raconvert.1 will uncompress files that have been compressed using gzip or bzip2.
 The filename extensions for compression must be in the filename for this to happen.

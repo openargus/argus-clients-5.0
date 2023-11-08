@@ -49,6 +49,11 @@
 
 #define ARGUS_SQL_STATUS        (ARGUS_SQL_INSERT | ARGUS_SQL_SELECT | ARGUS_SQL_UPDATE | ARGUS_SQL_DELETE)
 
+#define ARGUSSQLMAXQUERYTIMESPAN        300
+#define ARGUSSQLMAXCOLUMNS              256
+#define ARGUSSQLMAXROWNUMBER            0x80000
+
+
 #if defined(CYGWIN)
 #define USE_IPV6
 #endif
@@ -440,6 +445,7 @@ main(int argc, char **argv)
          mysql_close(RaMySQL+1);
          ArgusCloseDown = 1;
          RaParseComplete(0);
+
       } else {
          /* ArgusProcessData will set ArgusCloseDown and call RaParseComplete */
          /* Does this even need to be a thread? */
@@ -447,7 +453,6 @@ main(int argc, char **argv)
             ArgusLog (LOG_ERR, "main() pthread_create error %s\n", strerror(errno));
          pthread_join(RaDataThread, NULL);
       }
-
 
       pthread_join(RaMySQLInsertThread, NULL);
       pthread_join(RaMySQLUpdateThread, NULL);
@@ -528,15 +533,27 @@ ArgusOutputProcess (void *arg)
    while (!ArgusCloseDown) {
       gettimeofday(tvp, NULL);
 
-      if (((tvp->tv_sec > ntvp->tv_sec) || ((tvp->tv_sec  == ntvp->tv_sec) && (tvp->tv_usec >  ntvp->tv_usec)))) {
-         struct RaBinProcessStruct *rbps = RaBinProcess;
-         if (rbps != NULL) {
-            struct RaBinStruct *bin = NULL;
-            int i, max = ((parser->tflag && !parser->RaWildCardDate) ? rbps->nadp.count : rbps->max) + 1;
+/* 
+   here we periodically process the set of bins to provide cache concurrency
+   with the database tables.  If we are a SBP (stream block processor), then
+   we need to do this occasionally, if we are processing entire files, we do
+   not need to do this at all.
+*/
 
-            for (i = rbps->index; i < max; i++) {
-               if ((rbps->array != NULL) && ((bin = rbps->array[i]) != NULL)) {
-                  ArgusProcessSqlData(bin);
+      if (((tvp->tv_sec > ntvp->tv_sec) || ((tvp->tv_sec  == ntvp->tv_sec) && (tvp->tv_usec >  ntvp->tv_usec)))) {
+         if (parser->Sflag) {
+            struct RaBinProcessStruct *rbps = RaBinProcess;
+#ifdef ARGUSDEBUG
+            ArgusDebug (2, "ArgusOutputProcess() processing bins\n");
+#endif
+            if (rbps != NULL) {
+               struct RaBinStruct *bin = NULL;
+               int i, max = ((parser->tflag && !parser->RaWildCardDate) ? rbps->nadp.count : rbps->max) + 1;
+
+               for (i = rbps->index; i < max; i++) {
+                  if ((rbps->array != NULL) && ((bin = rbps->array[i]) != NULL)) {
+                     ArgusProcessSqlData(bin);
+                  }
                }
             }
          }
@@ -548,7 +565,6 @@ ArgusOutputProcess (void *arg)
             ntvp->tv_usec -= 1000000;
          }
       }
-
       nanosleep (&ts, NULL);
    }
 
@@ -851,10 +867,10 @@ RaSQLQuerySecondsTable (unsigned int start, unsigned int stop)
    int retn, x;
 
    if (RaRoleString) {
-      str = "SELECT * from %s_Seconds WHERE second >= %u and second <= %u",
+      str = "SELECT * from %s_Seconds WHERE second >= %u and second <= %u";
       sprintf (buf, str, RaRoleString, start, stop);
    } else {
-      str = "SELECT * from Seconds WHERE second >= %u and second <= %u",
+      str = "SELECT * from Seconds WHERE second >= %u and second <= %u";
       sprintf (buf, str, start, stop);
    }
 
@@ -928,9 +944,188 @@ RaSQLQuerySecondsTable (unsigned int start, unsigned int stop)
    }
 }
 
+
 void
 RaSQLQueryDatabaseTable (char *table, unsigned int start, unsigned int stop)
 {
+   MYSQL_RES *mysqlRes;
+   char *timeField = NULL;
+   char *buf, *sbuf;
+   int i, slen = 0;
+   int retn, x, count = 0;
+
+   if ((buf = (char *)ArgusCalloc (1, MAXSTRLEN)) == NULL)
+      ArgusLog(LOG_ERR, "ArgusCalloc error %s", strerror(errno));
+
+   if ((sbuf = (char *)ArgusCalloc (1, MAXARGUSRECORD)) == NULL)
+      ArgusLog(LOG_ERR, "ArgusCalloc error %s", strerror(errno));
+
+   for (i = 0; (ArgusTableColumnName[i] != NULL) && (i < ARGUSSQLMAXCOLUMNS); i++) {
+      if (!(strcmp("ltime", ArgusTableColumnName[i]))) {
+         timeField = "ltime";
+      }
+      if (!(strcmp("stime", ArgusTableColumnName[i]))) {
+         timeField = "stime";
+         break;
+      }
+   }
+
+   if (timeField == NULL)
+      timeField = "second";
+
+   {
+      char *ArgusSQLStatement;
+      unsigned int t1, t2;
+
+      if ((ArgusSQLStatement = ArgusCalloc(1, MAXSTRLEN)) == NULL)
+         ArgusLog(LOG_ERR, "unable to allocate ArgusSQLStatement: %s", strerror(errno));
+
+      sprintf (buf, "SELECT count(*) from %s", table);
+      if ((retn = mysql_real_query(RaMySQL, buf, strlen(buf))) == 0) {
+         if ((mysqlRes = mysql_store_result(RaMySQL)) != NULL) {
+            if ((retn = mysql_num_fields(mysqlRes)) > 0) {
+               while ((row = mysql_fetch_row(mysqlRes))) {
+                  count = atoi(row[0]);
+               }
+            }
+         }
+      }
+
+      if (count > ARGUSSQLMAXROWNUMBER) {
+         if (timeField && (ArgusParser->tflag == 0)) {
+            sprintf (buf, "SELECT min(%s) start, max(%s) stop from %s", timeField, timeField, table);
+            if ((retn = mysql_real_query(RaMySQL, buf, strlen(buf))) == 0) {
+               if ((mysqlRes = mysql_store_result(RaMySQL)) != NULL) {
+                  if ((retn = mysql_num_fields(mysqlRes)) > 0) {
+                     while ((row = mysql_fetch_row(mysqlRes))) {
+                        start = atoi(row[0]);
+                        stop  = atoi(row[1]) + 1;
+                     }
+                  }
+               }
+            }
+         }
+
+         for (t1 = start; t1 <= stop; t1 += ARGUSSQLMAXQUERYTIMESPAN) {
+            t2 = ((t1 + ARGUSSQLMAXQUERYTIMESPAN) > stop) ? stop : (t1 + ARGUSSQLMAXQUERYTIMESPAN);
+
+            *ArgusSQLStatement = '\0';
+         
+            if (ArgusParser->ArgusSQLStatement != NULL)
+               strcpy(ArgusSQLStatement, ArgusParser->ArgusSQLStatement);
+
+            if (ArgusAutoId)
+               sprintf (buf, "SELECT autoid,record from %s", table);
+            else
+               sprintf (buf, "SELECT record from %s", table);
+
+            if ((slen = strlen(ArgusSQLStatement)) > 0) {
+               snprintf (&ArgusSQLStatement[strlen(ArgusSQLStatement)], MAXSTRLEN - slen, " and ");
+               slen = strlen(ArgusSQLStatement);
+            }
+
+            snprintf (&ArgusSQLStatement[slen], MAXSTRLEN - slen, "%s >= %d and %s < %d", timeField, t1, timeField, t2);
+
+            if (strlen(ArgusSQLStatement) > 0)
+               sprintf (&buf[strlen(buf)], " WHERE %s", ArgusSQLStatement);
+
+#ifdef ARGUSDEBUG
+            ArgusDebug (1, "SQL Query %s\n", buf);
+#endif
+            if ((retn = mysql_real_query(RaMySQL, buf, strlen(buf))) == 0) {
+               if ((mysqlRes = mysql_store_result(RaMySQL)) != NULL) {
+                  if ((retn = mysql_num_fields(mysqlRes)) > 0) {
+                     while ((row = mysql_fetch_row(mysqlRes))) {
+                        unsigned long *lengths = mysql_fetch_lengths(mysqlRes);
+                        int autoid = 0;
+
+                        if (ArgusAutoId && (retn > 1)) {
+                           char *endptr;
+                           autoid = strtol(row[0], &endptr, 10);
+                           if (row[0] == endptr)
+                              ArgusLog(LOG_ERR, "mysql database error: autoid returned %s", row[0]);
+                           x = 1;
+                        } else
+                           x = 0;
+
+                        ArgusParser->ArgusAutoId = autoid;
+                        bcopy (row[x], sbuf, (int) lengths[x]);
+
+                        ArgusHandleRecord (ArgusParser, ArgusInput, (struct ArgusRecord *)sbuf, lengths[x], &ArgusParser->ArgusFilterCode);
+                     }
+                  }
+
+                  mysql_free_result(mysqlRes);
+               }
+
+            } else {
+               if (mysql_errno(RaMySQL) != ER_NO_SUCH_TABLE) {
+                  ArgusLog(LOG_ERR, "mysql_real_query error %s", mysql_error(RaMySQL));
+#ifdef ARGUSDEBUG
+               } else {
+                  ArgusDebug (4, "%s: skip missing table %s", __func__, table);
+#endif
+               }
+            }
+         }
+
+      } else {
+         *ArgusSQLStatement = '\0';
+         
+         if (ArgusParser->ArgusSQLStatement != NULL)
+            strcpy(ArgusSQLStatement, ArgusParser->ArgusSQLStatement);
+
+         if (ArgusAutoId)
+            sprintf (buf, "SELECT autoid,record from %s", table);
+         else
+            sprintf (buf, "SELECT record from %s", table);
+
+         if (strlen(ArgusSQLStatement) > 0)
+            sprintf (&buf[strlen(buf)], " WHERE %s", ArgusSQLStatement);
+
+#ifdef ARGUSDEBUG
+         ArgusDebug (1, "SQL Query %s\n", buf);
+#endif
+         if ((retn = mysql_real_query(RaMySQL, buf, strlen(buf))) == 0) {
+            if ((mysqlRes = mysql_store_result(RaMySQL)) != NULL) {
+               if ((retn = mysql_num_fields(mysqlRes)) > 0) {
+                  while ((row = mysql_fetch_row(mysqlRes))) {
+                     unsigned long *lengths = mysql_fetch_lengths(mysqlRes);
+                     int autoid = 0;
+
+                     if (ArgusAutoId && (retn > 1)) {
+                        char *endptr;
+                        autoid = strtol(row[0], &endptr, 10);
+                        if (row[0] == endptr)
+                           ArgusLog(LOG_ERR, "mysql database error: autoid returned %s", row[0]);
+                        x = 1;
+                     } else
+                        x = 0;
+
+                     ArgusParser->ArgusAutoId = autoid;
+                     bcopy (row[x], sbuf, (int) lengths[x]);
+
+                     ArgusHandleRecord (ArgusParser, ArgusInput, (struct ArgusRecord *)sbuf, lengths[x], &ArgusParser->ArgusFilterCode);
+                  }
+               }
+
+               mysql_free_result(mysqlRes);
+            }
+
+         } else {
+            if (mysql_errno(RaMySQL) != ER_NO_SUCH_TABLE) {
+               ArgusLog(LOG_ERR, "mysql_real_query error %s", mysql_error(RaMySQL));
+#ifdef ARGUSDEBUG
+            } else {
+               ArgusDebug (4, "%s: skip missing table %s", __func__, table);
+#endif
+            }
+         }
+      }
+   }
+
+   ArgusFree(sbuf);
+   ArgusFree(buf);
 }
 
 
@@ -1017,6 +1212,7 @@ ArgusProcessSQLQueryList(struct ArgusParserStruct *parser, struct ArgusListStruc
                               for (x = 0; x < retn; x++) {
                                  bcopy (row[x], buf, (int) lengths[x]);
                                  if ((buf->hdr.type & ARGUS_FAR) ||
+                                     (buf->hdr.type & ARGUS_AFLOW) ||
                                      (buf->hdr.type & ARGUS_NETFLOW)) {
 #ifdef _LITTLE_ENDIAN
                                     ArgusNtoH(buf);
@@ -1099,6 +1295,7 @@ ArgusMySQLInsertProcess (void *arg)
 {
    struct ArgusParserStruct *parser = (struct ArgusParserStruct *) arg;
    sigset_t blocked_signals;
+   struct timeval timeout = {0,100000};
 
    sigfillset(&blocked_signals);
    pthread_sigmask(SIG_BLOCK, &blocked_signals, NULL);
@@ -1129,8 +1326,8 @@ ArgusMySQLInsertProcess (void *arg)
             MUTEX_UNLOCK(&ArgusSQLInsertQueryList->lock);
 
          } else {
-            ts->tv_sec  = parser->RaClientTimeout.tv_sec;
-            ts->tv_nsec = parser->RaClientTimeout.tv_usec * 1000;
+            ts->tv_sec  = timeout.tv_sec;
+            ts->tv_nsec = timeout.tv_usec * 1000;
             nanosleep(ts, NULL);
          }
       }
@@ -1220,12 +1417,13 @@ ArgusMySQLSelectProcess (void *arg)
    struct ArgusParserStruct *parser = (struct ArgusParserStruct *) arg;
    struct timespec tsbuf, *ts = &tsbuf;
    sigset_t blocked_signals;
+   struct timeval timeout = {0,100000};
 
    sigfillset(&blocked_signals);
    pthread_sigmask(SIG_BLOCK, &blocked_signals, NULL);
 
-   ts->tv_sec  = parser->RaClientTimeout.tv_sec;
-   ts->tv_nsec = parser->RaClientTimeout.tv_usec * 1000;
+   ts->tv_sec  = timeout.tv_sec;
+   ts->tv_nsec = timeout.tv_usec * 1000;
 
 #ifdef ARGUSDEBUG
    ArgusDebug (2, "ArgusMySQLSelectProcess() starting");
@@ -1241,8 +1439,8 @@ ArgusMySQLSelectProcess (void *arg)
             struct timeval tvp;
 
             gettimeofday (&tvp, 0L);
-            ts->tv_sec   = parser->RaClientTimeout.tv_sec  + tvp.tv_sec;
-            ts->tv_nsec  = (parser->RaClientTimeout.tv_usec + tvp.tv_usec) * 1000;
+            ts->tv_sec   = timeout.tv_sec  + tvp.tv_sec;
+            ts->tv_nsec  = (timeout.tv_usec + tvp.tv_usec) * 1000;
             if (ts->tv_nsec > 1000000000) {
                ts->tv_sec++;
                ts->tv_nsec -= 1000000000;
@@ -1252,8 +1450,8 @@ ArgusMySQLSelectProcess (void *arg)
             MUTEX_UNLOCK(&ArgusSQLSelectQueryList->lock);
 
          } else {
-            ts->tv_sec  = parser->RaClientTimeout.tv_sec;
-            ts->tv_nsec = parser->RaClientTimeout.tv_usec * 1000;
+            ts->tv_sec  = timeout.tv_sec;
+            ts->tv_nsec = timeout.tv_usec * 1000;
             nanosleep(ts, NULL);
          }
       }
@@ -1303,12 +1501,13 @@ ArgusMySQLUpdateProcess (void *arg)
    struct ArgusParserStruct *parser = (struct ArgusParserStruct *) arg;
    struct timespec tsbuf, *ts = &tsbuf;
    sigset_t blocked_signals;
+   struct timeval timeout = {0,100000};
 
    sigfillset(&blocked_signals);
    pthread_sigmask(SIG_BLOCK, &blocked_signals, NULL);
 
-   ts->tv_sec  = parser->RaClientTimeout.tv_sec;
-   ts->tv_nsec = parser->RaClientTimeout.tv_usec * 1000;
+   ts->tv_sec  = timeout.tv_sec;
+   ts->tv_nsec = timeout.tv_usec * 1000;
 
 #ifdef ARGUSDEBUG
    ArgusDebug (2, "ArgusMySQLUpdateProcess() starting");
@@ -1324,8 +1523,8 @@ ArgusMySQLUpdateProcess (void *arg)
             struct timeval tvp;
 
             gettimeofday (&tvp, 0L);
-            ts->tv_sec   = parser->RaClientTimeout.tv_sec  + tvp.tv_sec;
-            ts->tv_nsec  = (parser->RaClientTimeout.tv_usec + tvp.tv_usec) * 1000;
+            ts->tv_sec   = timeout.tv_sec  + tvp.tv_sec;
+            ts->tv_nsec  = (timeout.tv_usec + tvp.tv_usec) * 1000;
             if (ts->tv_nsec > 1000000000) {
                ts->tv_sec++;
                ts->tv_nsec -= 1000000000;
@@ -1335,8 +1534,8 @@ ArgusMySQLUpdateProcess (void *arg)
             MUTEX_UNLOCK(&ArgusSQLUpdateQueryList->lock);
 
          } else {
-            ts->tv_sec  = parser->RaClientTimeout.tv_sec;
-            ts->tv_nsec = parser->RaClientTimeout.tv_usec * 1000;
+            ts->tv_sec  = timeout.tv_sec;
+            ts->tv_nsec = timeout.tv_usec * 1000;
             nanosleep(ts, NULL);
          }
       }
@@ -1385,12 +1584,13 @@ ArgusMySQLDeleteProcess (void *arg)
    struct ArgusParserStruct *parser = (struct ArgusParserStruct *) arg;
    struct timespec tsbuf, *ts = &tsbuf;
    sigset_t blocked_signals;
+   struct timeval timeout = {0,100000};
 
    sigfillset(&blocked_signals);
    pthread_sigmask(SIG_BLOCK, &blocked_signals, NULL);
 
-   ts->tv_sec  = parser->RaClientTimeout.tv_sec;
-   ts->tv_nsec = parser->RaClientTimeout.tv_usec * 1000;
+   ts->tv_sec  = timeout.tv_sec;
+   ts->tv_nsec = timeout.tv_usec * 1000;
 
 #ifdef ARGUSDEBUG
    ArgusDebug (2, "ArgusMySQLDeleteProcess() starting");
@@ -1406,8 +1606,8 @@ ArgusMySQLDeleteProcess (void *arg)
             struct timeval tvp;
 
             gettimeofday (&tvp, 0L);
-            ts->tv_sec   = parser->RaClientTimeout.tv_sec  + tvp.tv_sec;
-            ts->tv_nsec  = (parser->RaClientTimeout.tv_usec + tvp.tv_usec) * 1000;
+            ts->tv_sec   = timeout.tv_sec  + tvp.tv_sec;
+            ts->tv_nsec  = (timeout.tv_usec + tvp.tv_usec) * 1000;
             if (ts->tv_nsec > 1000000000) {
                ts->tv_sec++;
                ts->tv_nsec -= 1000000000;
@@ -1417,8 +1617,8 @@ ArgusMySQLDeleteProcess (void *arg)
             MUTEX_UNLOCK(&ArgusSQLDeleteQueryList->lock);
 
          } else {
-            ts->tv_sec  = parser->RaClientTimeout.tv_sec;
-            ts->tv_nsec = parser->RaClientTimeout.tv_usec * 1000;
+            ts->tv_sec  = timeout.tv_sec;
+            ts->tv_nsec = timeout.tv_usec * 1000;
             nanosleep(ts, NULL);
          }
       }

@@ -163,6 +163,7 @@ typedef struct ArgusRecord * (*ArgusNetFlowHandler)(struct ArgusParserStruct *, 
 struct ArgusFileInput {
    struct ArgusQueueHeader qhdr;
    char *filename;
+   char *tempfile;
    FILE *file;
    long long ostart;
    long long ostop;
@@ -1291,6 +1292,7 @@ extern void RaParseComplete (int);
 extern int RaParseType (char *);
 extern struct ArgusISOAddr *RaParseISOAddr (struct ArgusParserStruct *, char *);
 extern struct ArgusCIDRAddr *RaParseCIDRAddr (struct ArgusParserStruct *, char *);
+extern int RaIsEtherAddr (struct ArgusParserStruct *, char *);
 
 extern void ArgusClientTimeout (void);
 extern void parse_arg (int, char**);

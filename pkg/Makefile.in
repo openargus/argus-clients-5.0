@@ -46,6 +46,7 @@ GLOBAL_CONFIG_DIR := $(DESTDIR)$(sysconfdir)
 
 ifndef WORKSTATION_BUILD
  SBIN_SCRIPTS = rhel/systemd/radium-setup \
+                rhel/systemd/rastatus-setup \
                 rhel/systemd/rastream-process \
                 rhel/systemd/radhcp-nightly \
                 rhel/systemd/radhcp-setup \
@@ -54,11 +55,13 @@ ifndef WORKSTATION_BUILD
                 rhel/systemd/radns-nightly \
                 rhel/systemd/matrixData-nightly \
                 rhel/systemd/dbaseRollup-nightly \
-                rhel/systemd/rarp-nightly
+                rhel/systemd/rarp-nightly \
+                rhel/systemd/rawatcher-process
     UNITFILES = rhel/systemd/radhcp-nightly.timer \
                 rhel/systemd/radhcp-nightly.service \
                 rhel/systemd/radhcp.service \
                 rhel/systemd/radium.service \
+                rhel/systemd/rastatus.service \
                 rhel/systemd/rasqlinsert@.service \
                 rhel/systemd/rastream.service \
                 rhel/systemd/radns-nightly.timer \
@@ -80,11 +83,13 @@ ifndef WORKSTATION_BUILD
     USR_ARGUS = rhel/ralabel.country.conf
       PKGDATA = rhel/share/argus-clients/rasqlinsert.l2_l3 \
                 rhel/share/argus-clients/rasqlinsert.ipmatrix \
+                rhel/share/argus-clients/rasqlinsert.ether \
+                rhel/share/argus-clients/rasqlinsert.ethermatrix \
+                rhel/share/argus-clients/rasqlinsert.eflows \
                 rhel/share/argus-clients/rasqlinsert.dns \
                 rhel/share/argus-clients/rasqlinsert.man \
                 rhel/share/argus-clients/rasqlinsert.dhcp \
                 rhel/share/argus-clients/rasqlinsert.arp \
-                rhel/share/argus-clients/rasqlinsert.ether \
                 rhel/share/argus-clients/rasqlinsert.ldap \
                 rhel/share/argus-clients/rasqlinsert.ntp \
                 rhel/share/argus-clients/emerging-Block-IPs-2018-03-22.conf

@@ -18,9 +18,9 @@
  *
  *
  * rasql  - Read Argus data using time offset indexs from mysql database.
- *         This program reads argus output streams from a database query,
- *         filters and optionally writes the output to a file, its
- *         stdout or prints the binary records to stdout in ASCII.
+ *          This program reads argus output streams from a database query,
+ *          filters and optionally writes the output to a file, its
+ *          stdout or prints the binary records to stdout in ASCII.
  */
 
 /* 
@@ -266,6 +266,7 @@ RaProcessRecord (struct ArgusParserStruct *parser, struct ArgusRecordStruct *arg
          break;
 
       case ARGUS_NETFLOW:
+      case ARGUS_AFLOW:
       case ARGUS_FAR: {
          struct ArgusMetricStruct *metric = (void *)argus->dsrs[ARGUS_METRIC_INDEX];
          if (metric != NULL) {
@@ -337,11 +338,10 @@ RaProcessThisRecord (struct ArgusParserStruct *parser, struct ArgusRecordStruct 
 #ifdef _LITTLE_ENDIAN
                         ArgusHtoN(argusrec);
 #endif
-                        rv = ArgusWriteNewLogfile (parser, argus->input,
-                                                   wfile, argusrec);
-                        if (rv < 0)
-                           ArgusLog(LOG_ERR, "%s unable to open file\n",
-                                    __func__);
+                        rv = ArgusWriteNewLogfile (parser, argus->input, wfile, argusrec);
+                        if (rv < 0) {
+                           ArgusLog(LOG_ERR, "%s unable to open file\n", __func__);
+                        }
                      }
                      ArgusFree(sbuf);
                   }
@@ -752,8 +752,8 @@ RaSQLQuerySecondsTable (unsigned int start, unsigned int stop)
    for (t1 = start; t1 <= stop; t1 += ARGUSSQLMAXQUERYTIMESPAN) {
       t2 = ((t1 + ARGUSSQLMAXQUERYTIMESPAN) > stop) ? stop : (t1 + ARGUSSQLMAXQUERYTIMESPAN);
 
-      str = "SELECT * from argus.Seconds WHERE second >= %u and second <= %u",
-      sprintf (buf, str, t1, t2);
+      str = "SELECT * from %s.Seconds WHERE second >= %u and second <= %u";
+      sprintf (buf, str, RaDatabase, t1, t2);
 
 #ifdef ARGUSDEBUG
       ArgusDebug (2, "SQL Query %s\n", buf);
@@ -1069,8 +1069,8 @@ RaSQLProcessQueue (struct ArgusQueueStruct *queue)
          if ((fstruct = (struct RaMySQLFileStruct *) ArgusPopQueue(ArgusFileQueue, ARGUS_LOCK)) !=  NULL) {
             char *str = NULL;
 
-            str = "SELECT filename from argus.Filename WHERE id = %d",
-            sprintf (buf, str, fstruct->fileindex);
+            str = "SELECT filename from %s.Filename WHERE id = %d",
+            sprintf (buf, str, RaDatabase, fstruct->fileindex);
 
             if ((retn = mysql_real_query(RaMySQL, buf, strlen(buf))) != 0)
                ArgusLog(LOG_ERR, "mysql_real_query error %s", mysql_error(RaMySQL));

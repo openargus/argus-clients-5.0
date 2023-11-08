@@ -329,6 +329,7 @@ RaProcessMatrixData (struct ArgusParserStruct *parser, struct ArgusRecordStruct 
 {
    switch (argus->hdr.type & 0xF0) {
       case ARGUS_NETFLOW:
+      case ARGUS_AFLOW:
       case ARGUS_FAR: {
          struct ArgusAggregatorStruct *agg = parser->ArgusAggregator;
          struct ArgusHashStruct *hstruct = NULL;
@@ -397,13 +398,13 @@ RaProcessMatrixData (struct ArgusParserStruct *parser, struct ArgusRecordStruct 
             }
 
          }
-#if defined(ARGUSDEBUG)
+#ifdef ARGUSDEBUG
          ArgusDebug (3, "RaProcessMatrixData () returning\n"); 
 #endif
       }
    }
 
-#if defined(ARGUSDEBUG)
+#ifdef ARGUSDEBUG
    ArgusDebug (6, "RaProcessMatrixData (%p, %p, %p)\n", parser, argus, process);
 #endif
 }
@@ -430,6 +431,7 @@ RaProcessRecord (struct ArgusParserStruct *parser, struct ArgusRecordStruct *ns)
          break;
 
       case ARGUS_NETFLOW:
+      case ARGUS_AFLOW:
       case ARGUS_FAR: {
          struct ArgusMetricStruct *metric = (void *)argus->dsrs[ARGUS_METRIC_INDEX];
          struct ArgusAggregatorStruct *agg = ArgusParser->ArgusProbeAggregator;
@@ -468,7 +470,7 @@ RaProcessRecord (struct ArgusParserStruct *parser, struct ArgusRecordStruct *ns)
          }
 
          if ((probe = ArgusFindProbe(agg->htable, hstruct)) != NULL) {
-            struct ArgusLabelerStruct *labeler;
+            struct ArgusLabelerStruct *labeler = NULL;
 
             switch (status) {
                case ARGUS_MATRIX_LOCAL:  labeler = probe->localLabeler; break;
@@ -2197,6 +2199,7 @@ ArgusRaHostsHandleRecord (struct ArgusParserStruct *parser,
                break;
       
             case ARGUS_NETFLOW:
+      case ARGUS_AFLOW:
             case ARGUS_FAR:
                parser->ArgusTotalFarRecords++;
                break;
@@ -2433,6 +2436,7 @@ RaHostsPrintTreeContents (struct ArgusLabelerStruct *labeler, struct RaAddressSt
                   if (node->labeler && node->labeler->ArgusAddrTree) {
                      if ((count = RaHostsPrintTreeEntries(node->labeler->ArgusAddrTree[AF_INET])) > 0) {
                         int tcount = count;
+                        startseries = 0; lastseries = 0;
                         hoststring = strdup(RaHostsPrintTreeLabeler(node->labeler->ArgusAddrTree[AF_INET], &tcount, RaHostsAddressList, RAHOSTSADDRESSLIST));
                         sprintf(field, "%d", count);
                         cnt = strdup(field);

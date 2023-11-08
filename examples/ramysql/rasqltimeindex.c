@@ -1,6 +1,6 @@
- /*
+/*
  * Gargoyle Client Software. Tools to read, analyze and manage Argus data.
- * Copyright (c) 2000-2016 QoSient, LLC
+ * Copyright (c) 2000-2020 QoSient, LLC
  * All rights reserved.
  *
  * THE ACCOMPANYING PROGRAM IS PROPRIETARY SOFTWARE OF QoSIENT, LLC,
@@ -20,12 +20,6 @@
  * rasqltimeindex  - Read Argus data and build a time index suitable for
  *                   inserting into a database schema.
  *
- */
-
-/* 
- * $Id: //depot/gargoyle/clients/examples/ramysql/rasqltimeindex.c#11 $
- * $DateTime: 2016/11/30 12:35:01 $
- * $Change: 3247 $
  */
 
 #ifdef HAVE_CONFIG_H
@@ -145,7 +139,7 @@ void RaArgusInputComplete (struct ArgusInput *input) {
    int cnt, retn, fileindex, filestatus;
    char buf[MAXSTRLEN], *endptr = NULL;
    char sbuf[MAXSTRLEN], *sptr = NULL;
-   char *filename;
+   char *cptr, *filename;
    struct ArgusInput *ArgusInput = input;
    struct RaTimeProbesStruct *probe = NULL;
 
@@ -155,12 +149,23 @@ void RaArgusInputComplete (struct ArgusInput *input) {
 
       do {
          int found = 0, error = 0;
+         char *sid = NULL, *inf = NULL;
 
          bzero(sbuf, sizeof(sbuf));
          sptr = sbuf;
+
          ArgusPrintSourceID(ArgusParser, sbuf, probe->tn, 64);
          while (isspace(*sptr)) sptr++;
          while (sptr[strlen(sptr) - 1] == ' ') sptr[strlen(sptr) - 1] = '\0';
+
+         if ((cptr = strchr(sptr, '/')) != NULL) {
+            *cptr = '\0';
+            sid = strdup(sptr);
+            inf = strdup(cptr+1);
+            *cptr = '/';
+         } else {
+            sid = strdup(sptr);
+         }
 
          do {
             sprintf (buf, RaTableQueryString[6], sptr);
@@ -183,12 +188,15 @@ void RaArgusInputComplete (struct ArgusInput *input) {
                if (!found) {
                   if (ArgusParser->vflag)
                      ArgusLog(LOG_ALERT, "Probe %s not found: installing", sptr);
-                  sprintf (buf, RaTableQueryString[7], sptr);
+
+                  sprintf (buf, RaTableQueryString[7], sptr, sid, inf);
                   if ((retn = mysql_real_query(RaMySQL, buf, strlen(buf))) != 0)
                      ArgusLog(LOG_ERR, "mysql_real_query error %s: %s", buf, mysql_error(RaMySQL));
                }
             }
          } while (!found && !error++);
+         if (sid != NULL) { free(sid); }
+         if (inf != NULL) { free(inf); }
       } while ((probe = (struct RaTimeProbesStruct *) probe->qhdr.nxt) != (void *) ArgusProbes->queue->start);
 
       bzero (buf, sizeof(buf));
@@ -457,6 +465,7 @@ RaProcessRecord (struct ArgusParserStruct *parser, struct ArgusRecordStruct *arg
 
       case ARGUS_EVENT:
       case ARGUS_NETFLOW:
+      case ARGUS_AFLOW:
       case ARGUS_FAR: {
          struct ArgusTransportStruct *trans = (void *)argus->dsrs[ARGUS_TRANSPORT_INDEX];
 
@@ -595,9 +604,12 @@ RaMySQLInit ()
       else if (ArgusParser->readDbstr != NULL)
          RaDatabase = strdup(ArgusParser->readDbstr);
 
-      if (RaDatabase != NULL)
+      if (RaDatabase == NULL) {
+         RaDatabase = "argus";
+      } else {
          if (!(strncmp("mysql:", RaDatabase, 6)))
             RaDatabase = &RaDatabase[6];
+      }
    }
 
    if (RaDatabase == NULL)
@@ -1011,8 +1023,8 @@ ArgusClientInit (struct ArgusParserStruct *parser)
                   parser->ArgusInputFileListTail->qhdr.nxt = &file->qhdr;
                } else {
                   parser->ArgusInputFileList = file;
-                  parser->ArgusInputFileListTail = file;
                }
+               parser->ArgusInputFileListTail = file;
                parser->ArgusInputFileCount++;
 
             } else {

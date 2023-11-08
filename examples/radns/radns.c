@@ -1,6 +1,6 @@
 /*
  * Gargoyle Client Software. Tools to read, analyze and manage Argus data.
- * Copyright (c) 2000-2016 QoSient, LLC
+ * Copyright (c) 2000-2020 QoSient, LLC
  * All rights reserved.
  *
  * THE ACCOMPANYING PROGRAM IS PROPRIETARY SOFTWARE OF QoSIENT, LLC,
@@ -15,12 +15,6 @@
  * IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION,
  * ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
  * THIS SOFTWARE.
- */
-
-/* 
- * $Id: //depot/gargoyle/clients/examples/radns/radns.c#24 $
- * $DateTime: 2016/11/30 00:54:11 $
- * $Change: 3245 $
  */
 
 /*
@@ -196,15 +190,17 @@ ArgusPrintAddressResponse(char *string, struct RaAddressStruct *raddr, char ***r
    if (dns != NULL) {
       struct ArgusListObjectStruct *tdns;
       struct timeval tvbuf, *tvp = &tvbuf;
-      char tbuf[128], *resbuf;
+      char tbuf[128], rbuf[128], *resbuf;
       int ind = *rind;
 
       if ((resbuf = ArgusMalloc(ARGUS_MAX_RESPONSE)) == NULL)
          ArgusLog (LOG_ERR, "ArgusPrintAddressResponse: ArgusMalloc error %s\n", strerror(errno));
 
       bzero(tbuf, sizeof(tbuf));
+      bzero(rbuf, sizeof(rbuf));
 
       ArgusPrintTime(ArgusParser, tbuf, sizeof(tbuf), &raddr->atime);
+      ArgusPrintTime(ArgusParser, rbuf, sizeof(rbuf), &raddr->rtime);
 
       RaDiffTime (&raddr->rtime, &raddr->atime, tvp);
 
@@ -212,7 +208,7 @@ ArgusPrintAddressResponse(char *string, struct RaAddressStruct *raddr, char ***r
          raddr->addr.str = strdup(ArgusGetName (ArgusParser, (unsigned char *)&raddr->addr.addr[0]));
 
       if (ArgusParser->ArgusPrintJson) {
-         sprintf (resbuf, "{ \"stime\":\"%s\", \"addr\":\"%s\"", tbuf, (raddr->addr.str != NULL) ? raddr->addr.str : string);
+         sprintf (resbuf, "{ \"stime\":\"%s\", \"rtime\":\"%s\", \"addr\":\"%s\"", tbuf, rbuf, (raddr->addr.str != NULL) ? raddr->addr.str : string);
       } else {
          sprintf (resbuf, "%s: \"%s\" ", tbuf, (raddr->addr.str != NULL) ? raddr->addr.str : string);
       }
@@ -494,7 +490,7 @@ ArgusHandleSearchCommand (struct ArgusOutputStruct *output, char *command)
          if (node.addr.str != NULL)
             node.addr.str = strdup(cidr->str);
 
-         if ((raddr = RaFindAddress (ArgusParser, labeler->ArgusAddrTree[AF_INET], &node, matchMode)) != NULL) {
+         if ((raddr = RaFindAddress (ArgusParser, labeler->ArgusAddrTree[cidr->type], &node, matchMode)) != NULL) {
             ArgusPrintAddressResponse(sptr, raddr, &retn, &rind, &reslen);
          } else {
 #ifdef ARGUSDEBUG
@@ -503,8 +499,9 @@ ArgusHandleSearchCommand (struct ArgusOutputStruct *output, char *command)
          }
 
       } else {
+#define RADNS_MATCHES_LEN	0x200000
          struct nnamemem **matches;
-         int i, mind = 0, mlen = 0x10000;
+         int i, mind = 0, mlen = RADNS_MATCHES_LEN;
          struct nnamemem *name;
 
          if ((matches = ArgusCalloc(mlen, sizeof(struct nnamemem *))) == NULL)
@@ -513,7 +510,8 @@ ArgusHandleSearchCommand (struct ArgusOutputStruct *output, char *command)
 // Not cidr, so must be a FQDN or a pattern to match.  If string is in the DNS name table, return that.
 
          if ((strlen(sptr) > 1) && ((name = ArgusFindNameEntry(ArgusDNSNameTable, sptr)) != NULL)) {
-            matches[mind++] = name;
+            if (mind < RADNS_MATCHES_LEN)
+               matches[mind++] = name;
 
          } else {
 #if defined(ARGUS_PCRE)
@@ -572,7 +570,7 @@ ArgusHandleSearchCommand (struct ArgusOutputStruct *output, char *command)
                if (ArgusParser->ArgusPrintJson) {
                   snprintf(refbuf, 16, "\"ref\":\"%d\"", name->ref);
                   results[resultnum++] = strdup(refbuf);
-                  if (name->ref > 0) {
+                  if (name->stime.tv_sec > 0) {
                      snprintf(timebuf, 64, "\"stime\":\"%d\",\"ltime\":\"%d\"", (int)name->stime.tv_sec, (int)name->ltime.tv_sec);
                      results[resultnum++] = strdup(timebuf);
                   }
@@ -665,21 +663,49 @@ ArgusHandleSearchCommand (struct ArgusOutputStruct *output, char *command)
 
                      for (x = 0; x < cnt; x++) {
                         struct RaAddressStruct *raddr = (struct RaAddressStruct *)list->list_obj;
-                        unsigned int addr = htonl(raddr->addr.addr[0]);
-                        struct in_addr naddr = *(struct in_addr *)&addr;
-                        if (x == 0) {
-                           char sbuf[256];
-                           snprintf (sbuf, 256, "\"addr\":[ \"%s\"", inet_ntoa(naddr));
-                           if (x == (cnt - 1)) 
-                              sprintf (&sbuf[strlen(sbuf)]," ]");
-                           results[resultnum++] = strdup(sbuf);
-                        } else {
-                           char sbuf[256];
-                           snprintf (sbuf, 256, "\"%s\"", inet_ntoa(naddr));
-                           if (x == (cnt - 1)) 
-                              sprintf (&sbuf[strlen(sbuf)]," ]");
-                           results[resultnum++] = strdup(sbuf);
+                        switch (raddr->addr.type) {
+                           case AF_INET: {
+                              unsigned int addr = htonl(raddr->addr.addr[0]);
+                              struct in_addr naddr = *(struct in_addr *)&addr;
+                              if (x == 0) {
+                                 char sbuf[256];
+                                 snprintf (sbuf, 256, "\"addr\":[ \"%s\"", inet_ntoa(naddr));
+                                 if (x == (cnt - 1)) 
+                                    sprintf (&sbuf[strlen(sbuf)]," ]");
+                                 results[resultnum++] = strdup(sbuf);
+                              } else {
+                                 char sbuf[256];
+                                 snprintf (sbuf, 256, "\"%s\"", inet_ntoa(naddr));
+                                 if (x == (cnt - 1)) 
+                                    sprintf (&sbuf[strlen(sbuf)]," ]");
+                                 results[resultnum++] = strdup(sbuf);
+                              }
+                              break;
+                           }
+                           case AF_INET6: {
+                              struct in6_addr naddr = *(struct in6_addr *)raddr->addr.addr;
+                              char ntop_buf[INET6_ADDRSTRLEN];
+                              const char *cp;
+
+                              if ((cp = inet_ntop(AF_INET6, (const void *) &naddr, ntop_buf, sizeof(ntop_buf))) != NULL) {
+                                 if (x == 0) {
+                                    char sbuf[256];
+                                    snprintf (sbuf, 256, "\"addr\":[ \"%s\"", cp);
+                                    if (x == (cnt - 1)) 
+                                       sprintf (&sbuf[strlen(sbuf)]," ]");
+                                    results[resultnum++] = strdup(sbuf);
+                                 } else {
+                                    char sbuf[256];
+                                    snprintf (sbuf, 256, "\"%s\"", cp);
+                                    if (x == (cnt - 1)) 
+                                       sprintf (&sbuf[strlen(sbuf)]," ]");
+                                    results[resultnum++] = strdup(sbuf);
+                                 }
+                              }
+                              break;
+                           }
                         }
+
                         list = list->nxt;
                      }
 #if defined(ARGUS_THREADS)
@@ -697,17 +723,30 @@ ArgusHandleSearchCommand (struct ArgusOutputStruct *output, char *command)
 
                      for (x = 0; x < cnt; x++) {
                         struct RaAddressStruct *raddr = (struct RaAddressStruct *)list->list_obj;
-                        unsigned int addr = htonl(raddr->addr.addr[0]);
-                        struct in_addr naddr = *(struct in_addr *)&addr;
+                        char *addrStr = NULL;
+
+                        switch (raddr->addr.type) {
+                           case AF_INET: {
+                              unsigned int addr = htonl(raddr->addr.addr[0]);
+                              struct in_addr naddr = *(struct in_addr *)&addr;
+                              addrStr = inet_ntoa(naddr);
+                              break;
+                           }
+                           case AF_INET6: {
+                              addrStr = raddr->addr.str;
+                              break;
+                           }
+                        }
+
                         if (x == 0) {
                            char sbuf[256];
-                           snprintf (sbuf, 256, "\"server\":[ \"%s\"", inet_ntoa(naddr));
+                           snprintf (sbuf, 256, "\"server\":[ \"%s\"", addrStr);
                            if (x == (cnt - 1)) 
                               sprintf (&sbuf[strlen(sbuf)]," ]");
                            results[resultnum++] = strdup(sbuf);
                         } else {
                            char sbuf[256];
-                           snprintf (sbuf, 256, "\"%s\"", inet_ntoa(naddr));
+                           snprintf (sbuf, 256, "\"%s\"", addrStr);
                            if (x == (cnt - 1)) 
                               sprintf (&sbuf[strlen(sbuf)]," ]");
                            results[resultnum++] = strdup(sbuf);
@@ -729,18 +768,31 @@ ArgusHandleSearchCommand (struct ArgusOutputStruct *output, char *command)
 
                      for (x = 0; x < cnt; x++) {
                         struct RaAddressStruct *raddr = (struct RaAddressStruct *)list->list_obj;
-                        unsigned int addr = htonl(raddr->addr.addr[0]);
-                        struct in_addr naddr = *(struct in_addr *)&addr;
+                        char *addrStr = NULL;
+
+                        switch (raddr->addr.type) {
+                           case AF_INET: {
+                              unsigned int addr = htonl(raddr->addr.addr[0]);
+                              struct in_addr naddr = *(struct in_addr *)&addr;
+                              addrStr = inet_ntoa(naddr);
+                              break;
+                           }
+                           case AF_INET6: {
+                              addrStr = raddr->addr.str;
+                              break;
+                           }
+                        }
+
                         if (x == 0) {
                            char sbuf[256];
-                           snprintf (sbuf, 256, "\"client\":[ \"%s\"", inet_ntoa(naddr));
-                           if (x == (cnt - 1)) 
+                           snprintf (sbuf, 256, "\"client\":[ \"%s\"", addrStr);
+                           if (x == (cnt - 1))
                               sprintf (&sbuf[strlen(sbuf)]," ]");
                            results[resultnum++] = strdup(sbuf);
                         } else {
                            char sbuf[256];
-                           snprintf (sbuf, 256, "\"%s\"", inet_ntoa(naddr));
-                           if (x == (cnt - 1)) 
+                           snprintf (sbuf, 256, "\"%s\"", addrStr);
+                           if (x == (cnt - 1))
                               sprintf (&sbuf[strlen(sbuf)]," ]");
                            results[resultnum++] = strdup(sbuf);
                         }
@@ -1232,6 +1284,7 @@ int RaProcessCRecord (struct ArgusParserStruct *, struct ArgusDomainStruct *, st
 int RaProcessSOARecord (struct ArgusParserStruct *, struct ArgusDomainStruct *, struct timeval *);
 int RaProcessNSRecord (struct ArgusParserStruct *, struct ArgusDomainStruct *, struct timeval *);
 int RaProcessPTRRecord (struct ArgusParserStruct *, struct ArgusDomainStruct *, struct timeval *);
+int RaProcessMXRecord (struct ArgusParserStruct *, struct ArgusDomainStruct *, struct timeval *);
 
 // ArgusNameEntry will take a FQDN and insert it into a hash table, as well as insert the
 // name into a namespace tree.
@@ -1509,7 +1562,7 @@ RaProcessARecord (struct ArgusParserStruct *parser, struct ArgusDomainStruct *dn
                      ncidr = 1;
                   }
 
-                  if ((raddr = RaFindAddress (parser, labeler->ArgusAddrTree[AF_INET], &node, ARGUS_EXACT_MATCH)) == NULL) {
+                  if ((raddr = RaFindAddress (parser, labeler->ArgusAddrTree[cidr->type], &node, ARGUS_EXACT_MATCH)) == NULL) {
                      if ((raddr = (struct RaAddressStruct *) ArgusCalloc (1, sizeof(*raddr))) != NULL) {
                         bcopy(&node, raddr, sizeof(node));
                         if (node.addr.str != NULL)
@@ -1936,27 +1989,95 @@ RaProcessPTRRecord (struct ArgusParserStruct *parser, struct ArgusDomainStruct *
          struct ArgusDomainResourceRecord *rr = list->list_union.obj;
 
          if ((ptr = ArgusNameEntry(ArgusDNSNameTable, rr->name, 0)) != NULL) {
+            if ((ptr->stime.tv_sec == 0) || (ptr->stime.tv_sec > dns->stime.tv_sec)) {
+               ptr->stime = dns->stime;
+            }
+            if ((ptr->ltime.tv_sec == 0) || (ptr->ltime.tv_sec < dns->ltime.tv_sec)) {
+               ptr->ltime = dns->ltime;
+            }
+
+           if (dns->server != NULL) {
+              if (ptr->servers == NULL)
+                 ptr->servers = ArgusNewList();
+              ArgusAddObjectToList(ptr->servers, dns->server, ARGUS_LOCK);
+           }
+
+           if (dns->client != NULL) {
+              if (ptr->clients == NULL)
+                 ptr->clients = ArgusNewList();
+              ArgusAddObjectToList(ptr->clients, dns->client, ARGUS_LOCK);
+           }
+
             if ((name = ArgusNameEntry(ArgusDNSNameTable, rr->data, 0)) != NULL) {
                char *nptr = strdup(rr->name);
                char *sptr, *tptr;
 
+               if ((name->stime.tv_sec == 0) || (name->stime.tv_sec > dns->stime.tv_sec)) {
+                  name->stime = dns->stime;
+               }
+               if ((name->ltime.tv_sec == 0) || (name->ltime.tv_sec < dns->ltime.tv_sec)) {
+                  name->ltime = dns->ltime;
+               }
+
+               if (dns->server != NULL) {
+                  if (name->servers == NULL)
+                     name->servers = ArgusNewList();
+                  ArgusAddObjectToList(name->servers, dns->server, ARGUS_LOCK);
+               }
+
+               if (dns->client != NULL) {
+                  if (name->clients == NULL)
+                     name->clients = ArgusNewList();
+                  ArgusAddObjectToList(name->clients, dns->client, ARGUS_LOCK);
+               }
+
                if ((tptr = nptr) != NULL) {
-                  char addrbuf[48], *addr = addrbuf, *a[4];
                   struct RaAddressStruct *raddr = NULL, node;
                   struct ArgusCIDRAddr *cidr = NULL;
+                  char addrbuf[128], *addr = addrbuf, *a[32];
+                  int ind = 0;
+
+                  bzero(addrbuf, sizeof(addrbuf));
+                  bzero(a, sizeof(a));
 
                   if ((sptr = strstr(tptr, ".in-addr.arpa")) != NULL) {
-                     int ind = 0;
+                     *sptr = '\0';
+                     while ((sptr = strtok(tptr, ".")) != NULL) {
+                        char *dptr = NULL;
+                        if ((dptr = strchr(sptr, '-')) != NULL)
+                           sptr = dptr + 1;
+                        a[ind++] = strdup(sptr);
+                        tptr = NULL;
+                     }
+                     sprintf (addr, "%s.%s.%s.%s", a[3], a[2], a[1], a[0]);
+                     for (i = 0; i < ind; i++) if (a[i] != NULL) {free(a[i]); a[i] = NULL;}
 
-                     bzero(addrbuf, sizeof(addrbuf));
-
+                  } else
+                  if ((sptr = strstr(tptr, ".ip6.arpa")) != NULL) {
+                     int next = 0;
                      *sptr = '\0';
                      while ((sptr = strtok(tptr, ".")) != NULL) {
                         a[ind++] = strdup(sptr);
                         tptr = NULL;
                      }
-                     sprintf (addr, "%s.%s.%s.%s", a[3], a[2], a[1], a[0]);
-                     for (i = 0; i < 4; i++) free(a[i]);
+                     for (i = ind - 1; i >= 0; i--) {
+                        if (a[i] != NULL) {
+                           if (strcmp(a[i],"0")) {
+                              sprintf (&addr[strlen(addr)], "%s", a[i]);
+                              next = 1;
+                           } else {
+                              if (next == 1)
+                                 sprintf (&addr[strlen(addr)], "%s", a[i]);
+                           }
+                           if ((i % 4) == 0) {
+                              if (next == 0) sprintf (&addr[strlen(addr)], "0");
+                              if (i > 0) sprintf (&addr[strlen(addr)], ":");
+                              next = 0;
+                           }
+                           free(a[i]);
+                           a[i] = NULL;
+                        }
+                     }
                   }
 
                   if ((cidr = RaParseCIDRAddr (ArgusParser, addr)) != NULL) {
@@ -1968,7 +2089,7 @@ RaProcessPTRRecord (struct ArgusParserStruct *parser, struct ArgusDomainStruct *
                      if (node.addr.str != NULL)
                         node.addr.str = strdup(cidr->str);
 
-                     if ((raddr = RaFindAddress (parser, labeler->ArgusAddrTree[AF_INET], &node, ARGUS_EXACT_MATCH)) == NULL) {
+                     if ((raddr = RaFindAddress (parser, labeler->ArgusAddrTree[cidr->type], &node, ARGUS_EXACT_MATCH)) == NULL) {
                         if ((raddr = (struct RaAddressStruct *) ArgusMalloc (sizeof(*raddr))) != NULL) {
                            int ttl = 0, tttl;
 
@@ -2062,6 +2183,88 @@ RaProcessPTRRecord (struct ArgusParserStruct *parser, struct ArgusDomainStruct *
    return retn;
 }
 
+//
+//
+//  RaProcessMXRecord
+//
+//  This routine will process a dns MX record.  The key is to insert the responses data
+//  record, and associate it with the domain name it referenced.
+//  
+//  MX records provide mail server routing.  Amex is interested in generating alarms if
+//  these show up.
+//
+//
+
+int
+RaProcessMXRecord (struct ArgusParserStruct *parser, struct ArgusDomainStruct *dns, struct timeval *tvp)
+{
+   struct ArgusDomainQueryStruct *res = dns->response;
+   struct nnamemem *ptr = NULL, *name = NULL;
+   struct ArgusLabelerStruct *labeler;
+   int retn = 0;
+
+   if ((labeler = parser->ArgusLabeler) == NULL) {
+      parser->ArgusLabeler = ArgusNewLabeler(parser, 0L);
+      labeler = parser->ArgusLabeler;
+      if (labeler->ArgusAddrTree == NULL)
+         if ((labeler->ArgusAddrTree = ArgusCalloc(128, sizeof(void *))) == NULL)
+            ArgusLog(LOG_ERR, "RaProcessCRecord: ArgusCalloc error");
+   }
+
+   if ((res != NULL) && (res->mx != NULL)) {
+      int x, count = res->mx->count;
+      for (x = 0; x < count; x++) {
+         struct ArgusListObjectStruct *list =  (struct ArgusListObjectStruct *)ArgusPopFrontList(res->mx, ARGUS_NOLOCK);
+         struct ArgusDomainResourceRecord *rr = list->list_union.obj;
+
+         if ((ptr = ArgusNameEntry(ArgusDNSNameTable, rr->name, 0)) != NULL) {
+            char *dptr = strdup(rr->data), *tptr, *sptr, *mxsptr;
+            int ind = 0;
+
+            if ((ptr->stime.tv_sec == 0) || (ptr->stime.tv_sec > dns->stime.tv_sec)) {
+               ptr->stime = dns->stime;
+            }
+            if ((ptr->ltime.tv_sec == 0) || (ptr->ltime.tv_sec < dns->ltime.tv_sec)) {
+               ptr->ltime = dns->ltime;
+            }
+// MX record data string format is "name mx server priority".
+// Need to pass the mx server to ArgusNameEntry.
+            tptr = dptr;
+            while ((sptr = strtok(tptr, " ")) != NULL) {
+               if (ind++ == 1) {
+                  mxsptr = strdup(sptr);
+               }
+               tptr = NULL;
+            }
+            free(dptr);
+
+            if ((name = ArgusNameEntry(ArgusDNSNameTable, mxsptr, 0)) != NULL) {
+               if ((name->stime.tv_sec == 0) || (name->stime.tv_sec > dns->stime.tv_sec)) {
+                  name->stime = dns->stime;
+               }
+               if ((name->ltime.tv_sec == 0) || (name->ltime.tv_sec < dns->ltime.tv_sec)) {
+                  name->ltime = dns->ltime;
+               }
+
+               if (name->mxs == NULL)
+                  name->mxs = ArgusNewList();
+
+#if defined(ARGUS_THREADS)
+               if (pthread_mutex_lock(&name->mxs->lock) == 0) {
+#endif
+#if defined(ARGUS_THREADS)
+                  pthread_mutex_unlock(&name->mxs->lock);
+               }
+#endif
+            }
+            if (mxsptr != NULL)
+               free(mxsptr);
+         }
+         ArgusPushBackList(res->mx, (struct ArgusListRecord *)list, ARGUS_NOLOCK);
+      }
+   }
+   return retn;
+}
 
 #define ISPORT(p) (dport == (p) || sport == (p))
 
@@ -2097,6 +2300,7 @@ RaProcessRecord (struct ArgusParserStruct *parser, struct ArgusRecordStruct *arg
          break;
 
       case ARGUS_NETFLOW:
+      case ARGUS_AFLOW:
       case ARGUS_FAR: {
          struct ArgusFlow *flow = (struct ArgusFlow *) argus->dsrs[ARGUS_FLOW_INDEX];
          struct ArgusNetworkStruct *net = (struct ArgusNetworkStruct *)argus->dsrs[ARGUS_NETWORK_INDEX];
@@ -2150,9 +2354,12 @@ RaProcessRecord (struct ArgusParserStruct *parser, struct ArgusRecordStruct *arg
                      }
 
                      case ARGUS_TYPE_IPV6: {
+                        process++;
+
                         switch (flow->ipv6_flow.ip_p) {
                            case IPPROTO_TCP:
                            case IPPROTO_UDP: {
+                              saddr = &flow->ipv6_flow.ip_src;
                               daddr = &flow->ipv6_flow.ip_dst;
                               proto = flow->ipv6_flow.ip_p;
                               sport = flow->ipv6_flow.sport;
@@ -2160,6 +2367,8 @@ RaProcessRecord (struct ArgusParserStruct *parser, struct ArgusRecordStruct *arg
                               break;
                            }
                         }
+                        srcAddrType = RaIPv6AddressType(parser, (struct in6_addr *)saddr);
+                        dstAddrType = RaIPv6AddressType(parser, (struct in6_addr *)daddr);
                         break;
                      }
                   }
@@ -2298,40 +2507,96 @@ RaProcessRecord (struct ArgusParserStruct *parser, struct ArgusRecordStruct *arg
                      struct RaAddressStruct *raddr = NULL, node;
   
                      bzero ((char *)&node, sizeof(node));
-                     node.addr.type = AF_INET;
-                     node.addr.addr[0] = *(unsigned int *)dnsServer;
-                     node.addr.mask[0] = 0xFFFFFFFF;
-                     node.addr.masklen = 32;
-                     node.addr.len = 4;
+
+                     switch (type) {
+                        case ARGUS_TYPE_IPV4: {
+                           node.addr.type = AF_INET;
+                           node.addr.addr[0] = *(unsigned int *)dnsServer;
+                           node.addr.mask[0] = 0xFFFFFFFF;
+                           node.addr.masklen = 32;
+                           node.addr.len = 4;
  
-                     if ((raddr = RaFindAddress (parser, ArgusDnsServers->ArgusAddrTree[AF_INET], &node, ARGUS_EXACT_MATCH)) == NULL) {
-                        if (!parser->qflag)
-                           fprintf (stdout, "%s: RaProcessRecord: new DNS server %s\n", tptr, intoa(node.addr.addr[0]));
+                           if ((raddr = RaFindAddress (parser, ArgusDnsServers->ArgusAddrTree[AF_INET], &node, ARGUS_EXACT_MATCH)) == NULL) {
+                              if (!parser->qflag)
+                                 fprintf (stdout, "%s: RaProcessRecord: new DNS server %s\n", tptr, intoa(node.addr.addr[0]));
  
-                        if ((raddr = (struct RaAddressStruct *) ArgusCalloc (1, sizeof(*raddr))) != NULL) {
-                           bcopy(&node, raddr, sizeof(node));
-                           if (node.addr.str != NULL)
-                              raddr->addr.str = strdup(node.addr.str);
-                           RaInsertAddress (parser, ArgusDnsServers, NULL, raddr, ARGUS_VISITED);
+                              if ((raddr = (struct RaAddressStruct *) ArgusCalloc (1, sizeof(*raddr))) != NULL) {
+                                 bcopy(&node, raddr, sizeof(node));
+                                 if (node.addr.str != NULL)
+                                    raddr->addr.str = strdup(node.addr.str);
+                                 RaInsertAddress (parser, ArgusDnsServers, NULL, raddr, ARGUS_VISITED);
+                              }
+                           }
+                           dns->server = dnsSrvr = raddr;
+
+                           node.addr.addr[0] = *(unsigned int *)dnsClient;
+                           node.addr.str = NULL;
+
+                           if ((raddr = RaFindAddress (parser, ArgusDnsClients->ArgusAddrTree[AF_INET], &node, ARGUS_EXACT_MATCH)) == NULL) {
+                              if (!parser->qflag)
+                                 fprintf (stdout, "%s: RaProcessRecord: new DNS client %s\n", tptr, intoa(node.addr.addr[0]));
+ 
+                              if ((raddr = (struct RaAddressStruct *) ArgusCalloc (1, sizeof(*raddr))) != NULL) {
+                                 bcopy(&node, raddr, sizeof(node));
+                                 if (node.addr.str != NULL)
+                                    raddr->addr.str = strdup(node.addr.str);
+                                 RaInsertAddress (parser, ArgusDnsClients, NULL, raddr, ARGUS_VISITED);
+                              }
+                           }
+                           dns->client = dnsClnt = raddr;
+                           break;
+                        }
+                        case ARGUS_TYPE_IPV6: {
+                           char ntop_buf[INET6_ADDRSTRLEN];
+                           const char *cp = NULL;
+
+                           if ((cp = inet_ntop(AF_INET6, (const void *) dnsServer, ntop_buf, sizeof(ntop_buf))) != NULL) {
+                              struct ArgusCIDRAddr *cidr = NULL;
+                              if ((cidr = RaParseCIDRAddr (parser, (char *) cp)) != NULL) {
+                                 bcopy(cidr, &node.addr, sizeof(*cidr));
+                                 if (node.addr.str == NULL)
+                                    node.addr.str = (char *)cp;
+                                 if ((raddr = RaFindAddress (parser, ArgusDnsServers->ArgusAddrTree[cidr->type], &node, ARGUS_EXACT_MATCH)) == NULL) {
+                                    if (!parser->qflag)
+                                       fprintf (stdout, "%s: RaProcessRecord: new DNS server %s\n", tptr, cp);
+ 
+                                    if ((raddr = (struct RaAddressStruct *) ArgusMalloc (sizeof(*raddr))) != NULL) {
+                                       bcopy(&node, raddr, sizeof(node));
+                                       if (node.addr.str != NULL)
+                                          raddr->addr.str = strdup(node.addr.str);
+
+                                       RaInsertAddress (parser, ArgusDnsServers, NULL, raddr, ARGUS_VISITED);
+                                    }
+                                 }
+                                 dns->server = dnsSrvr = raddr;
+                              }
+                           }
+
+                           if ((cp = inet_ntop(AF_INET6, (const void *) dnsClient, ntop_buf, sizeof(ntop_buf))) != NULL) {
+                              struct ArgusCIDRAddr *cidr = NULL;
+                              if ((cidr = RaParseCIDRAddr (parser, (char *) cp)) != NULL) {
+                                 bcopy(cidr, &node.addr, sizeof(*cidr));
+                                 if (node.addr.str == NULL)
+                                    node.addr.str = (char *)cp;
+                                 if ((raddr = RaFindAddress (parser, ArgusDnsClients->ArgusAddrTree[cidr->type], &node, ARGUS_EXACT_MATCH)) == NULL) {
+                                    if (!parser->qflag)
+                                       fprintf (stdout, "%s: RaProcessRecord: new DNS client %s\n", tptr, cp);
+
+                                    if ((raddr = (struct RaAddressStruct *) ArgusMalloc (sizeof(*raddr))) != NULL) {
+                                       bcopy(&node, raddr, sizeof(node));
+                                       if (node.addr.str != NULL)
+                                          raddr->addr.str = strdup(node.addr.str);
+
+                                       RaInsertAddress (parser, ArgusDnsClients, NULL, raddr, ARGUS_VISITED);
+                                    }
+                                 }
+                                 dns->client = dnsClnt = raddr;
+                              }
+                           }
+
+                           break;
                         }
                      }
-                     dns->server = dnsSrvr = raddr;
-
-                     node.addr.addr[0] = *(unsigned int *)dnsClient;
-                     node.addr.str = NULL;
-
-                     if ((raddr = RaFindAddress (parser, ArgusDnsClients->ArgusAddrTree[AF_INET], &node, ARGUS_EXACT_MATCH)) == NULL) {
-                        if (!parser->qflag)
-                           fprintf (stdout, "%s: RaProcessRecord: new DNS client %s\n", tptr, intoa(node.addr.addr[0]));
- 
-                        if ((raddr = (struct RaAddressStruct *) ArgusCalloc (1, sizeof(*raddr))) != NULL) {
-                           bcopy(&node, raddr, sizeof(node));
-                           if (node.addr.str != NULL)
-                              raddr->addr.str = strdup(node.addr.str);
-                           RaInsertAddress (parser, ArgusDnsClients, NULL, raddr, ARGUS_VISITED);
-                        }
-                     }
-                     dns->client = dnsClnt = raddr;
 
                   } else 
                   if (multicast) {
@@ -2825,6 +3090,7 @@ RaProcessThisEventRecord (struct ArgusParserStruct *parser, struct ArgusRecordSt
 
    switch (ns->hdr.type & 0xF0) {
       case ARGUS_NETFLOW:
+      case ARGUS_AFLOW:
       case ARGUS_FAR: {
          if (flow != NULL) {
             unsigned int addr, *daddr = NULL;

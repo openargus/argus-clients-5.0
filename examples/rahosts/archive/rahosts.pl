@@ -136,7 +136,7 @@ ARG: while (my $arg = shift(@ARGV)) {
      $sort="pkts";
   }
   if ($filter eq "") {
-     $filter="- ipv4";
+     $filter="- ipv6";
   } else {
      $filter="- $filter";
   }

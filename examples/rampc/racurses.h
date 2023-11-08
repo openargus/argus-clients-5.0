@@ -284,7 +284,6 @@ int RaCursorY = 0;
 
 struct ArgusQueueStruct *ArgusModelerQueue;
 struct ArgusQueueStruct *ArgusFileQueue;
-struct ArgusQueueStruct *ArgusProbeQueue;
 
 void RaResizeHandler (int);
 void * ArgusCursesProcess (void *);
@@ -407,8 +406,8 @@ void clearArgusWfile(struct ArgusParserStruct *);
 #define RAGETTINGwSTR      "Write display to file: "
 #define RAGETTINGpSTR      "Set Precision: "
 
-char RaCommandInputStr[MAXSTRLEN];
-char RaCommandError[MAXSTRLEN];
+char RaCommandInputStr[1024];
+char RaCommandError[1024];
 
 strproc *RaCommandValueArray = NULL;
 char **RaCommandArray        = NULL;

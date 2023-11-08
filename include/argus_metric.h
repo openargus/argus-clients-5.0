@@ -31,8 +31,8 @@
 extern "C" {
 #endif
 
-#define ARGUS_MAX_METRIC_ALG		130
-#define MAX_METRIC_ALG_TYPES		130
+#define ARGUS_MAX_METRIC_ALG		134
+#define MAX_METRIC_ALG_TYPES		134
 
 struct ArgusFetchValueStruct {
    char *field;
@@ -127,6 +127,11 @@ double ArgusFetchDstGap (struct ArgusRecordStruct *ns);
 
 double ArgusFetchSrcDup (struct ArgusRecordStruct *ns);
 double ArgusFetchDstDup (struct ArgusRecordStruct *ns);
+
+double ArgusFetchIntFlow (struct ArgusRecordStruct *ns);
+double ArgusFetchIntFlowMax (struct ArgusRecordStruct *ns);
+double ArgusFetchIntFlowMin (struct ArgusRecordStruct *ns);
+double ArgusFetchIntFlowStdDev (struct ArgusRecordStruct *ns);
 
 double ArgusFetchSrcIntPkt (struct ArgusRecordStruct *ns);
 double ArgusFetchSrcIntPktAct (struct ArgusRecordStruct *ns);
@@ -457,6 +462,14 @@ RaFetchAlgorithmTable[ARGUS_MAX_METRIC_ALG] = {
    {"smss", ArgusFetchSrcMaxSeg},
 #define ARGUSMETRICDSTMSS          129
    {"dmss", ArgusFetchDstMaxSeg},
+#define ARGUSMETRICINTFLOW         130
+   { "intflow", ArgusFetchIntFlow},
+#define ARGUSMETRICINTFLOWMAX      131
+   { "intflowmax", ArgusFetchIntFlowMax},
+#define ARGUSMETRICINTFLOWMIN      132
+   { "intflowmin", ArgusFetchIntFlowMin},
+#define ARGUSMETRICINTFLOWSTDDEV   133
+   { "intflowsdev", ArgusFetchIntFlowStdDev},
 };
 
 #else
@@ -522,6 +535,32 @@ extern double ArgusFetchAppByteCount (struct ArgusRecordStruct *ns);
 extern double ArgusFetchSrcAppByteCount (struct ArgusRecordStruct *ns);
 extern double ArgusFetchDstAppByteCount (struct ArgusRecordStruct *ns);
 extern double ArgusFetchAppByteRatio (struct ArgusRecordStruct *ns);
+
+extern double ArgusFetchIntFlow (struct ArgusRecordStruct *ns);
+extern double ArgusFetchIntFlowMax (struct ArgusRecordStruct *ns);
+extern double ArgusFetchIntFlowMin (struct ArgusRecordStruct *ns);
+extern double ArgusFetchIntFlowStdDev (struct ArgusRecordStruct *ns);
+
+extern double ArgusFetchSrcIntPkt (struct ArgusRecordStruct *ns);
+extern double ArgusFetchSrcIntPktAct (struct ArgusRecordStruct *ns);
+extern double ArgusFetchSrcIntPktIdl (struct ArgusRecordStruct *ns);
+extern double ArgusFetchDstIntPkt (struct ArgusRecordStruct *ns);
+extern double ArgusFetchDstIntPktAct (struct ArgusRecordStruct *ns);
+extern double ArgusFetchDstIntPktIdl (struct ArgusRecordStruct *ns);
+
+extern double ArgusFetchSrcIntPktActMin (struct ArgusRecordStruct *ns);
+extern double ArgusFetchSrcIntPktActMax (struct ArgusRecordStruct *ns);
+extern double ArgusFetchSrcIntPktIdlMin (struct ArgusRecordStruct *ns);
+extern double ArgusFetchSrcIntPktIdlMax (struct ArgusRecordStruct *ns);
+
+extern double ArgusFetchDstIntPktAct (struct ArgusRecordStruct *ns);
+extern double ArgusFetchDstIntPktIdl (struct ArgusRecordStruct *ns);
+
+extern double ArgusFetchDstIntPktActMin (struct ArgusRecordStruct *ns);
+extern double ArgusFetchDstIntPktActMax (struct ArgusRecordStruct *ns);
+extern double ArgusFetchDstIntPktIdlMin (struct ArgusRecordStruct *ns);
+extern double ArgusFetchDstIntPktIdlMax (struct ArgusRecordStruct *ns);
+
 extern double ArgusFetchSrcTcpBase (struct ArgusRecordStruct *ns);
 extern double ArgusFetchDstTcpBase (struct ArgusRecordStruct *ns);
 extern double ArgusFetchTcpRtt (struct ArgusRecordStruct *ns);

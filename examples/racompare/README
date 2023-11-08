@@ -19,32 +19,28 @@
  */
 
 
-Gargoyle Clients 5.0 Racompare Readme
+Gargoyle Clients 5.0 Ratop Readme
 QoSient, LLC
 argus@qosient.com
 http:/qosient.com
 
 
-Racompare.1 is a complex program that is designed to compare two argus data
-sets, and report on the differences.
+Ratop() is a complex program that is trying to be the program of choice
+for browsing argus data.  While it started as a 'top' program for flows,
+it is evolving to becoming a flow browser, opening files, remote sockets,
+searching and editing flow data.
 
-Racompare.1 is based on ratop.1, so that you can see the outcome of the comparisons
-on a terminal screen.  As such, racompare() is a curses program that uses readline()
-to provide input string editing and formating. Without a modern ncurses and readline
-library, racompare() doesn't do as good of a job as it can.
+Ratop() is moving in the direction of becoming vi.1 for argus flow data. 
+While vi.1 is not the program of choice for all people, ratop() is just an
+example program, so don't be too harse about the decision to look like vi.
 
-There will be two files fed to racompare.1, the baseline, and then the data to
-compare to the baseline.  There are 3 basic outputs
-   1. datasets where the baseline has an entry, but the input file does not.
-   2. datasets where the baseline and input have matches, but they are different
-   3. datasets where the baseline does not have a matching entry.
+Ratop() is a curses program that uses readline() to provide input string
+editing and formating. Without a modern ncurses and readline library,
+ratop() doesn't do as good of a job as it can.
 
-The model used for matches is specified on the command-line as a key function (-m).
-
-In curses, colors can be used to indicate matches and misses.
 
 Mac OS X
-Since Snow Leopard, Mac OS X is an excellent OS, but ...., the distribution doesn't provide
+Snow Leopard is an excellent OS, but ...., the distribution doesn't provide
 a completely functional readine library.
 
 Use the MacPorts implementation of readline, and things work fine on Snow Leopard.

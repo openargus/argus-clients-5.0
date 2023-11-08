@@ -236,6 +236,7 @@ struct ArgusRecordStruct {
    struct ArgusAggregatorStruct *agg;
    unsigned int status, dsrindex, rank, autoid;
    unsigned short timeout, idle;
+   struct timeval lastSrcStartTime, lastDstStartTime;
    struct RaBinProcessStruct *bins;
    struct ArgusHashTableHdr *htblhdr;
    struct ArgusHashTableHdr *hinthdr;
@@ -274,6 +275,7 @@ struct ArgusCIDRAddr {
 
 #define ARGUS_REAL_TIME_PROCESS   	0x0100
 #define ARGUS_FILE_LIST_PROCESSED	0x1000
+#define ARGUS_BASELINE_LIST_PROCESSED	0x2000
 
 #define ARGUS_LOCAL_TIME		0x01
 #define ARGUS_FORCE_LOCAL_SRC		0x02
@@ -310,6 +312,10 @@ enum ArgusLockFilesEnum {
    ARGUS_FILE_LCK_NONBLOCKING,
 };
 
+#define ARGUS_PRINT_NULL                0x01
+#define ARGUS_PRINT_EMPTY_STRING        0x02
+#define ARGUS_OMIT_EMPTY_STRING         0x04
+
 struct ArgusParserStruct {
    int status;
    uid_t uid;
@@ -340,6 +346,9 @@ struct ArgusParserStruct {
    struct timeval ArgusTimeDelta;
    struct timeval ArgusTimeOffset;
 
+   int (*ArgusParseClientMessage)(struct ArgusParserStruct *, void *, void *, char *);
+   int (*ArgusWriteClientMessage)(struct ArgusParserStruct *, void *, void *, char *);
+
    int ArgusDirectionFunction, ArgusZeroConf;
 
    double ArgusLastRecordTime;
@@ -360,9 +369,9 @@ struct ArgusParserStruct {
    struct ArgusEventsStruct *ArgusEventsTask;
 
 #if defined(ARGUS_THREADS)
-   pthread_t thread, remote, output, timer, dns;
+   pthread_t thread, remote, output, timer, dns, script;
    pthread_t listenthread;
-   pthread_mutex_t lock;
+   pthread_mutex_t lock, sync;
    pthread_cond_t cond;
 #endif /* ARGUS_THREADS */
 
@@ -413,6 +422,7 @@ struct ArgusParserStruct {
    char ArgusPrintMan, ArgusPrintEvent;
    char ArgusPrintXml, ArgusAsnFormat;
    char ArgusPrintJson, ArgusPrintNewick;
+   char ArgusPrintJsonEmptyString;
    char ArgusPrintD3;
    char ArgusSrvInit;
    char RaOutputStarted; 
@@ -456,9 +466,9 @@ struct ArgusParserStruct {
    char aflag, Aflag, bflag, cidrflag;
    char cflag, Cflag, dflag, Dflag, eflag, Eflag;
    char fflag, Fflag, gflag, Gflag, Hflag;
-   char idflag, jflag, Jflag, lflag, iLflag, Lflag, mflag, hflag;
+   signed char idflag, jflag, Jflag, lflag, iLflag, Lflag, mflag, hflag;
    char notNetflag, Oflag, Pflag, qflag, Qflag;
-   char Netflag, nflag, Normflag, Pctflag, pidflag;
+   char Netflag, nflag, nlflag, Normflag, Pctflag, pidflag;
 
    char tflag, uflag, Wflag, vflag, Vflag, iflag;
    char Iflag, rflag, Rflag, Sflag, sflag, Tflag, xflag;
@@ -537,6 +547,8 @@ struct ArgusParserStruct {
    char *ArgusRemoteFilter;
    char *ArgusDisplayFilter;
 
+   char *ArgusGeneratorConfig;
+
    char *ArgusBindAddr;
    char *ArgusEthernetVendorFile;
 
@@ -550,11 +562,21 @@ struct ArgusParserStruct {
    struct ArgusModeStruct *ArgusModeList;
    struct ArgusModeStruct *ArgusMaskList;
 
+   char *ArgusBaseLineMask;
+   char *ArgusSampleMask;
+
    size_t ArgusInputFileCount;
    struct ArgusFileInput *ArgusInputFileList;	        /* first element in file list */
    struct ArgusFileInput *ArgusInputFileListTail;	/* last element in file list */
-   struct ArgusInput *ArgusRemoteHostList;
+
+   size_t ArgusBaselineCount;
+   struct ArgusFileInput *ArgusBaselineList;	/* first element in file list */
+   struct ArgusFileInput *ArgusBaselineListTail;	/* last element in file list */
+
+   struct ArgusInput *ArgusRemoteServerList;
    struct ArgusInput *ArgusCurrentFile;
+
+   struct ArgusOutput *ArgusRemoteClientList;
 
    struct ArgusListStruct *ArgusLabelerFileList;
    struct ArgusListStruct *ArgusWfileList;

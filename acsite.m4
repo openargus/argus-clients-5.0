@@ -887,7 +887,6 @@ ARGUS_MYSQL_MAKEFILE=no
             fi
          fi
 
-
          AC_MSG_CHECKING([for my_bool in $ac_cv_mysql_where_inc/mysql.h])
          AC_EGREP_HEADER(my_bool, $ac_cv_mysql_where_inc/mysql.h,
             MYSQL_MY_BOOL_AVAILABLE=yes,)

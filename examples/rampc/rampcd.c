@@ -1080,6 +1080,7 @@ RaProcessRecord (struct ArgusParserStruct *parser, struct ArgusRecordStruct *arg
 
       case ARGUS_EVENT:
       case ARGUS_NETFLOW:
+      case ARGUS_AFLOW:
       case ARGUS_FAR: {
          struct ArgusTimeObject *time = (void *)argus->dsrs[ARGUS_TIME_INDEX];
 
@@ -1295,6 +1296,7 @@ RaProcessThisRecord (struct ArgusParserStruct *parser, struct ArgusRecordStruct 
 
       case ARGUS_EVENT:
       case ARGUS_NETFLOW:
+      case ARGUS_AFLOW:
       case ARGUS_FAR: {
          if ((probe = ArgusProcessProbe (parser, ns)) != NULL) {
             if ((count = ArgusProbeQueue->count) > 1) {
@@ -2224,19 +2226,19 @@ RadiumParseResourceLine (struct ArgusParserStruct *parser, int linenum,
          break;
 
       case RADIUM_ARGUS_SERVER:
-         if (!parser->Sflag++ && (parser->ArgusRemoteHostList != NULL))
-            ArgusDeleteHostList(parser);
+         if (!parser->Sflag++ && (parser->ArgusRemoteServerList != NULL))
+            ArgusDeleteServerList(parser);
 
-         if (!(ArgusAddHostList (parser, optarg, ARGUS_DATA_SOURCE, IPPROTO_TCP)))
+         if (!(ArgusAddServerList (parser, optarg, ARGUS_DATA_SOURCE, IPPROTO_TCP)))
             ArgusLog (LOG_ERR, "%s: host %s unknown\n", optarg);
          break;
 
       case RADIUM_CISCONETFLOW_PORT: {
          ++parser->Cflag;
-         if (!parser->Sflag++ && (parser->ArgusRemoteHostList != NULL))
-            ArgusDeleteHostList(parser);
+         if (!parser->Sflag++ && (parser->ArgusRemoteServerList != NULL))
+            ArgusDeleteServerList(parser);
 
-         if (!(ArgusAddHostList (parser, optarg, ARGUS_CISCO_DATA_SOURCE, IPPROTO_UDP)))
+         if (!(ArgusAddServerList (parser, optarg, ARGUS_CISCO_DATA_SOURCE, IPPROTO_UDP)))
             ArgusLog (LOG_ERR, "%s: host %s unknown\n", optarg);
 
          break;
@@ -2453,8 +2455,8 @@ clearRadiumConfiguration (void)
 
    ArgusParser->dflag = 0;
 
-   if (ArgusParser->ArgusRemoteHostList != NULL)
-      ArgusDeleteHostList(ArgusParser);
+   if (ArgusParser->ArgusRemoteServerList != NULL)
+      ArgusDeleteServerList(ArgusParser);
 
    if (ArgusParser->ArgusInputFileList) {
       ArgusDeleteFileList(ArgusParser);

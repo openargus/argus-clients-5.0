@@ -125,7 +125,7 @@ static struct qual qerr = { Q_UNDEF, Q_UNDEF, Q_UNDEF};
 %token  TK_BROADCAST TK_MULTICAST FRAG FRAG_ONLY 
 %token  ABR PCR RATE LOAD LOSS PLOSS GAP MAXSEG CO 
 %token  INTER INTERACTIVE INTERIDLE JITTER JITTERACTIVE JITTERIDLE
-%token  DUR AVGDUR DELTADUR DELTASTART DELTALAST
+%token  INTERFLOW INTERFLOWSTDDEV DUR AVGDUR DELTADUR DELTASTART DELTALAST
 %token  DELTASPKTS DELTADPKTS
 %token  SEQ NSTROKE
 %token  NUM FLOAT INBOUND OUTBOUND
@@ -342,6 +342,8 @@ iqual:    PORT			{ $$ = Q_PORT; }
 /* identifier types */
 fqual:    DUR			{ $$ = Q_DUR; }
 	| AVGDUR		{ $$ = Q_AVGDUR; }
+	| INTERFLOW		{ $$ = Q_INTERFLOW; }
+	| INTERFLOWSTDDEV	{ $$ = Q_INTERFLOWSTDDEV; }
 	| INTER			{ $$ = Q_INTER; }
 	| INTERACTIVE		{ $$ = Q_INTERACTIVE; }
 	| INTERIDLE		{ $$ = Q_INTERIDLE; }
@@ -469,7 +471,9 @@ oname:     TCPOPT               { $$ = Q_TCPOPT; }
 	;
 
 other:	  pqual TK_BROADCAST	{ $$ = Argusgen_broadcast($1); }
+	| ptype TK_BROADCAST	{ $$ = Argusgen_broadcast($1); }
 	| pqual TK_MULTICAST	{ $$ = Argusgen_multicast($1); }
+	| ptype TK_MULTICAST	{ $$ = Argusgen_multicast($1); }
 	| INTRANET		{ $$ = Argusgen_intranet(); }
 	| INTERNET		{ $$ = Argusgen_internet(); }
 	| INBOUND		{ $$ = Argusgen_inbound(0); }

@@ -4121,6 +4121,9 @@ ArgusDeleteRecordStruct (struct ArgusParserStruct *parser, struct ArgusRecordStr
 
       if (ns->hinthdr != NULL)
          ArgusRemoveHashEntry(&ns->hinthdr);
+
+      if (ns->disp.str != NULL)
+         free(ns->disp.str);
  
       if (ns->nsq != NULL) {
          while ((tsns = (struct ArgusRecordStruct *) ArgusPopQueue(ns->nsq, ARGUS_LOCK)) != NULL)

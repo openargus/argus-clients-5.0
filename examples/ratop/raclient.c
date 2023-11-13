@@ -338,6 +338,7 @@ ArgusThreadsInit(pthread_attr_t *attr)
 #endif
 }
 
+int ArgusProcessDataInitialize = 0;
 
 void *
 ArgusProcessData (void *arg)
@@ -346,17 +347,18 @@ ArgusProcessData (void *arg)
    int done = 0;
 #endif
 
-   struct ArgusParserStruct *parser = ArgusParser;
+   struct ArgusParserStruct *parser = (struct ArgusParserStruct *) arg;
 
-   while (parser == NULL) {
-      struct timespec ts = {0, 250000000};
-      nanosleep (&ts, NULL);
-      parser = ArgusParser;
-   }
+/*
+   if (pthread_mutex_lock(&parser->sync) != 0)
+      ArgusLog(LOG_ERR, "ArgusProcessData: pthread_mutex_lock error: %s\n", strerror(errno));
 
-   pthread_mutex_lock(&parser->sync);
-   pthread_cond_wait(&parser->cond, &parser->sync);
-   pthread_mutex_unlock(&parser->sync);
+   if (pthread_cond_wait(&parser->cond, &parser->sync) != 0)
+      ArgusLog(LOG_ERR, "ArgusProcessData: pthread_cond_wait error: %s\n", strerror(errno));
+
+   if (pthread_mutex_unlock(&parser->sync) != 0)
+      ArgusLog(LOG_ERR, "ArgusProcessData: pthread_mutex_unlock error: %s\n", strerror(errno));
+*/
 
 #ifdef ARGUSDEBUG
    ArgusDebug (2, "ArgusProcessData() starting");
@@ -1776,6 +1778,7 @@ RaProcessThisRecord (struct ArgusParserStruct *parser, struct ArgusRecordStruct 
                                     break;
                                  }
                               }
+                              ArgusDeleteRecordStruct(ArgusParser, dns);
                            }
                         }
                      }
@@ -1936,10 +1939,10 @@ RaProcessThisRecord (struct ArgusParserStruct *parser, struct ArgusRecordStruct 
 void
 RaProcessThisLsOfEventRecord (struct ArgusParserStruct *parser, struct ArgusRecordStruct *ns)
 {
-   struct ArgusRecordStruct *tns = NULL, *pns = NULL, *cns = NULL;
+   struct ArgusRecordStruct *pns = NULL, *cns = NULL;
    struct ArgusAggregatorStruct *agg = ArgusEventAggregator;
-   struct ArgusFlow *flow = (struct ArgusFlow *) ns->dsrs[ARGUS_FLOW_INDEX];
    struct ArgusHashStruct *hstruct = NULL;
+   struct ArgusFlow *flow = NULL;
    int found = 0;
 
    if (ArgusParser->RaClientUpdate.tv_sec == 0) {
@@ -1956,119 +1959,88 @@ RaProcessThisLsOfEventRecord (struct ArgusParserStruct *parser, struct ArgusReco
       struct nff_insn *fcode = agg->filter.bf_insns;
 
       if (ArgusFilterRecord (fcode, ns) != 0) {
-         cns = ArgusCopyRecordStruct(ns);
-         if (flow != NULL) {
-            if ((agg->rap = RaFlowModelOverRides(agg, cns)) == NULL)
-               agg->rap = agg->drap;
+         if ((cns = ArgusCopyRecordStruct(ns)) != NULL) {
+            if ((flow = (struct ArgusFlow *) cns->dsrs[ARGUS_FLOW_INDEX]) != NULL) {
+               if ((agg->rap = RaFlowModelOverRides(agg, cns)) == NULL)
+                  agg->rap = agg->drap;
 
-            ArgusGenerateNewFlow(agg, cns);
-            agg->ArgusMaskDefs = NULL;
+               ArgusGenerateNewFlow(agg, cns);
+               agg->ArgusMaskDefs = NULL;
 
-            if ((hstruct = ArgusGenerateHashStruct(agg, cns, flow)) == NULL)
-               ArgusLog (LOG_ERR, "RaProcessRecord: ArgusGenerateHashStruct error %s", strerror(errno));
+               if ((hstruct = ArgusGenerateHashStruct(agg, cns, flow)) == NULL)
+                  ArgusLog (LOG_ERR, "RaProcessRecord: ArgusGenerateHashStruct error %s", strerror(errno));
 
-            if ((pns = ArgusFindRecord(RaEventProcess->htable, hstruct)) == NULL) {
-//             struct ArgusFlow *cflow = (struct ArgusFlow *) cns->dsrs[ARGUS_FLOW_INDEX];
-               int tryreverse = 1;
+               if ((pns = ArgusFindRecord(RaEventProcess->htable, hstruct)) == NULL) {
+                  int tryreverse = 1;
 
-               switch (flow->hdr.argus_dsrvl8.qual & 0x1F) {
-                  case ARGUS_TYPE_IPV4: {
-                     switch (flow->ip_flow.ip_p) {
-                        case IPPROTO_ESP:
-                           tryreverse = 0;
-                           break;
+                  switch (flow->hdr.argus_dsrvl8.qual & 0x1F) {
+                     case ARGUS_TYPE_IPV4: {
+                        switch (flow->ip_flow.ip_p) {
+                           case IPPROTO_ESP:
+                              tryreverse = 0;
+                              break;
+                        }
+                        break;
                      }
-                     break;
-                  }
-                  case ARGUS_TYPE_IPV6: {
-                     switch (flow->ipv6_flow.ip_p) {
-                        case IPPROTO_ESP:
-                           tryreverse = 0;
-                           break;
+                     case ARGUS_TYPE_IPV6: {
+                        switch (flow->ipv6_flow.ip_p) {
+                           case IPPROTO_ESP:
+                              tryreverse = 0;
+                              break;
+                        }
+                        break;
                      }
-                     break;
                   }
-               }
 
-               if (!parser->RaMonMode && tryreverse) {
-                  struct ArgusRecordStruct *dns = ArgusCopyRecordStruct(ns);
+                  if (!parser->RaMonMode && tryreverse) {
+                     ArgusReverseRecord (cns);
+                     ArgusGenerateNewFlow(agg, cns);
 
-                  ArgusReverseRecord (dns);
-
-                  ArgusGenerateNewFlow(agg, dns);
-
-                  if ((hstruct = ArgusGenerateHashStruct(agg, dns, flow)) == NULL)
-                     ArgusLog (LOG_ERR, "RaProcessThisRecord: ArgusGenerateHashStruct error %s", strerror(errno));
-
-                  if ((pns = ArgusFindRecord(RaEventProcess->htable, hstruct)) != NULL) {
-                     ArgusDeleteRecordStruct(ArgusParser, cns);
-                     cns = dns;
-
-                  } else {
-                     ArgusDeleteRecordStruct(ArgusParser, dns);
                      if ((hstruct = ArgusGenerateHashStruct(agg, cns, flow)) == NULL)
                         ArgusLog (LOG_ERR, "RaProcessThisRecord: ArgusGenerateHashStruct error %s", strerror(errno));
+
+                     pns = ArgusFindRecord(RaEventProcess->htable, hstruct);
                   }
                }
             }
          }
 
-         if ((pns) && pns->qhdr.queue) {
-            if (pns->qhdr.queue != RaEventProcess->queue)
-               ArgusRemoveFromQueue (pns->qhdr.queue, &pns->qhdr, ARGUS_LOCK);
-            else
-               ArgusRemoveFromQueue (pns->qhdr.queue, &pns->qhdr, ARGUS_NOLOCK);
+         if (pns != NULL) {
+            found++;
+            if (pns->qhdr.queue) {
+               if (pns->qhdr.queue != RaEventProcess->queue)
+                  ArgusRemoveFromQueue (pns->qhdr.queue, &pns->qhdr, ARGUS_LOCK);
+               else
+                  ArgusRemoveFromQueue (pns->qhdr.queue, &pns->qhdr, ARGUS_NOLOCK);
+            }
 
             ArgusAddToQueue (RaEventProcess->queue, &pns->qhdr, ARGUS_NOLOCK);
          }
-         found++;
-
-      } else
-         agg = agg->nxt;
+      }
+      agg = agg->nxt;
    }
 
-   if (cns) {
-      if (!found)
-         if ((hstruct = ArgusGenerateHashStruct(agg, cns, flow)) == NULL)
-            ArgusLog (LOG_ERR, "RaProcessThisRecord: ArgusGenerateHashStruct error %s", strerror(errno));
-
-      switch (ns->hdr.type & 0xF0) {
+   if (pns != NULL) {
+      switch (pns->hdr.type & 0xF0) {
          case ARGUS_NETFLOW:
          case ARGUS_FAR: {
-            tns = ArgusCopyRecordStruct(cns);
-            if (pns) {
-               if (parser->RaCumulativeMerge)
-                  ArgusMergeRecords (ArgusParser->ArgusAggregator, pns, tns);
-               else {
-                  int i;
-                  for (i = 0; i < ARGUSMAXDSRTYPE; i++) {
-                     if (tns->dsrs[i] != NULL) {
-                        if (pns->dsrs[i] != NULL)
-                           ArgusFree(pns->dsrs[i]);
-                        pns->dsrs[i] = tns->dsrs[i];
-                        tns->dsrs[i] = NULL;
-                     }
-                  }
-               }
-
-               ArgusDeleteRecordStruct(ArgusParser, tns);
-               pns->status |= ARGUS_RECORD_MODIFIED;
-
-               ArgusRemoveFromQueue(RaEventProcess->queue, &pns->qhdr, ARGUS_NOLOCK);
-               ArgusAddToQueue (RaEventProcess->queue, &pns->qhdr, ARGUS_NOLOCK);
-
-            } else {
-               pns = tns;
-               pns->status |= ARGUS_RECORD_MODIFIED;
-               pns->htblhdr = ArgusAddHashEntry (RaEventProcess->htable, pns, hstruct);
-               ArgusAddToQueue (RaEventProcess->queue, &pns->qhdr, ARGUS_NOLOCK);
-            }
-            RaWindowModified = RA_MODIFIED;
+            ArgusMergeRecords (ArgusParser->ArgusAggregator, pns, cns);
+            pns->status |= ARGUS_RECORD_MODIFIED;
+            ArgusRemoveFromQueue(RaEventProcess->queue, &pns->qhdr, ARGUS_NOLOCK);
+            ArgusAddToQueue (RaEventProcess->queue, &pns->qhdr, ARGUS_NOLOCK);
+            break;
          }
       }
 
-      ArgusDeleteRecordStruct(ArgusParser, cns);
+      if (cns != NULL) 
+         ArgusDeleteRecordStruct(ArgusParser, cns);
+
+   } else {
+      cns->status |= ARGUS_RECORD_MODIFIED;
+      cns->htblhdr = ArgusAddHashEntry (RaEventProcess->htable, cns, hstruct);
+      ArgusAddToQueue (RaEventProcess->queue, &cns->qhdr, ARGUS_NOLOCK);
    }
+   RaWindowModified = RA_MODIFIED;
 
 #if defined(ARGUSDEBUG)
    ArgusDebug (4, "RaProcessThisLsOfEventRecord () returning\n");
@@ -2346,6 +2318,21 @@ RaParseSnmpEventRecord (struct ArgusParserStruct *parser, char *dptr, struct Arg
 #endif
 }
 
+/*
+
+RaParseLsOfEventRecord (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int)
+
+In the user buffer of this record will be multiple lines that have a flow descriptor and
+identifiers.  The idea is to parse these out, generate flow records from the flow descriptors,
+find a record that matches the descriptor, and add the identifiers as labels to
+the cached matching flows.
+
+So parse out the line,
+Create a flow record with the flow descriptors,
+Find the record,
+and merge the labels.
+
+*/
 
 void
 RaParseLsOfEventRecord (struct ArgusParserStruct *parser, char *dptr, struct ArgusRecordStruct *argus, int status)
@@ -2488,6 +2475,10 @@ RaParseLsOfEventRecord (struct ArgusParserStruct *parser, char *dptr, struct Arg
                      ArgusDebug (3, "RaProcessEventRecord: %s:srcid=%s:%s: %s %s.%s -> %s.%s %s\n", tbuf, sptr, app, node, 
                                          saddr, sport, daddr, dport, state);
 #endif
+
+
+// Create a flow record to use to find if a matching flow exists
+
                         if ((ns = ArgusGenerateRecordStruct(NULL, NULL, NULL)) != NULL) {
                            extern struct ArgusCanonRecord ArgusGenerateCanonBuffer;
                            struct ArgusCanonRecord  *canon = &ArgusGenerateCanonBuffer;
@@ -2544,7 +2535,6 @@ RaParseLsOfEventRecord (struct ArgusParserStruct *parser, char *dptr, struct Arg
                            label->hdr.subtype = ARGUS_PROC_LABEL;
                            label->hdr.argus_dsrvl8.len  = 1 + ((strlen(lptr) + 3)/4);
 
-                           if (label->l_un.label != NULL) free (label->l_un.label); 
                            label->l_un.label = lptr;
                            ns->dsrindex |= (0x01 << ARGUS_LABEL_INDEX);
 
@@ -2857,7 +2847,7 @@ ArgusCorrelateRecord (struct ArgusRecordStruct *ns)
          struct ArgusLabelStruct *l2 = (void *) pns->dsrs[ARGUS_LABEL_INDEX];
 
          if (l1 && l2) {
-            if (l1->l_un.label && l2->l_un.label) {
+            if ((l1->l_un.label != NULL) && (l2->l_un.label != NULL)) {
                if (strcmp(l1->l_un.label, l2->l_un.label)) {
                   char *buf, *label = NULL;
 
@@ -2878,6 +2868,7 @@ ArgusCorrelateRecord (struct ArgusRecordStruct *ns)
                      bcopy (label, l1->l_un.label, slen + 1);
                   }
                   ns->status |= ARGUS_RECORD_MODIFIED;
+                  ArgusFree(buf);
                }
 
             } else {

@@ -215,7 +215,7 @@ int
 RaLabelParseResourceFile (struct ArgusParserStruct *parser, struct ArgusLabelerStruct *labeler, char *file)
 {
    extern int ArgusEtherArrayInited;
-   char strbuf[MAXSTRLEN], *str = strbuf;
+   char *strbuf, *str;
    int retn = 1, lines = 0;
    FILE *fd = NULL;
 
@@ -223,6 +223,11 @@ RaLabelParseResourceFile (struct ArgusParserStruct *parser, struct ArgusLabelerS
       ArgusInitEtherarray();
 
    if (file) {
+      if ((strbuf = (void *)ArgusCalloc(MAXSTRLEN, sizeof(char))) == NULL) 
+         ArgusLog (LOG_ERR, "RaRealFlowLabels: ArgusCalloc error %s\n", strerror(errno));
+
+      str = strbuf;
+
       if ((fd = fopen (file, "r")) != NULL) {
          retn = 0;
          while ((fgets(str, MAXSTRLEN, fd)) != NULL)  {
@@ -240,6 +245,8 @@ RaLabelParseResourceFile (struct ArgusParserStruct *parser, struct ArgusLabelerS
          ArgusDebug (2, "RaLabelParseResourceFile:  %s: %s\n", file, strerror(errno));
 #endif
       }
+
+      ArgusFree(strbuf);
    }
 #ifdef ARGUSDEBUG
    ArgusDebug (6, "RaLabelParseResourceFile: %s done\n", file);
@@ -949,17 +956,21 @@ ArgusMergeLabel(char *l1, char *l2, char *buf, int len, int type)
    if (l1 != NULL) {
       if ((l1buf = (void *)ArgusCalloc(1, MAXSTRLEN)) == NULL)
          ArgusLog (LOG_ERR, "ArgusMergeLabel: ArgusCalloc error %s\n", strerror(errno));
-
+/*
       if ((l1str = ArgusConvertLabelToJson(l1, l1buf, MAXSTRLEN)) != NULL)
          res1 = ArgusJsonParse(l1str, &l1root);
+*/
    }
 
    if (l2 != NULL) {
       if ((l2buf = (void *)ArgusCalloc(1, MAXSTRLEN)) == NULL)
          ArgusLog (LOG_ERR, "ArgusMergeLabel: ArgusCalloc error %s\n", strerror(errno));
 
+/*
+      if ((l1str = ArgusConvertLabelToJson(l1, l1buf, MAXSTRLEN)) != NULL)
       if ((l2str = ArgusConvertLabelToJson(l2, l2buf, MAXSTRLEN)) != NULL) 
          res2 = ArgusJsonParse(l2str, &l2root);
+*/
    }
 
 // OK, at this point were ready to go, just go through all the attributes
@@ -2730,7 +2741,6 @@ RaInsertLocalityTree (struct ArgusParserStruct *parser, struct ArgusLabelerStruc
    if (labeler != NULL) {
       int state = ARGUS_PARSING_START_ADDRESS;
       struct enamemem *tp = NULL;
-      char *macstr = NULL;
 
       snprintf (tstrbuf, MAXSTRLEN, "%s", str);
       ptr = tstrbuf;
@@ -2742,7 +2752,7 @@ RaInsertLocalityTree (struct ArgusParserStruct *parser, struct ArgusLabelerStruc
                   *eptr++ = '\0';
 
                if (RaIsEtherAddr (parser, sptr)) {
-                  tp = lookup_emem(elabeltable, sptr);
+                  tp = lookup_emem(elabeltable, (const u_char *) sptr);
                   if (tp->e_name == NULL) {
                      tp->e_name = savestr(sptr);
                   }
@@ -5931,7 +5941,6 @@ ArgusGetInterfaceAddresses(struct ArgusParserStruct *parser)
                   struct sockaddr_dl *sdp = (struct sockaddr_dl *) p->ifa_addr; 
                   static struct argus_etherent e;
                   struct enamemem *tp;
-
                   char *macstr = NULL;
 
                   bzero((char *)&e, sizeof(e));

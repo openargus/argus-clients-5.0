@@ -1959,6 +1959,9 @@ RaProcessThisLsOfEventRecord (struct ArgusParserStruct *parser, struct ArgusReco
       struct nff_insn *fcode = agg->filter.bf_insns;
 
       if (ArgusFilterRecord (fcode, ns) != 0) {
+         if (cns != NULL)
+            ArgusDeleteRecordStruct(ArgusParser, cns);
+
          if ((cns = ArgusCopyRecordStruct(ns)) != NULL) {
             if ((flow = (struct ArgusFlow *) cns->dsrs[ARGUS_FLOW_INDEX]) != NULL) {
                if ((agg->rap = RaFlowModelOverRides(agg, cns)) == NULL)
@@ -2006,7 +2009,6 @@ RaProcessThisLsOfEventRecord (struct ArgusParserStruct *parser, struct ArgusReco
          }
 
          if (pns != NULL) {
-            found++;
             if (pns->qhdr.queue) {
                if (pns->qhdr.queue != RaEventProcess->queue)
                   ArgusRemoveFromQueue (pns->qhdr.queue, &pns->qhdr, ARGUS_LOCK);
@@ -2015,6 +2017,7 @@ RaProcessThisLsOfEventRecord (struct ArgusParserStruct *parser, struct ArgusReco
             }
 
             ArgusAddToQueue (RaEventProcess->queue, &pns->qhdr, ARGUS_NOLOCK);
+            found++;
          }
       }
       agg = agg->nxt;
@@ -2031,9 +2034,7 @@ RaProcessThisLsOfEventRecord (struct ArgusParserStruct *parser, struct ArgusReco
             break;
          }
       }
-
-      if (cns != NULL) 
-         ArgusDeleteRecordStruct(ArgusParser, cns);
+      ArgusDeleteRecordStruct(ArgusParser, cns);
 
    } else {
       cns->status |= ARGUS_RECORD_MODIFIED;

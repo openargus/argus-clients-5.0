@@ -7836,7 +7836,7 @@ ArgusPrintCor (struct ArgusParserStruct *parser, char *buf, struct ArgusRecordSt
 
                      default:
                      case ARGUS_TYPE_IPV4:   value =   strdup(ArgusGetName(parser, (u_char *)&trans->srcid.a_un.ipv4)); break;
-                     case ARGUS_TYPE_IPV6:   value = ArgusGetV6Name(parser, (u_char *)&trans->srcid.a_un.ipv6); break;
+                     case ARGUS_TYPE_IPV6:   value = strdup(ArgusGetV6Name(parser, (u_char *)&trans->srcid.a_un.ipv6)); break;
 //                   case ARGUS_TYPE_ETHER:  value = ArgusGetEtherName(parser, (u_char *)&trans->srcid.a_un.ether); break;
                   }
                   if (trans->hdr.argus_dsrvl8.qual & ARGUS_TYPE_INTERFACE) {
@@ -8998,7 +8998,7 @@ ArgusPrintSourceID (struct ArgusParserStruct *parser, char *buf, struct ArgusRec
 
                default:
                case ARGUS_IDIS_IPV4:   value =   strdup(ArgusGetName(parser, (u_char *)&rec->argus_mar.ipv4)); break;
-               case ARGUS_IDIS_IPV6:   value = ArgusGetV6Name(parser, (u_char *)&rec->argus_mar.ipv6); break;
+               case ARGUS_IDIS_IPV6:   value = strdup(ArgusGetV6Name(parser, (u_char *)&rec->argus_mar.ipv6)); break;
             }
 
             if (rec->argus_mar.status & ARGUS_ID_INC_INF) {
@@ -9031,7 +9031,7 @@ ArgusPrintSourceID (struct ArgusParserStruct *parser, char *buf, struct ArgusRec
 
                default:
                case ARGUS_TYPE_IPV4:   value =   strdup(ArgusGetName(parser, (u_char *)&trans->srcid.a_un.ipv4)); break;
-               case ARGUS_TYPE_IPV6:   value = ArgusGetV6Name(parser, (u_char *)&trans->srcid.a_un.ipv6); break;
+               case ARGUS_TYPE_IPV6:   value = strdup(ArgusGetV6Name(parser, (u_char *)&trans->srcid.a_un.ipv6)); break;
 //             case ARGUS_TYPE_ETHER:  value = ArgusGetEtherName(parser, (u_char *)&trans->srcid.a_un.ether); break;
             }
             if (trans->hdr.argus_dsrvl8.qual & ARGUS_TYPE_INTERFACE) {
@@ -9112,7 +9112,7 @@ ArgusPrintSID (struct ArgusParserStruct *parser, char *buf, struct ArgusRecordSt
 
                default:
                case ARGUS_IDIS_IPV4:   value =   strdup(ArgusGetName(parser, (u_char *)&rec->argus_mar.ipv4)); break;
-               case ARGUS_IDIS_IPV6:   value = ArgusGetV6Name(parser, (u_char *)&rec->argus_mar.ipv6); break;
+               case ARGUS_IDIS_IPV6:   value = strdup(ArgusGetV6Name(parser, (u_char *)&rec->argus_mar.ipv6)); break;
             }
          }
          break;
@@ -9135,7 +9135,7 @@ ArgusPrintSID (struct ArgusParserStruct *parser, char *buf, struct ArgusRecordSt
 
                default:
                case ARGUS_TYPE_IPV4:   value =   strdup(ArgusGetName(parser, (u_char *)&trans->srcid.a_un.ipv4)); break;
-               case ARGUS_TYPE_IPV6:   value = ArgusGetV6Name(parser, (u_char *)&trans->srcid.a_un.ipv6); break;
+               case ARGUS_TYPE_IPV6:   value = strdup(ArgusGetV6Name(parser, (u_char *)&trans->srcid.a_un.ipv6)); break;
 //             case ARGUS_TYPE_ETHER:  value = ArgusGetEtherName(parser, (u_char *)&trans->srcid.a_un.ether); break;
             }
          }
@@ -9205,7 +9205,7 @@ ArgusPrintNode (struct ArgusParserStruct *parser, char *buf, struct ArgusRecordS
 
                default:
                case ARGUS_IDIS_IPV4:   value =   strdup(ArgusGetName(parser, (u_char *)&rec->argus_mar.ipv4)); break;
-               case ARGUS_IDIS_IPV6:   value = ArgusGetV6Name(parser, (u_char *)&rec->argus_mar.ipv6); break;
+               case ARGUS_IDIS_IPV6:   value = strdup(ArgusGetV6Name(parser, (u_char *)&rec->argus_mar.ipv6)); break;
             }
          }
          break;
@@ -9228,7 +9228,7 @@ ArgusPrintNode (struct ArgusParserStruct *parser, char *buf, struct ArgusRecordS
 
                default:
                case ARGUS_TYPE_IPV4:   value =   strdup(ArgusGetName(parser, (u_char *)&trans->srcid.a_un.ipv4)); break;
-               case ARGUS_TYPE_IPV6:   value = ArgusGetV6Name(parser, (u_char *)&trans->srcid.a_un.ipv6); break;
+               case ARGUS_TYPE_IPV6:   value = strdup(ArgusGetV6Name(parser, (u_char *)&trans->srcid.a_un.ipv6)); break;
 //             case ARGUS_TYPE_ETHER:  value = ArgusGetEtherName(parser, (u_char *)&trans->srcid.a_un.ether); break;
             }
          }
@@ -10928,23 +10928,19 @@ ArgusPrintAddr (struct ArgusParserStruct *parser, char *buf, int type, void *add
                snprintf (addrbuf, sizeof(addrbuf), "%s", tptr);
                addrstr = addrbuf;
             } else {
-               addrstr = ArgusGetV6Name (parser, (unsigned char *)addr);
-               strcpy(addrbuf, addrstr);
-               free(addrstr);
+               snprintf (addrbuf, sizeof(addrbuf), "%s", ArgusGetV6Name (parser, (unsigned char *)addr));
                addrstr = addrbuf;
-
-               switch (parser->cidrflag) {
-                  case RA_ENABLE_CIDR_ADDRESS_FORMAT:
-                     if ((masklen == 128) || (masklen == 0))
-                        break;
+            }
+            switch (parser->cidrflag) {
+               case RA_ENABLE_CIDR_ADDRESS_FORMAT:
+                  if ((masklen == 128) || (masklen == 0))
+                     break;
 
 //  deliberately fall through
-                  case RA_STRICT_CIDR_ADDRESS_FORMAT:
-                     sprintf(addrbuf, "%s/%d", addrstr, masklen);
-                     addrstr = addrbuf;
-               }
+              case RA_STRICT_CIDR_ADDRESS_FORMAT:
+                 sprintf(addrbuf, "%s/%d", addrstr, masklen);
+                 addrstr = addrbuf;
             }
-
             break;
          }
 
@@ -22662,7 +22658,7 @@ ArgusGetV6Name(struct ArgusParserStruct *parser, u_char *ap)
    p = &h6nametable[key & (HASHNAMESIZE-1)];
    for (; p->nxt; p = p->nxt) {
       if (memcmp(&p->addr, &addr, sizeof(addr)) == 0)
-         return strdup(p->name);
+         return (p->name);
    }
    p->addr = addr;
    p->nxt = (struct h6namemem *)calloc(1, sizeof (*p));
@@ -22684,14 +22680,14 @@ ArgusGetV6Name(struct ArgusParserStruct *parser, u_char *ap)
          (void)alarm(0);
          if (hp) {
             if ((p->name = strdup(hp->h_name)) != NULL)
-               return strdup(p->name);
+               return (p->name);
          }
       }
    }
  
    if ((cp = inet_ntop(AF_INET6, (const void *) &addr, ntop_buf, sizeof(ntop_buf))) != NULL) {
       p->name = strdup(cp);
-      return strdup(p->name);
+      return (p->name);
    }
    return NULL;
 }

@@ -136,6 +136,11 @@
 #define INET6_ADDRSTRLEN	46
 #endif
 
+#define ARGUS_PRINT_TEMP_BUF_SIZE       0x10000
+#define ARGUS_TEMP_BUF_SIZE             0x400
+char *ArgusPrintTempBuf = NULL;
+char *ArgusTempBuffer = NULL;
+
 #define EXTRACT_FLOAT(p)        (*(float *)p)
 #define EXTRACT_DOUBLE(p)       (*(double *)p)
 #define EXTRACT_LONGLONG(p)     (*(unsigned long long *)p)
@@ -863,6 +868,16 @@ ArgusShutDown (int sig)
 
       if (ArgusParser->ArgusPrintXml && ArgusParser->RaOutputStarted)
          printf("</ArgusDataStream>\n"); 
+
+      if (ArgusPrintTempBuf != NULL) {
+         ArgusFree (ArgusPrintTempBuf);
+         ArgusPrintTempBuf = NULL;
+      }
+
+      if (ArgusTempBuffer != NULL) {
+         ArgusFree (ArgusTempBuffer);
+         ArgusTempBuffer = NULL;
+      }
 
 #ifdef ARGUSDEBUG
       ArgusDebug (2, "RaParseComplete(caught signal %d)\n", sig);
@@ -5676,11 +5691,6 @@ int ArgusPrintRecordCloser (struct ArgusParserStruct *, char *, struct ArgusReco
 
 int ArgusParseInited = 0;
 extern char version[];
-
-#define ARGUS_PRINT_TEMP_BUF_SIZE       0x10000
-#define ARGUS_TEMP_BUF_SIZE             0x400
-char *ArgusPrintTempBuf = NULL;
-char *ArgusTempBuffer = NULL;
 
 void
 ArgusPrintRecord (struct ArgusParserStruct *parser, char *buf, struct ArgusRecordStruct *argus, int len)
@@ -10921,18 +10931,16 @@ ArgusPrintAddr (struct ArgusParserStruct *parser, char *buf, int type, void *add
                snprintf (addrbuf, sizeof(addrbuf), "%s", ArgusGetV6Name (parser, (unsigned char *)addr));
                addrstr = addrbuf;
             }
-
             switch (parser->cidrflag) {
                case RA_ENABLE_CIDR_ADDRESS_FORMAT:
                   if ((masklen == 128) || (masklen == 0))
                      break;
 
 //  deliberately fall through
-               case RA_STRICT_CIDR_ADDRESS_FORMAT:
-                  sprintf(addrbuf, "%s/%d", addrstr, masklen);
-                  addrstr = addrbuf;
+              case RA_STRICT_CIDR_ADDRESS_FORMAT:
+                 sprintf(addrbuf, "%s/%d", addrstr, masklen);
+                 addrstr = addrbuf;
             }
-
             break;
          }
 
@@ -22690,7 +22698,7 @@ unsigned int
 getnamehash(const u_char *np)
 {
    unsigned int retn = 0;
-   unsigned char *ptr = np;
+   unsigned char *ptr = (unsigned char *) np;
    if (ptr != NULL) {
       retn = 5381;
       int c;

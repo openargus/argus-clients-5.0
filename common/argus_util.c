@@ -141,6 +141,10 @@
 char *ArgusPrintTempBuf = NULL;
 char *ArgusTempBuffer = NULL;
 
+int ArgusEtherArrayInited = 0;
+int ArgusParseInited = 0;
+extern char version[];
+
 #define EXTRACT_FLOAT(p)        (*(float *)p)
 #define EXTRACT_DOUBLE(p)       (*(double *)p)
 #define EXTRACT_LONGLONG(p)     (*(unsigned long long *)p)
@@ -5695,9 +5699,6 @@ ArgusPrintXmlSortAlgorithms(struct ArgusParserStruct *parser)
 int ArgusPrintRecordHeader (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
 int ArgusPrintRecordCloser (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
 
-int ArgusParseInited = 0;
-extern char version[];
-
 void
 ArgusPrintRecord (struct ArgusParserStruct *parser, char *buf, struct ArgusRecordStruct *argus, int len)
 {
@@ -10875,7 +10876,7 @@ isis_print_id(const u_int8_t *cp, int id_len)
 void
 ArgusPrintAddr (struct ArgusParserStruct *parser, char *buf, int type, void *addr, int objlen, unsigned char masklen, int len, int dir)
 {
-   char addrbuf[128], *addrstr = NULL;
+   char addrbuf[128], abuf[64], *addrstr = NULL;
    char *dirstr, *dptr = NULL;
 
    switch (dir) {
@@ -10898,8 +10899,8 @@ ArgusPrintAddr (struct ArgusParserStruct *parser, char *buf, int type, void *add
 
                if ((format != NULL) && (strlen(format) > 0)) {
                   if (strcmp(format, "%s")) {
-                     snprintf (addrbuf, sizeof(addrbuf), format, naddr);
-                     addrstr = addrbuf;
+                     snprintf (abuf, sizeof(abuf), format, naddr);
+                     addrstr = abuf;
                   }
                }
 
@@ -10909,8 +10910,8 @@ ArgusPrintAddr (struct ArgusParserStruct *parser, char *buf, int type, void *add
                if ((format != NULL) && (strlen(format) > 0)) {
                   if (strcmp(format, "%s")) {
                      unsigned int naddr = *(unsigned int *)addr;
-                     snprintf (addrbuf, sizeof(addrbuf), format, naddr);
-                     addrstr = addrbuf;
+                     snprintf (abuf, sizeof(abuf), format, naddr);
+                     addrstr = abuf;
                   }
                }
 
@@ -10931,11 +10932,11 @@ ArgusPrintAddr (struct ArgusParserStruct *parser, char *buf, int type, void *add
             if ((format != NULL) && (strlen(format) > 0)) {
                char bbuf[64], *tptr = bbuf;
                sprint128(tptr, format, (uint128 *)addr);
-               snprintf (addrbuf, sizeof(addrbuf), "%s", tptr);
-               addrstr = addrbuf;
+               snprintf (abuf, sizeof(addrbuf), "%s", tptr);
+               addrstr = abuf;
             } else {
-               snprintf (addrbuf, sizeof(addrbuf), "%s", ArgusGetV6Name (parser, (unsigned char *)addr));
-               addrstr = addrbuf;
+               snprintf (abuf, sizeof(addrbuf), "%s", ArgusGetV6Name (parser, (unsigned char *)addr));
+               addrstr = abuf;
             }
             switch (parser->cidrflag) {
                case RA_ENABLE_CIDR_ADDRESS_FORMAT:
@@ -22983,7 +22984,6 @@ lookup_protoid(const u_char *pi)
    return tp;
 }
 
-int ArgusEtherArrayInited = 0;
 
 char *
 etheraddr_string(struct ArgusParserStruct *parser, u_char *ep)
@@ -23694,8 +23694,8 @@ ArgusInitServarray(struct ArgusParserStruct *parser)
    if (parser->ArgusSrvInit > 0) 
       return;
 
+   pthread_mutex_lock(&parser->lock);
    setservent(1);
-
    while ((sv = getservent()) != NULL) {
       int port = ntohs(sv->s_port);
       i = port % (HASHNAMESIZE-1);
@@ -23722,6 +23722,7 @@ ArgusInitServarray(struct ArgusParserStruct *parser)
    }
    endservent();
    parser->ArgusSrvInit = 1;
+   pthread_mutex_unlock(&parser->lock);
 #endif
 }
 
@@ -23730,15 +23731,15 @@ ArgusFreeServarray(struct ArgusParserStruct *parser)
 {
    int i, x;
 
-   for (i = 0; i < HASHNAMESIZE; i++) {
+   for (x = 0; x < 2; x++) {
       struct hnamemem *table;
 
-      for (x = 0; x < 2; x++) {
-         switch (x) {
-            case 0: table = tporttable; break;
-            case 1: table = uporttable; break;
-         }
+      switch (x) {
+         case 0: table = tporttable; break;
+         case 1: table = uporttable; break;
+      }
 
+      for (i = 0; i < HASHNAMESIZE; i++) {
          if ((struct hnamemem *)table[i].name != NULL) {
             struct hnamemem *tp, *sp;
 
@@ -23913,6 +23914,30 @@ ArgusInitEtherarray(void)
 }
 
 void
+ArgusFreeHostarray(void)
+{
+   int i, start;
+
+   if (ArgusParseInited) {
+      for (i = 0; i < HASHNAMESIZE; i++) {
+         static struct hnamemem *p, *np;
+         start = 1;
+         p = &hnametable[i];
+         while (p != NULL) {
+            if (p->name  != NULL) free(p->name);
+            if (p->nname != NULL) free(p->nname);
+            np = p->nxt;
+            if (start == 0) {
+               free (p);
+            }
+            p = np;
+            start = 0;
+         }
+      }
+   }
+}
+
+void
 ArgusFreeEtherarray(void)
 {
    int i;
@@ -23929,6 +23954,8 @@ ArgusFreeEtherarray(void)
             } while ((tp = sp) != NULL);
          }
       }
+      ArgusFree(enametable);
+      enametable = NULL;
    }
 
    if (ArgusParser->ArgusEthernetVendorFile != NULL) {
@@ -30563,7 +30590,6 @@ ArgusCloseInput(struct ArgusParserStruct *parser, struct ArgusInput *input)
    if ((parser->eNflag >= 0) && (parser->ArgusTotalRecords > parser->eNflag)) {
       if (parser->ArgusReliableConnection)
          parser->ArgusReliableConnection = 0;
-//    parser->RaShutDown = 1;
    }
  
 /*

@@ -740,12 +740,13 @@ ArgusShutDown (int sig)
 #endif
 
    if (!(ArgusParser->RaShutDown++)) {
-      if (ArgusParser->RaPrintOptionIndex > 0) {
-         int x, cnt = ArgusParser->RaPrintOptionIndex;
-         for (x = 0; x < cnt; x++)
-            free(ArgusParser->RaPrintOptionStrings[x]);
-      }
-
+      while (ArgusParser->RaPrintOptionIndex > 0) {
+         if (ArgusParser->RaPrintOptionStrings[ArgusParser->RaPrintOptionIndex - 1]) {
+            ArgusParser->RaPrintOptionIndex--;
+            free(ArgusParser->RaPrintOptionStrings[ArgusParser->RaPrintOptionIndex]);
+            ArgusParser->RaPrintOptionStrings[ArgusParser->RaPrintOptionIndex] = NULL;
+         }
+      }  
       if (ArgusParser->writeDbstr != NULL) {
          free(ArgusParser->writeDbstr);
          ArgusParser->writeDbstr = NULL;
@@ -807,6 +808,7 @@ ArgusShutDown (int sig)
 
             ArgusDeleteQueue(input->queue);
             input->queue = NULL;
+            ArgusFree(input);
          }
 
          ArgusDeleteQueue(queue);
@@ -955,8 +957,10 @@ ArgusMainInit (struct ArgusParserStruct *parser, int argc, char **argv)
    ArgusProcessSOptions(parser);
 
    for (i = 0; i < parser->RaPrintOptionIndex; i++)
-      if (parser->RaPrintOptionStrings[i] != NULL)
+      if (parser->RaPrintOptionStrings[i] != NULL) {
+         free(parser->RaPrintOptionStrings[i]);
          parser->RaPrintOptionStrings[i] = NULL;
+      }
 
    parser->uid = getuid();
    parser->pid = getpid();
@@ -1347,7 +1351,9 @@ ArgusParseArgs(struct ArgusParserStruct *parser, int argc, char **argv)
 #endif
                   if (!(ArgusAddBaselineList (parser, optarg, type, -1, -1)))
                      ArgusLog(LOG_ERR, "%s: error: file arg %s", *argv, optarg);
+
                   stat(optarg, &((struct ArgusFileInput *) ArgusParser->ArgusBaselineListTail)->statbuf);
+
                } else
                if ((tzptr = strstr (optarg, "gen=")) != NULL) {
                   parser->ArgusGeneratorConfig = strdup(&optarg[4]);
@@ -30535,7 +30541,6 @@ ArgusCloseInput(struct ArgusParserStruct *parser, struct ArgusInput *input)
       input->servname = NULL;
    }
 
-/*
    if (input->hostname  != NULL) {
       free (input->hostname);
       input->hostname = NULL;
@@ -30547,7 +30552,7 @@ ArgusCloseInput(struct ArgusParserStruct *parser, struct ArgusInput *input)
       input->host = NULL;
    }
 #endif
-*/
+
    if (input->fd > 0) {
       if (close (input->fd))
          ArgusLog (LOG_ERR, "ArgusCloseInput: close error %s", strerror(errno));
@@ -30558,7 +30563,7 @@ ArgusCloseInput(struct ArgusParserStruct *parser, struct ArgusInput *input)
    if ((parser->eNflag >= 0) && (parser->ArgusTotalRecords > parser->eNflag)) {
       if (parser->ArgusReliableConnection)
          parser->ArgusReliableConnection = 0;
-      parser->RaShutDown = 1;
+//    parser->RaShutDown = 1;
    }
  
 /*
@@ -31333,6 +31338,7 @@ ArgusAddServerList (struct ArgusParserStruct *parser, char *host, int type, int 
       } else
          ArgusLog (LOG_ERR, "ArgusAddServerList(%s) ArgusCalloc %s", str, strerror(errno));
    }
+
    if (strbuf != NULL) ArgusFree(strbuf);
    if (msgbuf != NULL) ArgusFree(msgbuf);
 
@@ -32107,7 +32113,6 @@ ArgusCommonParseSourceID(struct ArgusAddrStruct *srcid,
                host = host->ai_next;
             } while (host != NULL);
             freeaddrinfo(hptr);
-
          }
 
 #else  // HAVE_GETADDRINFO

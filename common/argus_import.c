@@ -4190,7 +4190,7 @@ static void
 SFDecodeIPV6(SFSample *sptr)
 {
 // uint16_t payloadLen;
-   uint32_t label;
+// uint32_t label;
    uint32_t nextHeader;
    u_char *end = sptr->header + sptr->headerLen;
 
@@ -4203,7 +4203,8 @@ SFDecodeIPV6(SFSample *sptr)
 
       // get the tos (priority)
       sptr->dcd_ipTos = *ptr++ & 15;
-      // 24-bit label
+      // get past the 24-bit label
+/*
       label = *ptr++;
       label <<= 8;
       label += *ptr++;
@@ -4212,6 +4213,8 @@ SFDecodeIPV6(SFSample *sptr)
       // payload
       // payloadLen = (ptr[0] << 8) + ptr[1];
       ptr += 2;
+*/
+      ptr += 5;
       // next header
       nextHeader = *ptr++;
 

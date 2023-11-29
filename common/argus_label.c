@@ -1011,7 +1011,7 @@ ArgusUpgradeLabel(char *label, char *buf, int len)
 
          char *tptr, *sptr = tlabel;
          char *key = NULL, *value = NULL;
-         int cnt = 0;
+//       int cnt = 0;
 
          snprintf(buf, len, "{");
          slen = 1;
@@ -1038,7 +1038,7 @@ ArgusUpgradeLabel(char *label, char *buf, int len)
                }
             }
             sptr = NULL;
-            cnt++;
+//          cnt++;
          }
 
          slen = strlen(buf);
@@ -2965,7 +2965,8 @@ RaReadAddressConfig (struct ArgusParserStruct *parser, struct ArgusLabelerStruct
 {
    char *str, *ptr;
    char labelbuf[256], *label = NULL;
-   int retn = 1, linenum = 0;
+   int retn = 1;
+// int linenum = 0;
    char *banner = NULL;
    FILE *fd =  NULL;
 
@@ -2984,7 +2985,7 @@ RaReadAddressConfig (struct ArgusParserStruct *parser, struct ArgusLabelerStruct
 
       if ((fd = fopen (file, "r")) != NULL) {
          while ((ptr = fgets (str, MAXSTRLEN, fd)) != NULL) {
-            linenum++;
+//          linenum++;
             while (isspace((int)*ptr)) ptr++;
             switch (*ptr) {
                case '#': {
@@ -3227,7 +3228,7 @@ RaParsePortEntry (struct ArgusParserStruct *parser, struct ArgusLabelerStruct *l
    struct RaPortStruct *retn = NULL;
    char *strend, *label = NULL, *port = NULL;
    char *proto = NULL, *desc = NULL, *ptr, *tmp;
-   int error = 0, len = 0;
+   int len = 0;
 
    len = strlen(str);
    strend = str + len;
@@ -3277,18 +3278,18 @@ RaParsePortEntry (struct ArgusParserStruct *parser, struct ArgusLabelerStruct *l
 
       retn->start = strtol(port, &endptr, 10);
       if ((endptr != NULL) && (endptr == port)) {
-         error++;
+//       error++;
       } else {
          if ((ptr = strchr(port, '-')) != NULL) {
             retn->end   = strtol(ptr + 1, &endptr, 10);
-            if ((endptr != NULL) && (endptr == port))
-               error++;
+            if ((endptr != NULL) && (endptr == port)) {
+//             error++;
+            }
          } else {
             retn->end   = retn->start;
          }
       }
    }
-
    return(retn);
 }
 

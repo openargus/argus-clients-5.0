@@ -1100,10 +1100,12 @@ char *ArgusFlowLabelFields[ARGUS_RCITEMS] = {
    "filter", "label", "color", "cont",
 };
 
+
+
 int
 RaReadFlowLabels (struct ArgusParserStruct *parser, struct ArgusLabelerStruct *labeler, char *file)
 {
-   char strbuf[MAXSTRLEN], *str = strbuf;
+   char *strbuf;
    char *filter = NULL, *label = NULL, *color = NULL;
    char *ptr, *end;
 
@@ -1111,16 +1113,20 @@ RaReadFlowLabels (struct ArgusParserStruct *parser, struct ArgusLabelerStruct *l
    FILE *fd =  NULL;
 
    if (labeler != NULL) {
+      if ((strbuf = ArgusCalloc(1, MAXSTRLEN)) == NULL)
+         ArgusLog (LOG_ERR, "RaInsertRIRTree: ArgusCalloc error %s\n", strerror(errno));
+
       if (labeler->ArgusFlowQueue == NULL)
          if ((labeler->ArgusFlowQueue = ArgusNewQueue()) == NULL)
             ArgusLog (LOG_ERR, "RaReadAddressConfig: ArgusNewList error %s\n", strerror(errno));
 
       if ((fd = fopen (file, "r")) != NULL) {
-         while ((ptr = fgets (str, MAXSTRLEN, fd)) != NULL) {
+         while ((ptr = fgets (strbuf, MAXSTRLEN, fd)) != NULL) {
             linenum++;
-            while (isspace((int)*ptr)) ptr++;
 
-            if (*str && (*str != '\n') && (*str != '!')) {
+            if (*ptr) while (isspace((int)*ptr)) ptr++;
+
+            if (*ptr && (*ptr != '\n') && (*ptr != '!')) {
                switch (*ptr) {
                   case '#': {
                      if (!strncmp((char *)&ptr[1], "include ", 8)) {
@@ -1132,21 +1138,21 @@ RaReadFlowLabels (struct ArgusParserStruct *parser, struct ArgusLabelerStruct *l
                   }
 
                   default: {
-                     int i, done = 0, tlines = 0, cont = 0, defined = 0;
+                     int i, done = 0, cont = 0, defined = 0;
 
                      while (!done) {
                         for (i = 0; i < ARGUS_RCITEMS; i++) {
-                           if (!(strncmp(str, ArgusFlowLabelFields[i], strlen(ArgusFlowLabelFields[i])))) {
+                           if (!(strncmp(ptr, ArgusFlowLabelFields[i], strlen(ArgusFlowLabelFields[i])))) {
                               char *value = NULL;
 
-                              ptr = str + strlen(ArgusFlowLabelFields[i]); 
+                              ptr = ptr + strlen(ArgusFlowLabelFields[i]); 
                               while (*ptr && isspace((int)*ptr)) ptr++;
 
                               if (!(*ptr == '=') && (i != ARGUS_RC_CONT))
-                                 ArgusLog (LOG_ERR, "ArgusParseFlowLabeler: syntax error line %d %s", tlines, str);
+                                 ArgusLog (LOG_ERR, "ArgusParseFlowLabeler: syntax error line %d %s", linenum, strbuf);
 
                               ptr++;
-                              while (*ptr && isspace((int)*ptr)) ptr++;
+                              if (*ptr) while (*ptr && isspace((int)*ptr)) ptr++;
 
                               switch (i) {
                                  case ARGUS_RC_FILTER: 
@@ -1176,14 +1182,13 @@ RaReadFlowLabels (struct ArgusParserStruct *parser, struct ArgusLabelerStruct *l
                                  }
                               }
 
-                              while (*ptr && isspace((int)*ptr)) ptr++;
-                              str = ptr;
+                              if (*ptr) while (*ptr && isspace((int)*ptr)) ptr++;
                               defined++;
                            }
                         }
 
                         if (!(done || defined))
-                           ArgusLog (LOG_ERR, "ArgusParseAggregator: syntax error line %d: %s", tlines, str);
+                           ArgusLog (LOG_ERR, "ArgusParseAggregator: syntax error line %d: %s", linenum, strbuf);
 
                         if (ptr && ((*ptr == '\n') || (*ptr == '\0')))
                            done++;
@@ -1218,17 +1223,18 @@ RaReadFlowLabels (struct ArgusParserStruct *parser, struct ArgusLabelerStruct *l
                   }
                }
             }
-            str = strbuf;
+            bzero(strbuf, MAXSTRLEN);
          }
- 
          fclose(fd);
- 
+
       } else
          ArgusLog (LOG_ERR, "%s: %s", file, strerror(errno));
 
       if (filter != NULL) free(filter);
       if (label != NULL) free(label);
       if (color != NULL) free(color);
+
+      ArgusFree(strbuf);
    }
  
 #ifdef ARGUSDEBUG

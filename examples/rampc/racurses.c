@@ -456,7 +456,7 @@ ArgusProcessTerminator(WINDOW *win, int status, int ch)
                   sprintf (strbuf, "%s:%d", input->hostname, input->portnum);
                   if ((strstr (RaCommandInputStr, strbuf))) {
                      ArgusRemoveFromQueue (ArgusParser->ArgusActiveHosts, &input->qhdr, ARGUS_LOCK);
-                     ArgusCloseInput(ArgusParser, input);
+                     ArgusDeleteInput(ArgusParser, input);
                      break;
                   }
                   input = (void *)input->qhdr.nxt;
@@ -3666,7 +3666,7 @@ argus_command_string(void)
                   sprintf (strbuf, "%s:%d", input->hostname, input->portnum);
                   if ((strstr (RaCommandInputStr, strbuf))) {
                      ArgusRemoveFromQueue (ArgusParser->ArgusActiveHosts, &input->qhdr, ARGUS_LOCK);
-                     ArgusCloseInput(ArgusParser, input);
+                     ArgusDeleteInput(ArgusParser, input);
                      break;
                   }
                   input = (void *)input->qhdr.nxt;
@@ -5534,7 +5534,7 @@ RaOutputModifyScreen ()
    int i = 0;
    werase(RaCurrentWindow->window);
    for (i = RaMinCommandLines; i < (RaMaxCommandLines + 1); i++) {
-      mvwprintw (RaCurrentWindow->window, i, 1, RaCommandArray[i - RaMinCommandLines]);
+      mvwprintw (RaCurrentWindow->window, i, 1, "%s", RaCommandArray[i - RaMinCommandLines]);
       if (i == RaMinCommandLines)
          wstandout(RaCurrentWindow->window);
       wprintw (RaCurrentWindow->window, "%s", RaCommandValueArray[i - RaMinCommandLines]());

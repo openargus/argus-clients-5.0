@@ -71,7 +71,7 @@ int RaConvertParseRecordString (struct ArgusParserStruct *, char *);
 int ArgusParseDirStatus = -1;
 int ArgusParseTCPState = -1;
 int ArgusParseState = -1;
-u_short ArgusThisProto = -1;
+extern u_short ArgusThisProto;
 
 int RaFlagsIndicationStatus[64];
 int RaConvertParseDirLabel = 0;
@@ -722,7 +722,6 @@ setSchema (char *str)
 int
 setBaseline (char *optarg)
 {
-/*
    struct ArgusParserStruct *parser = NULL;
    int type = ARGUS_DATA_SOURCE | ARGUS_BASELINE_SOURCE;
    long long ostart = -1, ostop = -1;

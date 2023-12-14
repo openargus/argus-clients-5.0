@@ -791,7 +791,6 @@ ArgusShutDown (int sig)
          struct ArgusInput *input = NULL;
          while ((input = (void *)ArgusPopQueue(queue, ARGUS_LOCK)) != NULL) {
             ArgusDeleteInput(ArgusParser, input);
-            ArgusFree(input);
          }
 
          ArgusDeleteQueue(queue);

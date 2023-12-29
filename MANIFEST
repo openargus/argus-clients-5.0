@@ -19,1242 +19,1600 @@
  */
 
 Gargoyle Clients 5.0.3.2 distribution
-total 1080
--r--r--r--   1 carter  staff     523 Mar 16  2016 AUTHORS
--r--r--r--   1 carter  staff    7292 Mar 16  2016 CHANGES
--r--r--r--   1 carter  staff    3908 Mar 16  2016 CREDITS
--r--r--r--   1 carter  staff   37493 Oct  3 10:21 ChangeLog
--r--r--r--   1 carter  staff    8526 Mar 16  2016 INSTALL
--r--r--r--   1 carter  staff   62088 Oct 13 08:42 MANIFEST
--rw-r--r--   1 carter  staff    9213 Sep 28 14:17 Makefile.in
--r--r--r--   1 carter  staff    3810 Mar 16  2016 README
--r--r--r--   1 carter  staff       8 Oct 13 08:41 VERSION
--r--r--r--   1 carter  staff    7852 Mar 16  2016 aclocal.m4
--r--r--r--   1 carter  staff   59385 Mar 16  2016 acsite.m4
-drwxr-xr-x   4 carter  staff     136 Oct 13 08:41 bin
-drwxr-xr-x  13 carter  staff     442 Oct 13 08:41 clients
-drwxr-xr-x  18 carter  staff     612 Oct 13 08:41 common
-drwxr-xr-x   6 carter  staff     204 Oct  9 17:33 config
--rwxr-xr-x   1 carter  staff  308315 Oct 10 23:15 configure
--r--r--r--   1 carter  staff   12519 Oct 10 23:14 configure.ac
-drwxr-xr-x  14 carter  staff     476 Oct  9 17:33 debian
-drwxr-xr-x  40 carter  staff    1360 Oct 13 08:41 examples
-drwxr-xr-x  44 carter  staff    1496 Oct 13 08:41 include
-drwxr-xr-x   4 carter  staff     136 Oct 13 08:41 lib
-drwxr-xr-x   5 carter  staff     170 Oct  9 17:33 man
-drwxr-xr-x   6 carter  staff     204 Oct  9 17:33 pkg
-drwxr-xr-x   6 carter  staff     204 Oct  9 17:33 support
+total 1368
+-rw-r--r--@  1 carter  staff     523 Dec 27 15:39 AUTHORS
+-rw-r--r--   1 carter  staff    7292 Dec 27 15:39 CHANGES
+-rw-r--r--   1 carter  staff   35147 May 22  2017 COPYING
+-rw-r--r--   1 carter  staff    3908 Dec 27 15:39 CREDITS
+-rw-r--r--@  1 carter  staff   37819 Aug 24  2020 ChangeLog
+-rw-r--r--@  1 carter  staff    8526 Dec 27 15:39 INSTALL
+-rw-r--r--   1 carter  staff   78479 Dec 29 17:51 MANIFEST
+-rw-r--r--   1 carter  staff   11660 Dec 27 15:39 Makefile.in
+-rw-r--r--   1 carter  staff     884 Aug 24  2020 README.osx
+-rw-r--r--   1 carter  staff    2297 Nov 27 11:22 README.rst
+-rw-r--r--   1 carter  staff    1385 Nov  8 08:44 README.win7
+-rw-r--r--   1 carter  staff       8 Nov  8 08:44 VERSION
+-rw-r--r--   1 carter  staff   33829 Dec 29 16:56 aclocal.m4
+-rw-r--r--   1 carter  staff   61163 Dec 29 17:18 acsite.m4
+drwxr-xr-x   7 carter  staff     224 Dec 29 17:18 autom4te.cache
+drwxr-xr-x   5 carter  staff     160 Dec 29 17:50 bin
+drwxr-xr-x  14 carter  staff     448 Dec 29 17:50 clients
+drwxr-xr-x  34 carter  staff    1088 Dec 29 17:50 common
+drwxr-xr-x   6 carter  staff     192 Oct 27 17:00 config
+-rwxr-xr-x   1 carter  staff  383335 Dec 29 17:18 configure
+-rw-r--r--   1 carter  staff   15783 Dec 29 16:56 configure.ac
+drwxr-xr-x  14 carter  staff     448 Oct 27 17:00 debian
+drwxr-xr-x  44 carter  staff    1408 Dec 29 17:50 examples
+drwxr-xr-x  53 carter  staff    1696 Dec 29 17:50 include
+drwxr-xr-x   6 carter  staff     192 Dec 29 17:50 lib
+drwxr-xr-x   3 carter  staff      96 Nov 26 20:19 logo
+drwxr-xr-x   3 carter  staff      96 Nov  8 08:44 m4
+drwxr-xr-x   5 carter  staff     160 Mar 23  2023 man
+drwxr-xr-x  10 carter  staff     320 Dec 29 17:47 perllib
+drwxr-xr-x  11 carter  staff     352 Dec 29 17:47 pkg
+drwxr-xr-x  15 carter  staff     480 Dec 29 17:47 pythonlib
+drwxr-xr-x   6 carter  staff     192 Mar 23  2023 support
+drwxr-xr-x   9 carter  staff     288 Nov  8 08:51 unittests
+drwxr-xr-x   3 carter  staff      96 Aug  3  2020 utils
+
+./autom4te.cache:
+total 2856
+-rw-r--r--  1 carter  staff  386257 Dec 29 17:18 output.0
+-rw-r--r--  1 carter  staff       0 Dec 29 17:04 output.1
+-rw-r--r--  1 carter  staff    7694 Dec 29 17:18 requests
+-rw-r--r--  1 carter  staff  103638 Dec 29 17:18 traces.0
+-rw-r--r--  1 carter  staff  955196 Dec 29 17:04 traces.1
 
 ./bin:
-total 32
--rwxr-xr-x  1 carter  staff  9476 Sep 28 14:17 argusclientbug
--r-xr-xr-x  1 carter  staff  2395 Mar 16  2016 mkdep
+total 2936
+-rwxr-xr-x  1 carter  staff     9476 Aug 24  2020 argusclientbug
+-rwxr-xr-x  1 carter  staff  1483480 Mar 12  2021 argusmodule
+-rwxr-xr-x  1 carter  staff     2395 May 22  2017 mkdep
 
 ./clients:
-total 712
--r--r--r--  1 carter  staff   4976 Mar 16  2016 Makefile.in
--r--r--r--  1 carter  staff   2390 Mar 16  2016 README
--r--r--r--  1 carter  staff  27987 Oct 13 07:13 ra.c
--r--r--r--  1 carter  staff  51490 Oct 13 07:13 rabins.c
--r--r--r--  1 carter  staff  44289 Oct 13 08:28 racluster.c
--r--r--r--  1 carter  staff  41448 Oct 13 07:13 racount.c
--r--r--r--  1 carter  staff  33576 Oct 13 07:13 radium.c
--r--r--r--  1 carter  staff  77089 Oct 13 07:13 ranonymize.c
--r--r--r--  1 carter  staff   1833 Mar 16  2016 ranonymize.h
--r--r--r--  1 carter  staff  17516 Oct 13 07:13 rasort.c
--r--r--r--  1 carter  staff  39484 Oct 13 07:13 rasplit.c
+total 904
+-rw-r--r--  1 carter  staff   5441 Nov  8 08:51 Makefile.in
+-rw-r--r--@ 1 carter  staff   2390 Aug 24  2020 README
+-rw-r--r--  1 carter  staff  30150 Nov  8 08:44 ra.c
+-rw-r--r--  1 carter  staff  53763 Nov  8 08:44 rabins.c
+-rw-r--r--  1 carter  staff  47470 Nov  8 08:44 racluster.c
+-rw-r--r--  1 carter  staff  41472 Nov  8 08:44 racount.c
+-rw-r--r--  1 carter  staff  31978 Dec 14 09:43 radium.c
+-rw-r--r--  1 carter  staff  60571 Dec 27 15:39 ramanage.c
+-rw-r--r--  1 carter  staff  80403 Nov 30 12:15 ranonymize.c
+-rw-r--r--  1 carter  staff   1833 Aug 24  2020 ranonymize.h
+-rw-r--r--  1 carter  staff  18033 Nov  8 08:44 rasort.c
+-rw-r--r--  1 carter  staff  61442 Nov  8 08:44 rastream.c
 
 ./common:
-total 5024
--r--r--r--  1 carter  staff    5705 Mar 16  2016 Makefile.in
--r--r--r--  1 carter  staff   19229 Sep 20 14:36 argus_auth.c
--r--r--r--  1 carter  staff  738267 Oct 13 08:28 argus_client.c
--r--r--r--  1 carter  staff  155725 Oct 10 23:14 argus_code.c
--r--r--r--  1 carter  staff    2124 Mar 16  2016 argus_debug.h
--r--r--r--  1 carter  staff   22538 Jul 13 18:38 argus_event.c
--r--r--r--  1 carter  staff   87225 Jul 13 18:38 argus_filter.c
--r--r--r--  1 carter  staff    4469 Jul 13 18:38 argus_grep.c
--r--r--r--  1 carter  staff  175162 Jul 13 18:38 argus_import.c
--r--r--r--  1 carter  staff  179740 Sep 19 21:55 argus_label.c
--r--r--r--  1 carter  staff   14299 Oct 13 07:13 argus_main.c
--r--r--r--  1 carter  staff  121111 Oct  5 23:56 argus_output.c
--r--r--r--  1 carter  staff   13080 Sep 20 14:36 argus_parser.c
--r--r--r--  1 carter  staff  964731 Oct 13 08:28 argus_util.c
--r--r--r--  1 carter  staff   16805 Oct  3 10:21 grammar.y
--r--r--r--  1 carter  staff   13018 Oct  3 10:21 scanner.l
+total 5880
+-rw-r--r--  1 carter  staff     6244 Nov  8 08:51 Makefile.in
+-rw-r--r--  1 carter  staff    19233 Nov  3 10:47 argus_auth.c
+-rw-r--r--  1 carter  staff   702931 Dec 14 09:43 argus_client.c
+-rw-r--r--  1 carter  staff     3282 Nov  8 08:44 argus_clientconfig.c
+-rw-r--r--  1 carter  staff      163 Nov  3 10:02 argus_clientconfig.h
+-rw-r--r--  1 carter  staff   166070 Dec 27 15:46 argus_code.c
+-rw-r--r--  1 carter  staff     2124 Aug 24  2020 argus_debug.h
+-rw-r--r--  1 carter  staff    30741 Nov  8 08:44 argus_event.c
+-rw-r--r--  1 carter  staff    87272 Nov 29 13:06 argus_filter.c
+-rw-r--r--  1 carter  staff     4459 Nov  3 10:47 argus_grep.c
+-rw-r--r--  1 carter  staff   175537 Nov 29 13:06 argus_import.c
+-rw-r--r--  1 carter  staff    22053 Nov 26 20:23 argus_json.c
+-rw-r--r--  1 carter  staff   214721 Dec 27 15:46 argus_label.c
+-rw-r--r--  1 carter  staff    42123 Nov  8 08:44 argus_label_geoip.c
+-rw-r--r--  1 carter  staff     1462 Nov  3 10:47 argus_label_geoip.h
+-rw-r--r--  1 carter  staff     7006 Nov  3 10:47 argus_lockfile.c
+-rw-r--r--  1 carter  staff    16404 Dec 14 09:43 argus_main.c
+-rw-r--r--  1 carter  staff   241528 Nov 29 13:06 argus_output.c
+-rw-r--r--  1 carter  staff    20005 Nov  8 08:44 argus_parse_time.c
+-rw-r--r--  1 carter  staff    12297 Nov 28 13:20 argus_parser.c
+-rw-r--r--  1 carter  staff     7854 Aug 24  2020 argus_split_mode.c
+-rw-r--r--  1 carter  staff     9018 Nov  3 10:47 argus_timer.c
+-rw-r--r--  1 carter  staff  1087220 Dec 27 15:46 argus_util.c
+-rw-r--r--  1 carter  staff     5044 Nov  3 10:47 argus_windows_registry.c
+-rw-r--r--  1 carter  staff      561 Nov  3 10:47 argus_windows_registry.h
+-rw-r--r--  1 carter  staff    17449 Nov 21 11:02 grammar.y
+-rw-r--r--  1 carter  staff     6471 Nov  3 10:47 maxminddb-compat-util.h
+-rw-r--r--  1 carter  staff     2369 Aug 24  2020 ring.c
+-rw-r--r--  1 carter  staff     3350 Aug 24  2020 ring.h
+-rw-r--r--  1 carter  staff    14795 Nov 29 13:06 scanner.l
+-rw-r--r--  1 carter  staff     9155 Nov 30 12:13 sha1.c
+-rw-r--r--  1 carter  staff     3597 Nov  3 10:47 sha1.h
 
 ./config:
 total 184
--r-xr-xr-x  1 carter  staff  42856 Mar 16  2016 config.guess
--r-xr-xr-x  1 carter  staff  35740 Mar 16  2016 config.sub
--r-xr-xr-x  1 carter  staff   5585 Mar 16  2016 install-sh
--r-xr-xr-x  1 carter  staff    616 Mar 16  2016 mkinstalldirs
+-rwxr-xr-x  1 carter  staff  42856 May 22  2017 config.guess
+-rwxr-xr-x  1 carter  staff  35740 May 22  2017 config.sub
+-rwxr-xr-x  1 carter  staff   5585 May 22  2017 install-sh
+-rwxr-xr-x  1 carter  staff    616 May 22  2017 mkinstalldirs
 
 ./debian:
 total 88
--r--r--r--  1 carter  staff   168 Mar 16  2016 changelog
--r--r--r--  1 carter  staff     2 Mar 16  2016 compat
--r--r--r--  1 carter  staff   522 Mar 16  2016 control
--r--r--r--  1 carter  staff  1794 Mar 16  2016 copyright
--r--r--r--  1 carter  staff   988 Mar 16  2016 install
--r--r--r--  1 carter  staff    96 Mar 30  2015 manpages
--r-xr-xr-x  1 carter  staff  1138 Mar 16  2016 postinst
--r-xr-xr-x  1 carter  staff   134 Mar 16  2016 postrm
--r-xr-xr-x  1 carter  staff   795 Mar 16  2016 preinst
--r-xr-xr-x  1 carter  staff   210 Mar 16  2016 prerm
--r-xr-xr-x  1 carter  staff   442 Mar 16  2016 rules
-drwxr-xr-x  3 carter  staff   102 Oct  9 17:33 source
+-rw-r--r--  1 carter  staff   168 May 22  2017 changelog
+-rw-r--r--  1 carter  staff     2 Aug 24  2020 compat
+-rw-r--r--  1 carter  staff   522 Aug 24  2020 control
+-rw-r--r--  1 carter  staff  1794 May 22  2017 copyright
+-rw-r--r--  1 carter  staff   988 Aug 24  2020 install
+-rw-r--r--  1 carter  staff    96 May 22  2017 manpages
+-rwxr-xr-x  1 carter  staff  1138 Aug 24  2020 postinst
+-rwxr-xr-x  1 carter  staff   134 Aug 24  2020 postrm
+-rwxr-xr-x  1 carter  staff   795 Aug 24  2020 preinst
+-rwxr-xr-x  1 carter  staff   210 Aug 24  2020 prerm
+-rwxr-xr-x  1 carter  staff   442 Aug 24  2020 rules
+drwxr-xr-x  3 carter  staff    96 Oct 27 17:00 source
 
 ./debian/source:
 total 8
--r--r--r--  1 carter  staff  12 Mar 16  2016 format
+-rw-r--r--  1 carter  staff  12 May 22  2017 format
 
 ./examples:
 total 16
--r--r--r--   1 carter  staff  3966 Jun  6 10:32 Makefile.in
--rw-r--r--   1 carter  staff  4023 Sep 28 14:17 README
-drwxr-xr-x   7 carter  staff   238 Oct 13 08:41 race
-drwxr-xr-x   6 carter  staff   204 Oct 13 08:41 raconvert
-drwxr-xr-x   5 carter  staff   170 Oct  9 17:33 radark
-drwxr-xr-x   5 carter  staff   170 Oct 13 08:41 radecode
-drwxr-xr-x  15 carter  staff   510 Oct 13 08:41 radhcp
-drwxr-xr-x  11 carter  staff   374 Oct 13 08:41 radns
-drwxr-xr-x  61 carter  staff  2074 Oct 13 08:41 radump
-drwxr-xr-x   6 carter  staff   204 Oct 13 08:41 raevent
-drwxr-xr-x   6 carter  staff   204 Oct 13 08:41 rafilter
-drwxr-xr-x   6 carter  staff   204 Oct 13 08:41 ragraph
-drwxr-xr-x   5 carter  staff   170 Oct 13 08:41 ragrep
-drwxr-xr-x   5 carter  staff   170 Oct 13 08:41 rahisto
-drwxr-xr-x   6 carter  staff   204 Oct 13 08:41 rahosts
-drwxr-xr-x   5 carter  staff   170 Oct 13 08:41 ralabel
-drwxr-xr-x   5 carter  staff   170 Oct 13 08:41 ramatrix
-drwxr-xr-x   8 carter  staff   272 Oct 13 08:41 rampc
-drwxr-xr-x  12 carter  staff   408 Oct 13 08:41 ramysql
-drwxr-xr-x   5 carter  staff   170 Oct 13 08:41 rap
-drwxr-xr-x   7 carter  staff   238 Oct 13 08:41 rapath
-drwxr-xr-x   5 carter  staff   170 Oct 13 08:41 rapolicy
-drwxr-xr-x   5 carter  staff   170 Oct 13 08:41 raports
-drwxr-xr-x   5 carter  staff   170 Oct 13 08:41 raqsort
-drwxr-xr-x   6 carter  staff   204 Oct 13 08:41 rarpwatch
-drwxr-xr-x   6 carter  staff   204 Oct 13 08:41 rascanner
-drwxr-xr-x   6 carter  staff   204 Oct 13 08:41 raservices
-drwxr-xr-x  53 carter  staff  1802 Oct 10 23:15 rasnort
-drwxr-xr-x   5 carter  staff   170 Oct 13 08:41 rastream
-drwxr-xr-x   6 carter  staff   204 Oct 13 08:41 rastrip
-drwxr-xr-x   5 carter  staff   170 Oct 13 08:41 ratemplate
-drwxr-xr-x   5 carter  staff   170 Oct 13 08:41 ratimerange
-drwxr-xr-x   6 carter  staff   204 Oct 13 08:41 ratod
-drwxr-xr-x   8 carter  staff   272 Oct 13 08:41 ratop
-drwxr-xr-x   6 carter  staff   204 Oct  9 17:33 ratop.orig
-drwxr-xr-x   4 carter  staff   136 Oct 13 08:41 ratrace
-drwxr-xr-x   4 carter  staff   136 Oct 13 08:41 ratree
-drwxr-xr-x   3 carter  staff   102 Oct  9 17:33 routers
+-rw-r--r--   1 carter  staff  4087 Nov  8 08:44 Makefile.in
+-rw-r--r--@  1 carter  staff  4023 Aug 24  2020 README
+drwxr-xr-x   7 carter  staff   224 Dec 29 17:50 race
+drwxr-xr-x  11 carter  staff   352 Dec 29 17:50 racompare
+drwxr-xr-x  34 carter  staff  1088 Dec 27 15:46 racontext
+drwxr-xr-x   6 carter  staff   192 Dec 29 17:50 raconvert
+drwxr-xr-x   5 carter  staff   160 Nov  8 08:51 radark
+drwxr-xr-x   4 carter  staff   128 Dec 29 17:50 radbase
+drwxr-xr-x   5 carter  staff   160 Dec 29 17:50 radecode
+drwxr-xr-x  54 carter  staff  1728 Dec 29 17:50 radhcp
+drwxr-xr-x  13 carter  staff   416 Dec 29 17:50 radns
+drwxr-xr-x  62 carter  staff  1984 Dec 29 17:50 radump
+drwxr-xr-x   6 carter  staff   192 Dec 29 17:50 raevent
+drwxr-xr-x   6 carter  staff   192 Dec 29 17:50 rafilter
+drwxr-xr-x   8 carter  staff   256 Dec 29 17:50 ragen
+drwxr-xr-x   6 carter  staff   192 Dec 29 17:50 ragraph
+drwxr-xr-x   5 carter  staff   160 Dec 29 17:50 ragrep
+drwxr-xr-x  10 carter  staff   320 Dec 29 17:50 rahisto
+drwxr-xr-x  11 carter  staff   352 Nov  8 08:51 rahosts
+drwxr-xr-x   5 carter  staff   160 Dec 29 17:50 ralabel
+drwxr-xr-x   5 carter  staff   160 Dec 29 17:50 ramatrix
+drwxr-xr-x   8 carter  staff   256 Dec 29 17:50 rampc
+drwxr-xr-x  28 carter  staff   896 Dec 27 15:46 ramysql
+drwxr-xr-x   5 carter  staff   160 Dec 29 17:50 rap
+drwxr-xr-x   7 carter  staff   224 Dec 29 17:50 rapath
+drwxr-xr-x   5 carter  staff   160 Dec 29 17:50 rapolicy
+drwxr-xr-x   6 carter  staff   192 Dec 29 17:50 raports
+drwxr-xr-x   4 carter  staff   128 Nov  2 09:33 rapython
+drwxr-xr-x   5 carter  staff   160 Dec 29 17:50 raqsort
+drwxr-xr-x   6 carter  staff   192 Dec 29 17:50 rarpwatch
+drwxr-xr-x   8 carter  staff   256 Dec 29 17:50 rascanner
+drwxr-xr-x   6 carter  staff   192 Dec 29 17:50 raservices
+drwxr-xr-x  52 carter  staff  1664 Nov  8 08:51 rasnort
+drwxr-xr-x   6 carter  staff   192 Dec 29 17:50 rastrip
+drwxr-xr-x   5 carter  staff   160 Dec 29 17:50 ratemplate
+drwxr-xr-x   5 carter  staff   160 Dec 29 17:50 ratimerange
+drwxr-xr-x   6 carter  staff   192 Dec 29 17:50 ratod
+drwxr-xr-x  10 carter  staff   320 Dec 29 17:50 ratop
+drwxr-xr-x   4 carter  staff   128 Dec 29 17:50 ratrace
+drwxr-xr-x   4 carter  staff   128 Dec 29 17:50 ratree
+drwxr-xr-x   8 carter  staff   256 Dec 29 17:50 raup
+drwxr-xr-x   3 carter  staff    96 Oct 27 17:00 routers
 
 ./examples/race:
 total 192
--r--r--r--  1 carter  staff   3377 Jun 17 11:57 Makefile.in
--r--r--r--  1 carter  staff   5502 Mar 16  2016 README
--r--r--r--  1 carter  staff    956 Mar 16  2016 global.h
--r--r--r--  1 carter  staff   1470 Mar 16  2016 md5.h
--r--r--r--  1 carter  staff  76679 Sep 19 21:55 raced.c
+-rw-r--r--  1 carter  staff   3424 Nov  8 08:51 Makefile.in
+-rw-r--r--@ 1 carter  staff   5502 Aug 24  2020 README
+-rw-r--r--  1 carter  staff    956 Aug 24  2020 global.h
+-rw-r--r--  1 carter  staff   1470 Aug 24  2020 md5.h
+-rw-r--r--  1 carter  staff  76301 Dec 27 15:39 raced.c
+
+./examples/racompare:
+total 904
+-rw-r--r--  1 carter  staff    3987 Nov  8 08:51 Makefile.in
+-rw-r--r--  1 carter  staff    3714 Nov  8 08:44 NOTES
+-rw-r--r--@ 1 carter  staff    1990 Nov  8 08:44 README
+-rw-r--r--  1 carter  staff  161458 Dec 14 09:43 raclient.c
+-rw-r--r--  1 carter  staff    1864 Nov  3 10:47 racompare.conf
+-rw-r--r--  1 carter  staff  242082 Dec 27 15:39 racurses.c
+-rw-r--r--  1 carter  staff   15875 Nov  8 08:44 racurses.h
+-rw-r--r--  1 carter  staff   13003 Nov  8 08:44 rasql_common.c
+-rw-r--r--  1 carter  staff     885 Nov  8 08:44 rasql_common.h
+
+./examples/racontext:
+total 544
+-rw-r--r--  1 carter  staff  34120 Dec 12  2020 Makefile
+-rw-r--r--  1 carter  staff   4003 Nov  8 08:44 Makefile.in
+-rw-r--r--  1 carter  staff   7156 Nov  8 08:44 database-example.sql
+-rw-r--r--  1 carter  staff  18910 Dec 27 15:46 racontext.c
+-rw-r--r--  1 carter  staff   9693 Nov  8 08:44 racontext.h
+-rw-r--r--  1 carter  staff  15607 Nov  8 08:44 racontext_attribute.c
+-rw-r--r--  1 carter  staff   3375 Nov  8 08:44 racontext_attribute_dhcp.c
+-rw-r--r--  1 carter  staff    347 Nov  8 08:44 racontext_attribute_dhcp.h
+-rw-r--r--  1 carter  staff   9322 Nov  8 08:44 racontext_attribute_flow.c
+-rw-r--r--  1 carter  staff    375 Nov  8 08:44 racontext_attribute_flow.h
+-rw-r--r--  1 carter  staff   1838 Nov  8 08:44 racontext_attribute_normalize.c
+-rw-r--r--  1 carter  staff  14827 Nov  8 08:44 racontext_index_known_context.c
+-rw-r--r--  1 carter  staff   1109 Nov  8 08:44 racontext_index_known_context.h
+-rw-r--r--  1 carter  staff  13037 Nov  8 08:44 racontext_insert_known_context.c
+-rw-r--r--  1 carter  staff    979 Nov  8 08:44 racontext_insert_known_context.h
+-rw-r--r--  1 carter  staff   3320 Nov  8 08:44 racontext_known_context_calc.c
+-rw-r--r--  1 carter  staff   4301 Nov  8 08:44 racontext_known_context_tree.c
+-rw-r--r--  1 carter  staff   4457 Nov  8 08:44 racontext_process_dhcp.c
+-rw-r--r--  1 carter  staff    503 Nov  8 08:44 racontext_process_dhcp.h
+-rw-r--r--  1 carter  staff   1497 Nov  8 08:44 racontext_query_dhcp.c
+-rw-r--r--  1 carter  staff    617 Nov  8 08:44 racontext_query_dhcp.h
+-rw-r--r--  1 carter  staff   5960 Nov  8 08:44 racontext_query_index.c
+-rw-r--r--  1 carter  staff   5770 Nov  8 08:44 racontext_query_known_context.c
+-rw-r--r--  1 carter  staff    271 Nov  8 08:44 racontext_query_known_context.h
+-rw-r--r--  1 carter  staff   2719 Nov  8 08:44 racontext_sidlist.c
+-rw-r--r--  1 carter  staff   6939 Nov  8 08:44 racontext_sql_bind.c
+-rw-r--r--  1 carter  staff   1835 Nov  8 08:44 racontext_sql_bind.h
+-rw-r--r--  1 carter  staff   6771 Nov  8 08:44 racontext_sql_scan.c
+-rw-r--r--  1 carter  staff   2688 Nov  8 08:44 racontext_sql_scan.h
+-rw-r--r--  1 carter  staff  11429 Nov  8 08:44 racontext_tree.c
+-rw-r--r--  1 carter  staff   9693 Nov  8 08:44 ramysqlinit.c
+-rw-r--r--  1 carter  staff    270 Nov  8 08:44 ramysqlinit.h
 
 ./examples/raconvert:
-total 240
--r--r--r--  1 carter  staff   3917 Mar 16  2016 Makefile.in
--r--r--r--  1 carter  staff   3363 Mar 16  2016 README
--r--r--r--  1 carter  staff  93085 Jun  8 00:19 raconvert.c
--r--r--r--  1 carter  staff  19587 Mar 16  2016 raconvert.h
+total 288
+-rw-r--r--  1 carter  staff    3964 Nov  8 08:51 Makefile.in
+-rw-r--r--@ 1 carter  staff    3587 Nov  8 08:44 README
+-rw-r--r--  1 carter  staff  121836 Dec 27 15:46 raconvert.c
+-rw-r--r--  1 carter  staff   15947 Dec 27 15:46 raconvert.h
 
 ./examples/radark:
 total 40
--r--r--r--  1 carter  staff   3270 Mar 16  2016 Makefile.in
--r--r--r--  1 carter  staff   1048 Mar 16  2016 README
--r--r--r--  1 carter  staff  10538 Mar 16  2016 radark.pl
+-rw-r--r--  1 carter  staff   3316 Nov  8 08:51 Makefile.in
+-rw-r--r--@ 1 carter  staff   1048 Aug 24  2020 README
+-rw-r--r--  1 carter  staff  10538 Aug 24  2020 radark.pl
+
+./examples/radbase:
+total 16
+-rw-r--r--  1 carter  staff  2261 Aug 24  2020 Makefile.in
+-rwxr-xr-x  1 carter  staff  3120 Aug 24  2020 raipdbase.pl
 
 ./examples/radecode:
 total 32
--r--r--r--  1 carter  staff  2254 Mar 16  2016 Makefile.in
--r--r--r--  1 carter  staff   904 Mar 16  2016 README
--r--r--r--  1 carter  staff  5932 Mar 16  2016 radecode.pl
+-rw-r--r--  1 carter  staff  2254 Aug 24  2020 Makefile.in
+-rw-r--r--@ 1 carter  staff   904 Aug 24  2020 README
+-rw-r--r--  1 carter  staff  5950 Nov  3 10:47 radecode.pl
 
 ./examples/radhcp:
-total 480
--r--r--r--  1 carter  staff   3865 Jun  6 10:33 Makefile.in
--r--r--r--  1 carter  staff   9681 Jun  6 10:33 NOTES
--r--r--r--  1 carter  staff   2440 Jun  6 10:33 README
-drwxr-xr-x  3 carter  staff    102 Oct  9 17:33 archive
--rw-r--r--  1 carter  staff  10117 Aug  2 09:15 bootp.h
--r--r--r--  1 carter  staff   7036 Jun  2 18:16 interface.h
--rw-r--r--  1 carter  staff  20935 Jun  6 09:08 print-bootp.c
--r--r--r--  1 carter  staff  22930 Aug 22 00:38 rabootp.c
--r--r--r--  1 carter  staff  11173 Aug 22 00:32 rabootp.h
--r--r--r--  1 carter  staff  39640 Sep 19 21:55 radhcp.c
--rw-r--r--  1 carter  staff  22210 Jun  6 09:21 radump-bootp.c
--r--r--r--  1 carter  staff  66865 Jun  8 00:59 rasql.c
--r--r--r--  1 carter  staff   7605 Jun  6 10:33 rasql.h
-
-./examples/radhcp/archive:
-total 80
--r--r--r--  1 carter  staff  38126 Jun  8 00:19 rabootp.c
+total 3968
+-rw-r--r--  1 carter  staff     5948 Nov  8 08:51 Makefile.in
+-rw-r--r--  1 carter  staff     9681 Aug 24  2020 NOTES
+-rw-r--r--@ 1 carter  staff     2440 Aug 24  2020 README
+-rw-r--r--  1 carter  staff     4487 Aug 24  2020 README.design
+-rw-r--r--  1 carter  staff    12996 Nov  8 08:44 argus_dhcp.c
+-rw-r--r--  1 carter  staff     2809 Dec 27 15:46 argus_format_json.c
+-rw-r--r--  1 carter  staff      233 Dec 14 09:43 argus_format_json.h
+-rw-r--r--  1 carter  staff     5669 Nov  8 08:44 argus_print.h
+-rw-r--r--  1 carter  staff    10117 Aug 24  2020 bootp.h
+-rw-r--r--  1 carter  staff     6728 Aug 24  2020 dhcp.h
+-rw-r--r--  1 carter  staff     9007 Aug 24  2020 dhcp6.h
+-rwxr-xr-x  1 carter  staff  1531872 Sep 15  2021 example-libargus_dhcp
+-rw-r--r--  1 carter  staff    13578 Nov  8 08:44 example-libargus_dhcp.c
+-rw-r--r--  1 carter  staff     4977 Aug 24  2020 interface.h
+-rw-r--r--  1 carter  staff    50273 Nov  8 08:44 rabootp.c
+-rw-r--r--  1 carter  staff     1377 Nov  3 10:47 rabootp_callback.c
+-rw-r--r--  1 carter  staff      733 Aug 24  2020 rabootp_callback.h
+-rw-r--r--  1 carter  staff     5700 Nov  3 10:47 rabootp_client_tree.c
+-rw-r--r--  1 carter  staff     1334 Aug 24  2020 rabootp_client_tree.h
+-rw-r--r--  1 carter  staff     6252 Aug 24  2020 rabootp_fsa.c
+-rw-r--r--  1 carter  staff     1129 Aug 24  2020 rabootp_fsa.h
+-rw-r--r--  1 carter  staff    13130 Nov  3 10:47 rabootp_interval_tree.c
+-rw-r--r--  1 carter  staff     3618 Nov  3 10:47 rabootp_interval_tree.h
+-rw-r--r--  1 carter  staff     3229 Aug 24  2020 rabootp_l2addr_list.c
+-rw-r--r--  1 carter  staff     2145 Aug 24  2020 rabootp_l2addr_list.h
+-rw-r--r--  1 carter  staff     6571 Nov  3 10:47 rabootp_lease_pullup.c
+-rw-r--r--  1 carter  staff     1103 Aug 24  2020 rabootp_lease_pullup.h
+-rw-r--r--  1 carter  staff     2115 Nov  3 10:47 rabootp_memory.c
+-rw-r--r--  1 carter  staff      307 Aug 24  2020 rabootp_memory.h
+-rw-r--r--  1 carter  staff    10965 Nov  3 10:47 rabootp_patricia_tree.c
+-rw-r--r--  1 carter  staff     2145 Nov  3 10:47 rabootp_patricia_tree.h
+-rw-r--r--  1 carter  staff    23769 Dec 27 15:39 rabootp_print.c
+-rw-r--r--  1 carter  staff     1168 Aug 24  2020 rabootp_print.h
+-rw-r--r--  1 carter  staff    15264 Nov  3 10:47 rabootp_proto_timers.c
+-rw-r--r--  1 carter  staff     1005 Aug 24  2020 rabootp_proto_timers.h
+-rw-r--r--  1 carter  staff     1645 Nov 30 12:36 rabootp_querystr.c
+-rw-r--r--  1 carter  staff      367 Aug 24  2020 rabootp_querystr.h
+-rw-r--r--  1 carter  staff     9786 Nov  3 10:47 rabootp_sql.c
+-rw-r--r--  1 carter  staff      710 Nov  3 10:47 rabootp_sql.h
+-rw-r--r--  1 carter  staff     3215 Nov  3 10:47 rabootp_sql_bind.c
+-rw-r--r--  1 carter  staff     1639 Nov  3 10:47 rabootp_sql_bind.h
+-rw-r--r--  1 carter  staff     5398 Nov  8 08:44 rabootp_sql_scan.c
+-rw-r--r--  1 carter  staff     2155 Nov  8 08:44 rabootp_sql_scan.h
+-rw-r--r--  1 carter  staff     3518 Nov  3 10:47 rabootp_timer.c
+-rw-r--r--  1 carter  staff      862 Nov  3 10:47 rabootp_timer.h
+-rw-r--r--  1 carter  staff    12375 Nov  8 08:44 rabootp_update.c
+-rw-r--r--  1 carter  staff      199 Aug 24  2020 rabootp_update.h
+-rw-r--r--  1 carter  staff     3224 Nov  3 10:47 radhcp-query.in
+-rw-r--r--  1 carter  staff    45365 Nov  8 08:44 radhcp.c
+-rw-r--r--  1 carter  staff    20337 Nov  3 10:47 radhcp.pm
+-rw-r--r--  1 carter  staff    22122 Nov  3 10:47 rasql.c
+-rw-r--r--  1 carter  staff      656 Aug 24  2020 rasql.h
 
 ./examples/radns:
-total 464
--r--r--r--  1 carter  staff   3861 Jun  1 10:28 Makefile.in
--r--r--r--  1 carter  staff   9652 Apr  1  2016 NOTES
--r--r--r--  1 carter  staff   2425 Mar 16  2016 README
--r--r--r--  1 carter  staff   7036 Mar 16  2016 interface.h
--r--r--r--  1 carter  staff  66812 Sep 19 21:55 radns.c
--r--r--r--  1 carter  staff  38172 Jun  8 00:19 radomain.c
--r--r--r--  1 carter  staff  16648 Jun  6 10:32 radomain.h
--r--r--r--  1 carter  staff  66863 Jun  8 00:59 rasql.c
--r--r--r--  1 carter  staff   7604 Apr 18 10:48 rasql.h
+total 632
+-rw-r--r--  1 carter  staff    4099 Nov  8 08:51 Makefile.in
+-rw-r--r--  1 carter  staff    9652 Aug 24  2020 NOTES
+-rw-r--r--@ 1 carter  staff    3077 Aug 24  2020 README
+-rw-r--r--@ 1 carter  staff     676 Nov  3 10:47 commands.txt
+-rw-r--r--  1 carter  staff    7036 Aug 24  2020 interface.h
+-rw-r--r--  1 carter  staff  128312 Dec 27 15:46 radns.c
+-rwxr-xr-x  1 carter  staff   12699 Nov  8 08:44 radnsdb.pl
+-rw-r--r--  1 carter  staff   41598 Nov  3 10:47 radomain.c
+-rw-r--r--  1 carter  staff   17089 Nov  8 08:44 radomain.h
+-rw-r--r--  1 carter  staff   65494 Nov  3 10:47 rasql.c
+-rw-r--r--  1 carter  staff    7604 Aug 24  2020 rasql.h
 
 ./examples/radump:
-total 2344
--r--r--r--  1 carter  staff   4200 Mar 16  2016 Makefile.in
--r--r--r--  1 carter  staff   1924 Mar 16  2016 README
--r--r--r--  1 carter  staff   1906 Nov 26  2012 af.h
--r--r--r--  1 carter  staff   7118 Mar 16  2016 aodv.h
--r-xr-xr-x  1 carter  staff    831 Mar 16  2016 bgp.h
--r--r--r--  1 carter  staff   7849 Mar 16  2016 bootp.h
--r--r--r--  1 carter  staff   5907 Jun  7 23:54 gmpls.c
--r--r--r--  1 carter  staff   1212 Mar 16  2016 gmpls.h
--r--r--r--  1 carter  staff   7062 Mar 16  2016 interface.h
--r--r--r--  1 carter  staff   6654 Mar 16  2016 ipsec_doi.h
--r--r--r--  1 carter  staff  13250 Mar 16  2016 isakmp.h
--r--r--r--  1 carter  staff   2866 Mar 16  2016 l2tp.h
--rwxr-xr-x  1 carter  staff   1969 Mar 16  2016 l2vpn.c
--r-xr-xr-x  1 carter  staff    826 Mar 16  2016 l2vpn.h
--r--r--r--  1 carter  staff  26956 Mar 16  2016 mib.h
--r--r--r--  1 carter  staff  10708 Mar 16  2016 nameser.h
--r--r--r--  1 carter  staff  21403 Mar 16  2016 nlpid.h
--r--r--r--  1 carter  staff   5234 Mar 16  2016 ntp.h
--r--r--r--  1 carter  staff   5606 Mar 16  2016 oakley.h
--rw-r--r--  1 carter  staff  56128 Mar 16  2016 ofp-print.c
--r--r--r--  1 carter  staff   1371 Mar 16  2016 ofp-print.h
--r--r--r--  1 carter  staff   5947 Mar 16  2016 oui.h
--r--r--r--  1 carter  staff  14578 Jun  7 23:55 print-aodv.c
--r--r--r--  1 carter  staff  11013 Jun  7 23:56 print-arp.c
--r--r--r--  1 carter  staff   1962 Jun  7 23:56 print-beep.c
--r--r--r--  1 carter  staff  11200 Jun  7 23:56 print-bfd.c
--r--r--r--  1 carter  staff  79348 Jun  7 23:56 print-bgp.c
--r--r--r--  1 carter  staff  22084 Jun  7 23:57 print-bootp.c
--r--r--r--  1 carter  staff  21750 Jun  7 23:57 print-domain.c
--r--r--r--  1 carter  staff   9515 Jun  7 23:57 print-dvmrp.c
--r--r--r--  1 carter  staff   8412 Jun  7 23:57 print-ether.c
--r--r--r--  1 carter  staff  11828 Jun  7 23:58 print-igmp.c
--r--r--r--  1 carter  staff  39784 Jun  7 23:58 print-isakmp.c
--r--r--r--  1 carter  staff  94746 Jun  7 23:58 print-isoclns.c
--r--r--r--  1 carter  staff   7397 Jun  7 23:58 print-krb.c
--r--r--r--  1 carter  staff  22446 Jun  7 23:58 print-l2tp.c
--r--r--r--  1 carter  staff  21945 Jun  7 23:59 print-ldp.c
--r--r--r--  1 carter  staff  51229 Nov 26  2012 print-lldp.c
--r--r--r--  1 carter  staff  31315 Jun  7 23:59 print-lmp.c
--r--r--r--  1 carter  staff   3560 Jun  7 23:59 print-msdp.c
--r--r--r--  1 carter  staff   9471 Jun  7 23:59 print-ntp.c
--r--r--r--  1 carter  staff  38373 Jun  7 23:59 print-pim.c
--r--r--r--  1 carter  staff  29946 Jun  8 00:00 print-pptp.c
--r--r--r--  1 carter  staff  34778 Jun  8 00:00 print-radius.c
--r--r--r--  1 carter  staff   8863 Jun  8 00:00 print-rip.c
--r--r--r--  1 carter  staff  59006 Jun  8 00:00 print-rx.c
--r--r--r--  1 carter  staff  43872 Jun  8 00:00 print-smb.c
--r--r--r--  1 carter  staff  50992 Jun  8 00:01 print-snmp.c
--r--r--r--  1 carter  staff   5255 Jun  8 00:01 print-stp.c
--r-xr-xr-x  1 carter  staff   4479 Jun  8 00:01 print-syslog.c
--r--r--r--  1 carter  staff   7586 Jun  8 00:01 print-telnet.c
--r--r--r--  1 carter  staff   4529 Jun  8 00:02 print-tftp.c
--r--r--r--  1 carter  staff   4127 Jun  8 00:02 print-timed.c
--r--r--r--  1 carter  staff  22686 Jun  8 00:19 radump.c
--r--r--r--  1 carter  staff   3573 Mar 16  2016 rx.h
--r--r--r--  1 carter  staff   5555 Mar 16  2016 smb.h
--r--r--r--  1 carter  staff  64704 Jun  8 00:02 smbutil.c
--r--r--r--  1 carter  staff  11294 Mar 16  2016 telnet.h
--r--r--r--  1 carter  staff   3781 Mar 16  2016 timed.h
+total 2368
+-rw-r--r--  1 carter  staff   4259 Nov  8 08:51 Makefile.in
+-rw-r--r--@ 1 carter  staff   1924 Aug 24  2020 README
+-rw-r--r--  1 carter  staff   1906 May 22  2017 af.h
+-rw-r--r--  1 carter  staff   7118 May 22  2017 aodv.h
+-rwxr-xr-x  1 carter  staff    831 Aug 24  2020 bgp.h
+-rw-r--r--  1 carter  staff   7849 May 22  2017 bootp.h
+-rw-r--r--  1 carter  staff   5907 Aug 24  2020 gmpls.c
+-rw-r--r--  1 carter  staff   1212 May 22  2017 gmpls.h
+-rw-r--r--  1 carter  staff   7191 Nov  8 08:44 interface.h
+-rw-r--r--  1 carter  staff   6654 May 22  2017 ipsec_doi.h
+-rw-r--r--  1 carter  staff  13250 May 22  2017 isakmp.h
+-rw-r--r--  1 carter  staff   2866 May 22  2017 l2tp.h
+-rwxr-xr-x  1 carter  staff   1969 Aug 24  2020 l2vpn.c
+-rwxr-xr-x  1 carter  staff    826 Aug 24  2020 l2vpn.h
+-rw-r--r--  1 carter  staff  26956 May 22  2017 mib.h
+-rw-r--r--  1 carter  staff  10708 May 22  2017 nameser.h
+-rw-r--r--  1 carter  staff  21403 Aug 24  2020 nlpid.h
+-rw-r--r--  1 carter  staff   5234 May 22  2017 ntp.h
+-rw-r--r--  1 carter  staff   5606 May 22  2017 oakley.h
+-rw-r--r--  1 carter  staff  56110 Nov  3 10:47 ofp-print.c
+-rw-r--r--  1 carter  staff   1371 May 22  2017 ofp-print.h
+-rw-r--r--  1 carter  staff   5947 May 22  2017 oui.h
+-rw-r--r--  1 carter  staff  14578 Aug 24  2020 print-aodv.c
+-rw-r--r--  1 carter  staff  12883 Nov  3 10:47 print-arp.c
+-rw-r--r--  1 carter  staff   1962 Aug 24  2020 print-beep.c
+-rw-r--r--  1 carter  staff  11200 Aug 24  2020 print-bfd.c
+-rw-r--r--  1 carter  staff  79348 Aug 24  2020 print-bgp.c
+-rw-r--r--  1 carter  staff  22084 Aug 24  2020 print-bootp.c
+-rw-r--r--  1 carter  staff  21750 Aug 24  2020 print-domain.c
+-rw-r--r--  1 carter  staff   9515 Aug 24  2020 print-dvmrp.c
+-rw-r--r--  1 carter  staff   8412 Aug 24  2020 print-ether.c
+-rw-r--r--  1 carter  staff  11828 Aug 24  2020 print-igmp.c
+-rw-r--r--  1 carter  staff  39786 Aug 24  2020 print-isakmp.c
+-rw-r--r--  1 carter  staff  94746 Aug 24  2020 print-isoclns.c
+-rw-r--r--  1 carter  staff   7397 Aug 24  2020 print-krb.c
+-rw-r--r--  1 carter  staff  22446 Aug 24  2020 print-l2tp.c
+-rw-r--r--  1 carter  staff  21945 Aug 24  2020 print-ldp.c
+-rw-r--r--  1 carter  staff  51229 May 22  2017 print-lldp.c
+-rw-r--r--  1 carter  staff  31315 Aug 24  2020 print-lmp.c
+-rw-r--r--  1 carter  staff   3560 Aug 24  2020 print-msdp.c
+-rw-r--r--  1 carter  staff   9471 Aug 24  2020 print-ntp.c
+-rw-r--r--  1 carter  staff  38373 Aug 24  2020 print-pim.c
+-rw-r--r--  1 carter  staff  29946 Aug 24  2020 print-pptp.c
+-rw-r--r--  1 carter  staff  34778 Aug 24  2020 print-radius.c
+-rw-r--r--  1 carter  staff   8863 Aug 24  2020 print-rip.c
+-rw-r--r--  1 carter  staff  59006 Aug 24  2020 print-rx.c
+-rw-r--r--  1 carter  staff  45097 Nov  8 08:44 print-smb.c
+-rw-r--r--  1 carter  staff  50975 Nov 30 12:35 print-snmp.c
+-rw-r--r--  1 carter  staff   5255 Aug 24  2020 print-stp.c
+-rwxr-xr-x  1 carter  staff   4479 Aug 24  2020 print-syslog.c
+-rw-r--r--  1 carter  staff   7586 Aug 24  2020 print-telnet.c
+-rw-r--r--  1 carter  staff   4529 Aug 24  2020 print-tftp.c
+-rw-r--r--  1 carter  staff   4127 Aug 24  2020 print-timed.c
+-rw-r--r--  1 carter  staff   2249 Nov  3 10:47 print-wol.c
+-rw-r--r--  1 carter  staff  22879 Nov 30 12:33 radump.c
+-rw-r--r--  1 carter  staff   3573 May 22  2017 rx.h
+-rw-r--r--  1 carter  staff   5555 May 22  2017 smb.h
+-rw-r--r--  1 carter  staff  64704 Aug 24  2020 smbutil.c
+-rw-r--r--  1 carter  staff  11294 May 22  2017 telnet.h
+-rw-r--r--  1 carter  staff   3781 May 22  2017 timed.h
 
 ./examples/raevent:
 total 96
--r--r--r--  1 carter  staff   3904 Mar 16  2016 Makefile.in
--r--r--r--  1 carter  staff  20644 Mar 16  2016 README
--r--r--r--  1 carter  staff  11381 Sep 19 21:55 raevent.c
--r--r--r--  1 carter  staff   7078 Mar 16  2016 raevent.h
+-rw-r--r--  1 carter  staff   3951 Nov  8 08:51 Makefile.in
+-rw-r--r--@ 1 carter  staff  20644 Aug 24  2020 README
+-rw-r--r--  1 carter  staff  12029 Nov  8 08:44 raevent.c
+-rw-r--r--  1 carter  staff   7078 Aug 24  2020 raevent.h
 
 ./examples/rafilter:
-total 48
--r--r--r--  1 carter  staff   3864 Mar 16  2016 Makefile.in
--r--r--r--  1 carter  staff    351 Mar 16  2016 NOTES
--r--r--r--  1 carter  staff    906 Mar 16  2016 README
--r--r--r--  1 carter  staff  11717 Mar 25  2016 rafilteraddr.c
+total 56
+-rw-r--r--  1 carter  staff   3911 Nov  8 08:51 Makefile.in
+-rw-r--r--  1 carter  staff    351 May 22  2017 NOTES
+-rw-r--r--@ 1 carter  staff    906 Aug 24  2020 README
+-rw-r--r--  1 carter  staff  13037 Nov  8 08:44 rafilteraddr.c
+
+./examples/ragen:
+total 288
+-rw-r--r--  1 carter  staff    3485 Nov  8 12:22 Makefile.in
+-rw-r--r--@ 1 carter  staff    2178 Nov  8 08:44 README
+-rw-r--r--  1 carter  staff  111692 Dec 14 09:43 ragen.c
+-rw-r--r--  1 carter  staff    1172 Nov  8 08:44 ragen.h
+-rw-r--r--  1 carter  staff   13003 Nov  8 08:44 rasql_common.c
+-rw-r--r--  1 carter  staff     885 Nov  8 08:44 rasql_common.h
 
 ./examples/ragraph:
 total 272
--r--r--r--  1 carter  staff   2402 Mar 16  2016 Makefile.in
--r--r--r--  1 carter  staff    910 Mar 16  2016 README
--r--r--r--  1 carter  staff  63710 Mar 16  2016 ragraph.pl
--r--r--r--  1 carter  staff  62514 Mar 16  2016 raplot.pl
+-rw-r--r--  1 carter  staff   2402 Aug 24  2020 Makefile.in
+-rw-r--r--@ 1 carter  staff    910 Aug 24  2020 README
+-rw-r--r--  1 carter  staff  63781 Nov  8 08:44 ragraph.pl
+-rw-r--r--  1 carter  staff  62558 Nov  3 10:47 raplot.pl
 
 ./examples/ragrep:
-total 56
--r--r--r--  1 carter  staff   3898 Mar 16  2016 Makefile.in
--r--r--r--  1 carter  staff    911 Mar 16  2016 README
--r--r--r--  1 carter  staff  20400 Mar 25  2016 ragrep.c
+total 64
+-rw-r--r--  1 carter  staff   3945 Nov  8 08:51 Makefile.in
+-rw-r--r--@ 1 carter  staff    911 Aug 24  2020 README
+-rw-r--r--  1 carter  staff  21643 Nov 30 12:44 ragrep.c
 
 ./examples/rahisto:
-total 72
--r--r--r--  1 carter  staff   3907 Mar 16  2016 Makefile.in
--r--r--r--  1 carter  staff    915 Mar 16  2016 README
--r--r--r--  1 carter  staff  27933 Mar 25  2016 rahisto.c
+total 184
+-rw-r--r--  1 carter  staff   4971 Nov  8 08:51 Makefile.in
+-rw-r--r--@ 1 carter  staff    915 Aug 24  2020 README
+drwxr-xr-x  3 carter  staff     96 Nov  3 10:47 qosient
+-rwxr-xr-x  1 carter  staff   7414 Nov  3 10:47 rahisto-delsql.in
+-rwxr-xr-x  1 carter  staff   5692 Nov  3 10:47 rahisto-querysql.in
+-rwxr-xr-x  1 carter  staff   6719 Nov  3 10:47 rahisto-updatesql.in
+-rw-r--r--  1 carter  staff  53053 Nov 30 12:45 rahisto.c
+-rw-r--r--  1 carter  staff    378 Nov  3 10:47 rahisto.h
+
+./examples/rahisto/qosient:
+total 88
+-rwxr-xr-x  1 carter  staff  44839 Nov  3 10:47 rahisto.pm
 
 ./examples/rahosts:
-total 40
--r--r--r--  1 carter  staff  3393 Mar 16  2016 Makefile.in
--r--r--r--  1 carter  staff   900 Mar 16  2016 README
--r--r--r--  1 carter  staff  5486 Mar 16  2016 rahosts.pl
--r--r--r--  1 carter  staff  2346 Mar 16  2016 raips.pl
+total 424
+-rw-r--r--  1 carter  staff   3832 Oct 25 13:38 Makefile
+-rw-r--r--  1 carter  staff   3863 Nov  8 08:51 Makefile.in
+-rw-r--r--@ 1 carter  staff   1835 Nov  3 10:47 README
+drwxr-xr-x  4 carter  staff    128 Nov  8 08:44 archive
+-rwxr-xr-x  1 carter  staff  69520 Nov  8 08:44 raclique.pl
+-rw-r--r--  1 carter  staff  89142 Nov  8 08:44 rahosts.c
+-rw-r--r--  1 carter  staff   4353 Nov  8 08:44 rahostsdaily.pl
+-rwxr-xr-x  1 carter  staff  19862 Nov  8 08:44 rahostsv6.pl
+-rw-r--r--  1 carter  staff  16044 Nov  3 10:47 rasqlinsert.h
+
+./examples/rahosts/archive:
+total 48
+-rw-r--r--  1 carter  staff  19860 Nov  8 08:44 rahosts.pl
+-rw-r--r--  1 carter  staff   2276 Nov  3 10:47 raips.pl
 
 ./examples/ralabel:
-total 40
--r--r--r--  1 carter  staff   3321 Mar 16  2016 Makefile.in
--r--r--r--  1 carter  staff    894 Mar 16  2016 README
--r--r--r--  1 carter  staff  11512 Mar 25  2016 ralabel.c
+total 48
+-rw-r--r--  1 carter  staff   3368 Nov  8 08:51 Makefile.in
+-rw-r--r--@ 1 carter  staff   1444 Nov  3 10:47 README
+-rw-r--r--  1 carter  staff  14160 Nov  3 10:47 ralabel.c
 
 ./examples/ramatrix:
-total 120
--r--r--r--  1 carter  staff   3914 Mar 16  2016 Makefile.in
--r--r--r--  1 carter  staff    912 Mar 16  2016 README
--r--r--r--  1 carter  staff  53232 Sep 20 14:36 ramatrix.c
+total 128
+-rw-r--r--  1 carter  staff   3961 Nov  8 08:51 Makefile.in
+-rw-r--r--@ 1 carter  staff    912 Aug 24  2020 README
+-rw-r--r--  1 carter  staff  54171 Nov  8 08:44 ramatrix.c
 
 ./examples/rampc:
-total 856
--r--r--r--  1 carter  staff    4016 Jun  7 23:30 Makefile.in
--r--r--r--  1 carter  staff   91422 Sep 20 14:36 raclient.c
--r--r--r--  1 carter  staff  221830 Mar 25  2016 racurses.c
--r--r--r--  1 carter  staff   16041 Mar 16  2016 racurses.h
--r--r--r--  1 carter  staff   86917 Sep 20 14:36 rampcd.c
--r--r--r--  1 carter  staff    7204 Mar 16  2016 rampcd.h
+total 880
+-rw-r--r--  1 carter  staff    4121 Nov  8 08:51 Makefile.in
+-rw-r--r--  1 carter  staff   91460 Dec 14 09:43 raclient.c
+-rw-r--r--  1 carter  staff  222768 Dec 14 09:43 racurses.c
+-rw-r--r--  1 carter  staff   15890 Nov  8 08:44 racurses.h
+-rw-r--r--  1 carter  staff   96152 Dec 14 09:43 rampcd.c
+-rw-r--r--  1 carter  staff    7204 Aug 24  2020 rampcd.h
 
 ./examples/ramysql:
-total 848
--rw-r--r--  1 carter  staff   4382 Sep 28 14:17 Makefile.in
--r--r--r--  1 carter  staff   2381 Mar 16  2016 README
--rw-r--r--  1 carter  staff  95954 Sep 28 14:17 raclient.c
--rw-r--r--  1 carter  staff  65725 Sep 28 14:17 rasql.c
--r--r--r--  1 carter  staff  55268 Sep 29 10:09 rasqlcheckconf.c
--r--r--r--  1 carter  staff  25590 Oct  7 16:58 rasqlcheckconf.h
--r--r--r--  1 carter  staff  72743 Jun 13 13:43 rasqlinsert.c
--r--r--r--  1 carter  staff  16393 Mar 16  2016 rasqlinsert.h
--rw-r--r--  1 carter  staff  62566 Sep 28 14:17 rasqltimeindex.c
--r--r--r--  1 carter  staff   4843 Mar 16  2016 rasqltimeindex.h
+total 1424
+-rw-r--r--  1 carter  staff   19704 Sep 15  2021 Makefile
+-rw-r--r--  1 carter  staff    6586 Nov  8 08:51 Makefile.in
+-rw-r--r--@ 1 carter  staff    2381 Aug 24  2020 README
+-rw-r--r--  1 carter  staff   98684 Dec 27 15:46 raclient.c
+-rwxr-xr-x  1 carter  staff   13395 Nov  8 08:44 radbaserollup.pl
+-rw-r--r--  1 carter  staff  105337 Nov  8 08:44 rascore.c
+-rw-r--r--  1 carter  staff   70337 Nov  8 08:44 rasql.c
+-rw-r--r--  1 carter  staff   11727 Nov  3 10:47 rasql_common.c
+-rw-r--r--  1 carter  staff     885 Nov  3 10:02 rasql_common.h
+-rw-r--r--  1 carter  staff    4464 Nov  8 08:44 rasql_prepared_query.c
+-rw-r--r--  1 carter  staff    1179 Nov  8 08:44 rasql_prepared_query.h
+-rw-r--r--  1 carter  staff    3307 Nov  8 08:44 rasql_result_bind.c
+-rw-r--r--  1 carter  staff     440 Nov  8 08:44 rasql_result_bind.h
+-rw-r--r--  1 carter  staff   51261 Nov  3 10:47 rasqlcheckconf.c
+-rw-r--r--  1 carter  staff   25083 Nov  3 10:47 rasqlcheckconf.h
+-rw-r--r--  1 carter  staff   88303 Nov  8 08:44 rasqlinsert.c
+-rw-r--r--  1 carter  staff   16044 Nov  3 10:47 rasqlinsert.h
+-rw-r--r--  1 carter  staff   54563 Nov  8 08:44 rasqltimeindex.c
+-rw-r--r--  1 carter  staff    4920 Nov  8 08:44 rasqltimeindex.h
+-rwxr-xr-x  1 carter  staff    3572 Nov  3 10:47 rastatus-cpustats.pl
+-rwxr-xr-x  1 carter  staff    8298 Nov  3 10:47 rastatus-dailylogs.pl
+-rwxr-xr-x  1 carter  staff    4437 Nov  3 10:47 rastatus-diskstats.pl
+-rwxr-xr-x  1 carter  staff    3272 Nov  3 10:47 rastatus-loadavg.pl
+-rwxr-xr-x  1 carter  staff    3425 Nov  3 10:47 rastatus-memstats.pl
+-rw-r--r--  1 carter  staff   62929 Nov  8 08:44 rastatus.c
+-rw-r--r--  1 carter  staff    5243 Nov  3 10:47 rastatus.h
 
 ./examples/rap:
 total 104
--r--r--r--  1 carter  staff   3161 Mar 16  2016 Makefile.in
--r--r--r--  1 carter  staff   3314 Mar 16  2016 README
--r--r--r--  1 carter  staff  43094 Sep 20 14:36 rap.c
+-rw-r--r--  1 carter  staff   3251 Nov  8 08:51 Makefile.in
+-rw-r--r--@ 1 carter  staff   3314 Aug 24  2020 README
+-rw-r--r--  1 carter  staff  43617 Nov  8 08:44 rap.c
 
 ./examples/rapath:
 total 168
--r--r--r--  1 carter  staff   3443 Mar 16  2016 Makefile.in
--r--r--r--  1 carter  staff  31015 Mar 16  2016 README
--r--r--r--  1 carter  staff   5762 Jun  1 15:09 ralabel.conf
--r--r--r--  1 carter  staff  35349 Sep 20 14:36 rapath.c
--r--r--r--  1 carter  staff   1371 Mar 16  2016 rapath.h
+-rw-r--r--  1 carter  staff   3490 Nov  8 08:51 Makefile.in
+-rw-r--r--@ 1 carter  staff  31015 Aug 24  2020 README
+-rw-r--r--  1 carter  staff   5762 May 22  2017 ralabel.conf
+-rw-r--r--  1 carter  staff  35359 Nov  8 08:44 rapath.c
+-rw-r--r--  1 carter  staff   1371 Aug 24  2020 rapath.h
 
 ./examples/rapolicy:
 total 128
--r--r--r--  1 carter  staff   3331 Mar 16  2016 Makefile.in
--r--r--r--  1 carter  staff   1183 Mar 16  2016 README
--r--r--r--  1 carter  staff  55243 Sep 19 21:55 rapolicy.c
+-rw-r--r--  1 carter  staff   3378 Nov  8 08:51 Makefile.in
+-rw-r--r--@ 1 carter  staff   1183 Aug 24  2020 README
+-rw-r--r--  1 carter  staff  55945 Nov 30 12:29 rapolicy.c
 
 ./examples/raports:
-total 24
--r--r--r--  1 carter  staff  3279 Mar 16  2016 Makefile.in
--r--r--r--  1 carter  staff   887 Mar 16  2016 README
--r--r--r--  1 carter  staff  4057 Mar 16  2016 raports.pl
+total 56
+-rw-r--r--  1 carter  staff   3574 Nov  8 08:51 Makefile.in
+-rw-r--r--@ 1 carter  staff   2108 Aug 24  2020 README
+-rw-r--r--  1 carter  staff  10751 Nov  8 08:44 raports.pl
+-rwxr-xr-x  1 carter  staff   5010 Nov  8 08:44 raportsdaily.pl
+
+./examples/rapython:
+total 8
+-rw-r--r--  1 carter  staff  3623 Mar 13  2021 Makefile
 
 ./examples/raqsort:
-total 72
--r--r--r--  1 carter  staff   3849 Mar 16  2016 Makefile.in
--r--r--r--  1 carter  staff   1890 Mar 16  2016 README
--r--r--r--  1 carter  staff  26310 Mar 25  2016 raqsort.c
+total 80
+-rw-r--r--  1 carter  staff   3949 Nov  8 08:51 Makefile.in
+-rw-r--r--@ 1 carter  staff   1890 Aug 24  2020 README
+-rw-r--r--  1 carter  staff  29051 Nov  8 08:44 raqsort.c
 
 ./examples/rarpwatch:
 total 88
--r--r--r--  1 carter  staff   3845 Mar 16  2016 Makefile.in
--r--r--r--  1 carter  staff   3311 Aug 22 00:32 README
--r--r--r--  1 carter  staff  29863 Sep 20 14:36 rarpwatch.c
--r--r--r--  1 carter  staff    975 Mar 16  2016 rarpwatch.h
+-rw-r--r--  1 carter  staff   3892 Nov  8 08:51 Makefile.in
+-rw-r--r--@ 1 carter  staff   3608 Aug 24  2020 README
+-rw-r--r--  1 carter  staff  30469 Nov  8 08:44 rarpwatch.c
+-rw-r--r--  1 carter  staff    975 Aug 24  2020 rarpwatch.h
 
 ./examples/rascanner:
-total 120
--r--r--r--  1 carter  staff   3374 Mar 16  2016 Makefile.in
--r--r--r--  1 carter  staff   1087 Mar 16  2016 README
--r--r--r--  1 carter  staff  10537 Mar 16  2016 radark.pl
--r--r--r--  1 carter  staff  40251 Mar 16  2016 rascan.pl
+total 152
+-rw-r--r--  1 carter  staff   3992 Nov  8 08:51 Makefile.in
+-rw-r--r--@ 1 carter  staff   2224 Nov  3 10:47 README
+-rw-r--r--  1 carter  staff  10522 Aug 24  2020 radark.pl
+-rw-r--r--  1 carter  staff  40248 Nov  3 10:47 rascan.pl
+-rw-r--r--  1 carter  staff   5455 Nov  3 10:47 rascanner.pl
+-rw-r--r--  1 carter  staff   5791 Nov  3 10:47 rascannerdaily.pl
 
 ./examples/raservices:
 total 112
--r--r--r--  1 carter  staff   3584 Mar 16  2016 Makefile.in
--r--r--r--  1 carter  staff    949 Mar 16  2016 README
--r--r--r--  1 carter  staff  13239 Mar 25  2016 raservices.c
--r--r--r--  1 carter  staff  30664 Sep 20 14:36 rauserdata.c
+-rw-r--r--  1 carter  staff   3632 Nov  8 08:51 Makefile.in
+-rw-r--r--@ 1 carter  staff    949 Aug 24  2020 README
+-rw-r--r--  1 carter  staff  13932 Nov  8 08:44 raservices.c
+-rw-r--r--  1 carter  staff  29780 Nov  8 08:44 rauserdata.c
 
 ./examples/rasnort:
-total 1280
--rw-r--r--   1 carter  staff    3862 Oct 10 23:15 Makefile
--rw-r--r--   1 carter  staff    3817 Oct 12  2012 Makefile.in
--rw-r--r--   1 carter  staff    3557 Oct 12  2012 Makefile.in.orig
--rw-r--r--   1 carter  staff    2919 Oct 12  2012 bounds.h
--rw-r--r--   1 carter  staff     439 Oct 12  2012 byte_extract.h
--rw-r--r--   1 carter  staff    3616 Oct 12  2012 cdefs.h
--rw-r--r--   1 carter  staff    6301 Oct 12  2012 checksum.h
--rw-r--r--   1 carter  staff     951 Oct 12  2012 codes.h
--rw-r--r--   1 carter  staff    2891 Oct 12  2012 debug.h
--rw-r--r--   1 carter  staff   42333 Oct 12  2012 decode.h
--rw-r--r--   1 carter  staff    3373 Oct 12  2012 detect.h
-drwxr-xr-x  87 carter  staff    2958 Oct  9 17:33 detection-plugins
-drwxr-xr-x  14 carter  staff     476 Oct  9 17:33 etc
--rw-r--r--   1 carter  staff    2016 Oct 12  2012 event.h
--rw-r--r--   1 carter  staff     758 Oct 12  2012 event_wrapper.h
--rw-r--r--   1 carter  staff    1199 Oct 12  2012 fatal.h
--rw-r--r--   1 carter  staff    2773 Oct 12  2012 fpcreate.h
--rw-r--r--   1 carter  staff    1581 Oct 12  2012 fpdetect.h
--rw-r--r--   1 carter  staff   16350 Oct 12  2012 generators.h
--rw-r--r--   1 carter  staff    2788 Oct 12  2012 log.h
--rw-r--r--   1 carter  staff    1690 Oct 12  2012 mempool.h
--rw-r--r--   1 carter  staff    1526 Oct 12  2012 mstring.h
--rw-r--r--   1 carter  staff     195 Oct 12  2012 packet_time.h
-drwxr-xr-x   9 carter  staff     306 Oct  9 17:33 parser
--r--r--r--   1 carter  staff  329903 Oct 12  2012 parser.c
--rw-r--r--   1 carter  staff    3072 Oct 12  2012 parser.h
--rw-r--r--   1 carter  staff    4679 Oct 12  2012 pcrm.h
--rw-r--r--   1 carter  staff    5995 Oct 12  2012 plugbase.h
--rw-r--r--   1 carter  staff     873 Oct 12  2012 plugin_enum.h
-drwxr-xr-x  62 carter  staff    2108 Oct  9 17:33 preprocessors
--rw-r--r--   1 carter  staff    3024 Oct 12  2012 prototypes.h
--r--r--r--   1 carter  staff    9606 Oct 12  2012 rasnort.c
-drwxr-xr-x  53 carter  staff    1802 Oct  9 17:33 rules
--rw-r--r--   1 carter  staff    8702 Oct 12  2012 rules.h
--rw-r--r--   1 carter  staff    2162 Oct 12  2012 sf_sdlist.h
--rw-r--r--   1 carter  staff     514 Oct 12  2012 sfthreshold.h
-drwxr-xr-x  49 carter  staff    1666 Oct  9 17:33 sfutil
--r--r--r--   1 carter  staff   10294 Oct 12  2012 signature.c
--rw-r--r--   1 carter  staff    2770 Oct 12  2012 signature.h
--rw-r--r--   1 carter  staff    1841 Oct 12  2012 smalloc.h
--rw-r--r--   1 carter  staff    9347 Oct 12  2012 snort.h
--rw-r--r--   1 carter  staff    1955 Oct 12  2012 snprintf.h
--rw-r--r--   1 carter  staff    2247 Oct 12  2012 spo_plugbase.h
--rw-r--r--   1 carter  staff     970 Oct 12  2012 strlcatu.h
--rw-r--r--   1 carter  staff     970 Oct 12  2012 strlcpyu.h
--rw-r--r--   1 carter  staff    3658 Oct 12  2012 sys_include.h
--rw-r--r--   1 carter  staff    1186 Oct 12  2012 tag.h
--rw-r--r--   1 carter  staff    1622 Oct 12  2012 timersub.h
--rw-r--r--   1 carter  staff   33957 Oct 12  2012 ubi_BinTree.h
--rw-r--r--   1 carter  staff   12802 Oct 12  2012 ubi_SplayTree.h
--rw-r--r--   1 carter  staff    2347 Oct 12  2012 util.h
+total 1272
+-rw-r--r--   1 carter  staff    3864 Nov  8 08:51 Makefile.in
+-rw-r--r--   1 carter  staff    3557 Aug 24  2020 Makefile.in.orig
+-rw-r--r--   1 carter  staff    2919 Aug 24  2020 bounds.h
+-rw-r--r--   1 carter  staff     439 Aug 24  2020 byte_extract.h
+-rw-r--r--   1 carter  staff    3616 Aug 24  2020 cdefs.h
+-rw-r--r--   1 carter  staff    6301 Aug 24  2020 checksum.h
+-rw-r--r--   1 carter  staff     951 Aug 24  2020 codes.h
+-rw-r--r--   1 carter  staff    2891 Aug 24  2020 debug.h
+-rw-r--r--   1 carter  staff   42333 Aug 24  2020 decode.h
+-rw-r--r--   1 carter  staff    3373 Aug 24  2020 detect.h
+drwxr-xr-x  59 carter  staff    1888 Oct 27 17:00 detection-plugins
+drwxr-xr-x  13 carter  staff     416 Oct 27 17:00 etc
+-rw-r--r--   1 carter  staff    2016 Aug 24  2020 event.h
+-rw-r--r--   1 carter  staff     758 Aug 24  2020 event_wrapper.h
+-rw-r--r--   1 carter  staff    1199 Aug 24  2020 fatal.h
+-rw-r--r--   1 carter  staff    2773 Aug 24  2020 fpcreate.h
+-rw-r--r--   1 carter  staff    1581 Aug 24  2020 fpdetect.h
+-rw-r--r--   1 carter  staff   16350 Aug 24  2020 generators.h
+-rw-r--r--   1 carter  staff    2788 Aug 24  2020 log.h
+-rw-r--r--   1 carter  staff    1690 Aug 24  2020 mempool.h
+-rw-r--r--   1 carter  staff    1526 Aug 24  2020 mstring.h
+-rw-r--r--   1 carter  staff     195 Aug 24  2020 packet_time.h
+drwxr-xr-x   7 carter  staff     224 Oct 27 17:00 parser
+-rw-r--r--   1 carter  staff  329903 Aug 24  2020 parser.c
+-rw-r--r--   1 carter  staff    3072 Aug 24  2020 parser.h
+-rw-r--r--   1 carter  staff    4679 Aug 24  2020 pcrm.h
+-rw-r--r--   1 carter  staff    5995 Aug 24  2020 plugbase.h
+-rw-r--r--   1 carter  staff     873 Aug 24  2020 plugin_enum.h
+drwxr-xr-x  43 carter  staff    1376 Oct 27 17:00 preprocessors
+-rw-r--r--   1 carter  staff    3024 Aug 24  2020 prototypes.h
+-rw-r--r--   1 carter  staff    9606 Aug 24  2020 rasnort.c
+drwxr-xr-x  52 carter  staff    1664 Oct 27 17:00 rules
+-rw-r--r--   1 carter  staff    8702 Aug 24  2020 rules.h
+-rw-r--r--   1 carter  staff    2162 Aug 24  2020 sf_sdlist.h
+-rw-r--r--   1 carter  staff     514 Aug 24  2020 sfthreshold.h
+drwxr-xr-x  34 carter  staff    1088 Oct 27 17:00 sfutil
+-rw-r--r--   1 carter  staff   10294 Aug 24  2020 signature.c
+-rw-r--r--   1 carter  staff    2770 Aug 24  2020 signature.h
+-rw-r--r--   1 carter  staff    1841 Aug 24  2020 smalloc.h
+-rw-r--r--   1 carter  staff    9347 Aug 24  2020 snort.h
+-rw-r--r--   1 carter  staff    1955 Aug 24  2020 snprintf.h
+-rw-r--r--   1 carter  staff    2247 Aug 24  2020 spo_plugbase.h
+-rw-r--r--   1 carter  staff     970 Aug 24  2020 strlcatu.h
+-rw-r--r--   1 carter  staff     970 Aug 24  2020 strlcpyu.h
+-rw-r--r--   1 carter  staff    3658 Aug 24  2020 sys_include.h
+-rw-r--r--   1 carter  staff    1186 Aug 24  2020 tag.h
+-rw-r--r--   1 carter  staff    1622 Aug 24  2020 timersub.h
+-rw-r--r--   1 carter  staff   33957 Aug 24  2020 ubi_BinTree.h
+-rw-r--r--   1 carter  staff   12802 Aug 24  2020 ubi_SplayTree.h
+-rw-r--r--   1 carter  staff    2347 Aug 24  2020 util.h
 
 ./examples/rasnort/detection-plugins:
-total 5952
--rw-r--r--  1 carter  staff     9950 Oct 12  2012 Makefile
--rw-r--r--  1 carter  staff     1110 Oct 12  2012 Makefile.am
--rw-r--r--  1 carter  staff     9284 Oct 12  2012 Makefile.in
--rw-r--r--  1 carter  staff  1262460 Oct 12  2012 libspd.a
--rw-r--r--  1 carter  staff    14660 Oct 12  2012 sp_byte_check.c
--rw-r--r--  1 carter  staff      978 Oct 12  2012 sp_byte_check.h
--rw-r--r--  1 carter  staff    59112 Oct 12  2012 sp_byte_check.o
--rw-r--r--  1 carter  staff    12225 Oct 12  2012 sp_byte_jump.c
--rw-r--r--  1 carter  staff      974 Oct 12  2012 sp_byte_jump.h
--rw-r--r--  1 carter  staff    58336 Oct 12  2012 sp_byte_jump.o
--rw-r--r--  1 carter  staff    11085 Oct 12  2012 sp_clientserver.c
--rw-r--r--  1 carter  staff     1032 Oct 12  2012 sp_clientserver.h
--rw-r--r--  1 carter  staff    55612 Oct 12  2012 sp_clientserver.o
--rw-r--r--  1 carter  staff    10942 Oct 12  2012 sp_dsize_check.c
--rw-r--r--  1 carter  staff      983 Oct 12  2012 sp_dsize_check.h
--rw-r--r--  1 carter  staff    45232 Oct 12  2012 sp_dsize_check.o
--rw-r--r--  1 carter  staff    14309 Oct 12  2012 sp_flowbits.c
--rw-r--r--  1 carter  staff      235 Oct 12  2012 sp_flowbits.h
--rw-r--r--  1 carter  staff    65000 Oct 12  2012 sp_flowbits.o
--rw-r--r--  1 carter  staff     7414 Oct 12  2012 sp_icmp_code_check.c
--rw-r--r--  1 carter  staff     1002 Oct 12  2012 sp_icmp_code_check.h
--rw-r--r--  1 carter  staff    44124 Oct 12  2012 sp_icmp_code_check.o
--rw-r--r--  1 carter  staff     6212 Oct 12  2012 sp_icmp_id_check.c
--rw-r--r--  1 carter  staff     1017 Oct 12  2012 sp_icmp_id_check.h
--rw-r--r--  1 carter  staff    42904 Oct 12  2012 sp_icmp_id_check.o
--rw-r--r--  1 carter  staff     6263 Oct 12  2012 sp_icmp_seq_check.c
--rw-r--r--  1 carter  staff     1023 Oct 12  2012 sp_icmp_seq_check.h
--rw-r--r--  1 carter  staff    42976 Oct 12  2012 sp_icmp_seq_check.o
--rw-r--r--  1 carter  staff     7220 Oct 12  2012 sp_icmp_type_check.c
--rw-r--r--  1 carter  staff     1266 Oct 12  2012 sp_icmp_type_check.h
--rw-r--r--  1 carter  staff    44132 Oct 12  2012 sp_icmp_type_check.o
--rw-r--r--  1 carter  staff    15033 Oct 12  2012 sp_ip_fragbits.c
--rw-r--r--  1 carter  staff     1073 Oct 12  2012 sp_ip_fragbits.h
--rw-r--r--  1 carter  staff    48428 Oct 12  2012 sp_ip_fragbits.o
--rw-r--r--  1 carter  staff     5201 Oct 12  2012 sp_ip_id_check.c
--rw-r--r--  1 carter  staff      982 Oct 12  2012 sp_ip_id_check.h
--rw-r--r--  1 carter  staff    42696 Oct 12  2012 sp_ip_id_check.o
--rw-r--r--  1 carter  staff     6589 Oct 12  2012 sp_ip_proto.c
--rw-r--r--  1 carter  staff     1162 Oct 12  2012 sp_ip_proto.h
--rw-r--r--  1 carter  staff    44276 Oct 12  2012 sp_ip_proto.o
--rw-r--r--  1 carter  staff     5445 Oct 12  2012 sp_ip_same_check.c
--rw-r--r--  1 carter  staff     1039 Oct 12  2012 sp_ip_same_check.h
--rw-r--r--  1 carter  staff    42592 Oct 12  2012 sp_ip_same_check.o
--rw-r--r--  1 carter  staff     5763 Oct 12  2012 sp_ip_tos_check.c
--rw-r--r--  1 carter  staff      987 Oct 12  2012 sp_ip_tos_check.h
--rw-r--r--  1 carter  staff    42988 Oct 12  2012 sp_ip_tos_check.o
--rw-r--r--  1 carter  staff     7201 Oct 12  2012 sp_ipoption_check.c
--rw-r--r--  1 carter  staff      998 Oct 12  2012 sp_ipoption_check.h
--rw-r--r--  1 carter  staff    43880 Oct 12  2012 sp_ipoption_check.o
--rw-r--r--  1 carter  staff     7438 Oct 12  2012 sp_isdataat.c
--rw-r--r--  1 carter  staff      980 Oct 12  2012 sp_isdataat.h
--rw-r--r--  1 carter  staff    55112 Oct 12  2012 sp_isdataat.o
--rw-r--r--  1 carter  staff    40671 Oct 12  2012 sp_pattern_match.c
--rw-r--r--  1 carter  staff     2204 Oct 12  2012 sp_pattern_match.h
--rw-r--r--  1 carter  staff    87084 Oct 12  2012 sp_pattern_match.o
--rw-r--r--  1 carter  staff    13810 Oct 12  2012 sp_pcre.c
--rw-r--r--  1 carter  staff     1207 Oct 12  2012 sp_pcre.h
--rw-r--r--  1 carter  staff    60948 Oct 12  2012 sp_pcre.o
--rw-r--r--  1 carter  staff    16943 Oct 12  2012 sp_react.c
--rw-r--r--  1 carter  staff     1010 Oct 12  2012 sp_react.h
--rw-r--r--  1 carter  staff     1252 Oct 12  2012 sp_react.o
--rw-r--r--  1 carter  staff    11969 Oct 12  2012 sp_respond.c
--rw-r--r--  1 carter  staff     1209 Oct 12  2012 sp_respond.h
--rw-r--r--  1 carter  staff     1256 Oct 12  2012 sp_respond.o
--rw-r--r--  1 carter  staff     8863 Oct 12  2012 sp_rpc_check.c
--rw-r--r--  1 carter  staff      973 Oct 12  2012 sp_rpc_check.h
--rw-r--r--  1 carter  staff    53352 Oct 12  2012 sp_rpc_check.o
--rw-r--r--  1 carter  staff    10554 Oct 12  2012 sp_session.c
--rw-r--r--  1 carter  staff     1005 Oct 12  2012 sp_session.h
--rw-r--r--  1 carter  staff    55724 Oct 12  2012 sp_session.o
--rw-r--r--  1 carter  staff     5244 Oct 12  2012 sp_tcp_ack_check.c
--rw-r--r--  1 carter  staff      992 Oct 12  2012 sp_tcp_ack_check.h
--rw-r--r--  1 carter  staff    42856 Oct 12  2012 sp_tcp_ack_check.o
--rw-r--r--  1 carter  staff     9510 Oct 12  2012 sp_tcp_flag_check.c
--rw-r--r--  1 carter  staff      966 Oct 12  2012 sp_tcp_flag_check.h
--rw-r--r--  1 carter  staff    47628 Oct 12  2012 sp_tcp_flag_check.o
--rw-r--r--  1 carter  staff     5284 Oct 12  2012 sp_tcp_seq_check.c
--rw-r--r--  1 carter  staff      992 Oct 12  2012 sp_tcp_seq_check.h
--rw-r--r--  1 carter  staff    42856 Oct 12  2012 sp_tcp_seq_check.o
--rw-r--r--  1 carter  staff     5870 Oct 12  2012 sp_tcp_win_check.c
--rw-r--r--  1 carter  staff      991 Oct 12  2012 sp_tcp_win_check.h
--rw-r--r--  1 carter  staff    43108 Oct 12  2012 sp_tcp_win_check.o
--rw-r--r--  1 carter  staff    10423 Oct 12  2012 sp_ttl_check.c
--rw-r--r--  1 carter  staff      973 Oct 12  2012 sp_ttl_check.h
--rw-r--r--  1 carter  staff    44716 Oct 12  2012 sp_ttl_check.o
+total 3368
+-rw-r--r--  1 carter  staff     1110 Aug 24  2020 Makefile.am
+-rw-r--r--  1 carter  staff     9300 Aug 24  2020 Makefile.in
+-rw-r--r--  1 carter  staff  1262460 Aug 24  2020 libspd.a
+-rw-r--r--  1 carter  staff    14660 Aug 24  2020 sp_byte_check.c
+-rw-r--r--  1 carter  staff      978 Aug 24  2020 sp_byte_check.h
+-rw-r--r--  1 carter  staff    12225 Aug 24  2020 sp_byte_jump.c
+-rw-r--r--  1 carter  staff      974 Aug 24  2020 sp_byte_jump.h
+-rw-r--r--  1 carter  staff    11085 Aug 24  2020 sp_clientserver.c
+-rw-r--r--  1 carter  staff     1032 Aug 24  2020 sp_clientserver.h
+-rw-r--r--  1 carter  staff    10942 Aug 24  2020 sp_dsize_check.c
+-rw-r--r--  1 carter  staff      983 Aug 24  2020 sp_dsize_check.h
+-rw-r--r--  1 carter  staff    14309 Aug 24  2020 sp_flowbits.c
+-rw-r--r--  1 carter  staff      235 Aug 24  2020 sp_flowbits.h
+-rw-r--r--  1 carter  staff     7414 Aug 24  2020 sp_icmp_code_check.c
+-rw-r--r--  1 carter  staff     1002 Aug 24  2020 sp_icmp_code_check.h
+-rw-r--r--  1 carter  staff     6212 Aug 24  2020 sp_icmp_id_check.c
+-rw-r--r--  1 carter  staff     1017 Aug 24  2020 sp_icmp_id_check.h
+-rw-r--r--  1 carter  staff     6263 Aug 24  2020 sp_icmp_seq_check.c
+-rw-r--r--  1 carter  staff     1023 Aug 24  2020 sp_icmp_seq_check.h
+-rw-r--r--  1 carter  staff     7220 Aug 24  2020 sp_icmp_type_check.c
+-rw-r--r--  1 carter  staff     1266 Aug 24  2020 sp_icmp_type_check.h
+-rw-r--r--  1 carter  staff    15033 Aug 24  2020 sp_ip_fragbits.c
+-rw-r--r--  1 carter  staff     1073 Aug 24  2020 sp_ip_fragbits.h
+-rw-r--r--  1 carter  staff     5201 Aug 24  2020 sp_ip_id_check.c
+-rw-r--r--  1 carter  staff      982 Aug 24  2020 sp_ip_id_check.h
+-rw-r--r--  1 carter  staff     6589 Aug 24  2020 sp_ip_proto.c
+-rw-r--r--  1 carter  staff     1162 Aug 24  2020 sp_ip_proto.h
+-rw-r--r--  1 carter  staff     5445 Aug 24  2020 sp_ip_same_check.c
+-rw-r--r--  1 carter  staff     1039 Aug 24  2020 sp_ip_same_check.h
+-rw-r--r--  1 carter  staff     5763 Aug 24  2020 sp_ip_tos_check.c
+-rw-r--r--  1 carter  staff      987 Aug 24  2020 sp_ip_tos_check.h
+-rw-r--r--  1 carter  staff     7201 Aug 24  2020 sp_ipoption_check.c
+-rw-r--r--  1 carter  staff      998 Aug 24  2020 sp_ipoption_check.h
+-rw-r--r--  1 carter  staff     7438 Aug 24  2020 sp_isdataat.c
+-rw-r--r--  1 carter  staff      980 Aug 24  2020 sp_isdataat.h
+-rw-r--r--  1 carter  staff    40671 Aug 24  2020 sp_pattern_match.c
+-rw-r--r--  1 carter  staff     2204 Aug 24  2020 sp_pattern_match.h
+-rw-r--r--  1 carter  staff    13810 Aug 24  2020 sp_pcre.c
+-rw-r--r--  1 carter  staff     1207 Aug 24  2020 sp_pcre.h
+-rw-r--r--  1 carter  staff    16943 Aug 24  2020 sp_react.c
+-rw-r--r--  1 carter  staff     1010 Aug 24  2020 sp_react.h
+-rw-r--r--  1 carter  staff    11969 Aug 24  2020 sp_respond.c
+-rw-r--r--  1 carter  staff     1209 Aug 24  2020 sp_respond.h
+-rw-r--r--  1 carter  staff     8863 Aug 24  2020 sp_rpc_check.c
+-rw-r--r--  1 carter  staff      973 Aug 24  2020 sp_rpc_check.h
+-rw-r--r--  1 carter  staff    10554 Aug 24  2020 sp_session.c
+-rw-r--r--  1 carter  staff     1005 Aug 24  2020 sp_session.h
+-rw-r--r--  1 carter  staff     5244 Aug 24  2020 sp_tcp_ack_check.c
+-rw-r--r--  1 carter  staff      992 Aug 24  2020 sp_tcp_ack_check.h
+-rw-r--r--  1 carter  staff     9510 Aug 24  2020 sp_tcp_flag_check.c
+-rw-r--r--  1 carter  staff      966 Aug 24  2020 sp_tcp_flag_check.h
+-rw-r--r--  1 carter  staff     5284 Aug 24  2020 sp_tcp_seq_check.c
+-rw-r--r--  1 carter  staff      992 Aug 24  2020 sp_tcp_seq_check.h
+-rw-r--r--  1 carter  staff     5870 Aug 24  2020 sp_tcp_win_check.c
+-rw-r--r--  1 carter  staff      991 Aug 24  2020 sp_tcp_win_check.h
+-rw-r--r--  1 carter  staff    10423 Aug 24  2020 sp_ttl_check.c
+-rw-r--r--  1 carter  staff      973 Aug 24  2020 sp_ttl_check.h
 
 ./examples/rasnort/etc:
-total 552
--rw-r--r--  1 carter  staff    6051 Oct 12  2012 Makefile
--rw-r--r--  1 carter  staff     230 Oct 12  2012 Makefile.am
--rw-r--r--  1 carter  staff    5464 Oct 12  2012 Makefile.in
--rw-r--r--  1 carter  staff    3521 Oct 12  2012 classification.config
--rw-r--r--  1 carter  staff    6799 Oct 12  2012 gen-msg.map
--rw-r--r--  1 carter  staff    1622 Oct 12  2012 generators
--rw-r--r--  1 carter  staff     608 Oct 12  2012 reference.config
--rw-r--r--  1 carter  staff      59 Oct 12  2012 sid
--rw-r--r--  1 carter  staff  148937 Oct 12  2012 sid-msg.map
--rw-r--r--  1 carter  staff   22482 Oct 12  2012 snort.conf
--rw-r--r--  1 carter  staff    2319 Oct 12  2012 threshold.conf
--rw-r--r--  1 carter  staff   53841 Oct 12  2012 unicode.map
+total 536
+-rw-r--r--  1 carter  staff     230 Aug 24  2020 Makefile.am
+-rw-r--r--  1 carter  staff    5464 Aug 24  2020 Makefile.in
+-rw-r--r--  1 carter  staff    3521 Aug 24  2020 classification.config
+-rw-r--r--  1 carter  staff    6799 Aug 24  2020 gen-msg.map
+-rw-r--r--  1 carter  staff    1622 Aug 24  2020 generators
+-rw-r--r--  1 carter  staff     608 Aug 24  2020 reference.config
+-rw-r--r--  1 carter  staff      59 Aug 24  2020 sid
+-rw-r--r--  1 carter  staff  148937 Aug 24  2020 sid-msg.map
+-rw-r--r--  1 carter  staff   22482 Aug 24  2020 snort.conf
+-rw-r--r--  1 carter  staff    2319 Aug 24  2020 threshold.conf
+-rw-r--r--  1 carter  staff   53841 Aug 24  2020 unicode.map
 
 ./examples/rasnort/parser:
-total 256
--rw-r--r--  1 carter  staff   9034 Oct 12  2012 IpAddrSet.c
--rw-r--r--  1 carter  staff   1442 Oct 12  2012 IpAddrSet.h
--rw-r--r--  1 carter  staff  43020 Oct 12  2012 IpAddrSet.o
--rw-r--r--  1 carter  staff   8314 Oct 12  2012 Makefile
--rw-r--r--  1 carter  staff    143 Oct 12  2012 Makefile.am
--rw-r--r--  1 carter  staff   7661 Oct 12  2012 Makefile.in
--rw-r--r--  1 carter  staff  43222 Oct 12  2012 libparser.a
+total 144
+-rw-r--r--  1 carter  staff   9034 Aug 24  2020 IpAddrSet.c
+-rw-r--r--  1 carter  staff   1442 Aug 24  2020 IpAddrSet.h
+-rw-r--r--  1 carter  staff    143 Aug 24  2020 Makefile.am
+-rw-r--r--  1 carter  staff   7677 Aug 24  2020 Makefile.in
+-rw-r--r--  1 carter  staff  43222 Aug 24  2020 libparser.a
 
 ./examples/rasnort/preprocessors:
-total 5432
-drwxr-xr-x  16 carter  staff      544 Oct  9 17:33 HttpInspect
--rw-r--r--   1 carter  staff    12608 Oct 12  2012 Makefile
--rw-r--r--   1 carter  staff      717 Oct 12  2012 Makefile.am
--rw-r--r--   1 carter  staff    11948 Oct 12  2012 Makefile.in
-drwxr-xr-x  33 carter  staff     1122 Oct  9 17:33 flow
--rw-r--r--   1 carter  staff  1036644 Oct 12  2012 libspp.a
--rw-r--r--   1 carter  staff    27300 Oct 12  2012 perf-base.c
--rw-r--r--   1 carter  staff     3784 Oct 12  2012 perf-base.h
--rw-r--r--   1 carter  staff    57132 Oct 12  2012 perf-base.o
--rw-r--r--   1 carter  staff     3022 Oct 12  2012 perf-event.c
--rw-r--r--   1 carter  staff     1636 Oct 12  2012 perf-event.h
--rw-r--r--   1 carter  staff    44080 Oct 12  2012 perf-event.o
--rw-r--r--   1 carter  staff    12321 Oct 12  2012 perf-flow.c
--rw-r--r--   1 carter  staff     2612 Oct 12  2012 perf-flow.h
--rw-r--r--   1 carter  staff    52424 Oct 12  2012 perf-flow.o
--rw-r--r--   1 carter  staff     5442 Oct 12  2012 perf.c
--rw-r--r--   1 carter  staff     2740 Oct 12  2012 perf.h
--rw-r--r--   1 carter  staff    22344 Oct 12  2012 perf.o
--rw-r--r--   1 carter  staff     6873 Oct 12  2012 sfprocpidstats.c
--rw-r--r--   1 carter  staff     1403 Oct 12  2012 sfprocpidstats.h
--rw-r--r--   1 carter  staff     1264 Oct 12  2012 sfprocpidstats.o
--rw-r--r--   1 carter  staff    64451 Oct 12  2012 snort_httpinspect.c
--rw-r--r--   1 carter  staff      292 Oct 12  2012 snort_httpinspect.h
--rw-r--r--   1 carter  staff    80644 Oct 12  2012 snort_httpinspect.o
--rw-r--r--   1 carter  staff    16660 Oct 12  2012 spp_arpspoof.c
--rw-r--r--   1 carter  staff     1064 Oct 12  2012 spp_arpspoof.h
--rw-r--r--   1 carter  staff    47384 Oct 12  2012 spp_arpspoof.o
--rw-r--r--   1 carter  staff    11483 Oct 12  2012 spp_bo.c
--rw-r--r--   1 carter  staff      986 Oct 12  2012 spp_bo.h
--rw-r--r--   1 carter  staff    52172 Oct 12  2012 spp_bo.o
--rw-r--r--   1 carter  staff    23186 Oct 12  2012 spp_conversation.c
--rw-r--r--   1 carter  staff     2632 Oct 12  2012 spp_conversation.h
--rw-r--r--   1 carter  staff    59844 Oct 12  2012 spp_conversation.o
--rw-r--r--   1 carter  staff    11016 Oct 12  2012 spp_flow.c
--rw-r--r--   1 carter  staff      195 Oct 12  2012 spp_flow.h
--rw-r--r--   1 carter  staff    60844 Oct 12  2012 spp_flow.o
--rw-r--r--   1 carter  staff    42394 Oct 12  2012 spp_frag2.c
--rw-r--r--   1 carter  staff      932 Oct 12  2012 spp_frag2.h
--rw-r--r--   1 carter  staff    80824 Oct 12  2012 spp_frag2.o
--rw-r--r--   1 carter  staff     7452 Oct 12  2012 spp_httpinspect.c
--rw-r--r--   1 carter  staff      185 Oct 12  2012 spp_httpinspect.h
--rw-r--r--   1 carter  staff    46164 Oct 12  2012 spp_httpinspect.o
--rw-r--r--   1 carter  staff    10665 Oct 12  2012 spp_perfmonitor.c
--rw-r--r--   1 carter  staff     1044 Oct 12  2012 spp_perfmonitor.h
--rw-r--r--   1 carter  staff    56252 Oct 12  2012 spp_perfmonitor.o
--rw-r--r--   1 carter  staff    58663 Oct 12  2012 spp_portscan.c
--rw-r--r--   1 carter  staff     1434 Oct 12  2012 spp_portscan.h
--rw-r--r--   1 carter  staff    74140 Oct 12  2012 spp_portscan.o
--rw-r--r--   1 carter  staff    43250 Oct 12  2012 spp_portscan2.c
--rw-r--r--   1 carter  staff     1157 Oct 12  2012 spp_portscan2.h
--rw-r--r--   1 carter  staff    71996 Oct 12  2012 spp_portscan2.o
--rw-r--r--   1 carter  staff    18839 Oct 12  2012 spp_rpc_decode.c
--rw-r--r--   1 carter  staff      979 Oct 12  2012 spp_rpc_decode.h
--rw-r--r--   1 carter  staff    55944 Oct 12  2012 spp_rpc_decode.o
--rw-r--r--   1 carter  staff   168419 Oct 12  2012 spp_stream4.c
--rw-r--r--   1 carter  staff     1077 Oct 12  2012 spp_stream4.h
--rw-r--r--   1 carter  staff   114592 Oct 12  2012 spp_stream4.o
--rw-r--r--   1 carter  staff    10140 Oct 12  2012 spp_telnet_negotiation.c
--rw-r--r--   1 carter  staff     1041 Oct 12  2012 spp_telnet_negotiation.h
--rw-r--r--   1 carter  staff    52876 Oct 12  2012 spp_telnet_negotiation.o
+total 3336
+drwxr-xr-x  15 carter  staff      480 Oct 27 17:00 HttpInspect
+-rw-r--r--   1 carter  staff      717 Aug 24  2020 Makefile.am
+-rw-r--r--   1 carter  staff    11964 Aug 24  2020 Makefile.in
+drwxr-xr-x  25 carter  staff      800 Oct 27 17:00 flow
+-rw-r--r--   1 carter  staff  1036644 Aug 24  2020 libspp.a
+-rw-r--r--   1 carter  staff    27300 Aug 24  2020 perf-base.c
+-rw-r--r--   1 carter  staff     3784 Aug 24  2020 perf-base.h
+-rw-r--r--   1 carter  staff     3022 Aug 24  2020 perf-event.c
+-rw-r--r--   1 carter  staff     1636 Aug 24  2020 perf-event.h
+-rw-r--r--   1 carter  staff    12321 Aug 24  2020 perf-flow.c
+-rw-r--r--   1 carter  staff     2612 Aug 24  2020 perf-flow.h
+-rw-r--r--   1 carter  staff     5442 Aug 24  2020 perf.c
+-rw-r--r--   1 carter  staff     2740 Aug 24  2020 perf.h
+-rw-r--r--   1 carter  staff     6873 Aug 24  2020 sfprocpidstats.c
+-rw-r--r--   1 carter  staff     1403 Aug 24  2020 sfprocpidstats.h
+-rw-r--r--   1 carter  staff    64451 Aug 24  2020 snort_httpinspect.c
+-rw-r--r--   1 carter  staff      292 Aug 24  2020 snort_httpinspect.h
+-rw-r--r--   1 carter  staff    16660 Aug 24  2020 spp_arpspoof.c
+-rw-r--r--   1 carter  staff     1064 Aug 24  2020 spp_arpspoof.h
+-rw-r--r--   1 carter  staff    11483 Aug 24  2020 spp_bo.c
+-rw-r--r--   1 carter  staff      986 Aug 24  2020 spp_bo.h
+-rw-r--r--   1 carter  staff    23186 Aug 24  2020 spp_conversation.c
+-rw-r--r--   1 carter  staff     2632 Aug 24  2020 spp_conversation.h
+-rw-r--r--   1 carter  staff    11016 Aug 24  2020 spp_flow.c
+-rw-r--r--   1 carter  staff      195 Aug 24  2020 spp_flow.h
+-rw-r--r--   1 carter  staff    42394 Aug 24  2020 spp_frag2.c
+-rw-r--r--   1 carter  staff      932 Aug 24  2020 spp_frag2.h
+-rw-r--r--   1 carter  staff     7452 Aug 24  2020 spp_httpinspect.c
+-rw-r--r--   1 carter  staff      185 Aug 24  2020 spp_httpinspect.h
+-rw-r--r--   1 carter  staff    10665 Aug 24  2020 spp_perfmonitor.c
+-rw-r--r--   1 carter  staff     1044 Aug 24  2020 spp_perfmonitor.h
+-rw-r--r--   1 carter  staff    58663 Aug 24  2020 spp_portscan.c
+-rw-r--r--   1 carter  staff     1434 Aug 24  2020 spp_portscan.h
+-rw-r--r--   1 carter  staff    43250 Aug 24  2020 spp_portscan2.c
+-rw-r--r--   1 carter  staff     1157 Aug 24  2020 spp_portscan2.h
+-rw-r--r--   1 carter  staff    18839 Aug 24  2020 spp_rpc_decode.c
+-rw-r--r--   1 carter  staff      979 Aug 24  2020 spp_rpc_decode.h
+-rw-r--r--   1 carter  staff   168419 Aug 24  2020 spp_stream4.c
+-rw-r--r--   1 carter  staff     1077 Aug 24  2020 spp_stream4.h
+-rw-r--r--   1 carter  staff    10140 Aug 24  2020 spp_telnet_negotiation.c
+-rw-r--r--   1 carter  staff     1041 Aug 24  2020 spp_telnet_negotiation.h
 
 ./examples/rasnort/preprocessors/HttpInspect:
-total 560
--rw-r--r--   1 carter  staff   12614 Oct 12  2012 Makefile
--rw-r--r--   1 carter  staff     704 Oct 12  2012 Makefile.am
--rw-r--r--   1 carter  staff   11939 Oct 12  2012 Makefile.in
-drwxr-xr-x   8 carter  staff     272 Oct  9 17:33 anomaly_detection
-drwxr-xr-x  10 carter  staff     340 Oct  9 17:33 client
-drwxr-xr-x   8 carter  staff     272 Oct  9 17:33 event_output
-drwxr-xr-x  24 carter  staff     816 Oct  9 17:33 include
--rw-r--r--   1 carter  staff  253910 Oct 12  2012 libhttp_inspect.a
-drwxr-xr-x   8 carter  staff     272 Oct  9 17:33 mode_inspection
-drwxr-xr-x   8 carter  staff     272 Oct  9 17:33 normalization
-drwxr-xr-x   8 carter  staff     272 Oct  9 17:33 server
-drwxr-xr-x   8 carter  staff     272 Oct  9 17:33 session_inspection
-drwxr-xr-x  10 carter  staff     340 Oct  9 17:33 user_interface
-drwxr-xr-x  12 carter  staff     408 Oct  9 17:33 utils
+total 528
+-rw-r--r--   1 carter  staff     704 Aug 24  2020 Makefile.am
+-rw-r--r--   1 carter  staff   11955 Aug 24  2020 Makefile.in
+drwxr-xr-x   6 carter  staff     192 Oct 27 17:00 anomaly_detection
+drwxr-xr-x   7 carter  staff     224 Oct 27 17:00 client
+drwxr-xr-x   6 carter  staff     192 Oct 27 17:00 event_output
+drwxr-xr-x  23 carter  staff     736 Oct 27 17:00 include
+-rw-r--r--   1 carter  staff  253910 Aug 24  2020 libhttp_inspect.a
+drwxr-xr-x   6 carter  staff     192 Oct 27 17:00 mode_inspection
+drwxr-xr-x   6 carter  staff     192 Oct 27 17:00 normalization
+drwxr-xr-x   6 carter  staff     192 Oct 27 17:00 server
+drwxr-xr-x   6 carter  staff     192 Oct 27 17:00 session_inspection
+drwxr-xr-x   8 carter  staff     256 Oct 27 17:00 user_interface
+drwxr-xr-x   8 carter  staff     256 Oct 27 17:00 utils
 
 ./examples/rasnort/preprocessors/HttpInspect/anomaly_detection:
-total 128
--rw-r--r--  1 carter  staff   8914 Oct 12  2012 Makefile
--rw-r--r--  1 carter  staff    633 Oct 12  2012 Makefile.am
--rw-r--r--  1 carter  staff   8218 Oct 12  2012 Makefile.in
--rw-r--r--  1 carter  staff   1774 Oct 12  2012 hi_ad.c
--rw-r--r--  1 carter  staff  12780 Oct 12  2012 hi_ad.o
--rw-r--r--  1 carter  staff  12944 Oct 12  2012 libhi_ad.a
+total 72
+-rw-r--r--  1 carter  staff    633 Aug 24  2020 Makefile.am
+-rw-r--r--  1 carter  staff   8234 Aug 24  2020 Makefile.in
+-rw-r--r--  1 carter  staff   1774 Aug 24  2020 hi_ad.c
+-rw-r--r--  1 carter  staff  12944 Aug 24  2020 libhi_ad.a
 
 ./examples/rasnort/preprocessors/HttpInspect/client:
-total 352
--rw-r--r--  1 carter  staff   9005 Oct 12  2012 Makefile
--rw-r--r--  1 carter  staff    664 Oct 12  2012 Makefile.am
--rw-r--r--  1 carter  staff   8320 Oct 12  2012 Makefile.in
--rw-r--r--  1 carter  staff  47596 Oct 12  2012 hi_client.c
--rw-r--r--  1 carter  staff  27788 Oct 12  2012 hi_client.o
--rw-r--r--  1 carter  staff   2556 Oct 12  2012 hi_client_norm.c
--rw-r--r--  1 carter  staff  18080 Oct 12  2012 hi_client_norm.o
--rw-r--r--  1 carter  staff  46202 Oct 12  2012 libhi_client.a
+total 232
+-rw-r--r--  1 carter  staff    664 Aug 24  2020 Makefile.am
+-rw-r--r--  1 carter  staff   8336 Aug 24  2020 Makefile.in
+-rw-r--r--  1 carter  staff  47596 Aug 24  2020 hi_client.c
+-rw-r--r--  1 carter  staff   2556 Aug 24  2020 hi_client_norm.c
+-rw-r--r--  1 carter  staff  46202 Aug 24  2020 libhi_client.a
 
 ./examples/rasnort/preprocessors/HttpInspect/event_output:
-total 136
--rw-r--r--  1 carter  staff   8907 Oct 12  2012 Makefile
--rw-r--r--  1 carter  staff    637 Oct 12  2012 Makefile.am
--rw-r--r--  1 carter  staff   8216 Oct 12  2012 Makefile.in
--rw-r--r--  1 carter  staff   7162 Oct 12  2012 hi_eo_log.c
--rw-r--r--  1 carter  staff  14924 Oct 12  2012 hi_eo_log.o
--rw-r--r--  1 carter  staff  15116 Oct 12  2012 libhi_eo.a
+total 80
+-rw-r--r--  1 carter  staff    637 Aug 24  2020 Makefile.am
+-rw-r--r--  1 carter  staff   8232 Aug 24  2020 Makefile.in
+-rw-r--r--  1 carter  staff   7162 Aug 24  2020 hi_eo_log.c
+-rw-r--r--  1 carter  staff  15116 Aug 24  2020 libhi_eo.a
 
 ./examples/rasnort/preprocessors/HttpInspect/include:
-total 200
--rw-r--r--  1 carter  staff  6359 Oct 12  2012 Makefile
--rw-r--r--  1 carter  staff   352 Oct 12  2012 Makefile.am
--rw-r--r--  1 carter  staff  5729 Oct 12  2012 Makefile.in
--rw-r--r--  1 carter  staff   277 Oct 12  2012 hi_ad.h
--rw-r--r--  1 carter  staff   997 Oct 12  2012 hi_client.h
--rw-r--r--  1 carter  staff   453 Oct 12  2012 hi_client_norm.h
--rw-r--r--  1 carter  staff  2342 Oct 12  2012 hi_eo.h
--rw-r--r--  1 carter  staff  3258 Oct 12  2012 hi_eo_events.h
--rw-r--r--  1 carter  staff   549 Oct 12  2012 hi_eo_log.h
--rw-r--r--  1 carter  staff   178 Oct 12  2012 hi_include.h
--rw-r--r--  1 carter  staff   431 Oct 12  2012 hi_mi.h
--rw-r--r--  1 carter  staff   668 Oct 12  2012 hi_norm.h
--rw-r--r--  1 carter  staff   876 Oct 12  2012 hi_return_codes.h
--rw-r--r--  1 carter  staff   557 Oct 12  2012 hi_server.h
--rw-r--r--  1 carter  staff  2740 Oct 12  2012 hi_si.h
--rw-r--r--  1 carter  staff  4202 Oct 12  2012 hi_ui_config.h
--rw-r--r--  1 carter  staff   556 Oct 12  2012 hi_ui_iis_unicode_map.h
--rw-r--r--  1 carter  staff   732 Oct 12  2012 hi_ui_server_lookup.h
--rw-r--r--  1 carter  staff  1118 Oct 12  2012 hi_util.h
--rw-r--r--  1 carter  staff   455 Oct 12  2012 hi_util_hbm.h
--rw-r--r--  1 carter  staff  1348 Oct 12  2012 hi_util_kmap.h
--rw-r--r--  1 carter  staff   288 Oct 12  2012 hi_util_xmalloc.h
+total 184
+-rw-r--r--  1 carter  staff   352 Aug 24  2020 Makefile.am
+-rw-r--r--  1 carter  staff  5729 Aug 24  2020 Makefile.in
+-rw-r--r--  1 carter  staff   277 Aug 24  2020 hi_ad.h
+-rw-r--r--  1 carter  staff   997 Aug 24  2020 hi_client.h
+-rw-r--r--  1 carter  staff   453 Aug 24  2020 hi_client_norm.h
+-rw-r--r--  1 carter  staff  2342 Aug 24  2020 hi_eo.h
+-rw-r--r--  1 carter  staff  3258 Aug 24  2020 hi_eo_events.h
+-rw-r--r--  1 carter  staff   549 Aug 24  2020 hi_eo_log.h
+-rw-r--r--  1 carter  staff   178 Aug 24  2020 hi_include.h
+-rw-r--r--  1 carter  staff   431 Aug 24  2020 hi_mi.h
+-rw-r--r--  1 carter  staff   668 Aug 24  2020 hi_norm.h
+-rw-r--r--  1 carter  staff   876 Aug 24  2020 hi_return_codes.h
+-rw-r--r--  1 carter  staff   557 Aug 24  2020 hi_server.h
+-rw-r--r--  1 carter  staff  2740 Aug 24  2020 hi_si.h
+-rw-r--r--  1 carter  staff  4202 Aug 24  2020 hi_ui_config.h
+-rw-r--r--  1 carter  staff   556 Aug 24  2020 hi_ui_iis_unicode_map.h
+-rw-r--r--  1 carter  staff   732 Aug 24  2020 hi_ui_server_lookup.h
+-rw-r--r--  1 carter  staff  1118 Aug 24  2020 hi_util.h
+-rw-r--r--  1 carter  staff   455 Aug 24  2020 hi_util_hbm.h
+-rw-r--r--  1 carter  staff  1348 Aug 24  2020 hi_util_kmap.h
+-rw-r--r--  1 carter  staff   288 Aug 24  2020 hi_util_xmalloc.h
 
 ./examples/rasnort/preprocessors/HttpInspect/mode_inspection:
-total 112
--rw-r--r--  1 carter  staff   8908 Oct 12  2012 Makefile
--rw-r--r--  1 carter  staff    633 Oct 12  2012 Makefile.am
--rw-r--r--  1 carter  staff   8214 Oct 12  2012 Makefile.in
--rw-r--r--  1 carter  staff   2823 Oct 12  2012 hi_mi.c
--rw-r--r--  1 carter  staff  11848 Oct 12  2012 hi_mi.o
--rw-r--r--  1 carter  staff  12006 Oct 12  2012 libhi_mi.a
+total 64
+-rw-r--r--  1 carter  staff    633 Aug 24  2020 Makefile.am
+-rw-r--r--  1 carter  staff   8230 Aug 24  2020 Makefile.in
+-rw-r--r--  1 carter  staff   2823 Aug 24  2020 hi_mi.c
+-rw-r--r--  1 carter  staff  12006 Aug 24  2020 libhi_mi.a
 
 ./examples/rasnort/preprocessors/HttpInspect/normalization:
-total 280
--rw-r--r--  1 carter  staff   8942 Oct 12  2012 Makefile
--rw-r--r--  1 carter  staff    639 Oct 12  2012 Makefile.am
--rw-r--r--  1 carter  staff   8250 Oct 12  2012 Makefile.in
--rw-r--r--  1 carter  staff  45636 Oct 12  2012 hi_norm.c
--rw-r--r--  1 carter  staff  28852 Oct 12  2012 hi_norm.o
--rw-r--r--  1 carter  staff  29038 Oct 12  2012 libhi_norm.a
+total 192
+-rw-r--r--  1 carter  staff    639 Aug 24  2020 Makefile.am
+-rw-r--r--  1 carter  staff   8266 Aug 24  2020 Makefile.in
+-rw-r--r--  1 carter  staff  45636 Aug 24  2020 hi_norm.c
+-rw-r--r--  1 carter  staff  29038 Aug 24  2020 libhi_norm.a
 
 ./examples/rasnort/preprocessors/HttpInspect/server:
-total 144
--rw-r--r--  1 carter  staff   8961 Oct 12  2012 Makefile
--rw-r--r--  1 carter  staff    645 Oct 12  2012 Makefile.am
--rw-r--r--  1 carter  staff   8276 Oct 12  2012 Makefile.in
--rw-r--r--  1 carter  staff   4014 Oct 12  2012 hi_server.c
--rw-r--r--  1 carter  staff  17308 Oct 12  2012 hi_server.o
--rw-r--r--  1 carter  staff  17466 Oct 12  2012 libhi_server.a
+total 80
+-rw-r--r--  1 carter  staff    645 Aug 24  2020 Makefile.am
+-rw-r--r--  1 carter  staff   8292 Aug 24  2020 Makefile.in
+-rw-r--r--  1 carter  staff   4014 Aug 24  2020 hi_server.c
+-rw-r--r--  1 carter  staff  17466 Aug 24  2020 libhi_server.a
 
 ./examples/rasnort/preprocessors/HttpInspect/session_inspection:
-total 160
--rw-r--r--  1 carter  staff   8917 Oct 12  2012 Makefile
--rw-r--r--  1 carter  staff    633 Oct 12  2012 Makefile.am
--rw-r--r--  1 carter  staff   8220 Oct 12  2012 Makefile.in
--rw-r--r--  1 carter  staff  11326 Oct 12  2012 hi_si.c
--rw-r--r--  1 carter  staff  19628 Oct 12  2012 hi_si.o
--rw-r--r--  1 carter  staff  19790 Oct 12  2012 libhi_si.a
+total 96
+-rw-r--r--  1 carter  staff    633 Aug 24  2020 Makefile.am
+-rw-r--r--  1 carter  staff   8236 Aug 24  2020 Makefile.in
+-rw-r--r--  1 carter  staff  11326 Aug 24  2020 hi_si.c
+-rw-r--r--  1 carter  staff  19790 Aug 24  2020 libhi_si.a
 
 ./examples/rasnort/preprocessors/HttpInspect/user_interface:
-total 280
--rw-r--r--  1 carter  staff   9034 Oct 12  2012 Makefile
--rw-r--r--  1 carter  staff    690 Oct 12  2012 Makefile.am
--rw-r--r--  1 carter  staff   8341 Oct 12  2012 Makefile.in
--rw-r--r--  1 carter  staff   9164 Oct 12  2012 hi_ui_config.c
--rw-r--r--  1 carter  staff  23960 Oct 12  2012 hi_ui_config.o
--rw-r--r--  1 carter  staff   6085 Sep 11 11:58 hi_ui_iis_unicode_map.c
--rw-r--r--  1 carter  staff   5742 Oct 12  2012 hi_ui_server_lookup.c
--rw-r--r--  1 carter  staff  59278 Oct 12  2012 libhi_ui.a
+total 208
+-rw-r--r--  1 carter  staff    690 Aug 24  2020 Makefile.am
+-rw-r--r--  1 carter  staff   8357 Aug 24  2020 Makefile.in
+-rw-r--r--  1 carter  staff   9164 Aug 24  2020 hi_ui_config.c
+-rw-r--r--  1 carter  staff   6085 Aug 24  2020 hi_ui_iis_unicode_map.c
+-rw-r--r--  1 carter  staff   5742 Aug 24  2020 hi_ui_server_lookup.c
+-rw-r--r--  1 carter  staff  59278 Aug 24  2020 libhi_ui.a
 
 ./examples/rasnort/preprocessors/HttpInspect/utils:
-total 280
--rw-r--r--  1 carter  staff   9031 Oct 12  2012 Makefile
--rw-r--r--  1 carter  staff    680 Oct 12  2012 Makefile.am
--rw-r--r--  1 carter  staff   8347 Oct 12  2012 Makefile.in
--rw-r--r--  1 carter  staff   2396 Oct 12  2012 hi_util_hbm.c
--rw-r--r--  1 carter  staff   8944 Oct 12  2012 hi_util_hbm.o
--rw-r--r--  1 carter  staff  10177 Oct 12  2012 hi_util_kmap.c
--rw-r--r--  1 carter  staff  19100 Oct 12  2012 hi_util_kmap.o
--rw-r--r--  1 carter  staff   1145 Oct 12  2012 hi_util_xmalloc.c
--rw-r--r--  1 carter  staff  14160 Oct 12  2012 hi_util_xmalloc.o
--rw-r--r--  1 carter  staff  42770 Oct 12  2012 libhi_utils.a
+total 160
+-rw-r--r--  1 carter  staff    680 Aug 24  2020 Makefile.am
+-rw-r--r--  1 carter  staff   8363 Aug 24  2020 Makefile.in
+-rw-r--r--  1 carter  staff   2396 Aug 24  2020 hi_util_hbm.c
+-rw-r--r--  1 carter  staff  10177 Aug 24  2020 hi_util_kmap.c
+-rw-r--r--  1 carter  staff   1145 Aug 24  2020 hi_util_xmalloc.c
+-rw-r--r--  1 carter  staff  42770 Aug 24  2020 libhi_utils.a
 
 ./examples/rasnort/preprocessors/flow:
-total 1248
--rw-r--r--   1 carter  staff   12978 Oct 12  2012 Makefile
--rw-r--r--   1 carter  staff     514 Oct 12  2012 Makefile.am
--rw-r--r--   1 carter  staff   12799 Oct 12  2012 Makefile.in
--rw-r--r--   1 carter  staff     800 Oct 12  2012 common_defs.h
--rw-r--r--   1 carter  staff    4502 Oct 12  2012 flow.c
--rw-r--r--   1 carter  staff    2402 Oct 12  2012 flow.h
--rw-r--r--   1 carter  staff   36940 Oct 12  2012 flow.o
--rw-r--r--   1 carter  staff   16378 Oct 12  2012 flow_cache.c
--rw-r--r--   1 carter  staff    1284 Oct 12  2012 flow_cache.h
--rw-r--r--   1 carter  staff   47104 Oct 12  2012 flow_cache.o
--rw-r--r--   1 carter  staff    2423 Oct 12  2012 flow_callback.c
--rw-r--r--   1 carter  staff     833 Oct 12  2012 flow_callback.h
--rw-r--r--   1 carter  staff   37152 Oct 12  2012 flow_callback.o
--rw-r--r--   1 carter  staff     455 Oct 12  2012 flow_class.c
--rw-r--r--   1 carter  staff     171 Oct 12  2012 flow_class.h
--rw-r--r--   1 carter  staff   32144 Oct 12  2012 flow_class.o
--rw-r--r--   1 carter  staff     121 Oct 12  2012 flow_config.h
--rw-r--r--   1 carter  staff     241 Oct 12  2012 flow_error.h
--rw-r--r--   1 carter  staff    2503 Oct 12  2012 flow_hash.c
--rw-r--r--   1 carter  staff     542 Oct 12  2012 flow_hash.h
--rw-r--r--   1 carter  staff   34556 Oct 12  2012 flow_hash.o
--rw-r--r--   1 carter  staff    2002 Oct 12  2012 flow_print.c
--rw-r--r--   1 carter  staff     234 Oct 12  2012 flow_print.h
--rw-r--r--   1 carter  staff   22788 Oct 12  2012 flow_print.o
--rw-r--r--   1 carter  staff    2898 Oct 12  2012 flow_stat.c
--rw-r--r--   1 carter  staff     383 Oct 12  2012 flow_stat.h
--rw-r--r--   1 carter  staff   37364 Oct 12  2012 flow_stat.o
-drwxr-xr-x   9 carter  staff     306 Oct  9 17:33 int-snort
--rw-r--r--   1 carter  staff  249132 Oct 12  2012 libflow.a
-drwxr-xr-x  21 carter  staff     714 Oct  9 17:33 portscan
+total 696
+-rw-r--r--   1 carter  staff     514 Aug 24  2020 Makefile.am
+-rw-r--r--   1 carter  staff   12815 Aug 24  2020 Makefile.in
+-rw-r--r--   1 carter  staff     800 Aug 24  2020 common_defs.h
+-rw-r--r--   1 carter  staff    4502 Aug 24  2020 flow.c
+-rw-r--r--   1 carter  staff    2402 Aug 24  2020 flow.h
+-rw-r--r--   1 carter  staff   16378 Aug 24  2020 flow_cache.c
+-rw-r--r--   1 carter  staff    1284 Aug 24  2020 flow_cache.h
+-rw-r--r--   1 carter  staff    2423 Aug 24  2020 flow_callback.c
+-rw-r--r--   1 carter  staff     833 Aug 24  2020 flow_callback.h
+-rw-r--r--   1 carter  staff     455 Aug 24  2020 flow_class.c
+-rw-r--r--   1 carter  staff     171 Aug 24  2020 flow_class.h
+-rw-r--r--   1 carter  staff     121 Aug 24  2020 flow_config.h
+-rw-r--r--   1 carter  staff     241 Aug 24  2020 flow_error.h
+-rw-r--r--   1 carter  staff    2503 Aug 24  2020 flow_hash.c
+-rw-r--r--   1 carter  staff     542 Aug 24  2020 flow_hash.h
+-rw-r--r--   1 carter  staff    2002 Aug 24  2020 flow_print.c
+-rw-r--r--   1 carter  staff     234 Aug 24  2020 flow_print.h
+-rw-r--r--   1 carter  staff    2898 Aug 24  2020 flow_stat.c
+-rw-r--r--   1 carter  staff     383 Aug 24  2020 flow_stat.h
+drwxr-xr-x   7 carter  staff     224 Oct 27 17:00 int-snort
+-rw-r--r--   1 carter  staff  249132 Aug 24  2020 libflow.a
+drwxr-xr-x  15 carter  staff     480 Oct 27 17:00 portscan
 
 ./examples/rasnort/preprocessors/flow/int-snort:
-total 192
--rw-r--r--  1 carter  staff   8440 Oct 12  2012 Makefile
--rw-r--r--  1 carter  staff    151 Oct 12  2012 Makefile.am
--rw-r--r--  1 carter  staff   7759 Oct 12  2012 Makefile.in
--rw-r--r--  1 carter  staff    102 Oct 12  2012 flow_packet.c
--rw-r--r--  1 carter  staff   3676 Oct 12  2012 flow_packet.h
--rw-r--r--  1 carter  staff  31380 Oct 12  2012 flow_packet.o
--rw-r--r--  1 carter  staff  31512 Oct 12  2012 libintsnort.a
+total 104
+-rw-r--r--  1 carter  staff    151 Aug 24  2020 Makefile.am
+-rw-r--r--  1 carter  staff   7775 Aug 24  2020 Makefile.in
+-rw-r--r--  1 carter  staff    102 Aug 24  2020 flow_packet.c
+-rw-r--r--  1 carter  staff   3676 Aug 24  2020 flow_packet.h
+-rw-r--r--  1 carter  staff  31512 Aug 24  2020 libintsnort.a
 
 ./examples/rasnort/preprocessors/flow/portscan:
-total 1384
--rw-r--r--  1 carter  staff    8728 Oct 12  2012 Makefile
--rw-r--r--  1 carter  staff     348 Oct 12  2012 Makefile.am
--rw-r--r--  1 carter  staff    8048 Oct 12  2012 Makefile.in
--rw-r--r--  1 carter  staff   26263 Oct 12  2012 flowps.c
--rw-r--r--  1 carter  staff    6497 Oct 12  2012 flowps.h
--rw-r--r--  1 carter  staff   50800 Oct 12  2012 flowps.o
--rw-r--r--  1 carter  staff   33562 Oct 12  2012 flowps_snort.c
--rw-r--r--  1 carter  staff     231 Oct 12  2012 flowps_snort.h
--rw-r--r--  1 carter  staff   77100 Oct 12  2012 flowps_snort.o
--rw-r--r--  1 carter  staff  273628 Oct 12  2012 libportscan.a
--rw-r--r--  1 carter  staff    9378 Oct 12  2012 scoreboard.c
--rw-r--r--  1 carter  staff    1497 Oct 12  2012 scoreboard.h
--rw-r--r--  1 carter  staff   46220 Oct 12  2012 scoreboard.o
--rw-r--r--  1 carter  staff   13678 Oct 12  2012 server_stats.c
--rw-r--r--  1 carter  staff    1233 Oct 12  2012 server_stats.h
--rw-r--r--  1 carter  staff   57668 Oct 12  2012 server_stats.o
--rw-r--r--  1 carter  staff    6277 Oct 12  2012 unique_tracker.c
--rw-r--r--  1 carter  staff     590 Oct 12  2012 unique_tracker.h
--rw-r--r--  1 carter  staff   40152 Oct 12  2012 unique_tracker.o
+total 808
+-rw-r--r--  1 carter  staff     348 Aug 24  2020 Makefile.am
+-rw-r--r--  1 carter  staff    8064 Aug 24  2020 Makefile.in
+-rw-r--r--  1 carter  staff   26263 Aug 24  2020 flowps.c
+-rw-r--r--  1 carter  staff    6497 Aug 24  2020 flowps.h
+-rw-r--r--  1 carter  staff   33562 Aug 24  2020 flowps_snort.c
+-rw-r--r--  1 carter  staff     231 Aug 24  2020 flowps_snort.h
+-rw-r--r--  1 carter  staff  273628 Aug 24  2020 libportscan.a
+-rw-r--r--  1 carter  staff    9378 Aug 24  2020 scoreboard.c
+-rw-r--r--  1 carter  staff    1497 Aug 24  2020 scoreboard.h
+-rw-r--r--  1 carter  staff   13678 Aug 24  2020 server_stats.c
+-rw-r--r--  1 carter  staff    1233 Aug 24  2020 server_stats.h
+-rw-r--r--  1 carter  staff    6277 Aug 24  2020 unique_tracker.c
+-rw-r--r--  1 carter  staff     590 Aug 24  2020 unique_tracker.h
 
 ./examples/rasnort/rules:
-total 1416
--rw-r--r--  1 carter  staff   6598 Oct 12  2012 Makefile
--rw-r--r--  1 carter  staff    777 Oct 12  2012 Makefile.am
--rw-r--r--  1 carter  staff   6009 Oct 12  2012 Makefile.in
--rw-r--r--  1 carter  staff   4364 Oct 12  2012 attack-responses.rules
--rw-r--r--  1 carter  staff  12580 Oct 12  2012 backdoor.rules
--rw-r--r--  1 carter  staff   2971 Oct 12  2012 bad-traffic.rules
--rw-r--r--  1 carter  staff   4488 Oct 12  2012 chat.rules
--rw-r--r--  1 carter  staff   6702 Oct 12  2012 ddos.rules
--rw-r--r--  1 carter  staff  54560 Oct 12  2012 deleted.rules
--rw-r--r--  1 carter  staff   4930 Oct 12  2012 dns.rules
--rw-r--r--  1 carter  staff   4087 Oct 12  2012 dos.rules
--rw-r--r--  1 carter  staff    472 Oct 12  2012 experimental.rules
--rw-r--r--  1 carter  staff  15599 Oct 12  2012 exploit.rules
--rw-r--r--  1 carter  staff   3179 Oct 12  2012 finger.rules
--rw-r--r--  1 carter  staff  17298 Oct 12  2012 ftp.rules
--rw-r--r--  1 carter  staff  16017 Oct 12  2012 icmp-info.rules
--rw-r--r--  1 carter  staff   4624 Oct 12  2012 icmp.rules
--rw-r--r--  1 carter  staff   5462 Oct 12  2012 imap.rules
--rw-r--r--  1 carter  staff   1493 Oct 12  2012 info.rules
--rw-r--r--  1 carter  staff    205 Oct 12  2012 local.rules
--rw-r--r--  1 carter  staff  12028 Oct 12  2012 misc.rules
--rw-r--r--  1 carter  staff   1686 Oct 12  2012 multimedia.rules
--rw-r--r--  1 carter  staff    829 Oct 12  2012 mysql.rules
--rw-r--r--  1 carter  staff  17729 Oct 12  2012 netbios.rules
--rw-r--r--  1 carter  staff   3280 Oct 12  2012 nntp.rules
--rw-r--r--  1 carter  staff   6157 Oct 12  2012 oracle.rules
--rw-r--r--  1 carter  staff   1401 Oct 12  2012 other-ids.rules
--rw-r--r--  1 carter  staff   3501 Oct 12  2012 p2p.rules
--rw-r--r--  1 carter  staff   5601 Oct 12  2012 policy.rules
--rw-r--r--  1 carter  staff   1070 Oct 12  2012 pop2.rules
--rw-r--r--  1 carter  staff   5416 Oct 12  2012 pop3.rules
--rw-r--r--  1 carter  staff   5061 Oct 12  2012 porn.rules
--rw-r--r--  1 carter  staff  51360 Oct 12  2012 rpc.rules
--rw-r--r--  1 carter  staff   2877 Oct 12  2012 rservices.rules
--rw-r--r--  1 carter  staff   4867 Oct 12  2012 scan.rules
--rw-r--r--  1 carter  staff   4997 Oct 12  2012 shellcode.rules
--rw-r--r--  1 carter  staff  13597 Oct 12  2012 smtp.rules
--rw-r--r--  1 carter  staff   4073 Oct 12  2012 snmp.rules
--rw-r--r--  1 carter  staff  12454 Oct 12  2012 sql.rules
--rw-r--r--  1 carter  staff   3736 Oct 12  2012 telnet.rules
--rw-r--r--  1 carter  staff   2665 Oct 12  2012 tftp.rules
--rw-r--r--  1 carter  staff    822 Oct 12  2012 virus.rules
--rw-r--r--  1 carter  staff  10366 Oct 12  2012 web-attacks.rules
--rw-r--r--  1 carter  staff  92604 Oct 12  2012 web-cgi.rules
--rw-r--r--  1 carter  staff   2595 Oct 12  2012 web-client.rules
--rw-r--r--  1 carter  staff   8963 Oct 12  2012 web-coldfusion.rules
--rw-r--r--  1 carter  staff   8447 Oct 12  2012 web-frontpage.rules
--rw-r--r--  1 carter  staff  34672 Oct 12  2012 web-iis.rules
--rw-r--r--  1 carter  staff  78770 Oct 12  2012 web-misc.rules
--rw-r--r--  1 carter  staff  32630 Oct 12  2012 web-php.rules
--rw-r--r--  1 carter  staff    578 Oct 12  2012 x11.rules
+total 1400
+-rw-r--r--  1 carter  staff    777 Aug 24  2020 Makefile.am
+-rw-r--r--  1 carter  staff   6009 Aug 24  2020 Makefile.in
+-rw-r--r--  1 carter  staff   4364 Aug 24  2020 attack-responses.rules
+-rw-r--r--  1 carter  staff  12580 Aug 24  2020 backdoor.rules
+-rw-r--r--  1 carter  staff   2971 Aug 24  2020 bad-traffic.rules
+-rw-r--r--  1 carter  staff   4488 Aug 24  2020 chat.rules
+-rw-r--r--  1 carter  staff   6702 Aug 24  2020 ddos.rules
+-rw-r--r--  1 carter  staff  54560 Aug 24  2020 deleted.rules
+-rw-r--r--  1 carter  staff   4930 Aug 24  2020 dns.rules
+-rw-r--r--  1 carter  staff   4087 Aug 24  2020 dos.rules
+-rw-r--r--  1 carter  staff    472 Aug 24  2020 experimental.rules
+-rw-r--r--  1 carter  staff  15599 Aug 24  2020 exploit.rules
+-rw-r--r--  1 carter  staff   3179 Aug 24  2020 finger.rules
+-rw-r--r--  1 carter  staff  17298 Aug 24  2020 ftp.rules
+-rw-r--r--  1 carter  staff  16017 Aug 24  2020 icmp-info.rules
+-rw-r--r--  1 carter  staff   4624 Aug 24  2020 icmp.rules
+-rw-r--r--  1 carter  staff   5462 Aug 24  2020 imap.rules
+-rw-r--r--  1 carter  staff   1493 Aug 24  2020 info.rules
+-rw-r--r--  1 carter  staff    205 Aug 24  2020 local.rules
+-rw-r--r--  1 carter  staff  12028 Aug 24  2020 misc.rules
+-rw-r--r--  1 carter  staff   1686 Aug 24  2020 multimedia.rules
+-rw-r--r--  1 carter  staff    829 Aug 24  2020 mysql.rules
+-rw-r--r--  1 carter  staff  17729 Aug 24  2020 netbios.rules
+-rw-r--r--  1 carter  staff   3280 Aug 24  2020 nntp.rules
+-rw-r--r--  1 carter  staff   6157 Aug 24  2020 oracle.rules
+-rw-r--r--  1 carter  staff   1401 Aug 24  2020 other-ids.rules
+-rw-r--r--  1 carter  staff   3501 Aug 24  2020 p2p.rules
+-rw-r--r--  1 carter  staff   5601 Aug 24  2020 policy.rules
+-rw-r--r--  1 carter  staff   1070 Aug 24  2020 pop2.rules
+-rw-r--r--  1 carter  staff   5416 Aug 24  2020 pop3.rules
+-rw-r--r--  1 carter  staff   5061 Aug 24  2020 porn.rules
+-rw-r--r--  1 carter  staff  51360 Aug 24  2020 rpc.rules
+-rw-r--r--  1 carter  staff   2877 Aug 24  2020 rservices.rules
+-rw-r--r--  1 carter  staff   4867 Aug 24  2020 scan.rules
+-rw-r--r--  1 carter  staff   4997 Aug 24  2020 shellcode.rules
+-rw-r--r--  1 carter  staff  13597 Aug 24  2020 smtp.rules
+-rw-r--r--  1 carter  staff   4073 Aug 24  2020 snmp.rules
+-rw-r--r--  1 carter  staff  12454 Aug 24  2020 sql.rules
+-rw-r--r--  1 carter  staff   3736 Aug 24  2020 telnet.rules
+-rw-r--r--  1 carter  staff   2665 Aug 24  2020 tftp.rules
+-rw-r--r--  1 carter  staff    822 Aug 24  2020 virus.rules
+-rw-r--r--  1 carter  staff  10366 Aug 24  2020 web-attacks.rules
+-rw-r--r--  1 carter  staff  92604 Aug 24  2020 web-cgi.rules
+-rw-r--r--  1 carter  staff   2595 Aug 24  2020 web-client.rules
+-rw-r--r--  1 carter  staff   8963 Aug 24  2020 web-coldfusion.rules
+-rw-r--r--  1 carter  staff   8447 Aug 24  2020 web-frontpage.rules
+-rw-r--r--  1 carter  staff  34672 Aug 24  2020 web-iis.rules
+-rw-r--r--  1 carter  staff  78770 Aug 24  2020 web-misc.rules
+-rw-r--r--  1 carter  staff  32630 Aug 24  2020 web-php.rules
+-rw-r--r--  1 carter  staff    578 Aug 24  2020 x11.rules
 
 ./examples/rasnort/sfutil:
-total 1840
--rw-r--r--  1 carter  staff    9122 Oct 12  2012 Makefile
--rw-r--r--  1 carter  staff     713 Oct 12  2012 Makefile.am
--rw-r--r--  1 carter  staff    8467 Oct 12  2012 Makefile.in
--rw-r--r--  1 carter  staff   13822 Oct 12  2012 acsmx.c
--rw-r--r--  1 carter  staff    2350 Oct 12  2012 acsmx.h
--rw-r--r--  1 carter  staff   22900 Oct 12  2012 acsmx.o
--rw-r--r--  1 carter  staff    6082 Oct 12  2012 bitop.h
--rw-r--r--  1 carter  staff   21727 Oct 12  2012 ipobj.c
--rw-r--r--  1 carter  staff    3020 Oct 12  2012 ipobj.h
--rw-r--r--  1 carter  staff   32768 Oct 12  2012 ipobj.o
--rw-r--r--  1 carter  staff  293648 Oct 12  2012 libsfutil.a
--rw-r--r--  1 carter  staff    4759 Oct 12  2012 mpse.c
--rw-r--r--  1 carter  staff    2000 Oct 12  2012 mpse.h
--rw-r--r--  1 carter  staff   19808 Oct 12  2012 mpse.o
--rw-r--r--  1 carter  staff   41042 Oct 12  2012 mwm.c
--rw-r--r--  1 carter  staff    5319 Oct 12  2012 mwm.h
--rw-r--r--  1 carter  staff   33348 Oct 12  2012 mwm.o
--rw-r--r--  1 carter  staff   17467 Oct 12  2012 sfghash.c
--rw-r--r--  1 carter  staff    2293 Oct 12  2012 sfghash.h
--rw-r--r--  1 carter  staff   24904 Oct 12  2012 sfghash.o
--rw-r--r--  1 carter  staff    2223 Oct 12  2012 sfhashfcn.c
--rw-r--r--  1 carter  staff    1044 Oct 12  2012 sfhashfcn.h
--rw-r--r--  1 carter  staff   15232 Oct 12  2012 sfhashfcn.o
--rw-r--r--  1 carter  staff   12934 Oct 12  2012 sfksearch.c
--rw-r--r--  1 carter  staff    2306 Oct 12  2012 sfksearch.h
--rw-r--r--  1 carter  staff   20624 Oct 12  2012 sfksearch.o
--rw-r--r--  1 carter  staff    6929 Oct 12  2012 sflsq.c
--rw-r--r--  1 carter  staff    2966 Oct 12  2012 sflsq.h
--rw-r--r--  1 carter  staff   22160 Oct 12  2012 sflsq.o
--rw-r--r--  1 carter  staff    2464 Oct 12  2012 sfmemcap.c
--rw-r--r--  1 carter  staff     569 Oct 12  2012 sfmemcap.h
--rw-r--r--  1 carter  staff   15352 Oct 12  2012 sfmemcap.o
--rw-r--r--  1 carter  staff   33227 Oct 12  2012 sfthd.c
--rw-r--r--  1 carter  staff    4375 Oct 12  2012 sfthd.h
--rw-r--r--  1 carter  staff   26088 Oct 12  2012 sfthd.o
--rw-r--r--  1 carter  staff   27665 Oct 12  2012 sfxhash.c
--rw-r--r--  1 carter  staff    4047 Oct 12  2012 sfxhash.h
--rw-r--r--  1 carter  staff   27044 Oct 12  2012 sfxhash.o
--rw-r--r--  1 carter  staff     581 Oct 12  2012 util_math.c
--rw-r--r--  1 carter  staff     353 Oct 12  2012 util_math.h
--rw-r--r--  1 carter  staff    2144 Oct 12  2012 util_math.o
--rw-r--r--  1 carter  staff    2068 Oct 12  2012 util_net.c
--rw-r--r--  1 carter  staff     345 Oct 12  2012 util_net.h
--rw-r--r--  1 carter  staff   18936 Oct 12  2012 util_net.o
--rw-r--r--  1 carter  staff    2424 Oct 12  2012 util_str.c
--rw-r--r--  1 carter  staff     370 Oct 12  2012 util_str.h
--rw-r--r--  1 carter  staff    8592 Oct 12  2012 util_str.o
-
-./examples/rastream:
-total 136
--r--r--r--  1 carter  staff   3331 Mar 16  2016 Makefile.in
--r--r--r--  1 carter  staff   2673 Mar 16  2016 README
--r--r--r--  1 carter  staff  60569 Sep 20 14:36 rastream.c
+total 1192
+-rw-r--r--  1 carter  staff     713 Aug 24  2020 Makefile.am
+-rw-r--r--  1 carter  staff    8483 Aug 24  2020 Makefile.in
+-rw-r--r--  1 carter  staff   13822 Aug 24  2020 acsmx.c
+-rw-r--r--  1 carter  staff    2350 Aug 24  2020 acsmx.h
+-rw-r--r--  1 carter  staff    6082 Aug 24  2020 bitop.h
+-rw-r--r--  1 carter  staff   21727 Aug 24  2020 ipobj.c
+-rw-r--r--  1 carter  staff    3020 Aug 24  2020 ipobj.h
+-rw-r--r--  1 carter  staff  293648 Aug 24  2020 libsfutil.a
+-rw-r--r--  1 carter  staff    4759 Aug 24  2020 mpse.c
+-rw-r--r--  1 carter  staff    2000 Aug 24  2020 mpse.h
+-rw-r--r--  1 carter  staff   41042 Aug 24  2020 mwm.c
+-rw-r--r--  1 carter  staff    5319 Aug 24  2020 mwm.h
+-rw-r--r--  1 carter  staff   17467 Aug 24  2020 sfghash.c
+-rw-r--r--  1 carter  staff    2293 Aug 24  2020 sfghash.h
+-rw-r--r--  1 carter  staff    2223 Aug 24  2020 sfhashfcn.c
+-rw-r--r--  1 carter  staff    1044 Aug 24  2020 sfhashfcn.h
+-rw-r--r--  1 carter  staff   12934 Aug 24  2020 sfksearch.c
+-rw-r--r--  1 carter  staff    2306 Aug 24  2020 sfksearch.h
+-rw-r--r--  1 carter  staff    6929 Aug 24  2020 sflsq.c
+-rw-r--r--  1 carter  staff    2966 Aug 24  2020 sflsq.h
+-rw-r--r--  1 carter  staff    2464 Aug 24  2020 sfmemcap.c
+-rw-r--r--  1 carter  staff     569 Aug 24  2020 sfmemcap.h
+-rw-r--r--  1 carter  staff   33227 Aug 24  2020 sfthd.c
+-rw-r--r--  1 carter  staff    4375 Aug 24  2020 sfthd.h
+-rw-r--r--  1 carter  staff   27665 Aug 24  2020 sfxhash.c
+-rw-r--r--  1 carter  staff    4047 Aug 24  2020 sfxhash.h
+-rw-r--r--  1 carter  staff     581 Aug 24  2020 util_math.c
+-rw-r--r--  1 carter  staff     353 Aug 24  2020 util_math.h
+-rw-r--r--  1 carter  staff    2068 Aug 24  2020 util_net.c
+-rw-r--r--  1 carter  staff     345 Aug 24  2020 util_net.h
+-rw-r--r--  1 carter  staff    2424 Aug 24  2020 util_str.c
+-rw-r--r--  1 carter  staff     370 Aug 24  2020 util_str.h
 
 ./examples/rastrip:
 total 128
--r--r--r--  1 carter  staff   3322 Mar 16  2016 Makefile.in
--r--r--r--  1 carter  staff    905 Mar 16  2016 README
--rw-r--r--  1 carter  staff  39254 Apr 22  2015 index.html
--r--r--r--  1 carter  staff  12773 Mar 25  2016 rastrip.c
+-rw-r--r--  1 carter  staff   3369 Nov  8 08:51 Makefile.in
+-rw-r--r--@ 1 carter  staff    905 Aug 24  2020 README
+-rw-r--r--  1 carter  staff  39254 Aug 24  2020 index.html
+-rw-r--r--  1 carter  staff  13471 Nov  8 08:44 rastrip.c
 
 ./examples/ratemplate:
 total 40
--r--r--r--  1 carter  staff   3350 Mar 16  2016 Makefile.in
--r--r--r--  1 carter  staff    933 Mar 16  2016 README
--r--r--r--  1 carter  staff  11832 Mar 16  2016 ratemplate.c
+-rw-r--r--  1 carter  staff   3397 Nov  8 08:51 Makefile.in
+-rw-r--r--@ 1 carter  staff    933 Aug 24  2020 README
+-rw-r--r--  1 carter  staff  11936 Nov  8 08:44 ratemplate.c
 
 ./examples/ratimerange:
 total 40
--r--r--r--  1 carter  staff  3354 Mar 16  2016 Makefile.in
--r--r--r--  1 carter  staff   890 Mar 16  2016 README
--r--r--r--  1 carter  staff  9810 Oct 13 07:13 ratimerange.c
+-rw-r--r--  1 carter  staff  3401 Nov  8 08:51 Makefile.in
+-rw-r--r--@ 1 carter  staff   890 Aug 24  2020 README
+-rw-r--r--  1 carter  staff  9838 Nov  8 08:44 ratimerange.c
 
 ./examples/ratod:
 total 144
--r--r--r--  1 carter  staff   3849 Sep 19 21:55 Makefile.in
--r--r--r--  1 carter  staff   2990 Mar 16  2016 README
--rw-r--r--  1 carter  staff  14259 Oct  7  2014 rarc
--r--r--r--  1 carter  staff  47588 Mar 25  2016 ratod.c
+-rw-r--r--  1 carter  staff   3863 Nov  8 08:51 Makefile.in
+-rw-r--r--@ 1 carter  staff   2990 Aug 24  2020 README
+-rw-r--r--  1 carter  staff  14259 Aug 24  2020 rarc
+-rw-r--r--  1 carter  staff  48256 Nov  8 08:44 ratod.c
 
 ./examples/ratop:
-total 696
--r--r--r--  1 carter  staff    3863 Mar 16  2016 Makefile.in
--r--r--r--  1 carter  staff    3714 Mar 16  2016 NOTES
--r--r--r--  1 carter  staff    1990 Mar 16  2016 README
--r--r--r--  1 carter  staff   96299 Sep 20 14:36 raclient.c
--r--r--r--  1 carter  staff  227350 Sep 19 21:55 racurses.c
--r--r--r--  1 carter  staff   16145 Mar 16  2016 racurses.h
-
-./examples/ratop.orig:
-total 528
--r--r--r--  1 carter  staff    3699 Mar 16  2016 Makefile.in
--r--r--r--  1 carter  staff    2022 Mar 16  2016 README
--r--r--r--  1 carter  staff  252978 Mar 16  2016 ratop.c
--r--r--r--  1 carter  staff    7060 Mar 16  2016 ratop.h
+total 896
+-rw-r--r--  1 carter  staff    3971 Nov  8 08:51 Makefile.in
+-rw-r--r--  1 carter  staff    3714 Aug 24  2020 NOTES
+-rw-r--r--@ 1 carter  staff    1990 Aug 24  2020 README
+-rw-r--r--  1 carter  staff  162720 Dec 14 09:43 raclient.c
+-rw-r--r--  1 carter  staff  242571 Dec 14 09:43 racurses.c
+-rw-r--r--  1 carter  staff   15827 Nov  8 08:44 racurses.h
+-rw-r--r--  1 carter  staff   13003 Nov  8 08:44 rasql_common.c
+-rw-r--r--  1 carter  staff     885 Nov  8 08:44 rasql_common.h
 
 ./examples/ratrace:
-total 64
--r--r--r--  1 carter  staff   3859 Sep 19 21:55 Makefile.in
--r--r--r--  1 carter  staff  28242 Sep 20 14:36 ratrace.c
+total 72
+-rw-r--r--  1 carter  staff   3369 Nov  8 08:51 Makefile.in
+-rw-r--r--  1 carter  staff  28749 Nov  8 08:44 ratrace.c
 
 ./examples/ratree:
-total 40
--r--r--r--  1 carter  staff   3854 Sep 19 21:55 Makefile.in
--r--r--r--  1 carter  staff  15248 Sep 20 14:36 ratree.c
+total 48
+-rw-r--r--  1 carter  staff   3361 Nov  8 08:51 Makefile.in
+-rw-r--r--  1 carter  staff  19415 Nov  8 08:44 ratree.c
+
+./examples/raup:
+total 224
+-rw-r--r--  1 carter  staff   3985 Nov  8 08:51 Makefile.in
+-rw-r--r--  1 carter  staff   5674 Nov  3 10:47 NOTES
+-rw-r--r--@ 1 carter  staff   1592 Nov  3 10:47 README
+drwxr-xr-x  4 carter  staff    128 Nov  3 10:47 policies
+-rw-r--r--  1 carter  staff   1044 Nov  3 10:47 policy.conf
+-rw-r--r--  1 carter  staff  91663 Nov  8 08:44 raup.c
+
+./examples/raup/policies:
+total 16
+-rw-r--r--  1 carter  staff  886 Nov  3 10:47 domain.conf
+-rw-r--r--  1 carter  staff  532 Nov  3 10:47 ntp.conf
 
 ./examples/routers:
 total 8
--r--r--r--  1 carter  staff  2559 Mar 16  2016 routers.pl
+-rw-r--r--  1 carter  staff  2559 Aug 24  2020 routers.pl
 
 ./include:
-total 1456
--r--r--r--   1 carter  staff    2291 Mar 16  2016 Makefile.in
-drwxr-xr-x  15 carter  staff     510 Oct  9 17:33 argus
--r--r--r--   1 carter  staff     612 Mar 16  2016 argus_8021q.h
--r--r--r--   1 carter  staff   55664 Sep 19 21:55 argus_client.h
--r--r--r--   1 carter  staff   51806 Oct 10 23:14 argus_cluster.h
--r--r--r--   1 carter  staff    7410 Sep 19 21:55 argus_compat.h
--r--r--r--   1 carter  staff   16754 Oct  7 16:56 argus_config.h.in
--r--r--r--   1 carter  staff   16592 Mar 16  2016 argus_config.h.in~
--r--r--r--   1 carter  staff    2193 Mar 16  2016 argus_debug.h
--r--r--r--   1 carter  staff  101726 Oct  3 10:21 argus_def.h
--r--r--r--   1 carter  staff    3014 Mar 16  2016 argus_dscodepoints.h
--r--r--r--   1 carter  staff    4010 Mar 16  2016 argus_encapsulations.h
--r--r--r--   1 carter  staff   11854 Mar 16  2016 argus_ethernames.h
--r--r--r--   1 carter  staff    3855 Mar 16  2016 argus_ethertype.h
--r--r--r--   1 carter  staff   11133 Mar 16  2016 argus_event.h
--r--r--r--   1 carter  staff    9074 Mar 16  2016 argus_filter.h
--r--r--r--   1 carter  staff    1169 Mar 16  2016 argus_gmpls.h
--r--r--r--   1 carter  staff    1267 Mar 16  2016 argus_grep.h
--r--r--r--   1 carter  staff    4687 Mar 16  2016 argus_histo.h
--r--r--r--   1 carter  staff    3418 Mar 16  2016 argus_int.h
--r--r--r--   1 carter  staff   18645 Sep 19 21:55 argus_isis.h
--r--r--r--   1 carter  staff   12089 Jun  1 10:28 argus_label.h
--r--r--r--   1 carter  staff    4025 Mar 16  2016 argus_llc.h
--r--r--r--   1 carter  staff   10738 Mar 16  2016 argus_main.h
--r--r--r--   1 carter  staff    5703 Mar 16  2016 argus_mdp.h
--r--r--r--   1 carter  staff   28227 Oct  3 10:21 argus_metric.h
--r--r--r--   1 carter  staff    1947 Mar 16  2016 argus_namedb.h
--r--r--r--   1 carter  staff    5636 Mar 16  2016 argus_os.h
--r--r--r--   1 carter  staff   33590 Sep 19 21:55 argus_out.h
--r--r--r--   1 carter  staff    7462 Sep 19 21:55 argus_output.h
--r--r--r--   1 carter  staff   15041 Oct 10 23:14 argus_parser.h
--r--r--r--   1 carter  staff   19807 Oct 10 23:14 argus_sort.h
--r--r--r--   1 carter  staff    4529 Mar  7  2014 argus_sql.h
--r--r--r--   1 carter  staff    2476 Mar 16  2016 argus_udt.h
--r--r--r--   1 carter  staff  124346 Oct  3 10:21 argus_util.h
-drwxr-xr-x   8 carter  staff     272 Oct  9 17:33 cygwin-include
-drwxr-xr-x   4 carter  staff     136 Oct  9 17:33 net
-drwxr-xr-x   3 carter  staff     102 Oct  9 17:33 netinet
--r--r--r--   1 carter  staff    1226 Mar 16  2016 rabins.h
--r--r--r--   1 carter  staff    6158 Sep 19 21:55 radium.h
--r--r--r--   1 carter  staff   65288 Mar 16  2016 rapolicy.h
--r--r--r--   1 carter  staff    2734 Mar 16  2016 rasplit.h
+total 1624
+-rw-r--r--   1 carter  staff    2291 Aug 24  2020 Makefile.in
+drwxr-xr-x  16 carter  staff     512 Nov 28 14:00 argus
+-rw-r--r--   1 carter  staff     612 May 22  2017 argus_8021q.h
+-rw-r--r--   1 carter  staff   57127 Dec 14 09:43 argus_client.h
+-rw-r--r--   1 carter  staff   54189 Nov  3 10:47 argus_cluster.h
+-rw-r--r--   1 carter  staff    7410 Aug 24  2020 argus_compat.h
+-rw-r--r--   1 carter  staff   19505 Nov  8 08:51 argus_config.h.in
+-rw-r--r--   1 carter  staff    2193 Aug 24  2020 argus_debug.h
+-rw-r--r--   1 carter  staff  102532 Nov  8 08:44 argus_def.h
+-rw-r--r--   1 carter  staff     718 Nov  8 08:44 argus_dhcp.h
+-rw-r--r--   1 carter  staff    3014 Aug 24  2020 argus_dscodepoints.h
+-rw-r--r--   1 carter  staff    4010 Aug 24  2020 argus_encapsulations.h
+-rw-r--r--   1 carter  staff   11985 Nov  8 08:44 argus_ethernames.h
+-rw-r--r--   1 carter  staff    6289 Nov  3 10:47 argus_ethertype.h
+-rw-r--r--   1 carter  staff   11213 Nov  8 08:44 argus_event.h
+-rw-r--r--   1 carter  staff    1505 Nov  3 10:47 argus_events.h
+-rw-r--r--   1 carter  staff    9054 Nov  3 10:47 argus_filter.h
+-rw-r--r--   1 carter  staff    1169 Aug 24  2020 argus_gmpls.h
+-rw-r--r--   1 carter  staff    1267 Aug 24  2020 argus_grep.h
+-rw-r--r--   1 carter  staff    4938 Nov  3 10:47 argus_histo.h
+-rw-r--r--   1 carter  staff    3418 Aug 24  2020 argus_int.h
+-rw-r--r--   1 carter  staff   18645 Aug 24  2020 argus_isis.h
+-rw-r--r--   1 carter  staff    2918 Nov  3 10:47 argus_json.h
+-rw-r--r--   1 carter  staff   12044 Nov  3 10:47 argus_label.h
+-rw-r--r--   1 carter  staff   11914 Aug 24  2020 argus_legacy_out.h
+-rw-r--r--   1 carter  staff    5637 Nov  3 10:47 argus_llc.h
+-rw-r--r--   1 carter  staff     417 Nov  3 10:47 argus_lockfile.h
+-rw-r--r--   1 carter  staff   12081 Nov  8 08:44 argus_main.h
+-rw-r--r--   1 carter  staff    5703 Aug 24  2020 argus_mdp.h
+-rw-r--r--   1 carter  staff   32535 Nov  8 08:44 argus_metric.h
+-rw-r--r--   1 carter  staff     293 Nov  8 08:51 argus_mysql.h
+-rw-r--r--   1 carter  staff    1947 Aug 24  2020 argus_namedb.h
+-rw-r--r--   1 carter  staff    5636 Aug 24  2020 argus_os.h
+-rw-r--r--   1 carter  staff    4157 Nov  3 10:47 argus_oui.h
+-rw-r--r--   1 carter  staff   25238 Nov  8 08:44 argus_out.h
+-rw-r--r--   1 carter  staff    8295 Dec 14 09:43 argus_output.h
+-rw-r--r--   1 carter  staff   17368 Nov  8 08:44 argus_parser.h
+-rw-r--r--   1 carter  staff   20502 Nov  8 08:44 argus_sort.h
+-rw-r--r--   1 carter  staff    4529 Aug 24  2020 argus_sql.h
+-rw-r--r--   1 carter  staff     669 Aug 24  2020 argus_threads.h
+-rw-r--r--   1 carter  staff    3847 Aug 24  2020 argus_timer.h
+-rw-r--r--   1 carter  staff    2476 Aug 24  2020 argus_udt.h
+-rw-r--r--   1 carter  staff  153266 Nov 28 13:20 argus_util.h
+drwxr-xr-x   3 carter  staff      96 Mar 23  2023 bsd
+drwxr-xr-x   8 carter  staff     256 Mar 23  2023 cygwin-include
+drwxr-xr-x   4 carter  staff     128 Oct 27 17:00 net
+drwxr-xr-x   4 carter  staff     128 Nov  3 10:47 netinet
+-rw-r--r--   1 carter  staff    1226 Aug 24  2020 rabins.h
+-rw-r--r--   1 carter  staff    8904 Nov  8 08:44 rabootp.h
+-rw-r--r--   1 carter  staff   65326 Nov  3 10:02 rapolicy.h
+-rw-r--r--   1 carter  staff    2509 Aug 24  2020 rasplit.h
 
 ./include/argus:
-total 312
--r--r--r--  1 carter  staff  23567 Mar 16  2016 CflowdFlowPdu.h
--r--r--r--  1 carter  staff   3812 Mar 16  2016 bootp.h
--r--r--r--  1 carter  staff   3262 Mar 16  2016 cflowd.h
--r--r--r--  1 carter  staff   4592 Mar 16  2016 cons_def.h
--r--r--r--  1 carter  staff   5040 Mar 16  2016 cons_out.h
--r--r--r--  1 carter  staff   8393 Mar 16  2016 extract.h
--r--r--r--  1 carter  staff   3732 Mar 16  2016 fddi.h
--r--r--r--  1 carter  staff  10757 Oct  3 10:21 gencode.h
--r--r--r--  1 carter  staff    956 Mar 16  2016 global.h
--r--r--r--  1 carter  staff   1470 Mar 16  2016 md5.h
--r--r--r--  1 carter  staff   2424 Mar 16  2016 ppp.h
--r--r--r--  1 carter  staff   4836 Mar 16  2016 saslint.h
--r--r--r--  1 carter  staff  60355 Mar 16  2016 sflow.h
+total 336
+-rw-r--r--  1 carter  staff  23567 Aug 24  2020 CflowdFlowPdu.h
+-rw-r--r--  1 carter  staff   3812 May 22  2017 bootp.h
+-rw-r--r--  1 carter  staff   3262 May 22  2017 cflowd.h
+-rw-r--r--  1 carter  staff   4592 Aug 24  2020 cons_def.h
+-rw-r--r--  1 carter  staff   5040 Aug 24  2020 cons_out.h
+-rw-r--r--  1 carter  staff  12557 Aug 24  2020 extract.h
+-rw-r--r--  1 carter  staff   3732 Aug 24  2020 fddi.h
+-rw-r--r--  1 carter  staff   5480 Aug 24  2020 funcattrs.h
+-rw-r--r--  1 carter  staff  11077 Nov  8 08:44 gencode.h
+-rw-r--r--  1 carter  staff    956 May 22  2017 global.h
+-rw-r--r--  1 carter  staff   1470 May 22  2017 md5.h
+-rw-r--r--  1 carter  staff   2424 May 22  2017 ppp.h
+-rw-r--r--  1 carter  staff   4836 May 22  2017 saslint.h
+-rw-r--r--  1 carter  staff  60355 May 22  2017 sflow.h
+
+./include/bsd:
+total 0
+drwxr-xr-x  4 carter  staff  128 Oct 27 17:00 sys
+
+./include/bsd/sys:
+total 104
+-rw-r--r--  1 carter  staff  20973 Aug 24  2020 queue.h
+-rw-r--r--  1 carter  staff  25888 Aug 24  2020 tree.h
 
 ./include/cygwin-include:
 total 0
-drwxr-xr-x   3 carter  staff  102 Oct  9 17:33 arpa
-drwxr-xr-x   4 carter  staff  136 Oct  9 17:33 linux
-drwxr-xr-x   3 carter  staff  102 Oct  9 17:33 net
-drwxr-xr-x  15 carter  staff  510 Oct  9 17:33 netinet
-drwxr-xr-x   3 carter  staff  102 Oct  9 17:33 protocols
-drwxr-xr-x   3 carter  staff  102 Oct  9 17:33 sys
+drwxr-xr-x   3 carter  staff   96 Oct 27 17:00 arpa
+drwxr-xr-x   4 carter  staff  128 Oct 27 17:00 linux
+drwxr-xr-x   3 carter  staff   96 Oct 27 17:00 net
+drwxr-xr-x  15 carter  staff  480 Oct 27 17:00 netinet
+drwxr-xr-x   3 carter  staff   96 Oct 27 17:00 protocols
+drwxr-xr-x   3 carter  staff   96 Oct 27 17:00 sys
 
 ./include/cygwin-include/arpa:
 total 8
--r--r--r--  1 carter  staff  2822 Mar 16  2016 tftp.h
+-rw-r--r--  1 carter  staff  2822 May 22  2017 tftp.h
 
 ./include/cygwin-include/linux:
 total 16
--r--r--r--  1 carter  staff  1728 Mar 16  2016 if_arp.h
--r--r--r--  1 carter  staff  3092 Mar 16  2016 igmp.h
+-rw-r--r--  1 carter  staff  1728 May 22  2017 if_arp.h
+-rw-r--r--  1 carter  staff  3092 May 22  2017 igmp.h
 
 ./include/cygwin-include/net:
 total 8
--r--r--r--  1 carter  staff  1734 Mar 16  2016 if_arp.h
+-rw-r--r--  1 carter  staff  1734 May 22  2017 if_arp.h
 
 ./include/cygwin-include/netinet:
 total 136
--r--r--r--  1 carter  staff  8927 Sep 19 21:55 icmp6.h
--r--r--r--  1 carter  staff  1951 Mar 16  2016 if_ether.h
--r--r--r--  1 carter  staff  3480 Mar 16  2016 igmp.h
--r--r--r--  1 carter  staff   749 Mar 16  2016 in_systm.h
--r--r--r--  1 carter  staff  4084 Mar 16  2016 ip.h
--r--r--r--  1 carter  staff  3729 Mar 16  2016 ip6.h
--r--r--r--  1 carter  staff  5013 Mar 16  2016 ip_icmp.h
--r--r--r--  1 carter  staff  3198 Mar 16  2016 ip_var.h
--r--r--r--  1 carter  staff  1500 Mar 16  2016 tcp.h
--r--r--r--  1 carter  staff  6380 Mar 16  2016 tcp_var.h
--r--r--r--  1 carter  staff  1033 Mar 16  2016 tcpip.h
--r--r--r--  1 carter  staff   711 Mar 16  2016 udp.h
--r--r--r--  1 carter  staff  1086 Mar 16  2016 udp_var.h
+-rw-r--r--  1 carter  staff  8927 Aug 24  2020 icmp6.h
+-rw-r--r--  1 carter  staff  1951 May 22  2017 if_ether.h
+-rw-r--r--  1 carter  staff  3480 May 22  2017 igmp.h
+-rw-r--r--  1 carter  staff   749 May 22  2017 in_systm.h
+-rw-r--r--  1 carter  staff  4084 May 22  2017 ip.h
+-rw-r--r--  1 carter  staff  3729 May 22  2017 ip6.h
+-rw-r--r--  1 carter  staff  5013 May 22  2017 ip_icmp.h
+-rw-r--r--  1 carter  staff  3198 May 22  2017 ip_var.h
+-rw-r--r--  1 carter  staff  1500 May 22  2017 tcp.h
+-rw-r--r--  1 carter  staff  6380 May 22  2017 tcp_var.h
+-rw-r--r--  1 carter  staff  1033 May 22  2017 tcpip.h
+-rw-r--r--  1 carter  staff   711 May 22  2017 udp.h
+-rw-r--r--  1 carter  staff  1086 May 22  2017 udp_var.h
 
 ./include/cygwin-include/protocols:
 total 8
--r--r--r--  1 carter  staff  2340 Mar 16  2016 routed.h
+-rw-r--r--  1 carter  staff  2340 May 22  2017 routed.h
 
 ./include/cygwin-include/sys:
 total 8
--r--r--r--  1 carter  staff  49 Mar 16  2016 mbuf.h
+-rw-r--r--  1 carter  staff  49 May 22  2017 mbuf.h
 
 ./include/net:
 total 40
--r--r--r--  1 carter  staff   2172 Jun  1 15:16 etherdefs.h
--r--r--r--  1 carter  staff  12674 Mar 16  2016 nff.h
+-rw-r--r--  1 carter  staff   2172 May 22  2017 etherdefs.h
+-rw-r--r--  1 carter  staff  12674 May 22  2017 nff.h
 
 ./include/netinet:
-total 8
--r--r--r--  1 carter  staff  2448 Mar 16  2016 rtp.h
+total 56
+-rw-r--r--  1 carter  staff   2448 Aug 24  2020 rtp.h
+-rw-r--r--  1 carter  staff  21971 Nov  3 10:47 tlds.h
 
 ./lib:
-total 24
--r--r--r--  1 carter  staff   364 Mar 16  2016 argus-clients.pc.in
--r--r--r--  1 carter  staff  4544 Oct 13 08:41 argus-clients.spec
+total 56
+-rw-r--r--  1 carter  staff    364 May 22  2017 argus-clients.pc.in
+-rw-r--r--  1 carter  staff  10140 Dec 29 17:47 argus-clients.spec
+-rw-r--r--  1 carter  staff  10168 Nov  8 08:44 argus-clients.spec.in
+drwxr-xr-x  3 carter  staff     96 Mar 23  2023 perl5
+
+./lib/perl5:
+total 0
+drwxr-xr-x  3 carter  staff  96 Oct 27 17:00 qosient
+
+./lib/perl5/qosient:
+total 8
+-rw-r--r--  1 carter  staff  1963 Aug 24  2020 util.pm
+
+./logo:
+total 8
+-rw-r--r--  1 carter  staff  2491 Nov 26 20:19 argus_logo_medium-6aac34a9.png
+
+./m4:
+total 16
+-rw-r--r--  1 carter  staff  6126 Nov  8 08:44 ax_perl_ext.m4
 
 ./man:
 total 0
-drwxr-xr-x  27 carter  staff  918 Oct  9 17:33 man1
-drwxr-xr-x   8 carter  staff  272 Oct  9 17:33 man5
-drwxr-xr-x   3 carter  staff  102 Oct  9 17:33 man8
+drwxr-xr-x  29 carter  staff  928 Nov  8 08:44 man1
+drwxr-xr-x  10 carter  staff  320 Dec 29 17:47 man5
+drwxr-xr-x   4 carter  staff  128 Dec 27 15:46 man8
 
 ./man/man1:
-total 464
--r--r--r--  1 carter  staff  50118 Mar 16  2016 ra.1
--r--r--r--  1 carter  staff  18266 Mar 16  2016 rabins.1
--r--r--r--  1 carter  staff   8056 Jun 17 11:22 racluster.1
--r--r--r--  1 carter  staff   2778 Mar 16  2016 raconvert.1
--r--r--r--  1 carter  staff   4399 Mar 16  2016 racount.1
--r--r--r--  1 carter  staff   1723 Mar 16  2016 radecode.1
--r--r--r--  1 carter  staff   4953 Mar 16  2016 radump.1
--r--r--r--  1 carter  staff   5076 Mar 16  2016 raevent.1
--r--r--r--  1 carter  staff   2601 Mar 16  2016 rafilteraddr.1
--r--r--r--  1 carter  staff   6765 Mar 16  2016 ragraph.1
--r--r--r--  1 carter  staff   4075 Mar 16  2016 ragrep.1
--r--r--r--  1 carter  staff   5482 Mar 16  2016 rahisto.1
--r--r--r--  1 carter  staff   2446 Mar 16  2016 ralabel.1
--r--r--r--  1 carter  staff   1749 Mar 16  2016 ranonymize.1
--r--r--r--  1 carter  staff  13883 Mar 16  2016 rapath.1
--r-xr-xr-x  1 carter  staff   6437 Mar 16  2016 rapolicy.1
--r--r--r--  1 carter  staff   4707 Mar 16  2016 rasort.1
--r--r--r--  1 carter  staff   6898 Mar 16  2016 rasplit.1
--r--r--r--  1 carter  staff   2313 Mar 16  2016 rasql.1
--rw-r--r--  1 carter  staff   3350 Sep 28 14:17 rasqlcheckconf.1
--r--r--r--  1 carter  staff   6884 Mar 16  2016 rasqlinsert.1
--r--r--r--  1 carter  staff   2439 Mar 16  2016 rasqltimeindex.1
--r--r--r--  1 carter  staff   8863 Mar 16  2016 rastream.1
--r--r--r--  1 carter  staff   3372 Mar 16  2016 rastrip.1
--r--r--r--  1 carter  staff   8804 Mar 16  2016 ratop.1
+total 480
+-rw-r--r--  1 carter  staff  50859 Nov  8 08:44 ra.1
+-rw-r--r--  1 carter  staff  17596 Nov  8 08:44 rabins.1
+-rw-r--r--  1 carter  staff   7466 Nov  8 08:44 racluster.1
+-rw-r--r--  1 carter  staff   8746 Nov  8 08:44 racompare.1
+-rw-r--r--  1 carter  staff   2109 Nov  8 08:44 raconvert.1
+-rw-r--r--  1 carter  staff   3729 Nov  8 08:44 racount.1
+-rw-r--r--  1 carter  staff   1052 Nov  8 08:44 radecode.1
+-rw-r--r--  1 carter  staff   4281 Nov  8 08:44 radump.1
+-rw-r--r--  1 carter  staff   4406 Nov  8 08:44 raevent.1
+-rw-r--r--  1 carter  staff   1931 Nov  8 08:44 rafilteraddr.1
+-rw-r--r--  1 carter  staff   6095 Nov  8 08:44 ragraph.1
+-rw-r--r--  1 carter  staff   3405 Nov  8 08:44 ragrep.1
+-rw-r--r--  1 carter  staff   5400 Nov  8 08:44 rahisto.1
+-rw-r--r--  1 carter  staff   1776 Nov  8 08:44 ralabel.1
+-rw-r--r--  1 carter  staff   1545 Nov  8 08:44 ramanage.1
+-rw-r--r--  1 carter  staff   1775 Nov  8 08:44 ranonymize.1
+-rw-r--r--  1 carter  staff  13214 Nov  8 08:44 rapath.1
+-rw-r--r--  1 carter  staff   5756 Nov  8 08:44 rapolicy.1
+-rw-r--r--  1 carter  staff   4034 Nov  8 08:44 rasort.1
+-rw-r--r--  1 carter  staff   6228 Nov  8 08:44 rasplit.1
+-rw-r--r--  1 carter  staff   1643 Nov  8 08:44 rasql.1
+-rw-r--r--  1 carter  staff   2645 Nov  8 08:44 rasqlcheckconf.1
+-rw-r--r--  1 carter  staff   7281 Nov  8 08:44 rasqlinsert.1
+-rw-r--r--  1 carter  staff   1769 Nov  8 08:44 rasqltimeindex.1
+-rw-r--r--  1 carter  staff   9211 Nov  8 08:44 rastream.1
+-rw-r--r--  1 carter  staff   2702 Nov  8 08:44 rastrip.1
+-rw-r--r--  1 carter  staff   8404 Nov  8 08:44 ratop.1
 
 ./man/man5:
-total 128
--r--r--r--  1 carter  staff  11350 Mar 16  2016 racluster.5
--r--r--r--  1 carter  staff   3040 Mar 16  2016 racolor.conf.5
--r-xr-xr-x  1 carter  staff  10688 Mar 16  2016 radium.conf.5
--r--r--r--  1 carter  staff   6761 Mar 16  2016 ralabel.conf.5
--r--r--r--  1 carter  staff   7471 Mar 16  2016 ranonymize.5
--r--r--r--  1 carter  staff  17348 Mar 16  2016 rarc.5
+total 160
+-rw-r--r--  1 carter  staff  10681 Aug 24  2020 racluster.5
+-rw-r--r--  1 carter  staff   2476 Aug 24  2020 racolor.conf.5
+-rwxr-xr-x  1 carter  staff  10597 Nov  3 10:02 radium.conf.5
+-rw-r--r--  1 carter  staff   6088 Aug 24  2020 ralabel.conf.5
+-rw-r--r--  1 carter  staff   8109 Dec 29 17:47 ramanage.conf.5
+-rw-r--r--  1 carter  staff   8108 Nov  3 10:47 ramanage.conf.5.in
+-rw-r--r--  1 carter  staff   7021 Aug 24  2020 ranonymize.5
+-rw-r--r--  1 carter  staff  17458 Nov  3 10:47 rarc.5
 
 ./man/man8:
-total 16
--r-xr-xr-x  1 carter  staff  7852 Mar 16  2016 radium.8
+total 48
+-rwxr-xr-x@ 1 carter  staff   7182 Aug 24  2020 radium.8
+-rwxr-xr-x  1 carter  staff  12560 Dec 27 15:46 ragen.8
+
+./perllib:
+total 160
+-rw-r--r--  1 carter  staff   3915 Dec 29 17:47 Makefile
+-rw-r--r--  1 carter  staff   3893 Nov  8 08:51 Makefile.in
+drwxr-xr-x  3 carter  staff     96 Mar 23  2023 qosient
+-rw-r--r--  1 carter  staff      0 Sep 15  2021 swig.stamp
+-rw-r--r--  1 carter  staff   2775 Nov  3 10:47 swig_ArgusParseTime.c
+-rw-r--r--  1 carter  staff   1029 Nov  3 10:47 swig_ArgusParseTime.h
+-rw-r--r--  1 carter  staff    329 Nov  3 10:47 swig_ArgusParseTime.i
+-rw-r--r--  1 carter  staff  57598 Sep 15  2021 swig_ArgusParseTime_wrap.c
+
+./perllib/qosient:
+total 0
+drwxr-xr-x  3 carter  staff  96 Oct 27 17:00 XS
+
+./perllib/qosient/XS:
+total 8
+-rw-r--r--  1 carter  staff  1070 Sep 15  2021 util.pm
 
 ./pkg:
-total 40
--r--r--r--  1 carter  staff   4231 Mar 16  2016 README
--r--r--r--  1 carter  staff  10554 Mar 16  2016 radium.conf
-drwxr-xr-x  7 carter  staff    238 Oct  9 17:33 rhel
-drwxr-xr-x  5 carter  staff    170 Oct  9 17:33 ubuntu
+total 104
+-rw-r--r--   1 carter  staff   6931 Dec 29 17:47 Makefile
+-rw-r--r--   1 carter  staff   6956 Nov  8 08:44 Makefile.in
+-rw-r--r--@  1 carter  staff   4231 Aug 24  2020 README
+drwxr-xr-x   6 carter  staff    192 Nov  8 08:44 osx
+-rw-r--r--   1 carter  staff  16098 Nov  3 10:47 ra.conf
+-rw-r--r--   1 carter  staff  10554 Aug 24  2020 radium.conf
+drwxr-xr-x  12 carter  staff    384 Nov  8 08:44 rhel
+drwxr-xr-x   5 carter  staff    160 Oct 27 17:00 ubuntu
+drwxr-xr-x   7 carter  staff    224 Dec 29 17:47 win7
+
+./pkg/osx:
+total 8
+-rw-r--r--  1 carter  staff  1255 Aug 24  2020 distribution.xml
+drwxr-xr-x  3 carter  staff    96 Nov  8 08:44 osx-pkg
+drwxr-xr-x  3 carter  staff    96 Oct 27 17:00 resources
+drwxr-xr-x  4 carter  staff   128 Nov  8 08:44 scripts
+
+./pkg/osx/osx-pkg:
+total 0
+drwxr-xr-x  5 carter  staff  160 Nov  8 08:44 Contents
+
+./pkg/osx/osx-pkg/Contents:
+total 16
+-rw-r--r--  1 carter  staff  1182 Nov  8 08:44 Info.plist
+drwxr-xr-x  5 carter  staff   160 Nov  8 08:44 MacOS
+-rw-r--r--  1 carter  staff     8 Nov  8 08:44 PkgInfo
+
+./pkg/osx/osx-pkg/Contents/MacOS:
+total 0
+drwxr-xr-x  3 carter  staff   96 Nov  8 08:44 Library
+drwxr-xr-x  4 carter  staff  128 Nov  8 08:44 etc
+drwxr-xr-x  3 carter  staff   96 Nov  8 08:44 usr
+
+./pkg/osx/osx-pkg/Contents/MacOS/Library:
+total 0
+drwxr-xr-x  4 carter  staff  128 Nov  8 08:44 LaunchDaemons
+
+./pkg/osx/osx-pkg/Contents/MacOS/Library/LaunchDaemons:
+total 16
+-rw-r--r--  1 carter  staff   729 Nov  8 08:44 com.qosient.radium.plist
+-rw-r--r--  1 carter  staff  1079 Nov  8 08:44 com.qosient.rastream.plist
+
+./pkg/osx/osx-pkg/Contents/MacOS/etc:
+total 32
+-rw-r--r--  1 carter  staff  10794 Nov  8 08:44 radium.conf
+-rw-r--r--  1 carter  staff    541 Nov  8 08:44 ramanage.conf
+
+./pkg/osx/osx-pkg/Contents/MacOS/usr:
+total 0
+drwxr-xr-x  4 carter  staff  128 Nov  8 08:44 local
+
+./pkg/osx/osx-pkg/Contents/MacOS/usr/local:
+total 0
+drwxr-xr-x  4 carter  staff  128 Nov  8 08:44 argus
+drwxr-xr-x  3 carter  staff   96 Nov  8 08:44 bin
+
+./pkg/osx/osx-pkg/Contents/MacOS/usr/local/argus:
+total 24
+-rw-r--r--  1 carter  staff  5924 Nov  8 08:44 ralabel.conf
+-rw-r--r--  1 carter  staff    82 Nov  8 08:44 ralabel.country.conf
+
+./pkg/osx/osx-pkg/Contents/MacOS/usr/local/bin:
+total 8
+-rwxr-xr-x  1 carter  staff  604 Nov  8 08:44 rastream.sh
+
+./pkg/osx/resources:
+total 184
+-rw-r--r--  1 carter  staff  92962 Aug 24  2020 Gargoyle.png
+
+./pkg/osx/scripts:
+total 16
+-rwxr-xr-x  1 carter  staff  159 Nov  8 08:44 postinstall
+-rwxr-xr-x  1 carter  staff  307 Nov  8 08:44 preinstall
 
 ./pkg/rhel:
-total 32
--r--r--r--  1 carter  staff   2070 Jun  1 15:16 README
-drwxr-xr-x  4 carter  staff    136 Oct  9 17:33 init.d
--r--r--r--  1 carter  staff  10554 Mar 16  2016 radium.conf
-drwxr-xr-x  4 carter  staff    136 Oct  9 17:33 sysconfig
-drwxr-xr-x  5 carter  staff    170 Oct  9 17:33 systemd
+total 16
+-rw-r--r--@  1 carter  staff  2070 May 22  2017 README
+drwxr-xr-x   4 carter  staff   128 Oct 27 17:00 init.d
+drwxr-xr-x   3 carter  staff    96 Mar 23  2023 libexec
+-rw-r--r--   1 carter  staff    82 Aug 24  2020 ralabel.country.conf
+drwxr-xr-x   3 carter  staff    96 Nov  8 08:44 rastream.d
+drwxr-xr-x   4 carter  staff   128 Nov  8 08:44 rawatcher.d
+drwxr-xr-x   3 carter  staff    96 Oct 27 17:00 sasl2
+drwxr-xr-x   3 carter  staff    96 Aug 24  2020 share
+drwxr-xr-x   5 carter  staff   160 Oct 27 17:00 sysconfig
+drwxr-xr-x  44 carter  staff  1408 Dec 29 17:47 systemd
 
 ./pkg/rhel/init.d:
 total 16
--r-xr-xr-x  1 carter  staff  2777 Sep 15 14:23 radium
--r-xr-xr-x  1 carter  staff  2808 Mar 16  2016 rasplit
+-rwxr-xr-x  1 carter  staff  2777 Aug 24  2020 radium
+-rwxr-xr-x  1 carter  staff  2808 Aug 24  2020 rasplit
+
+./pkg/rhel/libexec:
+total 0
+drwxr-xr-x  4 carter  staff  128 Nov  3 10:47 argus-clients
+
+./pkg/rhel/libexec/argus-clients:
+total 16
+-rw-r--r--  1 carter  staff  1667 Aug 24  2020 migration_from_5.0-3.1.rhel.2_dhcp
+-rw-r--r--  1 carter  staff  1563 Nov  3 10:47 migration_from_5.0-3.4.rhel.23_dhcp
+
+./pkg/rhel/rastream.d:
+total 8
+-rwxr-xr-x  1 carter  staff  109 Nov  8 08:44 00ramanage
+
+./pkg/rhel/rawatcher.d:
+total 16
+-rwxr-xr-x  1 carter  staff   93 Nov  8 08:44 00rasqltimeindex
+-rwxr-xr-x  1 carter  staff  944 Nov  8 08:44 01rasqlinventory
+
+./pkg/rhel/sasl2:
+total 8
+-rw-r--r--  1 carter  staff  26 Aug 24  2020 radium.conf
+
+./pkg/rhel/share:
+total 0
+drwxr-xr-x  14 carter  staff  448 Nov  8 08:44 argus-clients
+
+./pkg/rhel/share/argus-clients:
+total 160
+-rw-r--r--  1 carter  staff  35039 Nov  3 10:02 emerging-Block-IPs-2018-03-22.conf
+-rw-r--r--  1 carter  staff    133 Aug 24  2020 rasqlinsert.arp
+-rw-r--r--  1 carter  staff    171 Aug 24  2020 rasqlinsert.dhcp
+-rw-r--r--  1 carter  staff    137 Aug 24  2020 rasqlinsert.dns
+-rw-r--r--  1 carter  staff    177 Nov  8 08:44 rasqlinsert.eflows
+-rw-r--r--  1 carter  staff    194 Nov  8 08:44 rasqlinsert.ether
+-rw-r--r--  1 carter  staff    171 Nov  8 08:44 rasqlinsert.ethermatrix
+-rw-r--r--  1 carter  staff    161 Nov  8 08:44 rasqlinsert.ipmatrix
+-rw-r--r--  1 carter  staff    206 Nov  8 08:44 rasqlinsert.l2_l3
+-rw-r--r--  1 carter  staff    147 Aug 24  2020 rasqlinsert.ldap
+-rw-r--r--  1 carter  staff    100 Aug 24  2020 rasqlinsert.man
+-rw-r--r--  1 carter  staff    138 Aug 24  2020 rasqlinsert.ntp
 
 ./pkg/rhel/sysconfig:
-total 16
--r--r--r--  1 carter  staff  449 Sep 28 11:05 radium
--r--r--r--  1 carter  staff  503 Sep 28 14:24 rasplit
+total 24
+-rw-r--r--  1 carter  staff  449 Aug 24  2020 radium
+-rw-r--r--  1 carter  staff  271 Aug 24  2020 rasplit
+-rw-r--r--  1 carter  staff  546 Aug 24  2020 rastream
 
 ./pkg/rhel/systemd:
-total 24
--rwxr-xr-x  1 carter  staff   355 Sep 28 14:17 radium-setup
--r--r--r--  1 carter  staff  1129 Sep 28 14:24 radium.service
--r--r--r--  1 carter  staff  1042 Sep 20 15:08 rasplit.service
+total 360
+-rwxr-xr-x  1 carter  staff  7915 Nov  3 10:47 dbaseRollup-nightly
+-rw-r--r--  1 carter  staff   147 Aug 24  2020 dbaseRollup-nightly.service
+-rw-r--r--  1 carter  staff   208 Aug 24  2020 dbaseRollup-nightly.timer
+-rwxr-xr-x  1 carter  staff  2316 Aug 24  2020 hostsData-nightly
+-rw-r--r--  1 carter  staff   130 Aug 24  2020 hostsData-nightly.service
+-rw-r--r--  1 carter  staff   191 Aug 24  2020 hostsData-nightly.timer
+-rwxr-xr-x  1 carter  staff  4187 Nov  8 08:44 matrixData-nightly
+-rw-r--r--  1 carter  staff   130 Aug 24  2020 matrixData-nightly.service
+-rw-r--r--  1 carter  staff   191 Aug 24  2020 matrixData-nightly.timer
+-rw-r--r--  1 carter  staff   150 Nov  8 08:44 processEsoc.service
+-rw-r--r--  1 carter  staff   186 Nov  8 08:44 processEsoc.timer
+-rwxr-xr-x  1 carter  staff  2939 Nov  8 08:44 radhcp-nightly
+-rw-r--r--  1 carter  staff  6254 Nov  3 10:47 radhcp-nightly-derived
+-rw-r--r--  1 carter  staff   164 Aug 24  2020 radhcp-nightly.service
+-rw-r--r--  1 carter  staff   182 Aug 24  2020 radhcp-nightly.timer
+-rwxr-xr-x  1 carter  staff   782 Nov  3 10:47 radhcp-setup
+-rw-r--r--  1 carter  staff  1141 Nov  3 10:47 radhcp.service
+-rwxr-xr-x  1 carter  staff  1954 Aug 24  2020 radium-setup
+-rw-r--r--  1 carter  staff  1162 Aug 24  2020 radium.service
+-rwxr-xr-x  1 carter  staff  3318 Nov  3 10:47 radns-nightly
+-rw-r--r--  1 carter  staff   119 Aug 24  2020 radns-nightly.service
+-rw-r--r--  1 carter  staff   180 Aug 24  2020 radns-nightly.timer
+-rw-r--r--  1 carter  staff   140 Nov  3 10:47 rahisto-delsql.service
+-rw-r--r--  1 carter  staff   192 Nov  3 10:47 rahisto-delsql.timer
+-rw-r--r--  1 carter  staff   125 Aug 24  2020 rahosts-nightly.service
+-rw-r--r--  1 carter  staff   192 Aug 24  2020 rahosts-nightly.timer
+-rw-r--r--  1 carter  staff   126 Aug 24  2020 raports-nightly.service
+-rw-r--r--  1 carter  staff   193 Aug 24  2020 raports-nightly.timer
+-rwxr-xr-x  1 carter  staff  3287 Nov  8 08:44 rarp-nightly
+-rw-r--r--  1 carter  staff   118 Aug 24  2020 rarp-nightly.service
+-rw-r--r--  1 carter  staff   179 Aug 24  2020 rarp-nightly.timer
+-rw-r--r--  1 carter  staff   156 Aug 24  2020 rascanners-nightly.service
+-rw-r--r--  1 carter  staff   220 Aug 24  2020 rascanners-nightly.timer
+-rw-r--r--  1 carter  staff  1026 Aug 24  2020 rasplit.service
+-rw-r--r--  1 carter  staff   530 Dec 29 17:47 rasqlinsert-setup
+-rw-r--r--  1 carter  staff   530 Aug 24  2020 rasqlinsert-setup.in
+-rw-r--r--  1 carter  staff   365 Nov  3 10:47 rasqlinsert@.service
+-rwxr-xr-x  1 carter  staff  1242 Nov  8 08:44 rastatus-setup
+-rw-r--r--  1 carter  staff  1096 Nov  8 08:44 rastatus.service
+-rwxr-xr-x  1 carter  staff   354 Nov  3 10:47 rastream-process
+-rw-r--r--  1 carter  staff  1045 Aug 24  2020 rastream.service
+-rwxr-xr-x  1 carter  staff   355 Nov  8 08:44 rawatcher-process
 
 ./pkg/ubuntu:
 total 8
--rw-r--r--  1 carter  staff  2099 Jun  1 15:16 README
-drwxr-xr-x  4 carter  staff   136 Oct  9 17:33 default
-drwxr-xr-x  4 carter  staff   136 Oct  9 17:33 init.d
+-rw-r--r--@ 1 carter  staff  2099 May 22  2017 README
+drwxr-xr-x  4 carter  staff   128 Oct 27 17:00 default
+drwxr-xr-x  4 carter  staff   128 Oct 27 17:00 init.d
 
 ./pkg/ubuntu/default:
 total 16
--r--r--r--  1 carter  staff  415 Mar 16  2016 radium
--r--r--r--  1 carter  staff  515 Mar 16  2016 rasplit
+-rw-r--r--  1 carter  staff  415 May 22  2017 radium
+-rw-r--r--  1 carter  staff  515 May 22  2017 rasplit
 
 ./pkg/ubuntu/init.d:
 total 32
--r-xr-xr-x  1 carter  staff  4249 Mar 16  2016 radium
--r-xr-xr-x  1 carter  staff  4241 Mar 16  2016 rasplit
+-rwxr-xr-x  1 carter  staff  4249 May 22  2017 radium
+-rwxr-xr-x  1 carter  staff  4241 May 22  2017 rasplit
+
+./pkg/win7:
+total 64
+-rw-r--r--  1 carter  staff    240 Dec 29 17:47 Makefile
+-rw-r--r--  1 carter  staff    296 Aug 24  2020 Makefile.in
+-rw-r--r--  1 carter  staff  10752 Dec 29 17:47 argus-clients.wxs
+-rw-r--r--  1 carter  staff  10836 Nov  8 08:44 argus-clients.wxs.in
+drwxr-xr-x  4 carter  staff    128 Dec 27 15:46 etc
+
+./pkg/win7/etc:
+total 16
+-rw-r--r--  1 carter  staff  506 Dec 27 15:46 ramanage.conf
+-rw-r--r--  1 carter  staff  670 Nov  3 10:47 rarc
+
+./pythonlib:
+total 27304
+-rw-r--r--  1 carter  staff      2387 Dec 29 17:47 Makefile
+-rw-r--r--  1 carter  staff      2402 Nov  8 08:44 Makefile.in
+-rw-r--r--  1 carter  staff    143300 Dec 14 11:14 argusWgan.c
+-rw-r--r--  1 carter  staff     34668 Nov  8 08:44 argusWgan.h
+-rw-r--r--  1 carter  staff       644 Nov  8 08:44 argusWgan.i
+-rw-r--r--  1 carter  staff      2444 Dec 14 11:14 argusWgan.py
+-rw-r--r--  1 carter  staff    113162 Dec 14 11:14 argusWgan_wrap.c
+drwxr-xr-x@ 4 carter  staff       128 Mar 23  2023 build
+-rw-r--r--  1 carter  staff  13549662 Nov  8 08:44 myFlow.csv
+-rw-r--r--  1 carter  staff    104507 Nov  8 08:44 numpy.i
+-rw-r--r--  1 carter  staff      1030 Nov  8 08:44 setup.py
+-rw-r--r--  1 carter  staff         0 Dec 14 11:14 swig.stamp
+-rw-r--r--  1 carter  staff       215 Nov  8 08:44 test.py
+
+./pythonlib/build:
+total 0
+drwxr-xr-x  3 carter  staff   96 Dec 14 11:14 lib.macosx-10.9-x86_64-3.8
+drwxr-xr-x  4 carter  staff  128 Dec 14 11:14 temp.macosx-10.9-x86_64-3.8
+
+./pythonlib/build/lib.macosx-10.9-x86_64-3.8:
+total 2880
+-rwxr-xr-x  1 carter  staff  1474056 Dec 14 11:14 _argusWgan.cpython-38-darwin.so
+
+./pythonlib/build/temp.macosx-10.9-x86_64-3.8:
+total 680
+-rw-r--r--  1 carter  staff  262336 Dec 14 11:14 argusWgan.o
+-rw-r--r--  1 carter  staff   77840 Dec 14 11:14 argusWgan_wrap.o
 
 ./support:
 total 0
-drwxr-xr-x  27 carter  staff  918 Oct  9 17:33 Config
-drwxr-xr-x   4 carter  staff  136 Oct  9 17:33 Database
-drwxr-xr-x   9 carter  staff  306 Oct  9 17:33 Startup
-drwxr-xr-x   3 carter  staff  102 Oct  9 17:33 System
+drwxr-xr-x  33 carter  staff  1056 Dec 27 15:46 Config
+drwxr-xr-x   4 carter  staff   128 Oct 27 17:00 Database
+drwxr-xr-x   9 carter  staff   288 Nov  3 10:47 Startup
+drwxr-xr-x   3 carter  staff    96 Oct 27 17:00 System
 
 ./support/Config:
-total 22912
--r--r--r--  1 carter  staff     2596 Mar 16  2016 README
--r--r--r--  1 carter  staff      351 Mar 16  2016 apt1.ipv4.addrs
--r--r--r--  1 carter  staff    10151 Mar 16  2016 continent.txt
--r--r--r--  1 carter  staff  9048066 Mar 16  2016 delegated-ipv4-latest
--rw-r--r--  1 carter  staff      374 Jun 13  2013 duration.classifier.labels
--r--r--r--  1 carter  staff     1105 Mar 16  2016 excel.rc
--r--r--r--  1 carter  staff     1627 Mar 16  2016 iana-address-file
--r--r--r--  1 carter  staff    24990 Mar 16  2016 iana-ipv4-address
--r--r--r--  1 carter  staff    28071 Mar 16  2016 iana-multicast-address
--r--r--r--  1 carter  staff   756315 Mar 16  2016 iana-port-numbers
--rw-r--r--  1 carter  staff      856 Jun 18  2012 ieee-address-file
--r--r--r--  1 carter  staff     1187 Mar 16  2016 local.addrs
--r--r--r--  1 carter  staff     2415 Mar 16  2016 racluster.conf
--r-xr-xr-x  1 carter  staff     1608 Mar 16  2016 racolor.conf
--r--r--r--  1 carter  staff    11131 Oct  2 11:08 radium.conf
--r-xr-xr-x  1 carter  staff      999 Mar 16  2016 ragetcountrycodes.sh
--r--r--r--  1 carter  staff     9064 Mar 16  2016 ralabel.conf
--r--r--r--  1 carter  staff     1961 Mar 16  2016 ralocality.conf
--r--r--r--  1 carter  staff    12197 Mar 16  2016 ranonymize.conf
--r--r--r--  1 carter  staff     4128 Mar 16  2016 rapolicy.conf
--r--r--r--  1 carter  staff    20044 Mar 16  2016 rarc
--r--r--r--  1 carter  staff     2232 Sep  7 14:23 rarc.print.all.conf
--r--r--r--  1 carter  staff      591 Mar 16  2016 rastream.sh
--r--r--r--  1 carter  staff    43450 Mar 16  2016 std.sig
--r--r--r--  1 carter  staff  1685148 Mar 16  2016 wireshark.manuf.txt
+total 42120
+-rw-r--r--@ 1 carter  staff      2596 Aug 24  2020 README
+-rw-r--r--  1 carter  staff       351 May 22  2017 apt1.ipv4.addrs
+-rw-r--r--@ 1 carter  staff     10151 May 22  2017 continent.txt
+-rw-r--r--  1 carter  staff  18773081 Nov  8 08:44 delegated-ipv4-latest
+-rw-r--r--  1 carter  staff       374 May 22  2017 duration.classifier.labels
+-rw-r--r--  1 carter  staff      1105 Aug 24  2020 excel.rc
+-rw-r--r--  1 carter  staff      2579 Nov  3 10:02 iana-address-file
+-rw-r--r--  1 carter  staff     25249 Nov  3 10:02 iana-ipv4-address
+-rw-r--r--  1 carter  staff     28071 May 22  2017 iana-multicast-address
+-rw-r--r--  1 carter  staff    756315 May 22  2017 iana-port-numbers
+-rw-r--r--  1 carter  staff      1977 Nov  3 10:02 iana-special-address
+-rw-r--r--  1 carter  staff       856 Aug 24  2020 ieee-address-file
+-rw-r--r--  1 carter  staff      1187 Aug 24  2020 local.addrs
+-rw-r--r--  1 carter  staff      2415 Aug 24  2020 racluster.conf
+-rwxr-xr-x  1 carter  staff      1608 Nov  8 08:44 racolor.conf
+-rw-r--r--  1 carter  staff      6756 Nov  8 08:44 raconvert.zeek.conf
+-rw-r--r--  1 carter  staff     11887 Aug 24  2020 radium.conf
+-rw-r--r--  1 carter  staff       343 Nov  3 10:47 radns.conf
+-rw-r--r--  1 carter  staff     10824 Dec 27 15:46 ragen.conf
+-rwxr-xr-x  1 carter  staff       999 Aug 24  2020 ragetcountrycodes.sh
+-rw-r--r--  1 carter  staff      9064 Aug 24  2020 ralabel.conf
+-rw-r--r--  1 carter  staff      1961 Aug 24  2020 ralocality.conf
+-rw-r--r--  1 carter  staff       491 Nov  8 08:44 ramanage.conf
+-rw-r--r--  1 carter  staff     12672 Nov  8 08:44 ranonymize.conf
+-rw-r--r--  1 carter  staff      4128 Aug 24  2020 rapolicy.conf
+-rw-r--r--  1 carter  staff     15626 Nov  3 10:47 rarc
+-rw-r--r--  1 carter  staff      2232 Aug 24  2020 rarc.print.all.conf
+-rw-r--r--  1 carter  staff      1529 Nov  3 10:47 rastatus.conf
+-rw-r--r--  1 carter  staff       591 Aug 24  2020 rastream.sh
+-rw-r--r--  1 carter  staff     44812 Nov  3 10:47 std.sig
+-rw-r--r--@ 1 carter  staff   1757637 Nov  8 08:44 wireshark.manuf.txt
 
 ./support/Database:
 total 16
--r--r--r--  1 carter  staff  3846 Mar 16  2016 MySQL.Archive.sh
--r--r--r--  1 carter  staff  2545 Mar 16  2016 README
+-rw-r--r--  1 carter  staff  3846 Aug 24  2020 MySQL.Archive.sh
+-rw-r--r--@ 1 carter  staff  2545 Aug 24  2020 README
 
 ./support/Startup:
 total 64
--r--r--r--  1 carter  staff  4348 Mar 16  2016 README
--r--r--r--  1 carter  staff   689 Mar 16  2016 com.qosient.radium.plist
--r--r--r--  1 carter  staff   866 Mar 16  2016 com.qosient.rasplit.plist
--rw-r--r--  1 carter  staff  1054 Nov 18  2014 com.qosient.rastream.plist
--r-xr-xr-x  1 carter  staff  2736 Mar 16  2016 radium
--r--r--r--  1 carter  staff   532 Mar 16  2016 radium.service
--r-xr-xr-x  1 carter  staff  2673 Mar 16  2016 rasplit
+-rw-r--r--@ 1 carter  staff  4348 Aug 24  2020 README
+-rw-r--r--  1 carter  staff   689 May 22  2017 com.qosient.radium.plist
+-rw-r--r--  1 carter  staff   866 May 22  2017 com.qosient.rasplit.plist
+-rw-r--r--  1 carter  staff  1041 Nov  3 10:47 com.qosient.rastream.plist
+-rwxr-xr-x  1 carter  staff  2736 Aug 24  2020 radium
+-rw-r--r--  1 carter  staff   532 May 22  2017 radium.service
+-rwxr-xr-x  1 carter  staff  2673 Aug 24  2020 rasplit
 
 ./support/System:
 total 8
--r--r--r--  1 carter  staff  1309 Mar 16  2016 magic
+-rw-r--r--  1 carter  staff  1309 Aug 24  2020 magic
+
+./unittests:
+total 64
+-rw-r--r--  1 carter  staff  3307 Nov  8 08:51 Makefile.in
+-rw-r--r--  1 carter  staff  7941 Aug 24  2020 test_argus_timer.c
+-rw-r--r--  1 carter  staff   247 Aug 24  2020 test_argus_timer.h
+-rw-r--r--  1 carter  staff  2808 Aug 24  2020 test_argus_timer_pps.c
+-rw-r--r--  1 carter  staff   646 Aug 24  2020 test_argus_timer_simtime.c
+-rw-r--r--  1 carter  staff   412 Aug 24  2020 test_argus_timer_walltime.c
+-rw-r--r--  1 carter  staff   993 Aug 24  2020 unittest.h
+
+./utils:
+total 16
+-rw-r--r--  1 carter  staff  4293 Jun  6  2018 Makefile

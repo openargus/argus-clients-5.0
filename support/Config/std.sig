@@ -1,6 +1,6 @@
 #
 #  Argus Clients Software
-#  Copyright (c) 2000-2014 QoSient, LLC
+#  Copyright (c) 2000-2024 QoSient, LLC
 #  All rights reserved.
 #
 #  QOSIENT, LLC DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS

@@ -3016,12 +3016,10 @@ RaReadAddressConfig (struct ArgusParserStruct *parser, struct ArgusLabelerStruct
                }
 
                default:
-                  if (isdigit((int)*ptr)) {
-                     RaInsertAddressTree (parser, labeler, ptr, label);
+                  if (strchr(ptr, '|')) {
+                     RaInsertRIRTree (parser, labeler, ptr);
                   } else {
-                     if (strchr(ptr, '|')) {
-                        RaInsertRIRTree (parser, labeler, ptr);
-                     }
+                     RaInsertAddressTree (parser, labeler, ptr, label);
                   }
                   break;
             }

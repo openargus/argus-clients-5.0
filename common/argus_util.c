@@ -7564,9 +7564,6 @@ RaParseCIDRAddr (struct ArgusParserStruct *parser, char *addr)
          } else
             sstr = str;
 
-         if (retn->masklen == 0)
-            retn->masklen = 128;
-
          if (strchr (sstr, '.')) {
             lsecnum += (lsecnum > 0) ? 1 : 2;
             if ((ipv4addr = strrchr(sstr, ':')) == NULL) {
@@ -7645,6 +7642,9 @@ RaParseCIDRAddr (struct ArgusParserStruct *parser, char *addr)
          }
 
          for (i = 0; i < 4; i++) retn->mask[i] = 0;
+
+         if ((retn->masklen == 0) && (retn->addr[0] != 0))
+            retn->masklen = 128;
 
          if ((masklen = retn->masklen) > 0) {
             unsigned int *mask = &retn->mask[0];

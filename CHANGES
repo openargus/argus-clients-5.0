@@ -1,5 +1,5 @@
 /*
- * Gargoyle Client Software. Tools to read, analyze and manage Argus data.
+ * Argus-5.0 Client Software. Tools to read, analyze and manage Argus data.
  * Copyright (c) 2000-2024 QoSient, LLC
  * All rights reserved.
  *
@@ -19,12 +19,12 @@
  */
 
 
-Gargoyle Data Support
+Argus-5.0 Data Support
 
 Argus-5.0 is a commercial version of argus, that provides enhanced
-functionality and performance.  Gargoyle is designed to be completely
-compatible with the open source argus and its program names,
-configuration, etc are / should be identical when possible.
+functionality and performance.  Argus-5.0 is designed to be completely
+backward compatible with the previous versions of open source argus and
+its program names, configuration, etc should be similar when possible.
 
 Product specific changes are provided with each product.  When no
 specific changes are mentioned, gargoyle should be perceived as
@@ -33,55 +33,50 @@ completely compatible, but enhanced.
 
 Argus Data Support
 
-Argus-3.0 represents a major change in argus data.  The format
-was completely updated to support IPv6 data, 64-bit architectures
-and Quad-word metrics, and provide better compression for data
-in motion and at rest.  As a result there is no forward compatibility
-between argus-2.0 programs and argus-3.0 data.  Argus-3.0 programs
-are backward compatible, however, so you can read and process your
-data with argus-3.0 programs.
+Argus-5.0 represents a major change in argus data.  The format
+was completely updated to support 128-bit uuid argus source id's,
+As a result there is no forward compatibility between argus-3.0 programs and
+argus-5.0 data.  Argus-5.0 programs are backward compatible, however, so
+you can read and process your data with argus-5.0 programs.
 
-We have not made any provisions for argus-3.0 programs to generate
-argus-2.x formatted data.  So there is explicit conversion that will be
-going on under the covers.  Don't convert your argus-2.x data to argus-3.0
-unless you find that you can get say better compressed files.
+We have made provisions for argus-5.0 programs to generate argus-3.x formatted
+data, but that is configurable, and not the default behavior.  So there is
+explicit conversion that will be going on under the covers.  There is no 
+compelling justification to convert your argus-3.x data, allowing you to leave
+the original data unmodified.
 
-Argus-3.0.6 and its clients provides for UDP based transport of argus
+Argus-5.0.0 and its clients provides for extended modes of transport of argus
 data, earlier version of argus-clients cannot read these transport formats.
 
-Argus-3.0.6 provides for some specific changes from earlier versions
-of argus-3.0.x data, and so there is no forward compatibility guarantees.
+Argus-clients-5.0 provides extended capabilities for reading flow-tools
+originated data, and bro/zeek data and converting them to argus-5.0 data
+formats.
 
-Argus-clients-3.0.6 provides extended capabilities for reading flow-tools
-originated data, and converting them to argus-3.0 data formats.
-
-Argus-clients-3.0.6 is backward compatible with all prior releases of
+Argus-clients-5.0.0 is backward compatible with all prior releases of
 argus data, fixing a large number of bugs, with regard to data represenation
 and processing.  
 
 
 Architecture
 
-The client programs evolved quite a bit between argus-2.0 and argus-3.0.
+The client programs evolved quite a bit between argus-2.0, argus-3.0 and argus-5.0.
 With the addition of large scale argus data collection and distribution, using
-radium(), rasplit() and rastream().  Argus-clients-3.0.6 extends this
-architecture, providing the ability to collect, distribute, archive, analyze,
-and process network flow data, for argus data, flow-tools data, netflow v5-8
-and partial sflow data processing.
+radium(), and rastream().  Argus-clients-5.0 extends this architecture, providing
+the ability to collect, distribute, archive, analyze, and process network flow
+data, for argus data, flow-tools data, netflow v5-8 partial sflow data processing,
+and zeek data conversion.
 
-radium(), rasplit() and rastream() are the principal programs that have
-been added to the ra* family of programs.  radium can connect to multiple
-sources of argus data, whether they are streams or files of data, and
-can write out data to multiple targets, supporting independant access control,
-authentication, and filtering per target.  What this means is that you can
-build a argus data distribution tree, to collect, process and redistribute
-argus data.
+radium(), and rastream() are the principal programs that have been added to the
+ra* family of programs.  radium can connect to multiple sources of argus data,
+whether they are streams or files of data, and can write out data to multiple targets,
+supporting independant access control, authentication, and filtering per target.
+What this means is that you can build a argus data distribution tree, to collect,
+process and redistribute argus data.
 
-rasplit() and rastream() are known as a stream block processors (SBP).
-You want to collect data from a set of argus data stream sources, and the
-data just keeps coming in.  When/how can you stop to process the
-data, say for real-time indexing, search and/or processing?  In the
-database world this is called 'stream block processing'.  rasplit() and
+Rastream() is known as a stream block processors (SBP).  You want to collect data
+from a set of argus data stream sources, and the data just keeps coming in.
+When/how can you stop to process the data, say for real-time indexing, search
+and/or processing?  In the database world this is called 'stream block processing'.
 rastream() reads in argus data, and output the data into a set of files
 that make up a native OS filesystem based archive.  rastream() extends
 this capability by implementing a wa hold buffer to allow for input sorting,
@@ -95,11 +90,11 @@ With these  programs, we have collected data from as many as 5K argus data
 sources, and managed the data in a set of argus data respositories.
 
 Argus-clients-3.0.6 provides new capabilities in this area, allowing
-radium to "serve up" files that are generated by rasplit() or rastream().
+radium to "serve up" files that are generated by rastream().
 See the manpages for radium.1 and ra.1.
 
 
-The clients distribution has been restructred in argus-3.0.6.  It is organized
+The clients distribution has been restructred in argus-5.0.0.  It is organized
 into argus client Core Programs, and Examples.
 
 Client Core Programs
@@ -114,7 +109,6 @@ Client Core Programs
    rasort     - ported.
 
    ratop      - massive rewrite.  Completely new program.
-
 
 Client Example Programs
    These programs provide examples in key areas of argus data processing

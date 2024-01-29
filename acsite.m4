@@ -1,5 +1,5 @@
 dnl
-dnl Gargoyle Client Software. Tools to read, analyze and manage Argus data.
+dnl Argus-5.0 Client Software. Tools to read, analyze and manage Argus data.
 dnl Copyright (c) 2000-2024 QoSient, LLC
 dnl All rights reserved.
 dnl

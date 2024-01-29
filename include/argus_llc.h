@@ -1,5 +1,5 @@
 /*
- * Gargoyle Software.  Common include files. Llc defines
+ * Argus-5.0 Software.  Common include files. Llc defines
  * Copyright (c) 2000-2024 QoSient, LLC
  * All rights reserved.
  *

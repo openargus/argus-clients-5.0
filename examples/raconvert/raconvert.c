@@ -496,8 +496,8 @@ RaConvertParseTitleString (char *str)
                if (!(strncmp(RaParseLabelStringTable[i], obj, len))) {
                   RaParseLabelAlgorithmIndex++;
                   RaParseLabelAlgorithms[items] = RaParseLabelAlgorithmTable[i];
-                  if (i == ARGUSPRINTDIR)   RaConvertParseDirLabel++;
-                  if (i == ARGUSPRINTSTATE) RaConvertParseStateLabel++;
+                  if (strcmp("Dir",obj) == 0)   RaConvertParseDirLabel++;
+                  if (strcmp("State",obj) == 0)   RaConvertParseStateLabel++;
                   found++;
                   break;
                }
@@ -664,7 +664,7 @@ int
 RaConvertParseRecordString (struct ArgusParserStruct *parser, char *str, int slen)
 {
    struct ArgusRecordStruct *argus = &parser->argus;
-   int retn = 1, numfields, i, parsed = 0;
+   int retn = 1, numfields = 1, i, parsed = 0;
    char *argv[ARGUS_MAX_PRINT_FIELDS], **ap = argv;
    char delim[16], *ptr, *tptr, *tok;
 
@@ -704,9 +704,14 @@ RaConvertParseRecordString (struct ArgusParserStruct *parser, char *str, int sle
             else
                *ap = NULL;
       
+            numfields++;
             if (++ap >= &argv[ARGUS_MAX_PRINT_FIELDS])
                break;
             tptr = tok;
+         }
+         if (strlen(tptr)) {
+            *ap = tptr;
+            numfields++;
          }
 /*
          for (ap = argv; (*ap = strtok(tptr, delim)) != NULL;) {
@@ -715,8 +720,6 @@ RaConvertParseRecordString (struct ArgusParserStruct *parser, char *str, int sle
                break;
          }
 */
-
-         numfields = ((char *)ap - (char *)argv)/sizeof(ap);
 
          for (i = 0; i < numfields; i++) {
             if (RaParseLabelAlgorithms[i] != NULL) {
@@ -1566,7 +1569,6 @@ ArgusParseProtoLabel (struct ArgusParserStruct *parser, char *buf)
                ArgusLog (LOG_ERR, "ArgusParseProto(0x%xs, %s) proto not found\n", parser, buf);
 	    else
                ArgusThisProto = retn;
-            return;
          }
       }
    }
@@ -1686,21 +1688,8 @@ ArgusParseSrcAddrLabel (struct ArgusParserStruct *parser, char *buf)
       if (argus->dsrs[ARGUS_FLOW_INDEX] == NULL) {
          argus->dsrs[ARGUS_FLOW_INDEX] = &parser->canon.flow.hdr;
          argus->dsrindex |= 0x1 << ARGUS_FLOW_INDEX;
-      }
-
-      parser->canon.flow.hdr.type              = ARGUS_FLOW_DSR;
-      parser->canon.flow.hdr.subtype           = ARGUS_FLOW_CLASSIC5TUPLE;
-      switch (taddr->type) {
-         case AF_INET: {
-            parser->canon.flow.hdr.argus_dsrvl8.qual  = ARGUS_TYPE_IPV4 | ARGUS_MASKLEN;
-            parser->canon.flow.hdr.argus_dsrvl8.len   = 5;
-            break;
-         }
-         case AF_INET6: {
-            parser->canon.flow.hdr.argus_dsrvl8.qual  = ARGUS_TYPE_IPV6;
-            parser->canon.flow.hdr.argus_dsrvl8.len   = 11;
-            break;
-         }
+         parser->canon.flow.hdr.type              = ARGUS_FLOW_DSR;
+         parser->canon.flow.hdr.subtype           = ARGUS_FLOW_CLASSIC5TUPLE;
       }
 
       switch (taddr->type) {
@@ -1713,6 +1702,9 @@ ArgusParseSrcAddrLabel (struct ArgusParserStruct *parser, char *buf)
                }
 
                default:
+                  parser->canon.flow.hdr.argus_dsrvl8.qual  = ARGUS_TYPE_IPV4 | ARGUS_MASKLEN;
+                  parser->canon.flow.hdr.argus_dsrvl8.len   = 5;
+
                   parser->canon.flow.flow_un.ip.ip_src = *taddr->addr;
                   parser->canon.flow.flow_un.ip.smask  = taddr->masklen;
                   break;
@@ -1724,6 +1716,9 @@ ArgusParseSrcAddrLabel (struct ArgusParserStruct *parser, char *buf)
             unsigned int *sp  = (unsigned int *)&parser->canon.flow.flow_un.ipv6.ip_src;
             unsigned int *rsp = (unsigned int *)taddr->addr;
             int i;
+
+            parser->canon.flow.hdr.argus_dsrvl8.qual  = ARGUS_TYPE_IPV6;
+            parser->canon.flow.hdr.argus_dsrvl8.len   = 11;
 
             for (i = 0; i < 4; i++)
                *sp++ = *rsp++;
@@ -2600,6 +2595,7 @@ ArgusParseStateLabel (struct ArgusParserStruct *parser, char *buf)
 {
    int match = 0;
 
+   ArgusParseState = 0;
    if (ArgusInputType == ARGUS_AFLOW) {
       RaConvertParseDirLabel = 1;
       RaConvertParseStateLabel = 1;
@@ -2698,8 +2694,9 @@ ArgusParseStateLabel (struct ArgusParserStruct *parser, char *buf)
       if (!match) {
          int i;
          for (i = 0; i < ICMP_MAXTYPE; i++) {
-            if (!(strcmp (buf, icmptypestr[i]))) {
-            }
+            if (icmptypestr[i] != NULL) 
+               if (!(strcmp (buf, icmptypestr[i]))) {
+               }
          }
       }
 

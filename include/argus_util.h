@@ -47,8 +47,8 @@ extern "C" {
 #include <argus/cons_out.h>
 #include <argus/cflowd.h>
 
-#define ARGUS_MAX_PRINT_ALG     	242
-#define MAX_PRINT_ALG_TYPES     	242
+#define ARGUS_MAX_PRINT_ALG     	243
+#define MAX_PRINT_ALG_TYPES     	243
 
 
 #include <argus/CflowdFlowPdu.h>
@@ -456,6 +456,7 @@ int ArgusCommonParseSourceID (struct ArgusAddrStruct *,
                               struct ArgusParserStruct *, char *);
 void ArgusParseSourceID (struct ArgusParserStruct *, char *);
 
+void ArgusPrintType (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
 void ArgusPrintBssid (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
 void ArgusPrintSsid (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
 void ArgusPrintCause (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
@@ -716,6 +717,7 @@ void ArgusPrintProducerConsumerRatio (struct ArgusParserStruct *, char *, struct
 void ArgusPrintSrcVirtualNID (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
 void ArgusPrintDstVirtualNID (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
 
+void ArgusPrintTypeLabel (struct ArgusParserStruct *, char *, int);
 void ArgusPrintBssidLabel (struct ArgusParserStruct *, char *, int);
 void ArgusPrintSsidLabel (struct ArgusParserStruct *, char *, int);
 void ArgusPrintCauseLabel (struct ArgusParserStruct *, char *, int);
@@ -1470,6 +1472,8 @@ RaPrintAlgorithmTable[MAX_PRINT_ALG_TYPES] = {
    { "svnid", "", 6 , 1, ARGUS_PTYPE_INT, ARGUSPRINTSRCVNID, ArgusPrintSrcVirtualNID, ArgusPrintSrcVirtualNIDLabel, "int", 0},
 #define ARGUSPRINTDSTVNID		241
    { "dvnid", "", 6 , 1, ARGUS_PTYPE_INT, ARGUSPRINTDSTVNID, ArgusPrintDstVirtualNID, ArgusPrintDstVirtualNIDLabel, "int", 0},
+#define ARGUSPRINTTYPE			242
+   { "type", "", 4 , 1, ARGUS_PTYPE_STRING, ARGUSPRINTTYPE, ArgusPrintType, ArgusPrintTypeLabel, "varchar(4)", 0},
 };
 
 

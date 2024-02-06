@@ -14,16 +14,16 @@
 .IX  "raconvert command"  ""  "\fLraconvert\fP \(em argus data"
 .LP
 .B Raconvert
-reads comman separated ASCII
+reads ASCII based files, either CSV, or Json 
 .BR argus
-data from a file or stdin, and converts the ASCII representation to binary format.
-In order for \fBraconver\fP to process the delimited data correctly, the file should
-be created by \fBra.1\fP like programs, using the "-c <char>" option to specify
-a field separator.  Column delimiters can be any non-ambiguous character, and are
-automatically discovered from the files title string.
+data from a file or stdin, and converts the ASCII representation to binary
+argus format.  In order for \fBraconvert\fP to process the data correctly, the file should
+be created by \fBra.1\fP like programs, using the "-c <char>" option or the "-M json"
+mode, to specify the ASCII format.  In the case of CSV files, column delimiters can be
+any non-ambiguous character, and are automatically discovered from the files title string.
 
-Because \fBraconvert.1\fP expects the first valid string in the file to be a
-\fBra.1\fP column title line, the \fBra.1\fP program must use the equivalent
+In the case of CSV files, because \fBraconvert.1\fP expects the first valid string in the
+file to be a \fBra.1\fP column title line, the \fBra.1\fP program must use the equivalent
 of the "-L 0" option.  
 
 The file can present its column oriented data in any order, and \fBraconvert\fP will
@@ -45,6 +45,11 @@ leaked.
 .nf
 \fBra\fP -L0 -c , -r argusfile > argus.ascii.csv 
 \fBraconvert\fP -r argus.ascii.csv -w argusfile
+.fi
+
+.nf
+\fBra\fP -M json -r argusfile > argus.json
+\fBraconvert\fP -r argus.json -w argusfile
 .fi
 
 .SH COPYRIGHT

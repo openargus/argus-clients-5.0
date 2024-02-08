@@ -137,7 +137,7 @@
 #endif
 
 #define ARGUS_PRINT_TEMP_BUF_SIZE       0x10000
-#define ARGUS_TEMP_BUF_SIZE             0x400
+#define ARGUS_TEMP_BUF_SIZE             0x10000
 char *ArgusPrintTempBuf = NULL;
 char *ArgusTempBuffer = NULL;
 
@@ -5963,22 +5963,19 @@ ArgusPrintRecord (struct ArgusParserStruct *parser, char *buf, struct ArgusRecor
    dlen = len - blen;
 
    if (!(parser->ArgusPrintJson))
-      while (isspace((int)(buf[blen - 1])))
-      {
+      while (isspace((int)(buf[blen - 1]))) {
          buf[blen - 1] = '\0';
          blen--;
       }
 
    if ((parser->RaFieldDelimiter != ' ') && (parser->RaFieldDelimiter != '\0'))
-      if (buf[blen - 1] == parser->RaFieldDelimiter)
-      {
+      if (buf[blen - 1] == parser->RaFieldDelimiter) {
          buf[blen - 1] = '\0';
          blen--;
       }
 
    /*
-   if (parser->RaFieldQuoted)
-   {
+   if (parser->RaFieldQuoted) {
       char *ptr = tptr, sepbuf[8], *sep = sepbuf;
       char *ap, *tstr = buf;
       int i = 0;
@@ -5986,17 +5983,13 @@ ArgusPrintRecord (struct ArgusParserStruct *parser, char *buf, struct ArgusRecor
       bzero(sep, 8);
       sep[0] = parser->RaFieldDelimiter;
 
-      while ((ap = strtok(tstr, sep)) != NULL)
-      {
+      while ((ap = strtok(tstr, sep)) != NULL) {
          if (i++)
             *ptr++ = parser->RaFieldDelimiter;
-         if (*ap != '\0')
-         {
+         if (*ap != '\0') {
             snprintf(ptr, MAXSTRLEN, "%c%s%c", parser->RaFieldQuoted, ap, parser->RaFieldQuoted);
             ptr += strlen(ptr);
-         }
-         else
-         {
+         } else {
             snprintf(ptr, MAXSTRLEN, "%c%c", parser->RaFieldQuoted, parser->RaFieldQuoted);
             ptr += strlen(ptr);
          }
@@ -6007,8 +6000,7 @@ ArgusPrintRecord (struct ArgusParserStruct *parser, char *buf, struct ArgusRecor
 
    dlen = len - blen;
 
-   if (parser->ArgusPrintJson)
-   {
+   if (parser->ArgusPrintJson) {
       ArgusPrintRecordCloser(parser, &buf[blen], argus, dlen);
    }
 
@@ -6314,7 +6306,7 @@ ArgusPrintRecordCloser (struct ArgusParserStruct *parser, char *buf, struct Argu
    if (buf != NULL) {
       retn = strlen(buf);
       if (parser->ArgusPrintJson) {
-         sprintf(&buf[strlen(buf)], "}"); 
+         sprintf(&buf[strlen(buf)], " }"); 
          retn += 2;
       } else
       if (parser->ArgusPrintXml) {
@@ -19087,7 +19079,7 @@ ArgusPrintManStatus (struct ArgusParserStruct *parser, char *buf, struct ArgusRe
       }
    } else {
       // Printing MAR is disabled... shouldn't usually be reached due to other gates in printing routines
-      sprintf(buf, "%*.*s ", len, len, " ");
+      // sprintf(buf, "");
    }
 
 #ifdef ARGUSDEBUG
@@ -25109,7 +25101,6 @@ ArgusPrintLabel(struct ArgusParserStruct *parser, char *buf, struct ArgusRecordS
       if (parser->ArgusPrintJson) {
          // JSON (strings) mode
             labelbuf = strdup(obuf); // Work with a copy of the string
-            int orig_len = strlen(obuf);
             if (labelbuf == NULL) {
                ArgusLog(LOG_ERR, "PrintLabel, Label Expansion: Unable to strdup(), malloc fail?");
                //Will exit after logging error
@@ -25164,12 +25155,16 @@ ArgusPrintLabel(struct ArgusParserStruct *parser, char *buf, struct ArgusRecordS
                         }
                      } else {
                         // bad label field, had no equals sign
-                        fprintf(stderr, "WARNING: PrintLabel-Expansion: Bad label, no equals sign ");
-                        fprintf(stderr, "near char %li in string (length %d): \"%s\"\n", (one_label_pair - labelbuf), orig_len, obuf);
+#ifdef ARGUSDEBUG
+                        ArgusDebug(3, "ArgusPrintLabel (%p, %p) Bad label, no equals sign '%s'", buf, argus, label->l_un.label);
+#endif
                      }
                   } while ((one_label_pair = strtok(NULL, ":")) != NULL);
 
-                  l -= 2; // Backtrack two chars to replace the dangling comma
+                  if (l > 2) {
+                     if ((buf[l - 2] == ',') && (buf[l - 1] == ' '))
+                        l -= 2; // Backtrack two chars to replace the dangling comma
+                  }
                   l += sprintf(buf + l, " }");
                }
             } else {

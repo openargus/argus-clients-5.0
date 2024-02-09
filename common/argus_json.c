@@ -356,8 +356,10 @@ json_parse_value(const char** cursor, ArgusJsonValue *parent) {
 
             if ((parent->type == ARGUS_JSON_KEY) ||
                 (parent->type == ARGUS_JSON_STRING)) {
-               if (parent->value.string != NULL)
+               if (parent->value.string != NULL) {
                   free (parent->value.string);
+                  parent->value.string = NULL;
+               }
             }
 
             if (parent->type != ARGUS_JSON_KEY) {
@@ -642,7 +644,9 @@ json_merge_value(ArgusJsonValue *p1, ArgusJsonValue *p2) {
             for (x = 0; x < p2size; x += 2) {
                if (((ArgusJsonValue *)&p2data[x])->type) {
                   vector_push_back(&p1->value.array, &p2data[x]);
+                  ((ArgusJsonValue *)&p2data[x])->type = ARGUS_JSON_NULL;
                   vector_push_back(&p1->value.array, &p2data[x + 1]);
+                  ((ArgusJsonValue *)&p2data[x + 1])->type = ARGUS_JSON_NULL;
                   p1->status |= ARGUS_JSON_MODIFIED;
                }
             }

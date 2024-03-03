@@ -1970,8 +1970,6 @@ ArgusProcessBell (WINDOW *win, int status, int ch)
 
    ArgusDisplayStatus = (ArgusDisplayStatus ? 0 : 1);
    ArgusZeroDebugString();
-   if (ArgusParser->Pauseflag)
-      ArgusSetDebugString ("Paused", LOG_ERR, ARGUS_LOCK);
    ArgusTouchScreen();
 
 #ifdef ARGUSDEBUG
@@ -2151,6 +2149,7 @@ ArgusProcessCharacter(WINDOW *win, int status, int ch)
 
                         RaWindowCursorX = cursx;
                         ArgusUpdateScreen();
+                        RaRefreshDisplay();
                      } 
 #if defined(ARGUS_THREADS)
                      pthread_mutex_unlock(&RaCursesLock);
@@ -2969,6 +2968,7 @@ void
 ArgusDrawWindow(struct ArgusWindowStruct *ws)
 {
    WINDOW *win = ws->window;
+   
    if (win == RaCurrentWindow->window) {
       struct ArgusParserStruct *parser = ArgusParser;
       struct ArgusRecordStruct *ns = NULL;
@@ -3839,6 +3839,7 @@ argus_command_string(void)
                RaDisplayLinesSet = 0;
 
             wclear(RaCurrentWindow->window);
+            RaRefreshDisplay();
             break;
          }
 
@@ -3874,8 +3875,9 @@ argus_command_string(void)
                }
                ArgusTouchScreen();
             }
+            RaRefreshDisplay();
+            break;
          }
-         break;
 
          case RAGETTINGd: {
             struct ArgusInput *input;
@@ -4237,6 +4239,7 @@ argus_command_string(void)
 #endif
                werase(RaCurrentWindow->window);
                ArgusTouchScreen();
+               RaRefreshDisplay();
             }
             ArgusFree(strbuf);
             break;
@@ -4512,6 +4515,7 @@ argus_command_string(void)
             }
 
             ArgusUpdateScreen();
+            RaRefreshDisplay();
             break;
          }
 
@@ -5579,7 +5583,11 @@ RaUpdateDebugWindow(WINDOW *win)
       secs = (dtime.tv_sec * 1.0) + ((dtime.tv_usec * 1.0)/1000000.0);
       rate = (secs > 0.0) ? (totalrecs * 1.0) / secs : 0.0;
 
-      status = (ArgusParser->RaTasksToDo & RA_SORTING) ? "Sorting" : (ArgusParser->RaTasksToDo ? "Active" : "Idle");
+      if (ArgusParser->Pauseflag) {
+         status = "Paused";
+      } else {
+         status = (ArgusParser->RaTasksToDo & RA_SORTING) ? "Sorting" : (ArgusParser->RaTasksToDo ? "Active" : "Idle");
+      }
 
       sprintf (tbuf, "ProcessQueue %6d DisplayQueue %6d TotalRecords %8lld  Rate %11.4f rps   Status %s",
                           RaCursesProcess->queue->count, RaSortItems, totalrecs, rate, status);

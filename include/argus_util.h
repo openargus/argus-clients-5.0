@@ -47,8 +47,8 @@ extern "C" {
 #include <argus/cons_out.h>
 #include <argus/cflowd.h>
 
-#define ARGUS_MAX_PRINT_ALG     	245
-#define MAX_PRINT_ALG_TYPES     	245
+#define ARGUS_MAX_PRINT_ALG     	247
+#define MAX_PRINT_ALG_TYPES     	247
 
 
 #include <argus/CflowdFlowPdu.h>
@@ -480,6 +480,8 @@ void ArgusPrintDstMacAddress (struct ArgusParserStruct *, char *, struct ArgusRe
 void ArgusPrintSrcMacOuiAddress (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
 void ArgusPrintDstMacOuiAddress (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
 void ArgusPrintMacOuiAddress (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
+void ArgusPrintSrcMacClass (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
+void ArgusPrintDstMacClass (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
 void ArgusPrintEtherType (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
 void ArgusPrintProto (struct ArgusParserStruct *, char *, struct ArgusRecordStruct *, int);
 void ArgusPrintAddr (struct ArgusParserStruct *, char *, int, void *, int, unsigned char, int, int);
@@ -744,6 +746,8 @@ void ArgusPrintMacAddressLabel (struct ArgusParserStruct *, char *, int);
 void ArgusPrintSrcMacOuiAddressLabel (struct ArgusParserStruct *, char *, int);
 void ArgusPrintDstMacOuiAddressLabel (struct ArgusParserStruct *, char *, int);
 void ArgusPrintMacOuiAddressLabel (struct ArgusParserStruct *, char *, int);
+void ArgusPrintSrcMacClassLabel (struct ArgusParserStruct *, char *, int);
+void ArgusPrintDstMacClassLabel (struct ArgusParserStruct *, char *, int);
 void ArgusPrintEtherTypeLabel (struct ArgusParserStruct *, char *, int);
 void ArgusPrintProtoLabel (struct ArgusParserStruct *, char *, int);
 void ArgusPrintAddrLabel (struct ArgusParserStruct *, char *, int);
@@ -1481,9 +1485,13 @@ RaPrintAlgorithmTable[MAX_PRINT_ALG_TYPES] = {
 #define ARGUSPRINTTYPE			242
    { "type", "", 4 , 1, ARGUS_PTYPE_STRING, ARGUSPRINTTYPE, ArgusPrintType, ArgusPrintTypeLabel, "varchar(4)", 0},
 #define ARGUSPRINTSRCMACOUI    		243
-   { "smacoui", "", 18 , 1, ARGUS_PTYPE_STRING, ARGUSPRINTSRCMACOUI, ArgusPrintSrcMacOuiAddress, ArgusPrintSrcMacOuiAddressLabel, "varchar(24)", 0},
+   { "smacoui", "", 7 , 1, ARGUS_PTYPE_STRING, ARGUSPRINTSRCMACOUI, ArgusPrintSrcMacOuiAddress, ArgusPrintSrcMacOuiAddressLabel, "varchar(24)", 0},
 #define ARGUSPRINTDSTOUINAME		244
-   { "dmacoui", "", 18 , 1, ARGUS_PTYPE_STRING, ARGUSPRINTSRCMACOUI, ArgusPrintDstMacOuiAddress, ArgusPrintDstMacOuiAddressLabel, "varchar(24)", 0},
+   { "dmacoui", "", 7 , 1, ARGUS_PTYPE_STRING, ARGUSPRINTSRCMACOUI, ArgusPrintDstMacOuiAddress, ArgusPrintDstMacOuiAddressLabel, "varchar(24)", 0},
+#define ARGUSPRINTSRCMACCLASS		245
+   { "smacclass", "%d", 9 , 1, ARGUS_PTYPE_INT, ARGUSPRINTSRCMACCLASS, ArgusPrintSrcMacClass, ArgusPrintSrcMacClassLabel, "int", 0},
+#define ARGUSPRINTDSTMACCLASS		246
+   { "dmacclass", "%d", 9 , 1, ARGUS_PTYPE_INT, ARGUSPRINTDSTMACCLASS, ArgusPrintDstMacClass, ArgusPrintDstMacClassLabel, "int", 0},
 };
 
 
